@@ -77,8 +77,9 @@ def badge_class(badge_type, name):
 
 @badge_app.route("/")
 def index():
-    return """<a href="http://islandora.ca/">Islandora</a>
-<a href="http://openbadges.org/">Open Badge</a> issuer endpo"""
+    return """<a href="http://islandora.ca/"><img src="http://islandora.ca/sites/default/files/Islandora.png"
+alt="Islandora"></a>
+<h1><a href="http://openbadges.org/">Open Badge</a> issuer endpoint</h1>"""
 
 def main(host, port, debug=True):
     """Function runs the development application based on arguments passed in
