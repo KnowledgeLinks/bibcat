@@ -1,4 +1,4 @@
-# Islandora.ca Badges
+# Islandora.ca eBadges Repository
 
 This Flask application allows the [Islandora.ca][ISLANDORA_CA] foundation to issue Camp, special
 projects, and other types of [Open Badges](http://openbadges.org/).

@@ -23,16 +23,15 @@ from flask_negotiate import produces
 badge_app = Flask(__name__)
 project_root = os.path.abspath(os.path.dirname(__file__))
 
-@badge_app.route("/badges/<badge_type>/<name>/<uid>")
-@badge_app.route("/badges/<badge_type>/<name>/<uid>.json")
+@badge_app.route("/badges/<event>/<uid>")
+@badge_app.route("/badges/<event>/<uid>.json")
 @produces('application/json')
-def badge_assertion(badge_type, name, uid):
+def badge_assertion(event, uid):
     """Route returns individual badge assertation json or 404 error if not
     found on disk.
 
     Args:
-        badge_type: Badge Type (Camp, Projects, Institutions, etc.)
-        name: Name of Badge
+        event: Badge Type (Camp, Projects, Institutions, etc.)
         uid: Unique ID of the Badge
 
     Returns:
@@ -41,8 +40,7 @@ def badge_assertion(badge_type, name, uid):
     badge_path = os.path.join(
         project_root,
         "badges",
-        badge_type,
-        name,
+        event,
         "{}.json".format(uid))
     if not os.path.exists(badge_class_path):
         abort(404)
@@ -50,17 +48,16 @@ def badge_assertion(badge_type, name, uid):
     return jsonify(badge)
 
 
-@badge_app.route("/badges/<badge_type>/<name>")
-@badge_app.route("/badges/<badge_type>/<name>.json")
+@badge_app.route("/badges/<event>")
+@badge_app.route("/badges/<event>.json")
 @produces('application/json')
-def badge_class(badge_type, name):
+def badge_class(event, name):
     """Route generates a JSON BadgeClass
     <https://github.com/mozilla/openbadges-specification/> for each Islandora
     badge.
 
     Args:
-        badge_type: Badge Type (Camp, Projects, Institutions, etc.)
-        name: Name of Badge
+        event: Name of Event (Camp, Projects, Institutions, etc.)
 
     Returns:
         Badge Class JSON
@@ -68,7 +65,7 @@ def badge_class(badge_type, name):
     badge_class_path = os.path.join(
         project_root,
         "badges",
-        badge_type,
+        event,
         "{}.json".format(name))
     if not os.path.exists(badge_class_path):
         abort(404)
@@ -77,9 +74,7 @@ def badge_class(badge_type, name):
 
 @badge_app.route("/")
 def index():
-    return """<a href="http://islandora.ca/"><img src="http://islandora.ca/sites/default/files/Islandora.png"
-alt="Islandora"></a>
-<h1><a href="http://openbadges.org/">Open Badge</a> issuer endpoint</h1>"""
+    return render_template('index.html')
 
 def main(host, port, debug=True):
     """Function runs the development application based on arguments passed in
