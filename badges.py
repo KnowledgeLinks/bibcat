@@ -6,7 +6,7 @@
 #
 # Created:     16/09/2014
 # Copyright:   (c) Jeremy Nelson, Colorado College, Islandora Foundation 2014
-# Licence:     <your licence>
+# Licence:     GPLv3
 #-------------------------------------------------------------------------------
 __author__ = "Jeremy Nelson"
 __version_info__ = ('0', '0', '1')
@@ -15,13 +15,28 @@ __version__ = '.'.join(__version_info__)
 import argparse
 import json
 import os
+import rdflib
 import urllib.request
 
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
+from flask import url_for
 from flask_negotiate import produces
+from flask_fedora_commons import Repository
+
+schema_namespace = rdflib.Namespace("http://schema.org/")
 
 badge_app = Flask(__name__)
+badge_app.config.from_py('application.cfg', silent=True)
+if not 'FEDORA_BASE_URL' in badge_app.config:
+    # Default Fedora 4 running on the same server
+    badge_app.config['FEDORA_BASE_URL'] = 'http://localhost:8080/'
+if not 'BADGE_ISSUER_URL' in badge_app.config:
+    # Sets default to the Islandora Foundation URL
+    badge_app.config['BADGE_ISSUER_URL'] = 'http://islandora.ca/'
+
+repository = Repository(badge_app)
 project_root = os.path.abspath(os.path.dirname(__file__))
+
 
 @badge_app.route("/badges/<event>/<uid>")
 @badge_app.route("/badges/<event>/<uid>.json")
@@ -37,6 +52,7 @@ def badge_assertion(event, uid):
     Returns:
         Assertion JSON of issued badge
     """
+
     badge_path = os.path.join(
         project_root,
         "badges",
@@ -62,15 +78,38 @@ def badge_class(event, name):
     Returns:
         Badge Class JSON
     """
-    badge_class_path = os.path.join(
-        project_root,
-        "badges",
-        event,
-        "{}.json".format(name))
-    if not os.path.exists(badge_class_path):
-        abort(404)
-    badge_class = json.load(open(badge_class_path))
+    badge_class_uri = rdflib.URIRef(
+        urllib.parse.urljoin(repository.base_url,
+                             "/".join(['rest', 'badges', event])))
+
+    badge_rdf = repository.read(str(badge_class_uri))
+    keywords = [str(obj) for obj in badge_rdf.objects(subject=badge_class_uri,
+        predicate=schema_namespace.keywords)]
+    badge_class = {
+        "name": badge_rdf.value(
+            subject=badge_class_uri,
+            predicate=schema_namespace.name),
+        "description": badge_rdf.value(
+            subject=badge_class_uri,
+            predicate=schema_namespace.description),
+        "critera": url_for('/badges/{}/critera'.format(event)),
+        "issuer": badge_app.config['BADGE_ISSUER_URL'],
+        "tags": keywords
+        }
     return jsonify(badge_class)
+
+@badge_app.route("/badges/<event>/critera")
+def badge_critera(event):
+    """Route Generates an HTML class that displays the criteria for the badge
+
+    Args:
+        event: Name of Event (Camp, Projects, Institutions, etc.)
+
+    Returns:
+        HTML display of the Badge's critera
+    """
+    return ""
+
 
 @badge_app.route("/")
 def index():

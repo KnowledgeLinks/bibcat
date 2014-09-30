@@ -1,0 +1,4 @@
+Flask >=0.10.0
+Flask-FedoraCommons >= 0.0.7
+Flask-Negotiate >= 0.0.9
+rdflib 
