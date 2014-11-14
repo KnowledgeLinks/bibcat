@@ -15,14 +15,18 @@ __version__ = '.'.join(__version_info__)
 import argparse
 import hashlib
 import json
+import mimetypes
 import os
 import rdflib
 import urllib.request
 import uuid
+import sys
+
 
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import url_for
 from flask_negotiate import produces
+sys.path.append("C:\\Users\\jernelson\\Development\\flask-fedora")
 from flask_fedora_commons import Repository, SCHEMA_ORG
 from string import Template
 
@@ -42,12 +46,12 @@ if not 'BADGE_ISSUER_URL' in badge_app.config:
 repository = Repository(badge_app)
 project_root = os.path.abspath(os.path.dirname(__file__))
 
-event_template = Template("""PREFIX schema: <http://schema.org/>
+badge_class_template = Template("""PREFIX schema: <http://schema.org/>
 
-SELECT ?event
+SELECT ?badge
 
 WHERE {
-  ?event schema:name "$event" .
+  ?badge schema:name "$badge" .
 }""")
 
 uuid_template = Template("""PREFIX fcrepo: <http://fedora.info/definitions/v4/repository#>
@@ -83,60 +87,63 @@ def badge_assertion(event, uid):
     }
     return jsonify(badge)
 
-@badge_app.route("/badges/<event>.png")
-@badge_app.route("/badges/<event>/<uid>.png")
-def badge_image(event, uid=None):
+@badge_app.route("/badges/<badge>.png")
+@badge_app.route("/badges/<badge>/<uid>.png")
+def badge_image(badge, uid=None):
     if uid is not None:
         img_url = repository.sparql(uuid_template(uuid=uid))
     else:
-        img_url = repository.sparql(event_template(event=event))
+        img_url = repository.sparql(badge_class_template(badge=badge))
     img = urllib.request.urlopen(img_url).read()
     return Response(img, mimetype='image/png')
 
-@badge_app.route("/badges/<event>")
-@badge_app.route("/badges/<event>.json")
+@badge_app.route("/badges/<badge>")
+@badge_app.route("/badges/<badge_class>.json")
 @produces('application/json', 'application/rdf+xml', 'text/html')
-def badge_class(event):
+def badge_class(badge):
     """Route generates a JSON BadgeClass
     <https://github.com/mozilla/openbadges-specification/> for each Islandora
     badge.
 
     Args:
-        event: Name of Event (Camp, Projects, Institutions, etc.)
+        badge: Name of Badge (Camp, Projects, Institutions, etc.)
 
     Returns:
         Badge Class JSON
     """
-    event_uri = repository.sparql(event_template.substitute(event=event))
+    badge_uri = repository.sparql(
+        '/'.join([repository.base_url, 'rest', 'fcr:sparql']),
+        badge_class_template.substitute(badge=badge))
     badge_rdf = rdflib.Graph().parse(event_uri)
-    keywords = [str(obj) for obj in badge_rdf.objects(subject=badge_class_uri,
+    keywords = [str(obj) for obj in badge_rdf.objects(
+        subject=rdflib.URIRef(badge_uri),
         predicate=schema_namespace.keyword)]
-    badge_class = {
+    badge_class_json = {
         "name": badge_rdf.value(
             subject=badge_class_uri,
             predicate=schema_namespace.name),
         "description": badge_rdf.value(
             subject=badge_class_uri,
             predicate=schema_namespace.description),
-        "critera": url_for('badge_criteria', event=event),
-        "image": url_for('badge_image', event=event),
+        "critera": url_for('badge_criteria', badge_class=badge_class),
+        "image": url_for('badge_image', badge_class=badge_class),
         "issuer": url_for('badge_issuer_organization'),
         "tags": keywords
         }
-    return jsonify(badge_class)
+    return jsonify(badge_class_json)
 
-@badge_app.route("/badges/<event>/criteria")
-def badge_criteria(event):
-    """Route Generates an HTML class that displays the criteria for the badge
+@badge_app.route("/badges/<badge>/criteria")
+def badge_criteria(badge):
+    """Route displays the criteria for the badge class
 
     Args:
-        event: Name of Event (Camp, Projects, Institutions, etc.)
+        badge: Name of Badge (Camp, Projects, Institutions, etc.)
 
     Returns:
         HTML display of the Badge's critera
     """
-    event_uri = repository.sparql(event_template(event=event))
-    badge_rdf = rdflib.Graph().parse(event_uri)
+    badge_uri = repository.sparql(badge_class_template(badge=badge))
+    badge_rdf = rdflib.Graph().parse(badge_uri)
     badge_criteria = {
         "name": "Criteria for {}".format(
             badge_rdf.value(
@@ -172,11 +179,11 @@ def bake_badge(badge_uri):
     result = urllib.request.urlopen(add_image_request)
     return result.read()
 
-def create_event():
-    "Function creates an event through a command prompt"
-    event_name = input("Enter event name >>")
-    started_on = input("Event started on >>")
-    ended_on = input("Event finished on >>")
+def create_badge_class():
+    "Function creates an badge class through a command prompt"
+    badge_name = input("Enter badge class name >>")
+    started_on = input("Badge started on >>")
+    ended_on = input("Event finished on (can leave blank) >>")
     keywords = []
     while 1:
         keyword = input("Enter keyword (q to quit) >>")
@@ -189,21 +196,35 @@ def create_event():
         if requirement.lower() == 'q':
             break
         criteria.append(requirement)
-    print("""Please review the following for the Badge Event:
+    image_location = input("Enter file path or URL for badge class image >>")
+
+    print("""Please review the following for the Badge Class:
 ---------------
 Name: {}
 Started on: {}
 Ended on: {}
 Keywords: {}
 Critera: {}
+Badge location: {}
 ---------------""".format(
-    event_name,
+    badge_name,
     started_on,
     ended_on,
     ','.join(keywords),
-    ','.join(criteria)))
+    ','.join(criteria),
+    image_location))
     prompt = input("Keep? (Y|N) >>")
     if prompt.lower() == 'y':
+        if image_location.startswith("http"):
+            badge_image = urllib.request.urlopen(image_location).read()
+        else:
+            badge_image = open(image_location, 'rb').read()
+        badge_request = urllib.request.Request(
+            '/'.join([repository.base_url, 'rest']),
+            data=badge_image,
+            headers={"Content-Type": mimetypes.guess_type(image_location)[0]})
+        result = urllib.request.urlopen(badge_request)
+        badge_class_url = result.read().decode()
         template = Template("""PREFIX schema: <http://schema.org/>
 PREFIX ob: <http://openbadges.org>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -212,30 +233,30 @@ INSERT DATA {
   <> rdf:type schema:EducationalEvent .
   <> schema:name "$name" .
   <> schema:startDate "$start" .
-  <> schema:endDate "$end" .
   """)
         sparql = template.substitute(
-            name=event_name,
-            start=started_on,
-            end=ended_on)
+            name=badge_name,
+            start=started_on)
+        if ended_on is not None or len(ended_on) > 0:
+            sparql += """<> schema:endDate "{}" .\n""".format(ended_on)
         for keyword in keywords:
             sparql += """  <> schema:keywords "{}" .\n""".format(keyword)
         for requirement in criteria:
             sparql += """  <> schema:educationalUse "{}" .\n""".format(requirement)
         sparql += "}"
-        event_url = repository.create()
+
         update_request = urllib.request.Request(
-            event_url,
+            badge_class_url + "/fcr:metadata",
             data=sparql.encode(),
             method='PATCH',
             headers={"Content-Type": "application/sparql-update"})
         result = urllib.request.urlopen(update_request)
-        return event_url
+        return url_for('badge_class', badge=badge_name)
     else:
         retry = input("Try again? (Y|N)")
         if retry.lower() == 'y':
-            create_event()
-          
+            create_badge_class()
+
 
 def issue_badge(email, event):
     """Function issues a badge based on an event and an email, returns the
@@ -273,7 +294,7 @@ INSERT DATA {
   <> ob:verify ob:hosted .
   <> ob:issuedOn "$issuedOn"
 }""")
-    
+
     sparql = insert_template.subsitute(
         email=email,
         badge_class_uri=url_for(badge_class, event),
@@ -321,6 +342,8 @@ def main(args):
         email = args.email
         event = args.event
         issue_badge(email, event)
+    elif args.action.startswith('new'):
+        create_badge_class()
     elif args.action.startswith('revoke'):
         email = args.email
         event = args.event
@@ -331,8 +354,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'action',
-        choices=['serve', 'issue', 'revoke'],
-        help='Action for badge, choices: serve, issue, revoke')
+        choices=['serve', 'issue', 'revoke', 'new'],
+        help='Action for badge, choices: serve, issue, new, revoke')
     parser.add_argument('--host', help='Host IP address for dev server')
     parser.add_argument('--port', help='Port number for dev server')
     parser.add_argument('--email', help='Email account to issue event badge')
