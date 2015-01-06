@@ -1,3 +1,5 @@
 *.swp
-fedora/*
+*.war
+fedora/fcrepo4-data
 __pycache__
+application.cfg

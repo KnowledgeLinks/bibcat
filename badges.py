@@ -5,11 +5,11 @@ Purpose:     Islandora Badges Application
 Author:      Jeremy Nelson
 
 Created:     16/09/2014
-Copyright:   (c) Jeremy Nelson, Colorado College, Islandora Foundation 2014
+Copyright:   (c) Jeremy Nelson, Colorado College, Islandora Foundation 2014-
 Licence:     GPLv3
 """
 __author__ = "Jeremy Nelson"
-__version_info__ = ('0', '0', '1')
+__version_info__ = ('0', '0', '2')
 __version__ = '.'.join(__version_info__)
 
 import argparse
@@ -18,13 +18,14 @@ import json
 import mimetypes
 import os
 import rdflib
+import re
 import urllib.request
 import uuid
 import sys
 
 
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
-from flask import url_for
+from flask import current_app, url_for
 from flask_negotiate import produces
 sys.path.append("C:\\Users\\jernelson\\Development\\flask-fedora")
 from flask_fedora_commons import Repository, SCHEMA_ORG
@@ -43,24 +44,43 @@ if not 'BADGE_ISSUER_URL' in badge_app.config:
     # Sets default to the Islandora Foundation URL
     badge_app.config['BADGE_ISSUER_URL'] = 'http://islandora.ca/'
 
-repository = Repository(badge_app)
+badges = dict()
 project_root = os.path.abspath(os.path.dirname(__file__))
+repository = Repository(badge_app)
 
-badge_class_template = Template("""PREFIX schema: <http://schema.org/>
+def load_badges(repository=repository):
+    """Function checks for existing Fedora URL for all badges at
+    {fedora_url}/rest/badges, if URL doesn't exist, creates an
+    empty Fedora Object at that URL, loads all badges into a global variable.
 
-SELECT ?badge
+    Args:
+        repository: Fedora Repository
+    """
+    badges_url = "/".join(
+        [badge_app.config['FEDORA_BASE_URL'],
+         'rest',
+         'badges'])
+    if not repository.exists(badges_url):
+        new_badges_request = urllib.request.Request(
+            badges_url,
+            method='PUT')
+        response = urllib.request.urlopen(new_badges_request)
+    badges_graph = rdflib.Graph().parse(badges_url)
+    for obj in badges_graph.objects(
+        subject=rdflib.URIRef(badges_url),
+        predicate=rdflib.OWL.distinctMembers):
+            badge_class_uri = rdflib.URIRef("{}/fcr:metadata".format(obj))
+            badge_class_graph = rdflib.Graph().parse(str(badge_class_uri))
+            badge_class_name = badge_class_graph.value(
+                subject=badge_class_uri,
+                predicate=schema_namespace.alternativeName)
+            badges[str(badge_class_name)] = {
+                'graph': badge_class_graph,
+                'issued': {},
+                'uri': badge_class_uri
+            }
 
-WHERE {
-  ?badge schema:name "$badge" .
-}""")
 
-uuid_template = Template("""PREFIX fcrepo: <http://fedora.info/definitions/v4/repository#>
-
-SELECT ?subject
-
-WHERE {
-  ?subject fcrepo:uuid "$uuid" .
-}""")
 
 
 @badge_app.route("/badges/<event>/<uid>")
@@ -77,6 +97,7 @@ def badge_assertion(event, uid):
     Returns:
         Assertion JSON of issued badge
     """
+
     badge_uri = repository.sparql(uuid_template(uuid=uid))
     if badge_uri is None:
         abort(404)
@@ -93,31 +114,34 @@ def badge_image(badge, uid=None):
     if uid is not None:
         img_url = repository.sparql(uuid_template(uuid=uid))
     else:
-        img_url = repository.sparql(badge_class_template(badge=badge))
+        if not badge in badges:
+            abort(404)
+        img_url = '/'.join(str(badges[badge]['url']).split("/")[:-1])
     img = urllib.request.urlopen(img_url).read()
     return Response(img, mimetype='image/png')
 
-@badge_app.route("/badges/<badge>")
-@badge_app.route("/badges/<badge_class>.json")
+@badge_app.route("/badges/<badge_classname>")
+@badge_app.route("/badges/<badge_classname>.json")
 @produces('application/json', 'application/rdf+xml', 'text/html')
-def badge_class(badge):
+def badge_class(badge_classname):
     """Route generates a JSON BadgeClass
     <https://github.com/mozilla/openbadges-specification/> for each Islandora
     badge.
 
     Args:
-        badge: Name of Badge (Camp, Projects, Institutions, etc.)
+        badge_classname: Name of Badge (Camp, Projects, Institutions, etc.)
 
     Returns:
         Badge Class JSON
     """
-    badge_uri = repository.sparql(
-        '/'.join([repository.base_url, 'rest', 'fcr:sparql']),
-        badge_class_template.substitute(badge=badge))
-    badge_rdf = rdflib.Graph().parse(event_uri)
+    if not badge_classname in badges:
+        abort(404)
+    event = badges.get(badge_classname)
+    badge_rdf = event.get('graph')
+    badge_class_uri = event.get('uri')
     keywords = [str(obj) for obj in badge_rdf.objects(
-        subject=rdflib.URIRef(badge_uri),
-        predicate=schema_namespace.keyword)]
+        subject=badge_class_uri,
+        predicate=schema_namespace.keywords)]
     badge_class_json = {
         "name": badge_rdf.value(
             subject=badge_class_uri,
@@ -125,8 +149,8 @@ def badge_class(badge):
         "description": badge_rdf.value(
             subject=badge_class_uri,
             predicate=schema_namespace.description),
-        "critera": url_for('badge_criteria', badge_class=badge_class),
-        "image": url_for('badge_image', badge_class=badge_class),
+        "critera": url_for('badge_criteria', badge=badge_classname),
+        "image": url_for('badge_image', badge=badge_classname),
         "issuer": url_for('badge_issuer_organization'),
         "tags": keywords
         }
@@ -140,10 +164,13 @@ def badge_criteria(badge):
         badge: Name of Badge (Camp, Projects, Institutions, etc.)
 
     Returns:
-        HTML display of the Badge's critera
+        JSON of badge's critera
     """
-    badge_uri = repository.sparql(badge_class_template(badge=badge))
-    badge_rdf = rdflib.Graph().parse(badge_uri)
+    if not badge in badges:
+        abort(404)
+    event = badges.get(badge)
+    badge_rdf = event.get('graph')
+    badge_class_uri = event.get('uri')
     badge_criteria = {
         "name": "Criteria for {}".format(
             badge_rdf.value(
@@ -182,6 +209,7 @@ def bake_badge(badge_uri):
 def create_badge_class():
     "Function creates an badge class through a command prompt"
     badge_name = input("Enter badge class name >>")
+    description = input("Description >>")
     started_on = input("Badge started on >>")
     ended_on = input("Event finished on (can leave blank) >>")
     keywords = []
@@ -201,6 +229,7 @@ def create_badge_class():
     print("""Please review the following for the Badge Class:
 ---------------
 Name: {}
+Description: {}
 Started on: {}
 Ended on: {}
 Keywords: {}
@@ -208,6 +237,7 @@ Critera: {}
 Badge location: {}
 ---------------""".format(
     badge_name,
+    description,
     started_on,
     ended_on,
     ','.join(keywords),
@@ -226,16 +256,20 @@ Badge location: {}
         result = urllib.request.urlopen(badge_request)
         badge_class_url = result.read().decode()
         template = Template("""PREFIX schema: <http://schema.org/>
-PREFIX ob: <http://openbadges.org>
+PREFIX openbadge: <http://openbadges.org>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 INSERT DATA {
   <> rdf:type schema:EducationalEvent .
   <> schema:name "$name" .
+  <> schema:alternativeName "$altName" .
+  <> schema:description "$description" .
   <> schema:startDate "$start" .
   """)
         sparql = template.substitute(
             name=badge_name,
+            altName=slugify(badge_name),
+            description=description,
             start=started_on)
         if ended_on is not None or len(ended_on) > 0:
             sparql += """<> schema:endDate "{}" .\n""".format(ended_on)
@@ -251,7 +285,10 @@ INSERT DATA {
             method='PATCH',
             headers={"Content-Type": "application/sparql-update"})
         result = urllib.request.urlopen(update_request)
-        return url_for('badge_class', badge=badge_name)
+        repository.insert('/'.join([repository.base_url, 'rest', 'badges']),
+            'owl:distinctMembers', badge_class_url)
+        load_badges()
+        return badge_class_url
     else:
         retry = input("Try again? (Y|N)")
         if retry.lower() == 'y':
@@ -271,28 +308,31 @@ def issue_badge(email, event):
     """
     if email is None or event is None:
         raise ValueError("email and event cannot be None")
-    event_uri = repository.sparql(event_template.subsitute(event=event))
+    if not event in badges:
+        raise ValueError("Unknown event {}".format(event))
+    event_uri = badges[event].get('uri')
     fedora_url = repository.create()
     badge_graph = rdflib.Graph().parse(fedora_url)
-    badge_url = url_for(
-        'badge_assertion',
-        event,
-        str(badge_graph.value(
-                subject=rdflib.URIref(fedora_url),
-                predicate=rdflib.URIref(
+    with badge_app.app_context():
+        badge_url = current_app.url_for(
+            'badge_assertion',
+            event=event,
+            uuid=str(badge_graph.value(
+                subject=rdflib.URIRef(fedora_url),
+                predicate=rdflib.URIRef(
                     'http://fedora.info/definitions/v4/repository#uuid'))))
     identity_hash = hashlib.sha256(email)
     identity_hash.update(badge_app.config['IDENTITY_SALT'])
     insert_template = Template("""PREFIX schema: <http://schema.org/>
-PREFIX ob: <http://openbadges.org>
+PREFIX openbadge: <http://openbadges.org>
 
 INSERT DATA {
   <> schema:email "$email" .
   <> schema:image <$img_url> .
-  <> ob:badge  <$badge_class_uri> .
-  <> ob:identity "$sha256" .
-  <> ob:verify ob:hosted .
-  <> ob:issuedOn "$issuedOn"
+  <> openbadge:badge  <$badge_class_uri> .
+  <> openbadge:identity "$sha256" .
+  <> openbadge:verify openbadge:hosted .
+  <> openbadge:issuedOn "$issuedOn"
 }""")
 
     sparql = insert_template.subsitute(
@@ -306,21 +346,23 @@ INSERT DATA {
         data=sparql.encode(),
         headers={"Content-Type": "application/sparql-update"})
     result = urllib.request.urlopen(update_request)
+    repository.insert("/".join([repository.base_url, 'rest', 'badges']),
+        "schema:AchieveAction",
+        fedora_url)
     #bake_badge(badge_uri)
     return str(badge_uri)
 
-def new_badge():
-    print("Add new badge for {}".format(
-        badge_app.config.get('BADGE_ISSUER_NAME')))
-    event = input("Event >>")
-    description = input("Description >>")
-    image_path = input("Path to Badge image >>")
-    keywords = input("Keywords (separate by commas) >>")
-    keywords = [ kw.strip() for s in keywords.split(",")]
 
+def slugify(value):
+    """Converts to lowercase, removes non-word characters (alphanumerics and
+    underscores) and converts spaces to hyphens. Also strips leading and
+    trailing whitespace using Django format
 
+    Args:
 
-
+    """
+    value = re.sub('[^\w\s-]', '', value).strip().lower()
+    return re.sub('[-\s]+', '-', value)
 
 
 def main(args):
@@ -332,6 +374,7 @@ def main(args):
 
     """
     if args.action.startswith('serve'):
+        load_badges()
         host = args.host or '0.0.0.0'
         port = args.port or 5000
         badge_app.run(
