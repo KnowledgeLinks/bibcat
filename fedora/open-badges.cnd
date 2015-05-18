@@ -39,13 +39,20 @@
  */
 <fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
 
+<indexing = 'http://fedora.info/definitions/v4/indexing#'> 
+
 <badge = 'info:fedora/openbadge/'>
 
+/*
+ * Indexing
+ */
+[indexing:indexable] mixin
+- indexing:hasIndexingTransformation (STRING) multiple COPY nofulltext noqueryorder
 
 /*
  * Any Fedora resource.
  */
-[fedora:Resource] > mix:created, mix:lastModified, mix:referenceable mixin
+[fedora:Resource] > mix:created, mix:lastModified, mix:referenceable indexing:indexable mixin
   - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)

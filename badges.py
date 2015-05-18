@@ -21,6 +21,7 @@ import rdflib
 import re
 import urllib.request
 import uuid
+import subprocess
 import sys
 
 
@@ -31,12 +32,12 @@ sys.path.append("C:\\Users\\jernelson\\Development\\flask-fedora")
 from flask_fedora_commons import Repository, SCHEMA_ORG
 from string import Template
 
-
 schema_namespace = SCHEMA_ORG
 open_badges_namespace = rdflib.Namespace('http://openbadges.org')
 
 badge_app = Flask(__name__)
 badge_app.config.from_pyfile('application.cfg', silent=True)
+
 if not 'FEDORA_BASE_URL' in badge_app.config:
     # Default Fedora 4 running on the same server
     badge_app.config['FEDORA_BASE_URL'] = 'http://localhost:8080'
@@ -47,6 +48,19 @@ if not 'BADGE_ISSUER_URL' in badge_app.config:
 badges = dict()
 project_root = os.path.abspath(os.path.dirname(__file__))
 repository = Repository(badge_app)
+
+def launch_windows():
+    fedora_dir = urllib.request.pathname2url(project_root)[3:] + "/fedora"
+    repository_path = "file:/{}/repository.json".format(fedora_dir)
+    fedora_repo_cmd = ["start java",
+                     "-jar",
+                     "-Dfcrepo.modeshape.configuration={}".format(
+                        repository_path),
+                     "fedora/fcrepo-webapp-4.0.0-jetty-console.war",
+                     #" --contextPath={}/fcrepo4-data".format(fedora_dir),
+                     " --headless"]
+    print(fedora_repo_cmd)
+    subprocess.call(fedora_repo_cmd)
 
 def load_badges(repository=repository):
     """Function checks for existing Fedora URL for all badges at
@@ -328,7 +342,6 @@ PREFIX openbadge: <http://openbadges.org>
 
 INSERT DATA {
   <> schema:email "$email" .
-  <> schema:image <$img_url> .
   <> openbadge:badge  <$badge_class_uri> .
   <> openbadge:identity "$sha256" .
   <> openbadge:verify openbadge:hosted .
@@ -374,7 +387,7 @@ def main(args):
 
     """
     if args.action.startswith('serve'):
-        load_badges()
+        launch_windows()
         host = args.host or '0.0.0.0'
         port = args.port or 5000
         badge_app.run(
