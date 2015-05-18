@@ -30,7 +30,7 @@
 /*
  * Misc. namespaces
  */
-<openbadge = 'http://openbadges.org/'>
+<ob = 'http://schema.openbadges.org/'>
 <schema = 'http://schema.org/'>
 
 /*
@@ -52,7 +52,7 @@
 /*
  * Any Fedora resource.
  */
-[fedora:Resource] > mix:created, mix:lastModified, mix:referenceable indexing:indexable mixin
+[fedora:Resource] > mix:created, mix:lastModified, mix:referenceable mixin
   - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)
