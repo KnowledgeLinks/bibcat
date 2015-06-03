@@ -2,3 +2,6 @@ Flask >=0.10.0
 Flask-FedoraCommons >= 0.0.7
 Flask-Negotiate >= 0.0.9
 rdflib 
+aioredis
+falcon >= 0.3.0
+requests >= 2.7.0

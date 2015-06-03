@@ -1,6 +1,6 @@
 [submodule "lib/semantic_server"]
 	path = lib/semantic_server
 	url = https://github.com/jermnelson/semantic-server.git
-[submodule "lib\\ldfs"]
-	path = lib\\ldfs
+[submodule "lib/ldfs"]
+	path = lib/ldfs
 	url = https://github.com/jermnelson/linked-data-fragments.git

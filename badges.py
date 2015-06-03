@@ -127,16 +127,24 @@ def default_graph():
     return graph
 
 def start_services():
-    os.chdir(os.path.join(PROJECT_ROOT, "fuseki"))
-    fuseki = subprocess.Popen(
-        start_fuseki())
+#    os.chdir(os.path.join(PROJECT_ROOT, "fuseki"))
+#    fuseki = subprocess.Popen(
+#        start_fuseki())
+    os.chdir(os.path.join(PROJECT_ROOT, "cache"))
+    cache = subprocess.Popen(
+        start_cache())
     os.chdir(os.path.join(PROJECT_ROOT, "fedora"))
     fedora = subprocess.Popen(
         start_fedora(memory='1G'))
-    print("Started Fedora on pid={}\n\tFuseki on pid={}".format(
+    print("Started Fedora on pid={} pid={}".format(
         fuseki.pid, 
         fedora.pid))
 
+def start_cache():
+    return [
+        "./redis-server",
+        "redis.conf"]
+        
 def start_fedora(**kwargs):
     repo_json_file = os.path.join(PROJECT_ROOT, "fedora", "repository.json")
     java_command = [

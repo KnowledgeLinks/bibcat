@@ -1,5 +1,6 @@
 *.swp
 *.war
+*.rdb
 fedora/fcrepo4-data
 __pycache__
 application.cfg
