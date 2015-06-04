@@ -536,11 +536,11 @@ def main(args):
     """
     if args.action.startswith('serve'):
         host = args.host or '0.0.0.0'
-        port = args.port or 5000
-   #     badge_app.run(
-   #         host=host,
-   #         port=int(port),
-   #         debug=True)
+        port = args.port or 5100
+        badge_app.run(
+            host=host,
+            port=int(port),
+            debug=True)
         semantic_server.main()
     elif args.action.startswith('start'):
         start_services()
