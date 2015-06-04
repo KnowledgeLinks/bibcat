@@ -24,7 +24,7 @@ import re
 import requests
 import urllib.request
 import uuid
-import semantic_server.app  as semantic_server
+import lib.semantic_server.app  as semantic_server
 import subprocess
 import sys
 
@@ -476,15 +476,16 @@ class Services(object):
         
     def __start_fedora__(self, **kwargs):
         repo_json_file = os.path.join(PROJECT_ROOT, "fedora", "repository.json")
+        print("Repo json file is {}".format(repo_json_file))
         java_command = [
             "java",
             "-jar",
-            "-Dfcrepo.modeshape.configuration=file:/{}".format(repo_json_file)]
+            "-Dfcrepo.modeshape.configuration=file:{}".format(repo_json_file)]
         if "memory" in kwargs:
             java_command.append("-Xmx{}".format(kwargs.get("memory")))
         java_command.append(
             kwargs.get("jar-file",
-                "fcrepo-webapp-4.1.1-jetty-console.jar"))
+                "fcrepo-webapp-4.2.0-jetty-console.jar"))
         java_command.append("--headless")
         return java_command
 
@@ -536,10 +537,10 @@ def main(args):
     if args.action.startswith('serve'):
         host = args.host or '0.0.0.0'
         port = args.port or 5000
-        badge_app.run(
-            host=host,
-            port=int(port),
-            debug=True)
+   #     badge_app.run(
+   #         host=host,
+   #         port=int(port),
+   #         debug=True)
         semantic_server.main()
     elif args.action.startswith('start'):
         start_services()
