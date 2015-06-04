@@ -18,8 +18,15 @@ RUN \
 ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 
 # Install Python3 setuptools and pip
+RUN apt-get update
 RUN apt-get install -y python3-setuptools
 RUN easy_install3 pip
+
+# Install gcc for hiredis
+#RUN apt-get install -y gcc
+#RUN apt-get install -y libc6
+#RUN apt-get install -y libc6-dev
+RUN apt-get install -y build-essential
 
 # Install needed Python3 modules
 ADD requirements.txt /opt/badges/requirements.txt
