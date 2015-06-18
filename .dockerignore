@@ -1,0 +1,6 @@
+.git
+__pycache__
+*.pyc
+fcrepo4-data
+target
+badges.rdb
