@@ -14,6 +14,7 @@ __version_info__ = ('0', '0', '3')
 __version__ = '.'.join(__version_info__)
 
 import argparse
+import falcon
 import hashlib
 import json
 import mimetypes
@@ -23,9 +24,9 @@ import re
 import requests
 import urllib.request
 import uuid
+import semantic_server.app  as semantic_server
 import subprocess
 import sys
-
 
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import current_app, url_for, Response
@@ -126,38 +127,6 @@ def default_graph():
     graph.namespace_manager.bind('schema', SCHEMA)
     return graph
 
-def start_services():
-#    os.chdir(os.path.join(PROJECT_ROOT, "fuseki"))
-#    fuseki = subprocess.Popen(
-#        start_fuseki())
-    os.chdir(os.path.join(PROJECT_ROOT, "cache"))
-    cache = subprocess.Popen(
-        start_cache())
-    os.chdir(os.path.join(PROJECT_ROOT, "fedora"))
-    fedora = subprocess.Popen(
-        start_fedora(memory='1G'))
-    print("Started Fedora on pid={} pid={}".format(
-        fuseki.pid, 
-        fedora.pid))
-
-def start_cache():
-    return [
-        "./redis-server",
-        "redis.conf"]
-        
-def start_fedora(**kwargs):
-    repo_json_file = os.path.join(PROJECT_ROOT, "fedora", "repository.json")
-    java_command = [
-        "java",
-        "-jar",
-        "-Dfcrepo.modeshape.configuration=file:/{}".format(repo_json_file)]
-    if "memory" in kwargs:
-        java_command.append("-Xmx{}".format(kwargs.get("memory")))
-    java_command.append(
-        kwargs.get("jar-file",
-            "fcrepo-webapp-4.1.1-jetty-console.jar"))
-    java_command.append("--headless")
-    return java_command
 
 def start_fuseki(**kwargs):
     java_command = [
@@ -484,6 +453,78 @@ def slugify(value):
     return re.sub('[-\s]+', '-', value)
 
 
+class Services(object):
+
+    def __init__(self):
+        self.fedora_repo, self.cache = None, None
+
+    def __start_services__(self):
+        os.chdir(os.path.join(PROJECT_ROOT, "cache"))
+        self.cache = subprocess.Popen(
+            self.__start_cache__())
+        os.chdir(os.path.join(PROJECT_ROOT, "fedora"))
+        self.fedora_repo = subprocess.Popen(
+            self.__start_fedora__(memory='1G'))
+        print("Started Fedora on pid={} Redis cache pid={}".format(
+            self.fedora_repo.pid,
+            self.cache.pid))
+
+    def __start_cache__(self):
+        return [
+            "./redis-server",
+            "redis.conf"]
+        
+    def __start_fedora__(self, **kwargs):
+        repo_json_file = os.path.join(PROJECT_ROOT, "fedora", "repository.json")
+        java_command = [
+            "java",
+            "-jar",
+            "-Dfcrepo.modeshape.configuration=file:/{}".format(repo_json_file)]
+        if "memory" in kwargs:
+            java_command.append("-Xmx{}".format(kwargs.get("memory")))
+        java_command.append(
+            kwargs.get("jar-file",
+                "fcrepo-webapp-4.1.1-jetty-console.jar"))
+        java_command.append("--headless")
+        return java_command
+
+
+    def on_get(self, req, resp):
+        resp.status = falcon.HTTP_200
+        resp.body = json.dumps({ 'services': {
+            "fedora4": self.fedora_repo.pid or None,
+            "cache": self.cache.pid or None 
+            }
+        })
+
+    def on_post(self, req, resp):
+        if self.fedora_repo and self.cache:
+            raise falcon.HTTPForbidden(
+                "Services Already Running",
+                "Fedora 4 and Cache already running")
+        self.__start_services__()
+        resp.status = falcon.HTTP_201
+        resp.body = json.dumps({"services": {
+            "fedora4": {"pid": self.fedora_repo.pid},
+            "cache": {"pid": self.cache.pid}}})
+
+    def on_delete(self, req, resp):
+        if not self.cache and not self.fedora_repo:
+            raise falcon.HTTPServiceUnavailable(
+                "Cannot Delete Services",
+                "Cache and Fedora 4 are not running",
+                300)
+        for service in [self.cache,
+                        self.fedora_repo]:
+            if service is not None:
+                service.kill()
+                
+        resp.status = falcon.HTTP_200
+        resp.body = json.dumps(
+            {"message": "Services stopped"})
+
+semantic_server.api.add_route("/services", Services())
+
 def main(args):
     """Function runs the development application based on arguments passed in
     from the command-line.
@@ -499,6 +540,7 @@ def main(args):
             host=host,
             port=int(port),
             debug=True)
+        semantic_server.main()
     elif args.action.startswith('start'):
         start_services()
     elif args.action.startswith('issue'):
