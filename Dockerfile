@@ -1,10 +1,8 @@
 FROM ubuntu:14.04.2
 MAINTAINER "Jeremy Nelson <jermnelson@gmail.com>"
 
-RUN echo "deb http://archive.ubuntu.com/ubuntu trusty main universe" > /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get install -y software-properties-common
-RUN apt-get upgrade -y
 
 # Install Oracle Java 8 from 
 # https://github.com/dockerfile/java/blob/master/oracle-java8/Dockerfile
@@ -19,22 +17,22 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 
 # Install Python3 setuptools and pip
 RUN apt-get update
-RUN apt-get install -y python3-setuptools
-RUN easy_install3 pip
+#RUN apt-get install -y python3-setuptools
 
 # Install gcc for hiredis
-#RUN apt-get install -y gcc
-#RUN apt-get install -y libc6
-#RUN apt-get install -y libc6-dev
-RUN apt-get install -y build-essential
+#RUN add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main universe"
+RUN apt-get install -y gcc libc6-dev build-essential python3.4-dev python3-setuptools
 
 # Install needed Python3 modules
+RUN easy_install3 pip
 ADD requirements.txt /opt/badges/requirements.txt
 RUN cd /opt/badges; pip install -r requirements.txt
 
-ADD ["fedora" "/opt/badges/fedora"]
-ADD ["lib/ldfs" "/opt/badges/lib/ldfs"]
-ADD ["lib/semantic_server" "/opt/badges/lib/semantic_server"]
+VOLUME ["fedora", "cache"]
+
+COPY fedora/. fedora/.
+COPY lib/ldfs/ lib/ldfs/
+COPY lib/semantic_server/. /lib/semantic_server/
 
 EXPOSE 5100
 
