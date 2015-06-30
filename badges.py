@@ -21,16 +21,14 @@ import mimetypes
 import os
 import rdflib
 import re
+import redis
 import requests
+import socket
 import urllib.request
 import uuid
 import lib.semantic_server.app  as semantic_server
 import subprocess
 import sys
-
-from flask import abort, Flask, g, jsonify, redirect, render_template, request
-from flask import current_app, url_for, Response
-from flask_negotiate import produces
 
 from lib.semantic_server.app import config
 from lib.semantic_server.repository.utilities.namespaces import *
@@ -38,43 +36,25 @@ from lib.semantic_server.repository.resources.fedora import Resource
 
 from string import Template
 
-schema_namespace = SCHEMA
-open_badges_namespace = rdflib.Namespace('http://schema.openbadges.org/')
+OB = rdflib.Namespace('http://schema.openbadges.org/')
 
-badge_app = Flask(__name__)
-badge_app.config.from_pyfile('application.cfg', silent=True)
-
-PREFIX = """PREFIX fedora: <{}>
+PREFIX = """PREFIX bf: <{}>
+fedora: <{}>
 PREFIX iana: <{}>
 PREFIX ob: <{}> 
 PREFIX rdf: <{}>
 PREFIX schema: <{}>
-PREFIX xsd: <{}>""".format(FEDORA, 
+PREFIX xsd: <{}>""".format(BF,
+                           FEDORA, 
                            IANA, 
-                           open_badges_namespace, 
+                           OB, 
                            RDF, 
                            SCHEMA, 
                            XSD)
 
-if not 'FEDORA_BASE_URL' in badge_app.config:
-    # Default Fedora 4 running on the same server
-    badge_app.config['FEDORA_BASE_URL'] = 'http://localhost:8080'
-if not 'BADGE_ISSUER' in badge_app.config:
-    # Sets default to the Islandora Foundation URL
-    badge_app.config['BADGE_ISSUER'] = {
-        'name': "Islandora Foundataion",
-        'url': 'http://islandora.ca/'}
-if not 'SEMANTIC_SERVER' in badge_app.config:
-    badge_app.config['SEMANTIC_SERVER'] = {
-        'host': 'localhost',
-        'port': 18150}
-
-TRIPLESTORE_URL = "http://{}:{}/triplestore".format(
-    badge_app.config['SEMANTIC_SERVER'].get("host"),
-    badge_app.config['SEMANTIC_SERVER'].get("port"))
-
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
+TRIPLESTORE_URL = "http://localhost:8081/bigdata/sparql"
 
 FIND_ASSERTION_SPARQL = """{}
 SELECT DISTINCT *
@@ -122,169 +102,11 @@ WHERE {{{{
 def default_graph():
     graph = rdflib.Graph()
     graph.namespace_manager.bind('fedora', FEDORA)
-    graph.namespace_manager.bind('ob', open_badges_namespace)
+    graph.namespace_manager.bind('ob', OB)
     graph.namespace_manager.bind('rdf', RDF)
     graph.namespace_manager.bind('schema', SCHEMA)
     return graph
 
-
-def start_fuseki(**kwargs):
-    java_command = [
-        "java",
-        "-Xmx1200M",
-        "-jar",
-        "fuseki-server.jar",
-    ]
-    if kwargs.get('update', True):
-        java_command.append("--update")
-    java_command.append("--loc=store")
-    java_command.append("/{}".format(kwargs.get('datastore', 'badges')))
-    return java_command
-
-
-@badge_app.route("/badges/<badge>/<uid>")
-@badge_app.route("/badges/<badge>/<uid>.json")
-#@produces('application/json')
-def badge_assertion(badge, uid):
-    """Route returns individual badge assertation json or 404 error if not
-    found in the repository.
-
-    Args:
-        event: Badge Type (Camp, Projects, Institutions, etc.)
-        uid: Unique ID of the Badge
-
-    Returns:
-        Assertion JSON of issued badge
-    """
-    result = requests.post(TRIPLESTORE_URL,
-        data={"sparql": FIND_ASSERTION_SPARQL.format(uid)})
-    if result.status_code > 399:
-        abort(400)
-    bindings = result.json().get('results').get('bindings')
-    if len(bindings) < 1:
-        abort(404)
-    badge_graph = rdflib.Graph().parse(badge_uri)
-    issuedOn = datetime.strptime(
-        bindings[0]['IssuedOne']['value'],
-        "%Y-%m-%dT%H:%M:%S.%f")             
-    badge = {
-        "uid": uid,
-        "recipient": bindings[0]['recipient']['value'],
-        "badge": url_for('badge_class', badge_classname=badge),
-        "image": url_for('badge_image', badge=badge, uid=uid),
-        "issuedOn": int(time.mktime(issuedOn.timetuple())),
-        "verify": {
-            "type": "hosted",
-            "url": "{}.json".format(
-                url_for('badge_assertion', badge=badge, uid=uid))
-        }
-    }
-    return jsonify(badge)
-
-@badge_app.route("/badges/<badge>.png")
-@badge_app.route("/badges/<badge>/<uid>.png")
-def badge_image(badge, uid=None):
-    if uid is not None:
-        # Specific Issued Badge
-        result = requests.post(
-            TRIPLESTORE_URL,
-            data={"sparql": FIND_IMAGE_SPARQL.format(uid)})
-    else:
-        # Badge Class Image
-        result = requests.post(
-            TRIPLESTORE_URL,
-            data={"sparql": FIND_CLASS_IMAGE_SPARQL.format(badge)})
-    if result.status_code > 399:
-        abort(400)
-    bindings = result.json().get('results').get('bindings')
-    if len(bindings) < 1:
-        abort(404)       
-    img_url = bindings[0]['image']['value']
-    img = urllib.request.urlopen(img_url).read()
-    return Response(img, mimetype='image/png')
-
-@badge_app.route("/badges/<badge_classname>")
-@badge_app.route("/badges/<badge_classname>.json")
-@produces('application/json', 'application/rdf+xml', 'text/html')
-def badge_class(badge_classname):
-    """Route generates a JSON BadgeClass
-    <https://github.com/mozilla/openbadges-specification/> for each Islandora
-    badge.
-
-    Args:
-        badge_classname: Name of Badge (Camp, Projects, Institutions, etc.)
-
-    Returns:
-        Badge Class JSON
-    """
-    result = requests.post(
-        TRIPLESTORE_URL,
-        data={"sparql": FIND_CLASS_SPARQL.format(badge_classname)})
-    if result.status_code > 399:
-        abort(400)
-    bindings = result.json().get('results').get('bindings')
-    if len(bindings) < 1:
-        abort(404)
-    info = bindings[0]
-    keyword_result = requests.post(
-       TRIPLESTORE_URL,
-       data={"sparql": """{}
-SELECT DISTINCT ?keyword
-WHERE {{
-  ?subject schema:alternativeName "{}"^^xsd:string .
-  ?subject schema:keywords ?keyword .
-}}""".format(PREFIX, badge_classname)})
-    keywords = []
-    if keyword_result.status_code < 400:
-        for row in keyword_result.json().get('results').get('bindings'):
-            keywords.append(row['keyword']['value'])
-    badge_class_json = {
-        "name": info.get('name').get('value'),
-        "description": info.get('description').get('value'),
-        "critera": url_for('badge_criteria', badge=badge_classname),
-        "image": url_for('badge_image', badge=badge_classname),
-        "issuer": url_for('badge_issuer_organization'),
-        "tags": keywords
-        }
-    return jsonify(badge_class_json)
-
-@badge_app.route("/badges/<badge>/criteria")
-def badge_criteria(badge):
-    """Route displays the criteria for the badge class
-
-    Args:
-        badge: Name of Badge (Camp, Projects, Institutions, etc.)
-
-    Returns:
-        JSON of badge's critera
-    """
-    badge_result = requests.post(
-        TRIPLESTORE_URL,
-        data={"sparql": FIND_CRITERIA_SPARQL.format(badge)})
-    if badge_result.status_code > 399:
-        abort(400)
-    bindings = badge_result.json().get('results').get('bindings')
-    if len(bindings) < 1:
-        abort(404)
-    name ="Criteria for {} Open Badge".format(bindings[0]['name']['value']) 
-    badge_criteria = {
-        "name": name,
-        "educationalUse": [row.get('criteria').get('value') for row in bindings]
-    }
-    return jsonify(badge_criteria)
-
-@badge_app.route("/badges/issuer")
-def badge_issuer_organization():
-    "Route generates JSON for the badge issuer's organization"
-    organization = {
-        "name": badge_app.config.get('BADGE_ISSUER').get('name'),
-        "url": badge_app.config.get('BADGE_ISSUER').get('url')
-    }
-    return jsonify(organization)
-
-@badge_app.route("/")
-def index():
-    return render_template('index.html')
 
 def bake_badge(badge_uri):
     assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
@@ -346,11 +168,11 @@ Badge location: {}
         class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
         class_graph.add((badge_class_uri, 
                          RDF.type, 
-                         open_badges_namespace.BadgeClass))
+                         OB.BadgeClass))
         class_graph.add((badge_class_uri, 
-                         open_badges_namespace.issuer,
+                         OB.issuer,
                          rdflib.URIRef(
-                             badge_app.config['BADGE_ISSUER'].get('url'))))
+                             config.get('BADGE_ISSUER', 'url'))))
         class_graph.add((badge_class_uri, 
                          SCHEMA.name, 
                          rdflib.Literal(badge_name)))
@@ -410,13 +232,13 @@ def issue_badge(email, event):
     badge_assertion_graph = default_graph()
     badge_uri = rdflib.BNode()
     badge_assertion_graph.add((badge_uri,
-                               open_badges_namespace.verify,
-                               open_badges_namespace.hosted))
+                               OB.verify,
+                               OB.hosted))
     identity_hash = hashlib.sha256(email)
     identity_hash.update(badge_app.config['IDENTITY_SALT'])
     badge_assertion_graph.add(
         (badge_uri, 
-         open_badges_namespace.identity,
+         OB.identity,
          rdflib.Literal("sha256${0}".format(identity_hash.hexdigest()))))
 
     raw_data = """
@@ -452,6 +274,51 @@ def slugify(value):
     value = re.sub('[^\w\s-]', '', value).strip().lower()
     return re.sub('[-\s]+', '-', value)
 
+class BadgeCollection(object):
+
+    def on_get(self, req, resp):
+        resp.stat       
+ 
+
+class Badge(object):
+
+    def __init__(self, ):
+        self.uuid = None
+
+    def on_get(self, req, resp, uuid=None):
+        if uuid:
+            self.uuid = uuid
+       
+
+class BadgeClass(object):
+
+    def __init__(self):
+        pass
+
+    def on_get(self, req, resp, name):
+        resp.status = falcon.HTTP_200
+        resp.body = json.dumps(output)
+        result = requests.post(
+            TRIPLESTORE_URL,
+            data={"query": FIND_CLASS_SPARQL.format(name)})
+
+
+    def __on_get__(self):
+        badge_class_json = {
+            "name": self.cache.hget(name_hash, 'source'),
+            "description": self.cache.hget(desc_hash, "source")
+           # "critera": url_for('badge_criteria', badge=badge_classname),
+           # "image": url_for('badge_image', badge=badge_classname),
+           # "issuer": url_for('badge_issuer_organization'),
+           # "tags": keywords
+        }
+        resp.body = json.dumps(badge_class_json)
+         
+        
+
+#semantic_server.api.add_route("badge/{uuid}", Badge())
+semantic_server.api.add_route("/badges", BadgeClass())
+semantic_server.api.add_route("/badges/{name}", BadgeClass())
 
 class Services(object):
 
@@ -471,14 +338,14 @@ class Services(object):
 
     def __start_cache__(self):
         return [
-            "./redis-server",
+            "redis-server.exe",
             "redis.conf"]
         
     def __start_fedora__(self, **kwargs):
         repo_json_file = os.path.join(PROJECT_ROOT, "fedora", "repository.json")
         print("Repo json file is {}".format(repo_json_file))
         java_command = [
-            "java",
+            "C:\\Users\\jernelson\\Downloads\\jdk1.8.0_45\\bin\\java.exe",
             "-jar",
             "-Dfcrepo.modeshape.configuration=file:{}".format(repo_json_file)]
         if "memory" in kwargs:
@@ -524,7 +391,7 @@ class Services(object):
         resp.body = json.dumps(
             {"message": "Services stopped"})
 
-semantic_server.api.add_route("/services", Services())
+#semantic_server.api.add_route("/services", Services())
 
 def main(args):
     """Function runs the development application based on arguments passed in
@@ -543,7 +410,7 @@ def main(args):
             debug=True)
         semantic_server.main()
     elif args.action.startswith('start'):
-        start_services()
+        semantic_server.main()
     elif args.action.startswith('issue'):
         email = args.email
         event = args.event
