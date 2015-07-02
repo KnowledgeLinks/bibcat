@@ -57,10 +57,11 @@ PREFIX xsd: <{}>""".format(BF,
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
-TRIPLESTORE_URL = "http://localhost:8081/bigdata/sparql"
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.abspath(os.path.join(PROJECT_ROOT, "application.cfg")))
+
+TRIPLESTORE_URL = CONFIG.get('BADGE', 'triplestore')
 
 FIND_ASSERTION_SPARQL = """{}
 SELECT DISTINCT *
@@ -332,7 +333,7 @@ class BadgeClass(object):
         pass
 
 
-    def __keywords__(self, name):
+    def __keywords__(self, name, ext='json'):
         sparql = FIND_KEYWORDS_SPARQL.format(name)
         result = requests.post(
             TRIPLESTORE_URL,
@@ -418,10 +419,9 @@ class BadgeImage(object):
 
 #semantic_server.api.add_route("badge/{uuid}", Badge())
 semantic_server.api.add_route("/badges", BadgeClass())
-semantic_server.api.add_route("/badges/{name}", BadgeClass())
-semantic_server.api.add_route("/badges/{name}.json", BadgeClass())
+semantic_server.api.add_route("/badges/{name}.{ext}", BadgeClass())
+semantic_server.api.add_route("/badges/criteria/{name}", BadgeClassCriteria())
 semantic_server.api.add_route("/badges/{name}.png", BadgeImage())
-semantic_server.api.add_route("/badges/{name}/criteria", BadgeClassCriteria())
 semantic_server.api.add_route("/badges/{name}/{uuid}", Badge())
 
 class Services(object):
