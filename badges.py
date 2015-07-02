@@ -44,7 +44,7 @@ OB = rdflib.Namespace('http://schema.openbadges.org/')
 PREFIX = """PREFIX bf: <{}>
 PREFIX fedora: <{}>
 PREFIX iana: <{}>
-PREFIX ob: <{}> 
+PREFIX openbadge: <{}> 
 PREFIX rdf: <{}>
 PREFIX schema: <{}>
 PREFIX xsd: <{}>""".format(BF,
@@ -60,25 +60,44 @@ CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.abspath(os.path.join(PROJECT_ROOT, "application.cfg")))
-
 TRIPLESTORE_URL = CONFIG.get('BADGE', 'triplestore')
+ISSUER_URI = None
+
+
+CLASS_EXISTS_SPARQL = """{}
+SELECT DISTINCT ?entity
+WHERE {{{{
+  ?entity schema:alternativeName "{{}}"^^xsd:string .
+}}}}""".format(PREFIX)
+
+CHECK_ISSUER_SPARQL = """{}
+SELECT DISTINCT ?entity
+WHERE {{{{
+   ?entity schema:url <{{}}> .
+}}}}""".format(PREFIX)
+
+CHECK_PERSON_SPARQL = """{}
+SELECT DISTINCT ?entity 
+WHERE {{{{
+  ?entity schema:email "{{}}"^^xsd:string .
+}}}}""".format(PREFIX)
 
 FIND_ASSERTION_SPARQL = """{}
 SELECT DISTINCT *
 WHERE {{{{
-  ?subject fedora:uuid "{{}}"^^xsd:string .
-  ?subject ob:recipient ?IdentityObject .
-  ?subject ob:issuedOn ?DateTime .
+  ?subject schema:alternativeName "{{}}"^^xsd:string .
+  ?subject openbadge:recipient ?IdentityObject .
+  ?subject openbadge:issuedOn ?DateTime .
 }}}}""".format(PREFIX)
 
 
 FIND_CLASS_SPARQL = """{}
 SELECT DISTINCT *
 WHERE {{{{
-  ?class rdf:type ob:BadgeClass .
+  ?class rdf:type openbadge:BadgeClass .
   ?class schema:name ?name .
   ?class schema:description ?description .
-  ?class ob:issuer ?issuer .
+  ?class openbadge:issuer ?issuer .
   ?class schema:alternativeName "{{}}"^^xsd:string .
 }}}}""".format(PREFIX)
 
@@ -112,10 +131,12 @@ WHERE {{{{
    ?subject schema:keywords ?keyword .
 }}}}""".format(PREFIX)
 
+
+
 def default_graph():
     graph = rdflib.Graph()
     graph.namespace_manager.bind('fedora', FEDORA)
-    graph.namespace_manager.bind('ob', OB)
+    graph.namespace_manager.bind('openbadge', OB)
     graph.namespace_manager.bind('rdf', RDF)
     graph.namespace_manager.bind('schema', SCHEMA)
     graph.namespace_manager.bind('owl', OWL)
@@ -123,6 +144,10 @@ def default_graph():
 
 
 def bake_badge(badge_uri):
+    with open("E:\\2015\\open-badge-atla2015.png", "rb") as img:
+        return img.read()
+
+def bake_badge_production(badge_uri):
     assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
     result = urllib.request.urlopen(assert_url)
@@ -134,9 +159,105 @@ def bake_badge(badge_uri):
     result = urllib.request.urlopen(add_image_request)
     return result.read()
 
+def generate_tmp_uri(class_='Resource'):
+    return rdflib.URIRef('{}/badges/tmp/{}/{}'.format(
+        CONFIG.get('BADGE', 'issuer_url'),
+        class_,
+        datetime.datetime.utcnow().timestamp()))
+
+def add_get_issuer(ISSUER_URI):
+    if ISSUER_URI:
+        return ISSUER_URI
+    issuer_url = CONFIG.get('BADGE', 'issuer_url')
+    issuer_check_result = requests.post(
+        TRIPLESTORE_URL,
+        data={"query": CHECK_ISSUER_SPARQL.format(issuer_url),
+              "format": "json"})
+    if issuer_check_result.status_code < 400:
+        info = issuer_check_result.json().get('results').get('bindings')
+        if len(info) < 1:
+            issuer_graph = default_graph()
+            issuer_temp_uri = generate_tmp_uri('Organization')
+            issuer_graph.add((issuer_temp_uri,
+                              RDF.type,
+                              SCHEMA.Organization))
+            issuer_graph.add((issuer_temp_uri,
+                              SCHEMA.url,
+                              rdflib.URIRef(issuer_url)))
+            issuer_graph.add((issuer_temp_uri,
+                              SCHEMA.name,
+                              rdflib.Literal(CONFIG.get('BADGE', 'issuer_name'))))
+            resource = Resource(config=config) 
+            resource_url = resource.__create__(rdf=issuer_graph)
+            ISSUER_URI = rdflib.URIRef(resource_url)
+        else:
+            ISSUER_URI = rdflib.URIRef(info[0].get('entity').get('value'))
+    return ISSUER_URI
+
+ISSUER_URI = add_get_issuer(ISSUER_URI)
+
+def add_get_participant(**kwargs):
+    email = kwargs.get('email')
+    if email is None:
+        raise ValueError("Email cannot be none")
+    identity_hash = hashlib.sha256(email.encode())
+    identity_hash.update(CONFIG.get('BADGE', 'identity_salt').encode())
+    email_result = requests.post(
+        TRIPLESTORE_URL,
+        data={"query": CHECK_PERSON_SPARQL.format(email),
+              "format": "json"})
+    if email_result.status_code < 400:
+        info = email_result.json().get('results').get('bindings')
+        if len(info) > 1:
+            return info[0].get('entity').get('value')
+        new_person = default_graph()
+        new_person_uri = generate_tmp_uri('Person')
+        new_person.add((new_person_uri,
+                        RDF.type,
+                        SCHEMA.Person))
+        new_person.add((new_person_uri,
+                        SCHEMA.email,
+                        rdflib.Literal(email)))
+       
+        for prop in ['givenName', 'familyName', 'url']:
+            if prop in kwargs:
+                new_person.add((new_person,
+                               getattr(SCHEMA, prop),
+                               rdflib.Literal(kargs.get(prop))))
+        add_person = Resource(config=config)
+        person_url = add_person.__create__(rdf=new_person)
+        return str(person_url)
+
+    
+
+review_msg = """Please review the following for the Badge Class:
+---------------
+Name: {}
+Description: {}
+Started on: {}
+Ended on: {}
+Keywords: {}
+Critera: {}
+Badge location: {}
+---------------"""
+
 def create_badge_class():
     "Function creates an badge class through a command prompt"
-    badge_name = input("Enter badge class name >>")
+    while 1:
+        badge_name = input("Enter badge class name >>")
+        check_badge_result = requests.post(
+            TRIPLESTORE_URL,
+            data={"query": CLASS_EXISTS_SPARQL.format(slugify(badge_name)),
+                  "format": "json"})
+        if check_badge_result.status_code < 400:
+            info = check_badge_result.json().get('results').get('bindings')
+            if len(info) > 0:
+                print("{} already exists as {}\nPlease try again".format(
+                    badge_name,
+                    slugify(badge_name)))
+            else:
+                break
+    
     description = input("Description >>")
     started_on = input("Badge started on >>")
     ended_on = input("Event finished on (can leave blank) >>")
@@ -154,30 +275,21 @@ def create_badge_class():
         criteria.append(requirement)
     image_location = input("Enter file path or URL for badge class image >>")
 
-    print("""Please review the following for the Badge Class:
----------------
-Name: {}
-Description: {}
-Started on: {}
-Ended on: {}
-Keywords: {}
-Critera: {}
-Badge location: {}
----------------""".format(
-    badge_name,
-    description,
-    started_on,
-    ended_on,
-    ','.join(keywords),
-    ','.join(criteria),
-    image_location))
+    print(review_msg.format(
+        badge_name,
+        description,
+        started_on,
+        ended_on,
+        ','.join(keywords),
+        ','.join(criteria),
+        image_location))
     prompt = input("Keep? (Y|N) >>")
     if prompt.lower() == 'y':
         if image_location.startswith("http"):
             badge_image = urllib.request.urlopen(image_location).read()
         else:
             badge_image = open(image_location, 'rb').read()
-        badge_class_uri = rdflib.BNode()
+        badge_class_uri = generate_tmp_uri('BadgeClass')
         class_graph = default_graph()
         class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
         class_graph.add((badge_class_uri, 
@@ -185,8 +297,7 @@ Badge location: {}
                          OB.BadgeClass))
         class_graph.add((badge_class_uri, 
                          OB.issuer,
-                         rdflib.URIRef(
-                             config.get('BADGE_ISSUER', 'url'))))
+                         ISSUER_URI))
         class_graph.add((badge_class_uri, 
                          SCHEMA.name, 
                          rdflib.Literal(badge_name)))
@@ -221,6 +332,35 @@ Badge location: {}
         if retry.lower() == 'y':
             create_badge_class()
 
+def create_identity_object(email):
+    person_uri = rdflib.URIRef(add_get_participant(email=email))
+    identity_graph = default_graph()
+    new_identity_object = Resource(config=config)
+    identity_uri = generate_tmp_uri('IdentityType')
+    identity_graph.add(
+        (identity_uri,
+         RDF.type,
+         OB.IdentityType))
+    
+    identity_hash = hashlib.sha256(email.encode())
+    salt = CONFIG.get('BADGE', 'identity_salt')
+    identity_hash.update(salt.encode())
+    identity_graph.add(
+        (identity_uri,
+         OB.salt,
+         rdflib.Literal(salt)))
+    identity_graph.add(
+        (identity_uri, 
+         OB.identity,
+         rdflib.Literal("sha256${0}".format(identity_hash.hexdigest()))))
+    identity_graph.add(
+        (identity_uri,
+         OB.hashed,
+         rdflib.Literal("true",
+                        datatype=XSD.boolean)))
+    return str(new_identity_object.__create__(rdf=identity_graph))
+
+
 
 def issue_badge(email, event):
     """Function issues a badge based on an event and an email, returns the
@@ -235,17 +375,32 @@ def issue_badge(email, event):
     """
     if email is None or event is None:
         raise ValueError("email and event cannot be None")
+    event_check_result = requests.post(
+        TRIPLESTORE_URL,
+        data={"query": FIND_CLASS_SPARQL.format(event),
+              "format": "json"})
+    if event_check_result.status_code < 400:
+        info = event_check_result.json().get('results').get('bindings')
+        if len(info) < 1:
+            raise ValueError("{} event not found".format(event))
+        else:
+            event_uri = rdflib.URIRef(info[0].get('class').get('value'))
     badge_assertion_graph = default_graph()
-    badge_uri = rdflib.URIRef('http://intro2libsys.info/badge/temp')
+    badge_uri = generate_tmp_uri('BadgeAssertion')
+    badge_assertion_graph.add((badge_uri,
+                               OB.BadgeClass,
+                               event_uri))
     badge_assertion_graph.add((badge_uri,
                                OB.verify,
                                OB.hosted))
-    identity_hash = hashlib.sha256(email.encode())
-    identity_hash.update(CONFIG.get('BADGE', 'identity_salt').encode())
+    badge_assertion_graph.add((badge_uri, 
+                         RDF.type, 
+                         OB.Badge))
+    identity_uri = rdflib.URIRef(create_identity_object(email))
     badge_assertion_graph.add(
-        (badge_uri, 
-         OB.identity,
-         rdflib.Literal("sha256${0}".format(identity_hash.hexdigest()))))
+         (badge_uri, 
+          OB.recipient,
+          identity_uri))  
     badge_assertion_graph.add(
         (badge_uri,
          OB.verify,
@@ -253,33 +408,21 @@ def issue_badge(email, event):
     badge_assertion_graph.add(
         (badge_uri,
          OB.issuedOn,
-         rdflib.Literal(datetime.datetime.utcnow().isoformat())))    
+         rdflib.Literal(datetime.datetime.utcnow().isoformat(),
+                        datatype=XSD.dateTime)))    
     new_badge = Resource(config=config)
     badge_uri = new_badge.__create__(
         rdf=badge_assertion_graph,
         binary=b'a')
-
-#
-#    raw_data = """
-#INSERT DATA {
-#  <> schema:email "$email" .
-#  <> ob:badge  <$badge_class_uri> .
-#  <> ob:identity "$sha256" .
-#  <> ob:verify openbadge:hosted .
-#  <> ob:issuedOn "$issuedOn"
-#}"""
-
-#    update_request = urllib.request.Request(
-#        fedora_url,
-#        method='PATCH',
-#        data=sparql.encode(),
-#        headers={"Content-Type": "application/sparql-update"})
-#    result = urllib.request.urlopen(update_request)
-#    repository.insert("/".join([repository.base_url, 'rest', 'badges']),
-#        "schema:AchieveAction",
-#        fedora_url)
-    #bake_badge(badge_uri)
-    print(badge_uri)
+    if badge_uri.endswith("fcr:metadata"):
+        badge_uid = badge_uri.split("/")[-2]
+    else:
+        badge_uid = badge_uri.split("/")[-1]
+    if not new_badge.__new_property__(
+        str(OB.uid), 
+        '"{}"'.format(badge_uid)):
+        print("ERROR unable to save OpenBadge uid={}".format(badge_uid))
+    new_badge.__replace_binary__(badge_uri, binary=bake_badge(badge_uri))
     return str(badge_uri)
 
 
@@ -297,14 +440,15 @@ def slugify(value):
 class BadgeCollection(object):
 
     def on_get(self, req, resp):
-        resp.stat       
+        resp.status_code = falcon.HTTP_200       
  
 
-class Badge(object):
+class BadgeAssertion(object):
 
-    def on_get(self, req, resp, name, uuid):
+    def on_get(self, req, resp, uuid, ext='json'):
+        print("Before anything ={} {}".format(uuid, ext))
         result = requests.post(TRIPLESTORE_URL,
-            data={"query": FIND_ASSERTION_SPARQL.format(uid),
+            data={"query": FIND_ASSERTION_SPARQL.format(uuid),
                   "format": 'json'})
         if result.status_code > 399:
             raise falcon.HTTPInternalServerError(
@@ -325,7 +469,10 @@ class Badge(object):
             }
         }
         resp.status = falcon.HTTP_200
-        resp.body = json.dumps(badge)
+        if ext.startswith('json'):
+            resp.body = json.dumps(badge)
+        else:
+            resp.body = str(badge)
 
 class BadgeClass(object):
 
@@ -345,7 +492,9 @@ class BadgeClass(object):
             output.append(result.get('keyword').get('value'))
         return list(set(output))
 
-    def on_get(self, req, resp, name):
+    def on_get(self, req, resp, name, ext='json'):
+        if name.endswith(ext):
+            name = name.split(".{}".format(ext))[0]
         resp.status = falcon.HTTP_200
         sparql = FIND_CLASS_SPARQL.format(name)
         result = requests.post(
@@ -362,16 +511,17 @@ class BadgeClass(object):
         badge_class_json = {
             "name": info.get('name').get('value'),
             "description": info.get('description').get('value'),
-            "critera": '{}/badges/{}/criteria'.format(
+            "critera": '{}/BadgeCriteria/{}'.format(
                            badge_base_url,
                            name),
-            "image": '{}/badges/{}.png'.format(
+            "image": '{}/BadgeImage/{}.png'.format(
                           badge_base_url,
                           name),
-            "issuer": '{}/badges/issuer'.format(badge_base_url),
+            "issuer": CONFIG.get('BADGE', 'issuer_url'),
             "tags": keywords
         }
-        resp.body = json.dumps(badge_class_json)
+        if ext.startswith('json'):
+            resp.body = json.dumps(badge_class_json)
 
 
 class BadgeClassCriteria(object):
@@ -417,12 +567,14 @@ class BadgeImage(object):
         img_result = requests.get(img_url)
         resp.body = img_result.content
 
+
+        
 #semantic_server.api.add_route("badge/{uuid}", Badge())
-semantic_server.api.add_route("/badges", BadgeClass())
-semantic_server.api.add_route("/badges/{name}.{ext}", BadgeClass())
-semantic_server.api.add_route("/badges/criteria/{name}", BadgeClassCriteria())
-semantic_server.api.add_route("/badges/{name}.png", BadgeImage())
-semantic_server.api.add_route("/badges/{name}/{uuid}", Badge())
+semantic_server.api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
+semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
+semantic_server.api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
+semantic_server.api.add_route("/BadgeImage/{name}.png", BadgeImage())
+semantic_server.api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
 
 class Services(object):
 
