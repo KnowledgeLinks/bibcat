@@ -29,13 +29,22 @@ import socket
 import time
 import urllib.request
 import uuid
-import lib.semantic_server.app  as semantic_server
+try:
+    import lib.semantic_server.app  as semantic_server
+except ImportError:
+    from .lib.semantic_server import app as  semantic_server
+
 import subprocess
 import sys
+try:
+    from .lib.semantic_server.app import config
+    from .lib.semantic_server.repository.utilities.namespaces import *
+    from .lib.semantic_server.repository.resources.fedora import Resource
+except (ImportError, SystemError):
+    from lib.semantic_server.app import config
+    from lib.semantic_server.repository.utilities.namespaces import *
+    from lib.semantic_server.repository.resources.fedora import Resource
 
-from lib.semantic_server.app import config
-from lib.semantic_server.repository.utilities.namespaces import *
-from lib.semantic_server.repository.resources.fedora import Resource
 
 from string import Template
 
@@ -85,7 +94,7 @@ WHERE {{{{
 FIND_ASSERTION_SPARQL = """{}
 SELECT DISTINCT *
 WHERE {{{{
-  ?subject schema:alternativeName "{{}}"^^xsd:string .
+  ?subject openbadge:uid "{{}}"^^xsd:string .
   ?subject openbadge:recipient ?IdentityObject .
   ?subject openbadge:issuedOn ?DateTime .
 }}}}""".format(PREFIX)
@@ -419,8 +428,9 @@ def issue_badge(email, event):
     else:
         badge_uid = badge_uri.split("/")[-1]
     if not new_badge.__new_property__(
-        str(OB.uid), 
-        '"{}"'.format(badge_uid)):
+        "openbadge:uid", 
+        '"{}"'.format(badge_uid),
+        False):
         print("ERROR unable to save OpenBadge uid={}".format(badge_uid))
     new_badge.__replace_binary__(badge_uri, binary=bake_badge(badge_uri))
     return str(badge_uri)
@@ -446,7 +456,7 @@ class BadgeCollection(object):
 class BadgeAssertion(object):
 
     def on_get(self, req, resp, uuid, ext='json'):
-        print("Before anything ={} {}".format(uuid, ext))
+        print("SPARQL={}".format(FIND_ASSERTION_SPARQL.format(uuid)))
         result = requests.post(TRIPLESTORE_URL,
             data={"query": FIND_ASSERTION_SPARQL.format(uuid),
                   "format": 'json'})
@@ -454,12 +464,14 @@ class BadgeAssertion(object):
             raise falcon.HTTPInternalServerError(
                 "Cannot retrieve {}/{} badge".format(name, uuid),
                 result.text)
+        bindings = result.json().get('results').get('bindings')
+        print(bindings)
         badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
         badge = {
             "uid": uid,
             "recipient": bindings[0]['recipient']['value'],
-            "badge": "{}/badges/{}".format(badge_base_url, name),
-            "image": "{}/badges/{}.png".format(badge_base_url, uuid),
+            "badge": "{}/BadgeClass/{}".format(badge_base_url, name),
+            "image": "{}/BadgeImage/{}.png".format(badge_base_url, uuid),
             "issuedOn": int(time.mktime(issuedOn.timetuple())),
             "verify": {
                 "type": "hosted",
@@ -493,6 +505,7 @@ class BadgeClass(object):
         return list(set(output))
 
     def on_get(self, req, resp, name, ext='json'):
+        print("IN BadgeClass GET handler")
         if name.endswith(ext):
             name = name.split(".{}".format(ext))[0]
         resp.status = falcon.HTTP_200
