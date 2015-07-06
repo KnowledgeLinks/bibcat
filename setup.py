@@ -1,6 +1,6 @@
 __author__ = "Jeremy Nelson"
 __license__ = "GPLv3"
-__version_info__ = ('0', '0', '1')
+__version_info__ = ('0', '1', '0')
 __version__ = '.'.join(__version_info__)
 
 from setuptools import find_packages, setup
@@ -18,8 +18,8 @@ setup(
     install_requires=[
         'Flask',
         'rdflib',
-        'Flask-Negotiate',
-        'Flask-FedoraCommons'
+        'requests',
+        'Flask-Negotiate'
     ],
     classifiers=[
         'Framework :: Flask',

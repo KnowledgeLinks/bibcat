@@ -510,6 +510,7 @@ class BadgeClass(object):
             name = name.split(".{}".format(ext))[0]
         resp.status = falcon.HTTP_200
         sparql = FIND_CLASS_SPARQL.format(name)
+        print(TRIPLESTORE_URL, sparql)
         result = requests.post(
             TRIPLESTORE_URL,
             data={"query": sparql,
