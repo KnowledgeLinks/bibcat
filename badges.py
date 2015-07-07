@@ -16,6 +16,7 @@ __version__ = '.'.join(__version_info__)
 import argparse
 import configparser
 import datetime
+import dateutil.parser
 import falcon
 import hashlib
 import json
@@ -97,6 +98,8 @@ WHERE {{{{
   ?subject openbadge:uid "{{}}"^^xsd:string .
   ?subject openbadge:recipient ?IdentityObject .
   ?subject openbadge:issuedOn ?DateTime .
+  ?subject openbadge:BadgeClass ?badgeURI .
+  ?badgeURI schema:alternativeName ?badgeClass .
 }}}}""".format(PREFIX)
 
 
@@ -140,7 +143,17 @@ WHERE {{{{
    ?subject schema:keywords ?keyword .
 }}}}""".format(PREFIX)
 
+IDENT_OBJ_SPARQL = """{}
+SELECT DISTINCT *
+WHERE {{{{
+  <{{0}}> openbadge:identity ?identHash .
+  <{{0}}> openbadge:salt ?salt .
+}}}}""".format(PREFIX)
 
+UPDATE_UID_SPARQL = """{}
+INSERT DATA {{{{
+    <{{}}> openbadge:uid "{{}}"^^xsd:string
+}}}}""".format(PREFIX)
 
 def default_graph():
     graph = rdflib.Graph()
@@ -156,7 +169,7 @@ def bake_badge(badge_uri):
     with open("E:\\2015\\open-badge-atla2015.png", "rb") as img:
         return img.read()
 
-def bake_badge_production(badge_uri):
+def bake_badge_p(badge_uri):
     assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
     result = urllib.request.urlopen(assert_url)
@@ -432,7 +445,16 @@ def issue_badge(email, event):
         '"{}"'.format(badge_uid),
         False):
         print("ERROR unable to save OpenBadge uid={}".format(badge_uid))
+    ## Manually update triplestore
+    ts_update = requests.post(
+        TRIPLESTORE_URL,
+        data={"update": UPDATE_UID_SPARQL.format(badge_uri, badge_uid),
+              "format": "json"})
+    if ts_update.status_code > 399:
+        print("Error updating triplestore subject={} openbadge:uid to {}".format(
+            badge_uri, badge_uid))
     new_badge.__replace_binary__(badge_uri, binary=bake_badge(badge_uri))
+    print("Issued badge {}".format(badge_uri))
     return str(badge_uri)
 
 
@@ -455,31 +477,65 @@ class BadgeCollection(object):
 
 class BadgeAssertion(object):
 
+    def __get_identity_object__(self, uri):
+        salt = None
+        identity = None
+        sparql = IDENT_OBJ_SPARQL.format(uri) 
+        ident_result = requests.post(
+            TRIPLESTORE_URL,
+            data={"query": sparql,
+                  "format": "json"}) 
+        if ident_result.status_code > 399:
+            raise falcon.HTTPInternalServerError(
+                "Could not retrieve {} IdentityObject".format(uri),
+                "Error:\n{}\nSPARQL={}".format(
+                    ident_result.text,
+                    sparql))
+        bindings = ident_result.json().get('results').get('bindings')
+        if len(bindings) < 1:
+            return
+        identity_hash = bindings[0].get('identHash').get('value') 
+        salt = bindings[0].get('salt').get('value')
+        return {
+                 "type": "email",
+                 "hashed": True,
+                 "salt": salt,
+                 "identity": identity_hash
+        }
+
     def on_get(self, req, resp, uuid, ext='json'):
-        print("SPARQL={}".format(FIND_ASSERTION_SPARQL.format(uuid)))
         result = requests.post(TRIPLESTORE_URL,
             data={"query": FIND_ASSERTION_SPARQL.format(uuid),
                   "format": 'json'})
+        print(FIND_ASSERTION_SPARQL.format(uuid))
         if result.status_code > 399:
             raise falcon.HTTPInternalServerError(
                 "Cannot retrieve {}/{} badge".format(name, uuid),
                 result.text)
         bindings = result.json().get('results').get('bindings')
-        print(bindings)
+        print("Bindings {}".format(bindings))
         badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
-        badge = {
-            "uid": uid,
-            "recipient": bindings[0]['recipient']['value'],
+        try:
+            issuedOn = dateutil.parser.parse(
+                bindings[0]['DateTime']['value'])
+            recipient = self.__get_identity_object__(
+                bindings[0]['IdentityObject'].get('value'))
+            name = bindings[0]['badgeClass'].get('value')
+            badge = {
+            "uid": uuid,
+            "recipient": recipient,
             "badge": "{}/BadgeClass/{}".format(badge_base_url, name),
             "image": "{}/BadgeImage/{}.png".format(badge_base_url, uuid),
             "issuedOn": int(time.mktime(issuedOn.timetuple())),
             "verify": {
                 "type": "hosted",
-                "url": "{}/badges/{}.json".format(
+                "url": "{}/BadgeClass/{}.json".format(
                             badge_base_url,
                             name)
             }
-        }
+            }
+        except:
+            print("Error {}".format(sys.exc_info()))
         resp.status = falcon.HTTP_200
         if ext.startswith('json'):
             resp.body = json.dumps(badge)
