@@ -165,11 +165,11 @@ def default_graph():
     return graph
 
 
-def bake_badge(badge_uri):
+def bake_badge_dev(badge_uri):
     with open("E:\\2015\\open-badge-atla2015.png", "rb") as img:
         return img.read()
 
-def bake_badge_p(badge_uri):
+def bake_badge(badge_uri):
     assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
     result = urllib.request.urlopen(assert_url)
@@ -561,7 +561,6 @@ class BadgeClass(object):
         return list(set(output))
 
     def on_get(self, req, resp, name, ext='json'):
-        print("IN BadgeClass GET handler")
         if name.endswith(ext):
             name = name.split(".{}".format(ext))[0]
         resp.status = falcon.HTTP_200
@@ -640,8 +639,8 @@ class BadgeImage(object):
 
         
 #semantic_server.api.add_route("badge/{uuid}", Badge())
+#semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
 semantic_server.api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
-semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
 semantic_server.api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
 semantic_server.api.add_route("/BadgeImage/{name}.png", BadgeImage())
 semantic_server.api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
