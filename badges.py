@@ -132,7 +132,7 @@ WHERE {{{{
 FIND_IMAGE_SPARQL = """{}
 SELECT DISTINCT ?image
 WHERE {{{{
-  ?subject schema:alternativeName "{{}}"^^xsd:string  .
+  ?subject openbadge:uid "{{}}"^^xsd:string  .
   ?subject iana:describes ?image .
 }}}}""".format(PREFIX)
 
@@ -453,7 +453,7 @@ def issue_badge(email, event):
     if ts_update.status_code > 399:
         print("Error updating triplestore subject={} openbadge:uid to {}".format(
             badge_uri, badge_uid))
-    new_badge.__replace_binary__(badge_uri, binary=bake_badge(badge_uri))
+    new_badge.__replace_binary__(badge_uri, binary=bake_badge_dev(badge_uri))
     print("Issued badge {}".format(badge_uri))
     return str(badge_uri)
 
@@ -507,13 +507,11 @@ class BadgeAssertion(object):
         result = requests.post(TRIPLESTORE_URL,
             data={"query": FIND_ASSERTION_SPARQL.format(uuid),
                   "format": 'json'})
-        print(FIND_ASSERTION_SPARQL.format(uuid))
         if result.status_code > 399:
             raise falcon.HTTPInternalServerError(
                 "Cannot retrieve {}/{} badge".format(name, uuid),
                 result.text)
         bindings = result.json().get('results').get('bindings')
-        print("Bindings {}".format(bindings))
         badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
         try:
             issuedOn = dateutil.parser.parse(
@@ -565,7 +563,6 @@ class BadgeClass(object):
             name = name.split(".{}".format(ext))[0]
         resp.status = falcon.HTTP_200
         sparql = FIND_CLASS_SPARQL.format(name)
-        print(TRIPLESTORE_URL, sparql)
         result = requests.post(
             TRIPLESTORE_URL,
             data={"query": sparql,
@@ -622,7 +619,7 @@ class BadgeImage(object):
 
     def on_get(self, req, resp, name):
         resp.content_type = 'image/png'
-        sparql = FIND_CLASS_IMAGE_SPARQL.format(name)
+        sparql = FIND_IMAGE_SPARQL.format(name)
         img_exists = requests.post(
             TRIPLESTORE_URL,
             data={"query": sparql,
@@ -639,84 +636,11 @@ class BadgeImage(object):
 
         
 #semantic_server.api.add_route("badge/{uuid}", Badge())
-#semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
-semantic_server.api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
+semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
+#semantic_server.api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
 semantic_server.api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
 semantic_server.api.add_route("/BadgeImage/{name}.png", BadgeImage())
 semantic_server.api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
-
-class Services(object):
-
-    def __init__(self):
-        self.fedora_repo, self.cache = None, None
-
-    def __start_services__(self):
-        os.chdir(os.path.join(PROJECT_ROOT, "cache"))
-        self.cache = subprocess.Popen(
-            self.__start_cache__())
-        os.chdir(os.path.join(PROJECT_ROOT, "fedora"))
-        self.fedora_repo = subprocess.Popen(
-            self.__start_fedora__(memory='1G'))
-        print("Started Fedora on pid={} Redis cache pid={}".format(
-            self.fedora_repo.pid,
-            self.cache.pid))
-
-    def __start_cache__(self):
-        return [
-            "redis-server.exe",
-            "redis.conf"]
-        
-    def __start_fedora__(self, **kwargs):
-        repo_json_file = os.path.join(PROJECT_ROOT, "fedora", "repository.json")
-        print("Repo json file is {}".format(repo_json_file))
-        java_command = [
-            "C:\\Users\\jernelson\\Downloads\\jdk1.8.0_45\\bin\\java.exe",
-            "-jar",
-            "-Dfcrepo.modeshape.configuration=file:{}".format(repo_json_file)]
-        if "memory" in kwargs:
-            java_command.append("-Xmx{}".format(kwargs.get("memory")))
-        java_command.append(
-            kwargs.get("jar-file",
-                "fcrepo-webapp-4.2.0-jetty-console.jar"))
-        java_command.append("--headless")
-        return java_command
-
-
-    def on_get(self, req, resp):
-        resp.status = falcon.HTTP_200
-        resp.body = json.dumps({ 'services': {
-            "fedora4": self.fedora_repo.pid or None,
-            "cache": self.cache.pid or None 
-            }
-        })
-
-    def on_post(self, req, resp):
-        if self.fedora_repo and self.cache:
-            raise falcon.HTTPForbidden(
-                "Services Already Running",
-                "Fedora 4 and Cache already running")
-        self.__start_services__()
-        resp.status = falcon.HTTP_201
-        resp.body = json.dumps({"services": {
-            "fedora4": {"pid": self.fedora_repo.pid},
-            "cache": {"pid": self.cache.pid}}})
-
-    def on_delete(self, req, resp):
-        if not self.cache and not self.fedora_repo:
-            raise falcon.HTTPServiceUnavailable(
-                "Cannot Delete Services",
-                "Cache and Fedora 4 are not running",
-                300)
-        for service in [self.cache,
-                        self.fedora_repo]:
-            if service is not None:
-                service.kill()
-                
-        resp.status = falcon.HTTP_200
-        resp.body = json.dumps(
-            {"message": "Services stopped"})
-
-#semantic_server.api.add_route("/services", Services())
 
 def main(args):
     """Function runs the development application based on arguments passed in
