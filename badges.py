@@ -624,6 +624,7 @@ class BadgeImage(object):
             TRIPLESTORE_URL,
             data={"query": sparql,
                   "format": "json"})
+        print("Status={} for {}".format(img_exists.status_code, sparql))
         if img_exists.status_code > 399:
             raise falcon.HTTPInternalServerError(
                 "Cannot retrieve {}'s image".format(name),
