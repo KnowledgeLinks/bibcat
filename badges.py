@@ -10,7 +10,7 @@ Licence:     GPLv3
 """
 __author__ = "Jeremy Nelson"
 __license__ = "GPLv3"
-__version_info__ = ('0', '0', '3')
+__version_info__ = ('0', '1', '0')
 __version__ = '.'.join(__version_info__)
 
 import argparse
@@ -99,6 +99,7 @@ WHERE {{{{
   ?subject openbadge:recipient ?IdentityObject .
   ?subject openbadge:issuedOn ?DateTime .
   ?subject openbadge:BadgeClass ?badgeURI .
+  ?subject schema:version ?version .
   ?badgeURI schema:alternativeName ?badgeClass .
 }}}}""".format(PREFIX)
 
@@ -172,6 +173,7 @@ def bake_badge_dev(badge_uri):
 def bake_badge(badge_uri):
     assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
+    print(assert_url)
     result = urllib.request.urlopen(assert_url)
     raw_image = result.read()
     add_image_request = urllib.request.Request(
@@ -453,9 +455,14 @@ def issue_badge(email, event):
     if ts_update.status_code > 399:
         print("Error updating triplestore subject={} openbadge:uid to {}".format(
             badge_uri, badge_uid))
-    new_badge.__replace_binary__(badge_uri, binary=bake_badge_dev(badge_uri))
-    print("Issued badge {}".format(badge_uri))
-    return str(badge_uri)
+    badge_url = "{}/BadgeAssertion/{}".format(
+        CONFIG.get('BADGE', 'badge_base_url'),
+        badge_uid)
+    new_badge.__replace_binary__(
+        badge_uri, 
+        binary=bake_badge(badge_url))
+    print("Issued badge {}".format(badge_url))
+    return str(badge_url)
 
 
 def slugify(value):
@@ -518,20 +525,27 @@ class BadgeAssertion(object):
                 bindings[0]['DateTime']['value'])
             recipient = self.__get_identity_object__(
                 bindings[0]['IdentityObject'].get('value'))
+            version_ =bindings[0]['version'].get('value')
+
             name = bindings[0]['badgeClass'].get('value')
             badge = {
             "uid": uuid,
             "recipient": recipient,
             "badge": "{}/BadgeClass/{}".format(badge_base_url, name),
-            "image": "{}/BadgeImage/{}.png".format(badge_base_url, uuid),
+           
             "issuedOn": int(time.mktime(issuedOn.timetuple())),
             "verify": {
                 "type": "hosted",
                 "url": "{}/BadgeClass/{}.json".format(
                             badge_base_url,
                             name)
+                }
             }
-            }
+            # Badge has been successfully baked and badge image 
+            if int(version_) > 0:
+                badge["image"] =  "{}/BadgeImage/{}.png".format(
+                    badge_base_url, 
+                    uuid) 
         except:
             print("Error {}".format(sys.exc_info()))
         resp.status = falcon.HTTP_200
@@ -617,20 +631,28 @@ class BadgeClassCriteria(object):
 
 class BadgeImage(object):
 
-    def on_get(self, req, resp, name):
-        resp.content_type = 'image/png'
-        sparql = FIND_IMAGE_SPARQL.format(name)
+    def __image_exists__(self, name, template):
+        sparql = template.format(name)
         img_exists = requests.post(
             TRIPLESTORE_URL,
             data={"query": sparql,
                   "format": "json"})
-        print("Status={} for {}".format(img_exists.status_code, sparql))
         if img_exists.status_code > 399:
             raise falcon.HTTPInternalServerError(
                 "Cannot retrieve {}'s image".format(name),
                 img_exists.text)
-        img_url = img_exists.json()['results']['bindings'][0]
-        img_url = img_url.get('image').get('value')
+        bindings = img_exists.json()['results']['bindings']
+        if len(bindings) < 1:
+            return False
+        return bindings[0].get('image').get('value')
+
+    def on_get(self, req, resp, name):
+        resp.content_type = 'image/png'
+        img_url = self.__image_exists__(name, FIND_IMAGE_SPARQL)
+        if not img_url:
+            img_url = self.__image_exists__(name, FIND_CLASS_IMAGE_SPARQL)
+        if not img_url:
+            raise falcon.HTTPNotFound()
         img_result = requests.get(img_url)
         resp.body = img_result.content
 
