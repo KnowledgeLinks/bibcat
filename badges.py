@@ -99,7 +99,6 @@ WHERE {{{{
   ?subject openbadge:recipient ?IdentityObject .
   ?subject openbadge:issuedOn ?DateTime .
   ?subject openbadge:BadgeClass ?badgeURI .
-  ?subject schema:version ?version .
   ?badgeURI schema:alternativeName ?badgeClass .
 }}}}""".format(PREFIX)
 
@@ -433,7 +432,7 @@ def issue_badge(email, event):
         (badge_uri,
          OB.issuedOn,
          rdflib.Literal(datetime.datetime.utcnow().isoformat(),
-                        datatype=XSD.dateTime)))    
+                        datatype=XSD.dateTime)))
     new_badge = Resource(config=config)
     badge_uri = new_badge.__create__(
         rdf=badge_assertion_graph,
@@ -510,29 +509,42 @@ class BadgeAssertion(object):
                  "identity": identity_hash
         }
 
+    def __valid_image_url__(self, uuid):
+        url = "{}/BadgeImage/{}.png".format(
+             CONFIG.get('BADGE', 'badge_base_url'),
+             uuid)
+        badge_result = requests.get(url)
+        print(badge_result.status_code)
+        if len(badge_result.content) > 1:
+            return url
+        return False
+
     def on_get(self, req, resp, uuid, ext='json'):
+        sparql = FIND_ASSERTION_SPARQL.format(uuid)
+        print(sparql)
         result = requests.post(TRIPLESTORE_URL,
-            data={"query": FIND_ASSERTION_SPARQL.format(uuid),
+            data={"query": sparql,
                   "format": 'json'})
         if result.status_code > 399:
             raise falcon.HTTPInternalServerError(
                 "Cannot retrieve {}/{} badge".format(name, uuid),
                 result.text)
         bindings = result.json().get('results').get('bindings')
-        badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
         try:
             issuedOn = dateutil.parser.parse(
                 bindings[0]['DateTime']['value'])
             recipient = self.__get_identity_object__(
                 bindings[0]['IdentityObject'].get('value'))
-            version_ =bindings[0]['version'].get('value')
 
             name = bindings[0]['badgeClass'].get('value')
+            
+            badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
             badge = {
             "uid": uuid,
             "recipient": recipient,
-            "badge": "{}/BadgeClass/{}".format(badge_base_url, name),
-           
+            "badge": "{}/BadgeClass/{}".format(
+                badge_base_url, 
+                name),
             "issuedOn": int(time.mktime(issuedOn.timetuple())),
             "verify": {
                 "type": "hosted",
@@ -542,10 +554,9 @@ class BadgeAssertion(object):
                 }
             }
             # Badge has been successfully baked and badge image 
-            if int(version_) > 0:
-                badge["image"] =  "{}/BadgeImage/{}.png".format(
-                    badge_base_url, 
-                    uuid) 
+            badge_image_url = self.__valid_image_url__(uuid)
+            if badge_image_url:
+                badge["image"] = badge_image_url 
         except:
             print("Error {}".format(sys.exc_info()))
         resp.status = falcon.HTTP_200
