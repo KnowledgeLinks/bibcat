@@ -3,7 +3,7 @@ Name:        badges
 Purpose:     Islandora Badges Application
 
 Author:      Jeremy Nelson
-
+/bin/bash: 5: command not found
 Created:     16/09/2014
 Copyright:   (c) Jeremy Nelson, Colorado College, Islandora Foundation 2014-
 Licence:     GPLv3
@@ -170,7 +170,9 @@ def bake_badge_dev(badge_uri):
         return img.read()
 
 def bake_badge(badge_uri):
-    assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
+    #assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
+    #    badge_uri)
+    assert_url = 'http://backpack.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
     print(assert_url)
     result = urllib.request.urlopen(assert_url)
@@ -510,18 +512,22 @@ class BadgeAssertion(object):
         }
 
     def __valid_image_url__(self, uuid):
-        url = "{}/BadgeImage/{}.png".format(
-             CONFIG.get('BADGE', 'badge_base_url'),
-             uuid)
-        badge_result = requests.get(url)
-        print(badge_result.status_code)
-        if len(badge_result.content) > 1:
-            return url
+        sparql = FIND_IMAGE_SPARQL.format(uuid)
+        result = requests.post(
+            TRIPLESTORE_URL,
+            data={"query": sparql,
+                  "format": "json"})
+        if result.status_code < 400:
+            bindings = result.json().get('results').get('bindings')
+            image_url = bindings.get('image').get('value')
+            badge_result = requests.get(url)
+            if len(badge_result.content) > 1:
+                return url
         return False
 
     def on_get(self, req, resp, uuid, ext='json'):
         sparql = FIND_ASSERTION_SPARQL.format(uuid)
-        print(sparql)
+        #print(sparql)
         result = requests.post(TRIPLESTORE_URL,
             data={"query": sparql,
                   "format": 'json'})
@@ -545,7 +551,8 @@ class BadgeAssertion(object):
             "badge": "{}/BadgeClass/{}".format(
                 badge_base_url, 
                 name),
-            "issuedOn": int(time.mktime(issuedOn.timetuple())),
+            #"issuedOn": int(time.mktime(issuedOn.timetuple())),
+            "issuedOn": issuedOn.strftime("%Y-%m-%d"),
             "verify": {
                 "type": "hosted",
                 "url": "{}/BadgeClass/{}.json".format(
@@ -569,7 +576,6 @@ class BadgeClass(object):
 
     def __init__(self):
         pass
-
 
     def __keywords__(self, name, ext='json'):
         sparql = FIND_KEYWORDS_SPARQL.format(name)
@@ -602,14 +608,15 @@ class BadgeClass(object):
         badge_class_json = {
             "name": info.get('name').get('value'),
             "description": info.get('description').get('value'),
-            "critera": '{}/BadgeCriteria/{}'.format(
+            "criteria": '{}/BadgeCriteria/{}'.format(
                            badge_base_url,
                            name),
             "image": '{}/BadgeImage/{}.png'.format(
                           badge_base_url,
                           name),
-            "issuer": CONFIG.get('BADGE', 'issuer_url'),
-            "tags": keywords
+            "issuer": "{}/IssuerOrganization".format(
+                          badge_base_url),
+             "tags": keywords
         }
         if ext.startswith('json'):
             resp.body = json.dumps(badge_class_json)
@@ -667,7 +674,11 @@ class BadgeImage(object):
         img_result = requests.get(img_url)
         resp.body = img_result.content
 
+class IssuerOrganization(object):
 
+    def on_get(self, req, resp):
+        resp.body = json.dumps({"name": CONFIG.get('BADGE', 'issuer_name'),
+                                "url": CONFIG.get('BADGE', 'issuer_url')})
         
 #semantic_server.api.add_route("badge/{uuid}", Badge())
 semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
@@ -675,6 +686,7 @@ semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
 semantic_server.api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
 semantic_server.api.add_route("/BadgeImage/{name}.png", BadgeImage())
 semantic_server.api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
+semantic_server.api.add_route("/IssuerOrganization", IssuerOrganization())
 
 def main(args):
     """Function runs the development application based on arguments passed in
