@@ -536,36 +536,36 @@ class BadgeAssertion(object):
                 "Cannot retrieve {}/{} badge".format(name, uuid),
                 result.text)
         bindings = result.json().get('results').get('bindings')
-        try:
-            issuedOn = dateutil.parser.parse(
-                bindings[0]['DateTime']['value'])
-            recipient = self.__get_identity_object__(
-                bindings[0]['IdentityObject'].get('value'))
+##        try:
+        issuedOn = dateutil.parser.parse(
+            bindings[0]['DateTime']['value'])
+        recipient = self.__get_identity_object__(
+            bindings[0]['IdentityObject'].get('value'))
 
-            name = bindings[0]['badgeClass'].get('value')
-            
-            badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
-            badge = {
-            "uid": uuid,
-            "recipient": recipient,
-            "badge": "{}/BadgeClass/{}".format(
-                badge_base_url, 
-                name),
-            #"issuedOn": int(time.mktime(issuedOn.timetuple())),
-            "issuedOn": issuedOn.strftime("%Y-%m-%d"),
-            "verify": {
-                "type": "hosted",
-                "url": "{}/BadgeClass/{}.json".format(
-                            badge_base_url,
-                            name)
-                }
+        name = bindings[0]['badgeClass'].get('value')
+        
+        badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
+        badge = {
+        "uid": uuid,
+        "recipient": recipient,
+        "badge": "{}/BadgeClass/{}".format(
+            badge_base_url, 
+            name),
+        #"issuedOn": int(time.mktime(issuedOn.timetuple())),
+        "issuedOn": issuedOn.strftime("%Y-%m-%d"),
+        "verify": {
+            "type": "hosted",
+            "url": "{}/BadgeClass/{}.json".format(
+                        badge_base_url,
+                        name)
             }
-            # Badge has been successfully baked and badge image 
-            badge_image_url = self.__valid_image_url__(uuid)
-            if badge_image_url:
-                badge["image"] = badge_image_url 
-        except:
-            print("Error {}".format(sys.exc_info()))
+        }
+        # Badge has been successfully baked and badge image 
+        badge_image_url = self.__valid_image_url__(uuid)
+        if badge_image_url:
+            badge["image"] = badge_image_url 
+##        except:
+##            print("Error {}".format(sys.exc_info()))
         resp.status = falcon.HTTP_200
         if ext.startswith('json'):
             resp.body = json.dumps(badge)
