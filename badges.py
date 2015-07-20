@@ -175,14 +175,9 @@ def bake_badge(badge_uri):
     assert_url = 'http://backpack.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
     print(assert_url)
-    result = urllib.request.urlopen(assert_url)
-    raw_image = result.read()
-    add_image_request = urllib.request.Request(
-        "/".join([repository.base_uri, "rest"]),
-        data=raw_image,
-        method='POST')
-    result = urllib.request.urlopen(add_image_request)
-    return result.read()
+    result = requests.post(assert_url)
+    raw_image = result.content
+    return raw_image
 
 def generate_tmp_uri(class_='Resource'):
     return rdflib.URIRef('{}/badges/tmp/{}/{}'.format(
@@ -519,11 +514,12 @@ class BadgeAssertion(object):
                   "format": "json"})
         if result.status_code < 400:
             bindings = result.json().get('results').get('bindings')
-            image_url = bindings.get('image').get('value')
-            badge_result = requests.get(url)
-            if len(badge_result.content) > 1:
-                return url
-        return False
+            if len(bindings) > 0:
+                image_url = bindings[0].get('image').get('value')
+                badge_result = requests.get(image_url)
+                if len(badge_result.content) > 1:
+                    return url
+        return None
 
     def on_get(self, req, resp, uuid, ext='json'):
         sparql = FIND_ASSERTION_SPARQL.format(uuid)
@@ -543,10 +539,11 @@ class BadgeAssertion(object):
             bindings[0]['IdentityObject'].get('value'))
 
         name = bindings[0]['badgeClass'].get('value')
-        
         badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
         badge = {
+        "@context": "https://w3id.org/openbadges/v1",
         "uid": uuid,
+        "type": "Assertion",
         "recipient": recipient,
         "badge": "{}/BadgeClass/{}".format(
             badge_base_url, 
@@ -555,13 +552,14 @@ class BadgeAssertion(object):
         "issuedOn": issuedOn.strftime("%Y-%m-%d"),
         "verify": {
             "type": "hosted",
-            "url": "{}/BadgeClass/{}.json".format(
+            "url": "{}/BadgeClass/{}".format(
                         badge_base_url,
                         name)
             }
         }
         # Badge has been successfully baked and badge image 
         badge_image_url = self.__valid_image_url__(uuid)
+        print("Badge img url {}".format(badge_image_url))
         if badge_image_url:
             badge["image"] = badge_image_url 
 ##        except:
@@ -606,6 +604,8 @@ class BadgeClass(object):
         keywords = self.__keywords__(name)
         badge_base_url = CONFIG.get('BADGE', 'badge_base_url')
         badge_class_json = {
+            "@context": "https://w3id.org/openbadges/v1",
+            "type": "BadgeClass",
             "name": info.get('name').get('value'),
             "description": info.get('description').get('value'),
             "criteria": '{}/BadgeCriteria/{}'.format(
