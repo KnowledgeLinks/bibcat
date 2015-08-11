@@ -6,3 +6,4 @@
 fedora/fcrepo4-data
 __pycache__
 application.cfg
+*DS_Store
