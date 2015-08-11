@@ -54,12 +54,14 @@ OB = rdflib.Namespace('http://schema.openbadges.org/')
 PREFIX = """PREFIX bf: <{}>
 PREFIX fedora: <{}>
 PREFIX iana: <{}>
+PREFIX ldp: <{}>
 PREFIX openbadge: <{}> 
 PREFIX rdf: <{}>
 PREFIX schema: <{}>
 PREFIX xsd: <{}>""".format(BF,
                            FEDORA, 
                            IANA, 
+                           rdflib.Namespace('http://www.w3.org/ns/ldp#'),
                            OB, 
                            RDF, 
                            SCHEMA, 
@@ -133,7 +135,7 @@ FIND_IMAGE_SPARQL = """{}
 SELECT DISTINCT ?image
 WHERE {{{{
   ?subject openbadge:uid "{{}}"^^xsd:string  .
-  ?subject iana:describes ?image .
+  ?subject ldp:contains ?image .
 }}}}""".format(PREFIX)
 
 FIND_KEYWORDS_SPARQL = """{}
@@ -432,8 +434,7 @@ def issue_badge(email, event):
                         datatype=XSD.dateTime)))
     new_badge = Resource(config=config)
     badge_uri = new_badge.__create__(
-        rdf=badge_assertion_graph,
-        binary=b'a')
+        rdf=badge_assertion_graph)
     if badge_uri.endswith("fcr:metadata"):
         badge_uid = badge_uri.split("/")[-2]
     else:
@@ -454,9 +455,9 @@ def issue_badge(email, event):
     badge_url = "{}/BadgeAssertion/{}".format(
         CONFIG.get('BADGE', 'badge_base_url'),
         badge_uid)
-    new_badge.__replace_binary__(
-        badge_uri, 
-        binary=bake_badge(badge_url))
+    new_badge = requests.post(badge_uri,
+        data=bake_badge(badge_url),
+        headers={"Content-type": 'image/png'})
     print("Issued badge {}".format(badge_url))
     return str(badge_url)
 

@@ -3,7 +3,7 @@
 *.rdb
 *.bat
 *.log
-fedora/fcrepo4-data
+data*
 __pycache__
 application.cfg
 *DS_Store
