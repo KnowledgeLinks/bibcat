@@ -30,51 +30,38 @@ import socket
 import time
 import urllib.request
 import uuid
-try:
-    import lib.semantic_server.app  as semantic_server
-except ImportError:
-    from .lib.semantic_server import app as  semantic_server
-
-import subprocess
-import sys
-try:
-    from .lib.semantic_server.app import config
-    from .lib.semantic_server.repository.utilities.namespaces import *
-    from .lib.semantic_server.repository.resources.fedora import Resource
-except (ImportError, SystemError):
-    from lib.semantic_server.app import config
-    from lib.semantic_server.repository.utilities.namespaces import *
-    from lib.semantic_server.repository.resources.fedora import Resource
-
 
 from string import Template
 
-OB = rdflib.Namespace('http://schema.openbadges.org/')
+OBI = rdflib.Namespace("https://w3id.org/openbadges#")
+SCHEMA = rdflib.Namespace("https://schema.org/")
+#PREFIX = """PREFIX bf: <{}>
+#PREFIX fedora: <{}>
+#PREFIX iana: <{}>
+#PREFIX ldp: <{}>
+#PREFIX obi: <{}> 
+#PREFIX rdf: <{}>
+#PREFIX schema: <{}>
+#PREFIX xsd: <{}>""".format(BF,
+#                           FEDORA, 
+#                           IANA, 
+#                           rdflib.Namespace('http://www.w3.org/ns/ldp#'),
+#                           OBI, 
+#                           RDF, 
+#                           SCHEMA, 
+#                           XSD)
 
-PREFIX = """PREFIX bf: <{}>
-PREFIX fedora: <{}>
-PREFIX iana: <{}>
-PREFIX ldp: <{}>
-PREFIX openbadge: <{}> 
-PREFIX rdf: <{}>
-PREFIX schema: <{}>
-PREFIX xsd: <{}>""".format(BF,
-                           FEDORA, 
-                           IANA, 
-                           rdflib.Namespace('http://www.w3.org/ns/ldp#'),
-                           OB, 
-                           RDF, 
-                           SCHEMA, 
-                           XSD)
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.abspath(os.path.join(PROJECT_ROOT, "application.cfg")))
-TRIPLESTORE_URL = CONFIG.get('BADGE', 'triplestore')
-ISSUER_URI = None
 
+PREFIX = """PREFIX obi: <https://w3id.org/openbadges#>
+PREFIX schema: <https://schema.org>"""
+
+TRIPLESTORE_URL = CONFIG.get('BADGE', 'triplestore')
 
 CLASS_EXISTS_SPARQL = """{}
 SELECT DISTINCT ?entity
@@ -85,22 +72,22 @@ WHERE {{{{
 CHECK_ISSUER_SPARQL = """{}
 SELECT DISTINCT ?entity
 WHERE {{{{
-   ?entity schema:url <{{}}> .
+   ?entity obi:url <{{}}> .
 }}}}""".format(PREFIX)
 
 CHECK_PERSON_SPARQL = """{}
 SELECT DISTINCT ?entity 
 WHERE {{{{
-  ?entity schema:email "{{}}"^^xsd:string .
+  ?entity obi:email "{{}}"^^xsd:string .
 }}}}""".format(PREFIX)
 
 FIND_ASSERTION_SPARQL = """{}
 SELECT DISTINCT *
 WHERE {{{{
-  ?subject openbadge:uid "{{}}"^^xsd:string .
-  ?subject openbadge:recipient ?IdentityObject .
-  ?subject openbadge:issuedOn ?DateTime .
-  ?subject openbadge:BadgeClass ?badgeURI .
+  ?subject obi:uid "{{}}"^^xsd:string .
+  ?subject obi:recipient ?IdentityObject .
+  ?subject obi:issuedOn ?DateTime .
+  ?subject obi:BadgeClass ?badgeURI .
   ?badgeURI schema:alternativeName ?badgeClass .
 }}}}""".format(PREFIX)
 
@@ -109,9 +96,9 @@ FIND_CLASS_SPARQL = """{}
 SELECT DISTINCT *
 WHERE {{{{
   ?class rdf:type openbadge:BadgeClass .
-  ?class schema:name ?name .
-  ?class schema:description ?description .
-  ?class openbadge:issuer ?issuer .
+  ?class obi:name ?name .
+  ?class obi:description ?description .
+  ?class obi:issuer ?issuer .
   ?class schema:alternativeName "{{}}"^^xsd:string .
 }}}}""".format(PREFIX)
 
@@ -159,11 +146,9 @@ INSERT DATA {{{{
 
 def default_graph():
     graph = rdflib.Graph()
-    graph.namespace_manager.bind('fedora', FEDORA)
-    graph.namespace_manager.bind('openbadge', OB)
-    graph.namespace_manager.bind('rdf', RDF)
+    graph.namespace_manager.bind('obi', OBI)
+    graph.namespace_manager.bind('rdf', rdflib.RDF)
     graph.namespace_manager.bind('schema', SCHEMA)
-    graph.namespace_manager.bind('owl', OWL)
     return graph
 
 
@@ -176,7 +161,6 @@ def bake_badge(badge_uri):
     #    badge_uri)
     assert_url = 'http://backpack.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
-    print(assert_url)
     result = requests.post(assert_url)
     raw_image = result.content
     return raw_image
@@ -199,24 +183,31 @@ def add_get_issuer(ISSUER_URI):
         info = issuer_check_result.json().get('results').get('bindings')
         if len(info) < 1:
             issuer_graph = default_graph()
-            issuer_temp_uri = generate_tmp_uri('Organization')
+            new_issuer_result =  requests.post("{}:{}/fedora/rest".format(
+                config.get("DEFAULT", "host"),
+                config.get("TOMCAT", "port")))
+            issuer_temp_uri = rdflib.URIRef(new_issuer_result.text)
             issuer_graph.add((issuer_temp_uri,
                               RDF.type,
                               SCHEMA.Organization))
             issuer_graph.add((issuer_temp_uri,
-                              SCHEMA.url,
+                              RDF.type,
+                              OBI.Issuer))
+            issuer_graph.add((issuer_temp_uri,
+                              OBI.url,
                               rdflib.URIRef(issuer_url)))
             issuer_graph.add((issuer_temp_uri,
-                              SCHEMA.name,
+                              OBI.name,
                               rdflib.Literal(CONFIG.get('BADGE', 'issuer_name'))))
-            resource = Resource(config=config) 
-            resource_url = resource.__create__(rdf=issuer_graph)
-            ISSUER_URI = rdflib.URIRef(resource_url)
+            issuer_update_result = requests.put(str(issuer_temp_uri),
+                data=issuer_graph.serialize(format='turtle'),
+                headers={"Content-type": "text/turtle"})
+            ISSUER_URI = rdflib.URIRef(str(issuer_temp_uri))
         else:
             ISSUER_URI = rdflib.URIRef(info[0].get('entity').get('value'))
     return ISSUER_URI
 
-ISSUER_URI = add_get_issuer(ISSUER_URI)
+ISSUER_URI = add_get_issuer(ISSUER_URI=None)
 
 def add_get_participant(**kwargs):
     email = kwargs.get('email')
@@ -279,6 +270,11 @@ def create_badge_class():
                     slugify(badge_name)))
             else:
                 break
+        else:
+            print("Error with SPARQL {}\n{}".format(check_badge_result.status_code,
+                check_badge_result.text))
+            break
+
     
     description = input("Description >>")
     started_on = input("Badge started on >>")
@@ -311,23 +307,29 @@ def create_badge_class():
             badge_image = urllib.request.urlopen(image_location).read()
         else:
             badge_image = open(image_location, 'rb').read()
-        badge_class_uri = generate_tmp_uri('BadgeClass')
+        new_badge_result = requests.post("{}:{}/fedora/rest".format(
+            config.get("DEFAULT", "host"),
+            config.get("TOMCAT", "port")))
+        if new_badge_result.status_code > 399:
+            raise ValueError("Error adding new badge {}\n{}".format(
+                new_badge_result.status_code,
+                new_badge_result.text))
+        badge_class_uri = rdflib.URIRef(new_badge_result.text)
         class_graph = default_graph()
+        class_graph.parse(new_badge_result.text)
+        class_grpah.add((badge_class_uri, RDF.type, OBI.BadgeClass))
         class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
         class_graph.add((badge_class_uri, 
-                         RDF.type, 
-                         OB.BadgeClass))
-        class_graph.add((badge_class_uri, 
-                         OB.issuer,
+                         OBI.issuer,
                          ISSUER_URI))
         class_graph.add((badge_class_uri, 
-                         SCHEMA.name, 
+                         OBI.name, 
                          rdflib.Literal(badge_name)))
         class_graph.add((badge_class_uri, 
                    SCHEMA.alternativeName, 
                    rdflib.Literal(slugify(badge_name))))  
         class_graph.add((badge_class_uri, 
-                         SCHEMA.description, 
+                         OBI.description, 
                          rdflib.Literal(description)))
         class_graph.add((badge_class_uri, 
                          SCHEMA.startDate, 
@@ -338,17 +340,22 @@ def create_badge_class():
                              rdflib.Literal(ended_on)))
         for keyword in keywords:
             class_graph.add((badge_class_uri,
-                             SCHEMA.keywords,
+                             OBI.tags,
                              rdflib.Literal(keyword)))
         for requirement in criteria:
             class_graph.add((badge_class_uri,
-                             SCHEMA.educationalUse,
+                             OBI.criteria,
                              rdflib.Literal(requirement)))
-        badge_class = Resource(config=config)
-        badge_class_url = badge_class.__create__(
-            rdf=class_graph,
-            binary=badge_image)
-        return badge_class_url
+        update_class_result = requests.put(str(badge_class_uri),
+            data=class_graph.serialize(format='turtle'),
+            headers={"Content-type": "text/turtle"})
+        if update_class_result.status_code > 399:
+            raise ValueError("Could not update {} with RDF {}\n{} {}".format(
+                str(badge_class_uri),
+                class_graph.serialize(format='turtle').decode(),
+                update_class_result.status_code,
+                update_class_result.text))
+        return str(badge_class_uri)
     else:
         retry = input("Try again? (Y|N)")
         if retry.lower() == 'y':
@@ -682,12 +689,12 @@ class IssuerOrganization(object):
                                 "url": CONFIG.get('BADGE', 'issuer_url')})
         
 #semantic_server.api.add_route("badge/{uuid}", Badge())
-semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
+#semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
 #semantic_server.api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
-semantic_server.api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
-semantic_server.api.add_route("/BadgeImage/{name}.png", BadgeImage())
-semantic_server.api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
-semantic_server.api.add_route("/IssuerOrganization", IssuerOrganization())
+#semantic_server.api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
+#semantic_server.api.add_route("/BadgeImage/{name}.png", BadgeImage())
+#semantic_server.api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
+#semantic_server.api.add_route("/IssuerOrganization", IssuerOrganization())
 
 def main(args):
     """Function runs the development application based on arguments passed in
