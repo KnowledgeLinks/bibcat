@@ -3,14 +3,13 @@ Name:        badges
 Purpose:     Islandora Badges Application
 
 Author:      Jeremy Nelson
-/bin/bash: 5: command not found
 Created:     16/09/2014
 Copyright:   (c) Jeremy Nelson, Colorado College, Islandora Foundation 2014-
 Licence:     GPLv3
 """
 __author__ = "Jeremy Nelson"
 __license__ = "GPLv3"
-__version_info__ = ('0', '1', '0')
+__version_info__ = ('0', '5', '0')
 __version__ = '.'.join(__version_info__)
 
 import argparse
@@ -24,153 +23,33 @@ import mimetypes
 import os
 import rdflib
 import re
-import redis
 import requests
-import socket
 import time
-import urllib.request
-import uuid
 
-from string import Template
-
-OBI = rdflib.Namespace("https://w3id.org/openbadges#")
-RDF = rdflib.RDF
-SCHEMA = rdflib.Namespace("https://schema.org/")
-#PREFIX = """PREFIX bf: <{}>
-#PREFIX fedora: <{}>
-#PREFIX iana: <{}>
-#PREFIX ldp: <{}>
-#PREFIX obi: <{}> 
-#PREFIX rdf: <{}>
-#PREFIX schema: <{}>
-#PREFIX xsd: <{}>""".format(BF,
-#                           FEDORA, 
-#                           IANA, 
-#                           rdflib.Namespace('http://www.w3.org/ns/ldp#'),
-#                           OBI, 
-#                           RDF, 
-#                           SCHEMA, 
-#                           XSD)
-
+from jinja2 import Environment, FileSystemLoader
+from graph import *
+from forms import NewBadgeClass
+from wsgiref import simple_server
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
 
+ENV = Environment(loader=FileSystemLoader(os.path.join(PROJECT_ROOT, "templates")))
+
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.abspath(os.path.join(PROJECT_ROOT, "application.cfg")))
-
-PREFIX = """PREFIX obi: <https://w3id.org/openbadges#>
-PREFIX schema: <https://schema.org>"""
-
 TRIPLESTORE_URL = CONFIG.get('BADGE', 'triplestore')
-
-CLASS_EXISTS_SPARQL = """{}
-SELECT DISTINCT ?entity
-WHERE {{{{
-  ?entity schema:alternativeName "{{}}"^^xsd:string .
-}}}}""".format(PREFIX)
-
-CHECK_ISSUER_SPARQL = """{}
-SELECT DISTINCT ?entity
-WHERE {{{{
-   ?entity obi:url <{{}}> .
-}}}}""".format(PREFIX)
-
-CHECK_PERSON_SPARQL = """{}
-SELECT DISTINCT ?entity 
-WHERE {{{{
-  ?entity obi:email "{{}}"^^xsd:string .
-}}}}""".format(PREFIX)
-
-FIND_ASSERTION_SPARQL = """{}
-SELECT DISTINCT *
-WHERE {{{{
-  ?subject obi:uid "{{}}"^^xsd:string .
-  ?subject obi:recipient ?IdentityObject .
-  ?subject obi:issuedOn ?DateTime .
-  ?subject obi:BadgeClass ?badgeURI .
-  ?badgeURI schema:alternativeName ?badgeClass .
-}}}}""".format(PREFIX)
-
-
-FIND_CLASS_SPARQL = """{}
-SELECT DISTINCT *
-WHERE {{{{
-  ?class rdf:type openbadge:BadgeClass .
-  ?class obi:name ?name .
-  ?class obi:description ?description .
-  ?class obi:issuer ?issuer .
-  ?class schema:alternativeName "{{}}"^^xsd:string .
-}}}}""".format(PREFIX)
-
-FIND_CLASS_IMAGE_SPARQL = """{}
-SELECT DISTINCT ?image
-WHERE {{{{
-  ?subject schema:alternativeName "{{}}"^^xsd:string .
-  ?subject iana:describes ?image .
-}}}}""".format(PREFIX)
-
-
-FIND_CRITERIA_SPARQL = """{}
-SELECT ?name ?criteria
-WHERE {{{{
-  ?class schema:alternativeName "{{}}"^^xsd:string .
-  ?class schema:educationalUse ?criteria .
-  ?class schema:name ?name .
-}}}}""".format(PREFIX)
-
-FIND_IMAGE_SPARQL = """{}
-SELECT DISTINCT ?image
-WHERE {{{{
-  ?subject openbadge:uid "{{}}"^^xsd:string  .
-  ?subject ldp:contains ?image .
-}}}}""".format(PREFIX)
-
-FIND_KEYWORDS_SPARQL = """{}
-SELECT ?keyword
-WHERE {{{{
-   ?subject schema:alternativeName "{{}}"^^xsd:string .
-   ?subject schema:keywords ?keyword .
-}}}}""".format(PREFIX)
-
-IDENT_OBJ_SPARQL = """{}
-SELECT DISTINCT *
-WHERE {{{{
-  <{{0}}> openbadge:identity ?identHash .
-  <{{0}}> openbadge:salt ?salt .
-}}}}""".format(PREFIX)
-
-UPDATE_UID_SPARQL = """{}
-INSERT DATA {{{{
-    <{{}}> openbadge:uid "{{}}"^^xsd:string
-}}}}""".format(PREFIX)
-
-def default_graph():
-    graph = rdflib.Graph()
-    graph.namespace_manager.bind('obi', OBI)
-    graph.namespace_manager.bind('rdf', rdflib.RDF)
-    graph.namespace_manager.bind('schema', SCHEMA)
-    return graph
-
 
 def bake_badge_dev(badge_uri):
     with open("E:\\2015\\open-badge-atla2015.png", "rb") as img:
         return img.read()
 
 def bake_badge(badge_uri):
-    #assert_url = 'http://beta.openbadges.org/baker?assertion={0}'.format(
-    #    badge_uri)
     assert_url = 'http://backpack.openbadges.org/baker?assertion={0}'.format(
         badge_uri)
     result = requests.post(assert_url)
     raw_image = result.content
     return raw_image
-
-def generate_tmp_uri(class_='Resource'):
-    return rdflib.URIRef('{}/badges/tmp/{}/{}'.format(
-        CONFIG.get('BADGE', 'issuer_url'),
-        class_,
-        datetime.datetime.utcnow().timestamp()))
 
 def add_get_issuer(ISSUER_URI, config=CONFIG):
     if ISSUER_URI:
@@ -187,6 +66,7 @@ def add_get_issuer(ISSUER_URI, config=CONFIG):
             new_issuer_result =  requests.post("http://{}:{}/fedora/rest".format(
                 config.get("DEFAULT", "host"),
                 config.get("TOMCAT", "port")))
+            issuer_graph.parse(new_issuer_result.text)
             issuer_temp_uri = rdflib.URIRef(new_issuer_result.text)
             issuer_graph.add((issuer_temp_uri,
                               RDF.type,
@@ -308,59 +188,70 @@ def create_badge_class():
             badge_image = urllib.request.urlopen(image_location).read()
         else:
             badge_image = open(image_location, 'rb').read()
-        new_badge_result = requests.post("http://{}:{}/fedora/rest".format(
-            CONFIG.get("DEFAULT", "host"),
-            CONFIG.get("TOMCAT", "port")))
-        if new_badge_result.status_code > 399:
-            raise ValueError("Error adding new badge {}\n{}".format(
-                new_badge_result.status_code,
-                new_badge_result.text))
-        badge_class_uri = rdflib.URIRef(new_badge_result.text)
-        class_graph = default_graph()
-        class_graph.parse(new_badge_result.text)
-        class_grpah.add((badge_class_uri, RDF.type, OBI.BadgeClass))
-        class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
-        class_graph.add((badge_class_uri, 
-                         OBI.issuer,
-                         ISSUER_URI))
-        class_graph.add((badge_class_uri, 
-                         OBI.name, 
-                         rdflib.Literal(badge_name)))
-        class_graph.add((badge_class_uri, 
-                   SCHEMA.alternativeName, 
-                   rdflib.Literal(slugify(badge_name))))  
-        class_graph.add((badge_class_uri, 
-                         OBI.description, 
-                         rdflib.Literal(description)))
-        class_graph.add((badge_class_uri, 
-                         SCHEMA.startDate, 
-                         rdflib.Literal(started_on)))
-        if ended_on is not None or len(ended_on) > 0:
-            class_graph.add((badge_class_uri, 
-                             SCHEMA.endDate, 
-                             rdflib.Literal(ended_on)))
-        for keyword in keywords:
-            class_graph.add((badge_class_uri,
-                             OBI.tags,
-                             rdflib.Literal(keyword)))
-        for requirement in criteria:
-            class_graph.add((badge_class_uri,
-                             OBI.criteria,
-                             rdflib.Literal(requirement)))
-        update_class_result = requests.put(str(badge_class_uri),
-            data=class_graph.serialize(format='turtle'),
-            headers={"Content-type": "text/turtle"})
-        if update_class_result.status_code > 399:
-            raise ValueError("Could not update {} with RDF {}\n{} {}".format(
-                str(badge_class_uri),
-                class_graph.serialize(format='turtle').decode(),
-                update_class_result.status_code,
-                update_class_result.text))
-        return str(badge_class_uri)
     else:
         retry = input("Try again? (Y|N)")
         if retry.lower() == 'y':
             create_badge_class()
+
+        
+def new_badge_class(**kwargs):
+    image_raw = kwargs.get('image')
+    badge_name = kwargs.get('name')
+    description = kwargs.get('description')
+    started_on = kwargs.get('startDate')
+    ended_on = kwargs.get('endDate')
+    keywords = kwargs.get('tags')
+    criteria = kwargs.get('criteria', [])
+    new_badge_result = requests.post("http://{}:{}/fedora/rest".format(
+        CONFIG.get("DEFAULT", "host"),
+        CONFIG.get("TOMCAT", "port")))
+    if new_badge_result.status_code > 399:
+        raise ValueError("Error adding new badge {}\n{}".format(
+	    new_badge_result.status_code,
+	    new_badge_result.text))
+    badge_class_uri = rdflib.URIRef(new_badge_result.text)
+    class_graph = default_graph()
+    class_graph.parse(new_badge_result.text)
+    class_graph.add((badge_class_uri, RDF.type, OBI.BadgeClass))
+    class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
+    class_graph.add((badge_class_uri, 
+        OBI.issuer,
+        ISSUER_URI))
+    class_graph.add((badge_class_uri, 
+        OBI.name, 
+        rdflib.Literal(badge_name)))
+    class_graph.add((badge_class_uri, 
+        SCHEMA.alternativeName, 
+        rdflib.Literal(slugify(badge_name))))  
+    class_graph.add((badge_class_uri, 
+        OBI.description, 
+        rdflib.Literal(description)))
+    class_graph.add((badge_class_uri, 
+        SCHEMA.startDate, 
+        rdflib.Literal(started_on)))
+    if ended_on is not None or len(ended_on) > 0:
+        class_graph.add((badge_class_uri, 
+            SCHEMA.endDate, 
+        rdflib.Literal(ended_on)))
+    for keyword in keywords:
+        class_graph.add((badge_class_uri,
+            OBI.tags,
+	    rdflib.Literal(keyword)))
+    for requirement in criteria:
+        class_graph.add((badge_class_uri,
+            OBI.criteria,
+            rdflib.Literal(requirement)))
+    update_class_result = requests.put(
+        str(badge_class_uri),
+        data=class_graph.serialize(format='turtle'),
+        headers={"Content-type": "text/turtle"})
+    if update_class_result.status_code > 399:
+        raise ValueError("Could not update {} with RDF {}\n{} {}".format(
+	    str(badge_class_uri),
+	    class_graph.serialize(format='turtle').decode(),
+	    update_class_result.status_code,
+	    update_class_result.text))
+    return str(badge_class_uri)
 
 def create_identity_object(email):
     person_uri = rdflib.URIRef(add_get_participant(email=email))
@@ -596,10 +487,23 @@ class BadgeClass(object):
             output.append(result.get('keyword').get('value'))
         return list(set(output))
 
-    def on_get(self, req, resp, name, ext='json'):
-        if name.endswith(ext):
+    def __html__(self, name=None):
+        """Generates HTML view for web-browser"""
+        if not name:
+            badge_class_form = NewBadgeClass()
+        badge_class_template = ENV.get_template("badge_class.html")
+        return badge_class_template.render(
+            name=name, 
+            form=badge_class_form)
+
+    def on_get(self, req, resp, name=None, ext='json'):
+        if name and name.endswith(ext):
             name = name.split(".{}".format(ext))[0]
         resp.status = falcon.HTTP_200
+        if not name:
+            resp.content_type = "text/html"
+            resp.body = self.__html__(name)
+            return
         sparql = FIND_CLASS_SPARQL.format(name)
         result = requests.post(
             TRIPLESTORE_URL,
@@ -629,6 +533,13 @@ class BadgeClass(object):
         }
         if ext.startswith('json'):
             resp.body = json.dumps(badge_class_json)
+
+    def on_post(self, req, resp, name=None, ext='json'):
+        print(req.params.items())
+        new_badge_url = new_badge_class(**req.params)
+        resp.status = falcon.HTTP_200
+        resp.body = json.dumps({"message": "Success"})
+
 
 
 class BadgeClassCriteria(object):
@@ -683,19 +594,29 @@ class BadgeImage(object):
         img_result = requests.get(img_url)
         resp.body = img_result.content
 
+class DefaultView(object):
+
+    def on_get(self, req, resp):
+        resp.status = falcon.HTTP_200
+        resp.body = "In default view"
+
 class IssuerOrganization(object):
 
     def on_get(self, req, resp):
         resp.body = json.dumps({"name": CONFIG.get('BADGE', 'issuer_name'),
                                 "url": CONFIG.get('BADGE', 'issuer_url')})
+
+api = falcon.API()
         
-#semantic_server.api.add_route("badge/{uuid}", Badge())
-#semantic_server.api.add_route("/BadgeClass/{name}", BadgeClass())
-#semantic_server.api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
-#semantic_server.api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
-#semantic_server.api.add_route("/BadgeImage/{name}.png", BadgeImage())
-#semantic_server.api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
-#semantic_server.api.add_route("/IssuerOrganization", IssuerOrganization())
+#api.add_route("badge/{uuid}", Badge())
+api.add_route("/", DefaultView())
+api.add_route("/BadgeClass", BadgeClass())
+api.add_route("/BadgeClass/{name}", BadgeClass())
+api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
+api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
+api.add_route("/BadgeImage/{name}.png", BadgeImage())
+api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
+api.add_route("/IssuerOrganization", IssuerOrganization())
 
 def main(args):
     """Function runs the development application based on arguments passed in
@@ -706,16 +627,11 @@ def main(args):
 
     """
     if args.action.startswith('serve'):
+        print("Starting REST API on port 7500")
         host = args.host or '0.0.0.0'
-        port = args.port or 5100
-        badge_app.run(
-            host=host,
-            port=int(port),
-            debug=True)
-        semantic_server.main()
-    elif args.action.startswith('start'):
-        print("Starting REST API on port 18150")
-        semantic_server.main()
+        port = args.port or 7500
+        httpd = simple_server.make_server(host, port, api)
+        httpd.serve_forever()
     elif args.action.startswith('issue'):
         email = args.email
         event = args.event
@@ -732,7 +648,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'action',
-        choices=['serve', 'start', 'issue', 'revoke', 'new'],
+        choices=['serve', 'issue', 'revoke', 'new'],
         help='Action for badge, choices: serve, issue, new, revoke')
     parser.add_argument('--host', help='Host IP address for dev server')
     parser.add_argument('--port', help='Port number for dev server')

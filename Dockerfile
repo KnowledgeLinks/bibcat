@@ -1,27 +1,29 @@
-FROM ubuntu:14.04.2
-MAINTAINER "Jeremy Nelson <jermnelson@gmail.com>"
+#Dockerfile for Islandora OpenBadges REST API 
+FROM python:3.5.0
+MAINTAINER Jeremy Nelson <jermnelson@gmail.com>
 
-RUN apt-get update
-RUN apt-get install -y software-properties-common
+# Set environmental variables
+ENV IOB_HOME /opt/islandora-open-badges
+ENV NGINX_HOME /etc/nginx
 
-# Install Python3 setuptools and pip
-RUN apt-get update
-#RUN apt-get install -y python3-setuptools
+# Update Ubuntu and install Python 3 setuptools, git and other
+# packages
+RUN apt-get update && apt-get install -y && \
+  apt-get install -y python3-setuptools &&\
+  apt-get install -y git &&\
+  apt-get install -y nginx &&\
+  apt-get install -y python3-pip 
 
-# Install gcc for hiredis
-#RUN add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main universe"
-RUN apt-get install -y gcc libc6-dev build-essential python3.4-dev python3-setuptools
+COPY . $IOB_HOME
 
-# Install needed Python3 modules
-RUN easy_install3 pip
-ADD requirements.txt /opt/badges/requirements.txt
-RUN cd /opt/badges; pip install -r requirements.txt
-
-COPY lib/ldfs/ lib/ldfs/
-COPY lib/semantic_server/. /lib/semantic_server/
-
-EXPOSE 5100
-
-ENTRYPOINT ["/opt/badges/"]
-
-CMD ["python3", "badges.py", "serve"]
+RUN cd $IOB_HOME \
+    && pip3 install -r requirements.txt \
+    && rm $NGINX_HOME/sites-enabled/default \
+    && cp islandora.conf $NGINX_HOME/sites-available/islandora.conf \
+    && ln -s $NGINX_HOME/sites-available/islandora.conf $NGINX_HOME/sites-enabled/islandora.conf
+    
+EXPOSE 80
+WORKDIR $IOB_HOME
+# Run application with gunicorn and nginx
+COPY docker-entrypoint.sh $IOB_HOME/
+ENTRYPOINT ["./docker-entrypoint.sh"]

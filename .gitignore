@@ -5,6 +5,8 @@
 *.log
 data*
 build*
+dist*
+*egg-info*
 __pycache__
 application.cfg
 *DS_Store
