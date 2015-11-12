@@ -6,20 +6,19 @@ __version__ = '.'.join(__version_info__)
 from setuptools import find_packages, setup
 
 setup(
-    name: 'IslandoraOpenBadges',
-    version: __version__,
+    name='IslandoraOpenBadges',
+    version= __version__,
     author=__author__,
     author_email='jermnelson@gmail.com',
-    description="Islandora Flask application for issuing OpenBadges",
-    long_description=,
+    description="Islandora REST API for issuing OpenBadges",
+    long_description="",
     packages=find_packages(),
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'Flask',
+        'falcon',
         'rdflib',
-        'requests',
-        'Flask-Negotiate'
+        'requests'
     ],
     classifiers=[
         'Framework :: Flask',

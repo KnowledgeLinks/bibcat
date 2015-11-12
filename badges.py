@@ -34,6 +34,7 @@ import uuid
 from string import Template
 
 OBI = rdflib.Namespace("https://w3id.org/openbadges#")
+RDF = rdflib.RDF
 SCHEMA = rdflib.Namespace("https://schema.org/")
 #PREFIX = """PREFIX bf: <{}>
 #PREFIX fedora: <{}>
@@ -171,7 +172,7 @@ def generate_tmp_uri(class_='Resource'):
         class_,
         datetime.datetime.utcnow().timestamp()))
 
-def add_get_issuer(ISSUER_URI):
+def add_get_issuer(ISSUER_URI, config=CONFIG):
     if ISSUER_URI:
         return ISSUER_URI
     issuer_url = CONFIG.get('BADGE', 'issuer_url')
@@ -183,7 +184,7 @@ def add_get_issuer(ISSUER_URI):
         info = issuer_check_result.json().get('results').get('bindings')
         if len(info) < 1:
             issuer_graph = default_graph()
-            new_issuer_result =  requests.post("{}:{}/fedora/rest".format(
+            new_issuer_result =  requests.post("http://{}:{}/fedora/rest".format(
                 config.get("DEFAULT", "host"),
                 config.get("TOMCAT", "port")))
             issuer_temp_uri = rdflib.URIRef(new_issuer_result.text)
@@ -307,9 +308,9 @@ def create_badge_class():
             badge_image = urllib.request.urlopen(image_location).read()
         else:
             badge_image = open(image_location, 'rb').read()
-        new_badge_result = requests.post("{}:{}/fedora/rest".format(
-            config.get("DEFAULT", "host"),
-            config.get("TOMCAT", "port")))
+        new_badge_result = requests.post("http://{}:{}/fedora/rest".format(
+            CONFIG.get("DEFAULT", "host"),
+            CONFIG.get("TOMCAT", "port")))
         if new_badge_result.status_code > 399:
             raise ValueError("Error adding new badge {}\n{}".format(
                 new_badge_result.status_code,

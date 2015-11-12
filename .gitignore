@@ -4,6 +4,7 @@
 *.bat
 *.log
 data*
+build*
 __pycache__
 application.cfg
 *DS_Store
