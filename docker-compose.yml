@@ -6,3 +6,8 @@ badges:
    - "7500:7500"
 semantic_server:
   image: jermnelson/semantic-server-core:latest
+  ports:
+   - "8080:8080"
+  volumes:
+   - /opt/islandora-open-badges/fcrepo4-data:/usr/share/fcrepo4-data
+   - /opt/islandora-open-badges/blazegraph:/usr/share/blazegraph

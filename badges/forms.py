@@ -2,7 +2,7 @@ __author__ = "Jeremy Nelson"
 
 from wtforms import Form
 from wtforms.fields import BooleanField, DateTimeField, Field, FileField 
-from wtforms.fields import StringField, TextField
+from wtforms.fields import StringField, TextAreaField
 from wtforms.widgets import TextInput
 
 class CollectionListField(Field):
@@ -25,7 +25,7 @@ class CollectionListField(Field):
 class NewBadgeClass(Form):
     """Form for adding a new badge class"""
     name = StringField()
-    description = TextField()
+    description = TextAreaField()
     criteria = CollectionListField()
     endDate = DateTimeField("End Date")
     image_file = FileField("Upload Image File")

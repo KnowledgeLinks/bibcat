@@ -96,6 +96,15 @@ INSERT DATA {{{{
     <{{}}> openbadge:uid "{{}}"^^xsd:string
 }}}}""".format(PREFIX)
 
+UPDATE_BADGE_CLASS = """{}
+INSERT {{{{
+  <> obi:issuer <{{}}> .
+  <> obi:name "{{}}" .
+  <> obi:description "{{}}" .
+  <> schema:alternativeName "{{}}" .
+  <> 
+}}}}
+WHERE {{{{ }}}}""".format(PREFIX)
 def default_graph():
     graph = rdflib.Graph()
     graph.namespace_manager.bind('obi', OBI)

@@ -197,21 +197,25 @@ def create_badge_class():
 def new_badge_class(**kwargs):
     image_raw = kwargs.get('image')
     badge_name = kwargs.get('name')
+    badge_name_slug = slugify(badge_name)
     description = kwargs.get('description')
     started_on = kwargs.get('startDate')
     ended_on = kwargs.get('endDate')
     keywords = kwargs.get('tags')
     criteria = kwargs.get('criteria', [])
+    badge_image = kwargs.get('image_file')
     new_badge_result = requests.post("http://{}:{}/fedora/rest".format(
         CONFIG.get("DEFAULT", "host"),
-        CONFIG.get("TOMCAT", "port")))
+        CONFIG.get("TOMCAT", "port")),
+        data=badge_image,
+        headers={"Content-type": "image/png"})
     if new_badge_result.status_code > 399:
         raise ValueError("Error adding new badge {}\n{}".format(
 	    new_badge_result.status_code,
 	    new_badge_result.text))
-    badge_class_uri = rdflib.URIRef(new_badge_result.text)
+    badge_class_uri = rdflib.URIRef("{}/fcr:metadata".format(new_badge_result.text))
     class_graph = default_graph()
-    class_graph.parse(new_badge_result.text)
+    class_graph.parse(str(badge_class_uri))
     class_graph.add((badge_class_uri, RDF.type, OBI.BadgeClass))
     class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
     class_graph.add((badge_class_uri, 
@@ -222,10 +226,10 @@ def new_badge_class(**kwargs):
         rdflib.Literal(badge_name)))
     class_graph.add((badge_class_uri, 
         SCHEMA.alternativeName, 
-        rdflib.Literal(slugify(badge_name))))  
+        rdflib.Literal(badge_name_slug)))  
     class_graph.add((badge_class_uri, 
         OBI.description, 
-        rdflib.Literal(description)))
+        rdflib.Literal(' '.join(description))))
     class_graph.add((badge_class_uri, 
         SCHEMA.startDate, 
         rdflib.Literal(started_on)))
@@ -251,7 +255,7 @@ def new_badge_class(**kwargs):
 	    class_graph.serialize(format='turtle').decode(),
 	    update_class_result.status_code,
 	    update_class_result.text))
-    return str(badge_class_uri)
+    return str(badge_class_uri), badge_name_slug
 
 def create_identity_object(email):
     person_uri = rdflib.URIRef(add_get_participant(email=email))
@@ -342,7 +346,7 @@ def issue_badge(email, event):
         "openbadge:uid", 
         '"{}"'.format(badge_uid),
         False):
-        print("ERROR unable to save OpenBadge uid={}".format(badge_uid))
+            print("ERROR unable to save OpenBadge uid={}".format(badge_uid))
     ## Manually update triplestore
     ts_update = requests.post(
         TRIPLESTORE_URL,
@@ -535,10 +539,11 @@ class BadgeClass(object):
             resp.body = json.dumps(badge_class_json)
 
     def on_post(self, req, resp, name=None, ext='json'):
-        print(req.params.items())
-        new_badge_url = new_badge_class(**req.params)
-        resp.status = falcon.HTTP_200
+        new_badge_url, slug_name = new_badge_class(**req.params)
+        print("Slug name is {}".format(slug_name))
+        resp.status = falcon.HTTP_201
         resp.body = json.dumps({"message": "Success"})
+        resp.location = '/BadgeClass/{}'.format(slug_name)
 
 
 
