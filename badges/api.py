@@ -1,8 +1,8 @@
 __author__ = "Jeremy Nelson"
 
 import falcon
-from . import BadgeClass, BadgeClassCriteria, BadgeAssertion 
-from . import BadgeImage, DefaultView, IssuerOrganization
+from __init__ import BadgeClass, BadgeClassCriteria, BadgeAssertion 
+from __init__ import BadgeImage, DefaultView, IssuerOrganization
 
 api = falcon.API()
 

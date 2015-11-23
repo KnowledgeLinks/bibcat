@@ -117,5 +117,3 @@ def badge_image(badge, uid=None):
     if img_response.status_code > 399:
         abort(500)
     return Response(img_response.text, mimetype='image/png')
-
-

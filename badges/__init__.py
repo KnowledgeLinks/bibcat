@@ -622,6 +622,7 @@ def main(args):
 
     """
     if args.action.startswith('serve'):
+        from api import api
         print("Starting REST API on port 7500")
         host = args.host or '0.0.0.0'
         port = args.port or 7500
@@ -636,7 +637,7 @@ def main(args):
     elif args.action.startswith('revoke'):
         email = args.email
         event = args.event
-        revoke_bade(email, event)
+        revoke_badge(email, event)
 
 
 if __name__ == '__main__':
