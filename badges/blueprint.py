@@ -69,7 +69,7 @@ def badge_class(badge_classname):
         }
     return jsonify(badge_class_json)
 
-@badge_app.route("/Criteria/<badge>")
+@open_badge.route("/Criteria/<badge>")
 @produces('application/json')
 def badge_criteria(badge):
     """Route displays the criteria for the badge class

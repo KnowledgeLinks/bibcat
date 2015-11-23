@@ -611,17 +611,7 @@ class IssuerOrganization(object):
         resp.body = json.dumps({"name": CONFIG.get('BADGE', 'issuer_name'),
                                 "url": CONFIG.get('BADGE', 'issuer_url')})
 
-api = falcon.API()
-        
-#api.add_route("badge/{uuid}", Badge())
-api.add_route("/", DefaultView())
-api.add_route("/BadgeClass", BadgeClass())
-api.add_route("/BadgeClass/{name}", BadgeClass())
-api.add_route("/BadgeClass/{name}.{ext}", BadgeClass())
-api.add_route("/BadgeCriteria/{name}", BadgeClassCriteria())
-api.add_route("/BadgeImage/{name}.png", BadgeImage())
-api.add_route("/BadgeAssertion/{uuid}", BadgeAssertion())
-api.add_route("/IssuerOrganization", IssuerOrganization())
+
 
 def main(args):
     """Function runs the development application based on arguments passed in
