@@ -105,6 +105,7 @@ INSERT {{{{
   <> 
 }}}}
 WHERE {{{{ }}}}""".format(PREFIX)
+
 def default_graph():
     graph = rdflib.Graph()
     graph.namespace_manager.bind('obi', OBI)

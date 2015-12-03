@@ -213,9 +213,11 @@ def new_badge_class(**kwargs):
         raise ValueError("Error adding new badge {}\n{}".format(
 	    new_badge_result.status_code,
 	    new_badge_result.text))
-    badge_class_uri = rdflib.URIRef("{}/fcr:metadata".format(new_badge_result.text))
+#    badge_class_uri = rdflib.URIRef("{}/fcr:metadata".format(new_badge_result.text))
+    badge_class_uri = rdflib.URIRef(new_badge_result.text)
+    badge_class_metadata_url = 	str(badge_class_uri) + "/fcr:metadata"
     class_graph = default_graph()
-    class_graph.parse(str(badge_class_uri))
+    class_graph.parse(badge_class_metadata_url)
     class_graph.add((badge_class_uri, RDF.type, OBI.BadgeClass))
     class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
     class_graph.add((badge_class_uri, 
@@ -246,7 +248,7 @@ def new_badge_class(**kwargs):
             OBI.criteria,
             rdflib.Literal(requirement)))
     update_class_result = requests.put(
-        str(badge_class_uri),
+        badge_class_metadata_url,
         data=class_graph.serialize(format='turtle'),
         headers={"Content-type": "text/turtle"})
     if update_class_result.status_code > 399:
