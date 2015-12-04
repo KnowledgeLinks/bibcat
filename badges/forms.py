@@ -1,8 +1,10 @@
 __author__ = "Jeremy Nelson"
 
+from datetime import datetime as datetime
+
 from wtforms import Form
 from wtforms.fields import BooleanField, DateTimeField, Field, FileField 
-from wtforms.fields import StringField, TextAreaField
+from wtforms.fields import SelectField, StringField, TextAreaField
 from wtforms.widgets import TextInput
 
 class CollectionListField(Field):
@@ -16,6 +18,7 @@ class CollectionListField(Field):
             return ''
 
     def process_formdata(self, valuelist):
+        print("In CollectionListField {}".format(valuelist))
         if valuelist:
             self.data = [x.strip() for x in valuelist[0].split(',')]
         else:
@@ -32,3 +35,11 @@ class NewBadgeClass(Form):
     image_url = StringField()
     tags = CollectionListField()
     startDate = DateTimeField("Start Date")
+
+class NewAssertion(Form):
+    """Form for adding a new Assertion"""
+    badge = SelectField("Badge")
+    email = StringField("Recipient email")
+    familyName = StringField("Recipient family Name")
+    givenName = StringField("Recipient given Name")
+    issuedOn = DateTimeField("issuedOn", default=datetime.utcnow())

@@ -34,6 +34,14 @@ WHERE {{{{
   ?entity obi:email "{{}}"^^xsd:string .
 }}}}""".format(PREFIX)
 
+FIND_ALL_CLASSES = """{}
+SELECT DISTINCT ?name ?altName
+WHERE {{{{
+  ?subject rdf:type obi:BadgeClass .
+  ?subject obi:name ?name .
+  ?subject schema:alternativeName ?altName
+}}}}""".format(PREFIX) 
+
 FIND_ASSERTION_SPARQL = """{}
 SELECT DISTINCT *
 WHERE {{{{
@@ -48,7 +56,7 @@ WHERE {{{{
 FIND_CLASS_SPARQL = """{}
 SELECT DISTINCT *
 WHERE {{{{
-  ?class rdf:type openbadge:BadgeClass .
+  ?class rdf:type obi:BadgeClass .
   ?class obi:name ?name .
   ?class obi:description ?description .
   ?class obi:issuer ?issuer .
@@ -59,7 +67,7 @@ FIND_CLASS_IMAGE_SPARQL = """{}
 SELECT DISTINCT ?image
 WHERE {{{{
   ?subject schema:alternativeName "{{}}"^^xsd:string .
-  ?subject iana:describes ?image .
+  ?subject obi:image ?image .
 }}}}""".format(PREFIX)
 
 FIND_CRITERIA_SPARQL = """{}
@@ -73,15 +81,15 @@ WHERE {{{{
 FIND_IMAGE_SPARQL = """{}
 SELECT DISTINCT ?image
 WHERE {{{{
-  ?subject openbadge:uid "{{}}"^^xsd:string  .
-  ?subject ldp:contains ?image .
+  ?subject obi:uid "{{}}"^^xsd:string  .
+  ?subject obi:image ?image .
 }}}}""".format(PREFIX)
 
 FIND_KEYWORDS_SPARQL = """{}
 SELECT ?keyword
 WHERE {{{{
    ?subject schema:alternativeName "{{}}"^^xsd:string .
-   ?subject obi:keywords ?keyword .
+   ?subject obi:tags ?keyword .
 }}}}""".format(PREFIX)
 
 IDENT_OBJ_SPARQL = """{}
