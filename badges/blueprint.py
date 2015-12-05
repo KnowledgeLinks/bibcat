@@ -2,17 +2,48 @@ __author__ = "Jeremy Nelson"
 
 
 import requests
-from flask import abort, Blueprint, jsonify, render_template, Response
+from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask_negotiate import produces
-
+from .forms import NewBadgeClass, NewAssertion
+from .graph import *
+       
+    
 
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
+open_badge.config = {}
 
-@open_badge.route("/Assertion/<event>/<uid>")
-@open_badge.route("/Assertion/<event>/<uid>.json")
+@open_badge.record
+def record_params(setup_state):
+    app = setup_state.app
+    open_badge.config = dict([(key, value) for (key,value) in app.config.items()])
+
+def get_badge_classes():
+    all_badges_response = requests.post(
+       open_badge.config.get('TRIPLESTORE_URL'),
+       data={"query": FIND_ALL_CLASSES,
+             "format": "json"})
+    if all_badges_response.status_code > 399:
+        abort(502)
+    bindings = all_badges_response.json().get('results').get('bindings')
+    return [(r.get('altName')['value'], r.get('name')['value']) for r in bindings]
+      
+
+@open_badge.route("/Assertion/", methods=["POST", "GET"])
+def add_badge_assertion():
+    assertion_form = NewAssertion()
+    assertion_form.badge.choices = get_badge_classes()
+    if request.method.startswith("POST"):
+        if form.validate_on_submit():
+             redirect("/Assertion/{}".format(uuid))
+    return render_template(
+        "assertion.html",
+         form=assertion_form)
+
+@open_badge.route("/Assertion/<event>/<uuid>")
+@open_badge.route("/Assertion/<event>/<uuid>.json")
 @produces('application/json')
-def badge_assertion(event, uid):
+def badge_assertion(event=None):
     """Route returns individual badge assertation json or 404 error if not
     found in the repository.
 
@@ -32,6 +63,11 @@ def badge_assertion(event, uid):
 
     }
     return jsonify(badge)
+
+
+@open_badge.route("/BadgeClass/")
+def add_badge_class():
+    return "IN BadgeClass"
 
 @open_badge.route("/BadgeClass/<badge_classname>")
 @open_badge.route("/BadgeClass/<badge_classname>.json")

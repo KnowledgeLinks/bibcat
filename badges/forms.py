@@ -2,7 +2,10 @@ __author__ = "Jeremy Nelson"
 
 from datetime import datetime as datetime
 
-from wtforms import Form
+try:
+    from flask_wtf import Form
+except ImportError:
+    from wtforms import Form
 from wtforms.fields import BooleanField, DateTimeField, Field, FileField 
 from wtforms.fields import SelectField, StringField, TextAreaField
 from wtforms.widgets import TextInput
