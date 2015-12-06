@@ -47,7 +47,7 @@ try:
 except:
     # Sets to sensible Semantic Server Core defaults
     REPOSITORY_URL = "http://localhost:8080/fedora/rest"
-    TRIPLESTORE_URL = "http://localhost:8080/bigdata"
+    TRIPLESTORE_URL = "http://localhost:8080/bigdata/sparql"
 
 def bake_badge_dev(badge_uri):
     with open("E:\\2015\\open-badge-atla2015.png", "rb") as img:
@@ -71,11 +71,11 @@ def add_get_issuer(**kwargs):
     Returns
         issuer_uri(rdflib.URIRef)
     """
-    issuer_url = kwargs.get('url')
-    issuer_name = kwargs.get('name')
+    url = kwargs.get('url')
+    name = kwargs.get('name')
     issuer_check_result = requests.post(
         TRIPLESTORE_URL,
-        data={"query": CHECK_ISSUER_SPARQL.format(issuer_url),
+        data={"query": CHECK_ISSUER_SPARQL.format(url),
               "format": "json"})
     if issuer_check_result.status_code < 400:
         info = issuer_check_result.json().get('results').get('bindings')
@@ -91,11 +91,15 @@ def add_get_issuer(**kwargs):
                               RDF.type,
                               OBI.Issuer))
             issuer_graph.add((issuer_temp_uri,
+                              SCHEMA.url,
+                              rdflib.URIRef(url)))
+            obi_url = urllib.parse.urljoin(url, "badges/Issuer")
+            issuer_graph.add((issuer_temp_uri,
                               OBI.url,
-                              rdflib.URIRef(issuer_url)))
+                              rdflib.URIRef(url)))
             issuer_graph.add((issuer_temp_uri,
                               OBI.name,
-                              rdflib.Literal(CONFIG.get('BADGE', 'issuer_name'))))
+                              rdflib.Literal(name)))
             issuer_update_result = requests.put(str(issuer_temp_uri),
                 data=issuer_graph.serialize(format='turtle'),
                 headers={"Content-type": "text/turtle"})
@@ -239,13 +243,14 @@ def new_badge_class(**kwargs):
        name -- Required
        description -- Required
        startDate -- Datetime in YYYY-MM-DD format, Required
-       endDate -- Datetime in YYYY-MM-DD format, Optional default is startDate
+       endDate -- Datetime in YYYY-MM-DD format, Optional default is None
        criteria -- List of string with each string a description criteria, 
                    good candidate for controlled vocabulary, Optional default  
                    is an empty string
        tags --  List of descriptive key-word tags, Required
        badge_image -- Binary of Open Badge Image to be used in badge baking,
                       Required
+       issuer -- Dictionary with name and url fields. Required
 
     Returns:
        A Python tuple of the Badge URL and the slug for the Badge
@@ -255,9 +260,10 @@ def new_badge_class(**kwargs):
     badge_name_slug = slugify(badge_name)
     description = kwargs.get('description')
     started_on = kwargs.get('startDate')
-    ended_on = kwargs.get('endDate', started_on)
+    ended_on = kwargs.get('endDate')
     keywords = kwargs.get('tags')
     criteria = kwargs.get('criteria', None)
+    issuer = kwargs.get('issuer')
     badge_image = kwargs.get('image_file')
     new_badge_result = requests.post(REPOSITORY_URL)
     if new_badge_result.status_code > 399:
@@ -279,9 +285,11 @@ def new_badge_class(**kwargs):
     class_graph.add((badge_class_uri, RDF.type, OBI.BadgeClass))
     class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
     class_graph.add((badge_class_uri, OBI.image, image_uri))
+    # Searches for issuer, creates issuer_uri
+    issuer_uri = add_get_issuer(**issuer)
     class_graph.add((badge_class_uri, 
         OBI.issuer,
-        ISSUER_URI))
+        issuer_uri))
     class_graph.add((badge_class_uri, 
         OBI.name, 
         rdflib.Literal(badge_name)))
@@ -294,7 +302,7 @@ def new_badge_class(**kwargs):
     class_graph.add((badge_class_uri, 
         SCHEMA.startDate, 
         rdflib.Literal(started_on)))
-    if ended_on is not None or len(ended_on) > 0:
+    if ended_on and len(ended_on) > 0:
         class_graph.add((badge_class_uri, 
             SCHEMA.endDate, 
         rdflib.Literal(ended_on)))

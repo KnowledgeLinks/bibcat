@@ -4,16 +4,22 @@
 
 {% block main %}
 <div class="container">
- <h1>Open Badge Classes</h1>
+ <div class="panel panel-default">
+  <h1>Open Badge Classes</h1>
+ </div>
  <div class="row">
    <section class="col-md-6">
-    <h2>Existing Badge Classes</h2>
-    <ul>
+    <div class="panel panel-default">
+     <div class="panel-body">
+      <h2>Existing Badge Classes</h2>
+      <ul>
       {% for row in badges %}
-      <li><a href="/BadgeClass/{{ row.get('altName').get('value') }}">{{ row.get('name').get('value') }}</a></li>
+        <li><a href="/BadgeClass/{{ row.get('altName').get('value') }}">{{ row.get('name').get('value') }}</a></li>
       {% endfor %}
       
-    </ul>
+      </ul>
+     </div> 
+    </div>
    </section>
    <section class="col-md-6">
     <div class="panel panel-primary">
@@ -22,7 +28,7 @@
       </div>
       <div class="panel-body">
        <p class="lead">Create a New Badge Class for your event</p>
-       <form method="POST" action="/BadgeClass">
+       <form method="POST" action="{{ url_for('open_badge.add_badge_class') }}">
        <div class="row form-group">
         <section class="col-md-8">
           <label>{{ form.name.label }}</label>

@@ -3,7 +3,9 @@ __author__ = "Jeremy Nelson"
 
 import requests
 from flask import abort, Blueprint, jsonify, render_template, Response, request
+from flask import redirect, url_for
 from flask_negotiate import produces
+from . import new_badge_class
 from .forms import NewBadgeClass, NewAssertion
 from .graph import *
        
@@ -44,7 +46,7 @@ def add_badge_assertion():
 @open_badge.route("/Assertion/<event>/<uuid>.json")
 @produces('application/json')
 def badge_assertion(event=None):
-    """Route returns individual badge assertation json or 404 error if not
+    """Route returns individual badge assertion json or 404 error if not
     found in the repository.
 
     Args:
@@ -65,9 +67,26 @@ def badge_assertion(event=None):
     return jsonify(badge)
 
 
-@open_badge.route("/BadgeClass/")
+@open_badge.route("/BadgeClass/", methods=["POST", "GET"])
 def add_badge_class():
-    return "IN BadgeClass"
+    """Displays Form for adding a BadgeClass Form"""
+    badge_class_form = NewBadgeClass()
+    if request.method.startswith("POST"):
+        badge_url, badge_slug = new_badge_class(
+            name=badge_class_form.name.data,
+            description=badge_class_form.description.data,
+            image=badge_class_form.image_file.data,
+            startDate=badge_class_form.startDate.data,
+            endDate=badge_class_form.endDate.data,
+            tags=badge_class_form.tags.data,
+            issuer=open_badge.config.get("ORGANIZATION"),
+            criteria=badge_class_form.criteria.data)
+        redirect(url_for('open_badge.badge_class', badge_classname=badge_slug))
+    return render_template(
+        "badge_class.html",
+        form=badge_class_form)
+
+    
 
 @open_badge.route("/BadgeClass/<badge_classname>")
 @open_badge.route("/BadgeClass/<badge_classname>.json")
@@ -83,8 +102,7 @@ def badge_class(badge_classname):
     Returns:
         Badge Class JSON
     """
-    if not badge_classname in badges:
-        abort(404)
+    
     event = badges.get(badge_classname)
     badge_rdf = event.get('graph')
     badge_class_uri = event.get('uri')
