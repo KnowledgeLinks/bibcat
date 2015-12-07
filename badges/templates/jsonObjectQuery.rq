@@ -1,0 +1,49 @@
+prefix obi: <https://w3id.org/openbadges#> 
+prefix schema: <https://schema.org/> 
+prefix klob: <http://knowledgelinks.io/ns/openbadges#> 
+
+SELECT (GROUP_CONCAT(?json; SEPARATOR=",") AS ?jsonString)
+{
+	?uri schema:alternativeName "{{ badge_classname }}"^^xsd:string . #Set the object value for specific return
+	BIND (obi:BadgeClass AS ?objType) .  #Set the obi:??? to the return that you want BadgeClass or BadgeItem
+	{
+	  ?prop klob:jsonValFormat "lookup" .
+	  ?prop a ?objType .
+	  ?prop klob:jsonObjName ?objName .
+	  ?prop klob:lookupReturnField ?returnValFld.
+	  ?uri ?prop ?o .
+	  ?o ?returnValFld ?lookupVal
+	  BIND (CONCAT('"',?objName,'":"',?lookupVal,'"') AS ?json)
+	} UNION {
+	  ?prop klob:jsonValFormat "objectValue" .
+	  ?prop a ?objType .
+	  ?prop klob:jsonObjName ?objName .
+	  ?uri ?prop ?o .
+	  BIND (CONCAT('"',?objName,'":"',?o,'"') AS ?json)
+	} UNION {
+	  ?prop klob:jsonValFormat "urlSub" .
+	  ?prop a ?objType .
+	  ?prop klob:jsonObjName ?objName .
+	  ?prop klob:url ?url.
+	  ?prop klob:urlendfld ?fld .
+	  ?uri ?prop ?test .
+	  ?uri ?fld ?o .
+	  BIND (CONCAT('"',?objName,'":"',?url,?o,'"') AS ?json)
+	} UNION {
+	    {
+			SELECT ?objName (GROUP_CONCAT(?arrayVal; SEPARATOR=",") AS ?vals)
+			{
+				?uri schema:alternativeName "{{ badge_classname }}"^^xsd:string . #Set the object value for specific return
+				BIND (obi:BadgeClass AS ?objType) .  #Set the obi:??? to the return that you want BadgeClass or BadgeItem
+				?prop klob:jsonValFormat "multiValArray" .
+			    ?prop a ?objType .
+			    ?prop klob:jsonObjName ?objName .
+			    ?uri ?prop ?o .
+				BIND (CONCAT('"',?o,'"') AS ?arrayVal)
+			}
+			group by ?objName
+		}
+		BIND (CONCAT('"',?objName,'":[',?vals,']') AS ?json)
+	}
+}
+GROUP BY ?uri

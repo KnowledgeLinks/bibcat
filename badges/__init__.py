@@ -91,6 +91,9 @@ def add_get_issuer(**kwargs):
                               RDF.type,
                               OBI.Issuer))
             issuer_graph.add((issuer_temp_uri,
+                              OBI.type,
+                              OBI.Issuer))
+            issuer_graph.add((issuer_temp_uri,
                               SCHEMA.url,
                               rdflib.URIRef(url)))
             obi_url = urllib.parse.urljoin(url, "badges/Issuer")
@@ -283,6 +286,7 @@ def new_badge_class(**kwargs):
     class_graph = default_graph()
     class_graph.parse(str(badge_class_uri))
     class_graph.add((badge_class_uri, RDF.type, OBI.BadgeClass))
+    class_graph.add((badge_class_uri, OBI.type, OBI.BadgeClass))
     class_graph.add((badge_class_uri, RDF.type, SCHEMA.EducationalEvent))
     class_graph.add((badge_class_uri, OBI.image, image_uri))
     # Searches for issuer, creates issuer_uri
@@ -431,6 +435,9 @@ def issue_badge(**kwargs):
     badge_assertion_graph.add((badge_uri,
                                OBI.BadgeClass,
                                event_uri))
+    badge_assertion_graph.add((badge_uri,
+                               OBI.type,
+                               OBI.Assertion))
     badge_assertion_graph.add((badge_uri,
                                OBI.verify,
                                OBI.hosted))

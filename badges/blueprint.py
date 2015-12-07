@@ -1,11 +1,11 @@
 __author__ = "Jeremy Nelson"
 
-
+import json
 import requests
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
-from . import new_badge_class
+from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion
 from .graph import *
        
@@ -36,16 +36,22 @@ def add_badge_assertion():
     assertion_form = NewAssertion()
     assertion_form.badge.choices = get_badge_classes()
     if request.method.startswith("POST"):
-        if form.validate_on_submit():
-             redirect("/Assertion/{}".format(uuid))
+        assertion_url = issue_badge(
+            email=assertion_form.email,
+            badge=assertion_form.badge,
+            givenName=assertion_form.givenName,
+            familyName=assertion_form.familyName,
+            issuedOn=assertion_form.issuedOn)
+        uuid = assertion_url.split("/")[-1]
+        redirect('open_badge.assertion', uuid=uuid)
     return render_template(
         "assertion.html",
          form=assertion_form)
 
-@open_badge.route("/Assertion/<event>/<uuid>")
-@open_badge.route("/Assertion/<event>/<uuid>.json")
+@open_badge.route("/Assertion/<uuid>")
+@open_badge.route("/Assertion/<uuid>.json")
 @produces('application/json')
-def badge_assertion(event=None):
+def badge_assertion(uuid):
     """Route returns individual badge assertion json or 404 error if not
     found in the repository.
 
@@ -102,26 +108,17 @@ def badge_class(badge_classname):
     Returns:
         Badge Class JSON
     """
-    
-    event = badges.get(badge_classname)
-    badge_rdf = event.get('graph')
-    badge_class_uri = event.get('uri')
-    keywords = [str(obj) for obj in badge_rdf.objects(
-        subject=badge_class_uri,
-        predicate=schema_namespace.keywords)]
-    badge_class_json = {
-        "name": badge_rdf.value(
-            subject=badge_class_uri,
-            predicate=schema_namespace.name),
-        "description": badge_rdf.value(
-            subject=badge_class_uri,
-            predicate=schema_namespace.description),
-        "critera": url_for('badge_criteria', badge=badge_classname),
-        "image": url_for('badge_image', badge=badge_classname),
-        "issuer": url_for('badge_issuer_organization'),
-        "tags": keywords
-        }
-    return jsonify(badge_class_json)
+    sparql = render_template("jsonObjectQuery.rq",
+                             badge_classname=badge_classname)
+    badge_class_response = requests.post( 
+        open_badge.config.get('TRIPLESTORE_URL'),
+        data={"query": sparql,
+              "format": "json"})
+    if badge_class_response.status_code > 399:
+        abort(505)
+    raw_text = badge_class_response.json().get('results').get('bindings')[0]['jsonString']['value']
+    raw_text = "{" + raw_text + "}"
+    return json.dumps(json.loads(raw_text),indent=4, sort_keys=True)
 
 @open_badge.route("/Criteria/<badge>")
 @produces('application/json')
@@ -158,8 +155,8 @@ def badge_issuer_organization():
     return jsonify(organization)
 
 
-@open_badge.route("/<badge>.png")
-@open_badge.route("/<badge>/<uid>.png")
+@open_badge.route("/BadgeImage/<badge>.png")
+@open_badge.route("/BadgeImage/<uid>.png")
 def badge_image(badge, uid=None):
     if uid is not None:
         img_url = repository.sparql(uuid_template(uuid=uid))
