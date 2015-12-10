@@ -41,16 +41,20 @@ def add_badge_assertion():
             badge=assertion_form.badge.data,
             givenName=assertion_form.givenName.data,
             familyName=assertion_form.familyName.data,
-            issuedOn=assertion_form.issuedOn.data)
+            issuedOn=assertion_form.issuedOn.data,
+            issuer=open_badge.config.get("ORGANIZATION")
+            )
         uuid = assertion_url.split("/")[-1]
-        redirect('open_badge.assertion', uuid=uuid)
+        redirect_url = url_for('open_badge.badge_assertion', uuid=uuid)
+        print(uuid, redirect_url)
+        redirect(redirect_url)
     return render_template(
         "assertion.html",
          form=assertion_form)
 
 @open_badge.route("/Assertion/<uuid>")
 @open_badge.route("/Assertion/<uuid>.json")
-@produces('application/json')
+@produces('application/json', 'application/rdf+xml', 'text/html')
 def badge_assertion(uuid):
     """Route returns individual badge assertion json or 404 error if not
     found in the repository.
@@ -62,15 +66,22 @@ def badge_assertion(uuid):
     Returns:
         Assertion JSON of issued badge
     """
-    badge_uri = repository.sparql(uuid_template(uuid=uid))
-    if badge_uri is None:
-        abort(404)
-    badge_graph = rdflib.Graph().parse(badge_uri)
-    badge = {
-
-
-    }
-    return jsonify(badge)
+    sparql = render_template(
+        "jsonObjectQueryTemplate.rq",
+        uri_sparql_select = """
+BIND ("{}" AS ?uid) .
+BIND (URI(CONCAT("http://localhost:8080/fedora/rest/",SUBSTR(?uid, 1,2),"/",SUBSTR(?uid, 3,2),
+      "/",SUBSTR(?uid, 5,2),"/",SUBSTR(?uid, 7,2),"/",?uid)) AS ?uri) .""".format(uuid),
+        object_type = "Assertion")
+    assertion_response = requests.post( 
+        open_badge.config.get('TRIPLESTORE_URL'),
+        data={"query": sparql,
+              "format": "json"})
+    if assertion_response.status_code > 399:
+        abort(505)
+    raw_text = assertion_response.json().get('results').get('bindings')[0]['jsonString']['value']
+    raw_text = "{" + raw_text + "}"
+    return json.dumps(json.loads(raw_text),indent=4, sort_keys=True)
 
 
 @open_badge.route("/BadgeClass/", methods=["POST", "GET"])
@@ -82,7 +93,7 @@ def add_badge_class():
             name=badge_class_form.name.data,
             description=badge_class_form.description.data,
             image=badge_class_form.image_file.data,
-            startDate=badge_class_form.startDate.data,
+            startDate=badge_class_form.startDate.raw_data,
             endDate=badge_class_form.endDate.data,
             tags=badge_class_form.tags.data,
             issuer=open_badge.config.get("ORGANIZATION"),
@@ -108,8 +119,10 @@ def badge_class(badge_classname):
     Returns:
         Badge Class JSON
     """
-    sparql = render_template("jsonObjectQuery.rq",
-                             badge_classname=badge_classname)
+    sparql = render_template(
+        "jsonObjectQueryTemplate.rq",
+        uri_sparql_select = """?uri schema:alternativeName "{}"^^xsd:string .""".format(badge_classname),
+        object_type = "BadgeClass") 
     badge_class_response = requests.post( 
         open_badge.config.get('TRIPLESTORE_URL'),
         data={"query": sparql,
@@ -156,14 +169,26 @@ def badge_issuer_organization():
 
 
 @open_badge.route("/BadgeImage/<badge>.png")
-@open_badge.route("/BadgeImage/<uid>.png")
-def badge_image(badge, uid=None):
+@open_badge.route("/AssertionImage/<uid>.png")
+def badge_image(badge=None, uid=None):
     if uid is not None:
-        img_url = repository.sparql(uuid_template(uuid=uid))
-    else:
-        if not badge in badges:
+        assertion_url = "http://localhost:8080/fedora/rest/{0}/{1}/{2}/{3}/{4}".format(
+            uid[0:2], uid[2:4], uid[4:6], uid[6:8], uid)
+        assertion_img_response = requests.post(
+         open_badge.config.get('TRIPLESTORE_URL'),
+            data={"query": FIND_IMAGE_SPARQL.format(assertion_url),
+                  "format": "json"})
+        if assertion_img_response.status_code > 399:
+            abort(501)
+        bindings = assertion_img_response.json().get('results').get('bindings')
+        if len(bindings) < 1:
             abort(404)
+        img_url = bindings[0]['image']['value']
+        print(img_url)
+    elif badge is not None:
         img_url = '/'.join(str(badges[badge]['url']).split("/")[:-1])
+    else:
+        abort(404)
     img_response = requests.get(img_url)
     if img_response.status_code > 399:
         abort(500)

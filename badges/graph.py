@@ -79,11 +79,11 @@ WHERE {{{{
 }}}}""".format(PREFIX)
 
 FIND_IMAGE_SPARQL = """{}
-SELECT DISTINCT ?image
+SELECT DISTINCT ?image 
 WHERE {{{{
-  ?subject obi:uid "{{}}"^^xsd:string  .
-  ?subject obi:image ?image .
-}}}}""".format(PREFIX)
+  <{{0}}> obi:image ?image .
+}}}}
+""".format(PREFIX)
 
 FIND_KEYWORDS_SPARQL = """{}
 SELECT ?keyword

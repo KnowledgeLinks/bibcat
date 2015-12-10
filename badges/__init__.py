@@ -119,8 +119,6 @@ def add_get_participant(**kwargs):
         raise ValueError("Email cannot be none")
     for key, val in kwargs.items():
         print(key, val, type(val))
-    identity_hash = hashlib.sha256(email.encode())
-    identity_hash.update(CONFIG.get('BADGE', 'identity_salt').encode())
     email_result = requests.post(
         TRIPLESTORE_URL,
         data={"query": CHECK_PERSON_SPARQL.format(email),
@@ -128,7 +126,7 @@ def add_get_participant(**kwargs):
     if email_result.status_code < 400:
         info = email_result.json().get('results').get('bindings')
         if len(info) > 1:
-            return info[0].get('entity').get('value')
+            return rdflib.URIRef(info[0].get('entity').get('value'))
         person_response = requests.post(REPOSITORY_URL)
         if person_response.status_code > 399:
             raise falcon.HTTPBadGateway(
@@ -147,24 +145,26 @@ def add_get_participant(**kwargs):
        
         for prop in ['givenName', 'familyName', 'url']:
             if prop in kwargs:
-                new_person.add((new_person,
+                new_person.add((new_person_uri,
                                getattr(SCHEMA, prop),
                                rdflib.Literal(kwargs.get(prop))))
         for url in kwargs.get("sameAs", []):
-            new_person.add((new_person,
+            new_person.add((new_person_uri,
                             rdflib.OWL.sameAs,
                             rdflib.URIRef(url)))
         update_person_response = requests.put(
-            REPOSITORY_URL,
+            str(new_person_uri),
             data=new_person.serialize(format='turtle'),
             headers={"Content-type": "text/turtle"})
         if update_person_response.status_code > 399:
             raise falcon.HTTPBadGateway(
-                description="Failed to Update {} Code {}\nError {}".format(
+                title="Failed to Update {} Code {}".format(
                     new_person_uri,
-                    update_person_response.status_code,
+                    update_person_response.status_code),
+                description="Error {}".format(
                     update_person_response.text))
-        return str(person_uri)
+
+        return new_person_uri
 
     
 
@@ -306,11 +306,11 @@ def new_badge_class(**kwargs):
         rdflib.Literal(description)))
     class_graph.add((badge_class_uri, 
         SCHEMA.startDate, 
-        rdflib.Literal(started_on)))
+        rdflib.Literal(''.join(started_on))))
     if ended_on and len(ended_on) > 0:
         class_graph.add((badge_class_uri, 
             SCHEMA.endDate, 
-        rdflib.Literal(ended_on)))
+        rdflib.Literal(''.join(ended_on))))
     for keyword in keywords:
         class_graph.add((badge_class_uri,
             OBI.tags,
@@ -331,49 +331,6 @@ def new_badge_class(**kwargs):
 	    update_class_result.text))
     return str(badge_class_uri), badge_name_slug
 
-def create_identity_object(email, **kwargs):
-    """Function creates an identity object based on email and updates
-    the Person identityObject with any optional metadata
-
-    Args:
-        email(str): Email of recipient
-       
-    Keyword Args:
-        givenName(str): Given name for the recipient
-        familyName(str): Family name for the recipient
-        sameAs(list): List of URIs that the recipient is equivalent 
-    
-    Returns:
-        URL of new Identity Object
-    """
-    identity_uri = rdflib.URIRef(add_get_participant(email=email))
-    identity_graph = default_graph()
-    identity_graph
-    identity_graph.add(
-        (identity_uri,
-         RDF.type,
-         OBI.IdentityType))
-    
-    identity_hash = hashlib.sha256(email.encode())
-    salt = CONFIG.get('BADGE', 'identity_salt')
-    identity_hash.update(salt.encode())
-    identity_graph.add(
-        (identity_uri,
-         OBI.salt,
-         rdflib.Literal(salt)))
-    identity_graph.add(
-        (identity_uri, 
-         OBI.identity,
-         rdflib.Literal("sha256${0}".format(identity_hash.hexdigest()))))
-    identity_graph.add(
-        (identity_uri,
-         OBI.hashed,
-         rdflib.Literal("true",
-                        datatype=XSD.boolean)))
-    
-    return str(new_identity_object.__create__(rdf=identity_graph))
-
-
 
 def issue_badge(**kwargs):
     """Function issues a badge based on an event and an email, returns the
@@ -382,6 +339,7 @@ def issue_badge(**kwargs):
     Keyword Args:
         email(str): Email of participant
         badge(str): Badge Class 
+        issuer(dict):  Dictionary with name and url fields. Required
         givenName(str): Given name of participant, defaults to None
         familyName(str): Family name of participant, defaults to None
         issuedOne(datetime): Datetime the Badge was issued, defaults to 
@@ -392,6 +350,7 @@ def issue_badge(**kwargs):
     """
     email = kwargs.get('email')
     badge_class = kwargs.get('badge')
+    issuer = kwargs.get('issuer')
     issuedOn = kwargs.get('issuedOn', datetime.datetime.utcnow())
     if email is None or badge_class is None:
         raise ValueError("email and badge class cannot be None")
@@ -419,8 +378,8 @@ def issue_badge(**kwargs):
                 new_assertion_response.text))
     badge_uri = rdflib.URIRef(new_assertion_response.text)
     badge_uid = str(badge_uri).split("/")[-1]
-    badge_url = "{}/Assertion/{}".format(
-        CONFIG.get('BADGE', 'badge_base_url'),
+    badge_url = "{}/badges/Assertion/{}".format(
+        issuer.get('url'),
         badge_uid)
     new_badge_img_response = requests.post(
         str(badge_uri),
@@ -432,10 +391,13 @@ def issue_badge(**kwargs):
                 badge_uri,
                 new_badge_img_response.status_code,
                 new_badge_img_response.text))
-    badge_image_uri = rdflib.URIRef(new_badge_img_response.text)
     badge_assertion_graph = default_graph()
+    badge_assertion_graph.parse(str(badge_uri))
     badge_assertion_graph.add((badge_uri,
-                               OBI.BadgeClass,
+                               RDF.type,
+                               OBI.Assertion))
+    badge_assertion_graph.add((badge_uri,
+                               OBI.hasBadge, # Shouldn't this be OBI.badge?
                                event_uri))
     badge_assertion_graph.add((badge_uri,
                                OBI.type,
@@ -448,16 +410,29 @@ def issue_badge(**kwargs):
                          OBI.Badge))
     badge_assertion_graph.add((badge_uri,
         OBI.image,
-        badge_image_uri))
-    identity_uri = rdflib.URIRef(create_identity_object(**kwargs))
+        rdflib.URIRef(new_badge_img_response.text)))
+    # Now add/get Recipient ID 
+    recipient_uri = add_get_participant(**kwargs)
+    # Save IdentityObject related triples to Assertion Graph
+    salt = os.urandom(20)
+    badge_assertion_graph.add((badge_uri,
+                            OBI.salt,
+                            rdflib.Literal(str(salt))))
+    identity_hash = hashlib.sha256(email.encode())
+    identity_hash.update(salt)
     badge_assertion_graph.add(
         (badge_uri,
-         OBI.uid,
-         rdflib.Literal(badge_uid)))
+         OBI.identity,
+         rdflib.Literal("sha256?{}".format(identity_hash.hexdigest()))))
+#    badge_assertion_graph.add(
+#        (badge_uri,
+#         OBI.uid,
+#         rdflib.Literal(badge_uid)))
+    
     badge_assertion_graph.add(
          (badge_uri, 
           OBI.recipient,
-          identity_uri))  
+          recipient_uri))  
     badge_assertion_graph.add(
         (badge_uri,
          OBI.verify,
@@ -472,10 +447,11 @@ def issue_badge(**kwargs):
         headers={"Content-type": "text/turtle"})
     if update_badge_response.status_code > 399:
          raise falcon.HTTPBadGateway(
-            description="Failed to update Assertion {} Code {}\Error {}".format(
+            title="Failed to update Assertion {} Code {}".format(
                 badge_uri,
-                new_assertion_response.status_code,
-                new_assertion_response.text))
+                update_badge_response.status_code),
+            description="\Error {}".format(
+               update_badge_response.text))
     
        
     print("Issued badge {}".format(badge_url))

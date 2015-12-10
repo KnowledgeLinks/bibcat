@@ -4,7 +4,9 @@
 
 {% block main %}
 <div class="container">
+ <div class="well well-sm center-block">
  <h1>Issue Badge Assertion</h1>
+ </div>
  <div class="row">
   <section class="col-md-6">
     <div class="panel panel-primary">
@@ -21,7 +23,7 @@
         </section>
         <section class="col-md-6">
           <label>{{ form.familyName.label }}</label>
-          {{ form.email(class_='form-control') }}
+          {{ form.familyName(class_='form-control') }}
         </section>
        </div>
        <div>
