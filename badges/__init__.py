@@ -27,6 +27,7 @@ import rdflib
 import re
 import requests
 import time
+import urllib.parse
 
 from jinja2 import Environment, FileSystemLoader
 from .graph import *
@@ -401,6 +402,7 @@ def issue_badge(**kwargs):
     
     if event_check_result.status_code > 399:
         raise falcon.HTTPBadGateway(
+            
             description="Could not find Badge Class Code {}\nError {}".format(
                 event_check_result.status_code,
                 event_check_result.text))
@@ -463,8 +465,7 @@ def issue_badge(**kwargs):
     badge_assertion_graph.add(
         (badge_uri,
          OBI.issuedOn,
-         rdflib.Literal(issuedOn.isoformat(),
-                        datatype=XSD.dateTime)))
+         rdflib.Literal(issuedOn.timestamp())))
     update_badge_response = requests.put(
         str(badge_uri),
         data=badge_assertion_graph.serialize(format='turtle'),

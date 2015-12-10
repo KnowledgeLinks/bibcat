@@ -37,11 +37,11 @@ def add_badge_assertion():
     assertion_form.badge.choices = get_badge_classes()
     if request.method.startswith("POST"):
         assertion_url = issue_badge(
-            email=assertion_form.email,
-            badge=assertion_form.badge,
-            givenName=assertion_form.givenName,
-            familyName=assertion_form.familyName,
-            issuedOn=assertion_form.issuedOn)
+            email=assertion_form.email.data,
+            badge=assertion_form.badge.data,
+            givenName=assertion_form.givenName.data,
+            familyName=assertion_form.familyName.data,
+            issuedOn=assertion_form.issuedOn.data)
         uuid = assertion_url.split("/")[-1]
         redirect('open_badge.assertion', uuid=uuid)
     return render_template(
