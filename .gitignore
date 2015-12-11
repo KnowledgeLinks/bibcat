@@ -3,6 +3,7 @@
 *.rdb
 *.bat
 *.log
+*.bak
 data*
 build*
 dist*
