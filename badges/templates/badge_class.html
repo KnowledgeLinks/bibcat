@@ -14,7 +14,7 @@
       <h2>Existing Badge Classes</h2>
       <ul>
       {% for row in badges %}
-        <li><a href="/BadgeClass/{{ row.get('altName').get('value') }}">{{ row.get('name').get('value') }}</a></li>
+        <li><a href="/badges/BadgeClass/{{ row[0] }}">{{ row[1] }}</a></li>
       {% endfor %}
       
       </ul>
@@ -44,17 +44,18 @@
        <div class="row form-group">
         <section class="col-md-6">
           <label>{{ form.startDate.label }}</label>
-          {{ form.startDate(class_='form-control') }}
+          <!-- datepicker docs found at http://bootstrap-datepicker.readthedocs.org/en/latest/ -->
+          {{ form.startDate(class_='form-control dp') }}
         </section>
         <section class="col-md-6">
           <label>{{ form.endDate.label }} </label>
-          {{ form.endDate(class_='form-control') }}
+          {{ form.endDate(class_='form-control dp') }}
         </section>
        </div>
        <div class="row form-group">
         <section class="col-md-5">
           <label>{{ form.image_file.label }}</label>
-          {{ form.image_file(class_='btn btn-upload') }}
+          {{ form.image_file(class_='form-control btn btn-upload') }}
         </section>
         <section class="col-md-1">
            <h3>OR</h3>
@@ -93,4 +94,13 @@
    </section>
  </div>
 <div>
+{% endblock %}
+{% block more_js %}
+<script>
+	$('.dp').datepicker({
+		todayBtn: "linked",
+    clearBtn: true,
+    todayHighlight: true
+	});	
+</script>
 {% endblock %}

@@ -69,9 +69,9 @@ def badge_assertion(uuid):
     sparql = render_template(
         "jsonObjectQueryTemplate.rq",
         uri_sparql_select = """
-BIND ("{}" AS ?uid) .
-BIND (URI(CONCAT("http://localhost:8080/fedora/rest/",SUBSTR(?uid, 1,2),"/",SUBSTR(?uid, 3,2),
-      "/",SUBSTR(?uid, 5,2),"/",SUBSTR(?uid, 7,2),"/",?uid)) AS ?uri) .""".format(uuid),
+            BIND ("{}" AS ?uid) .
+            BIND (URI(CONCAT("http://localhost:8080/fedora/rest/",SUBSTR(?uid, 1,2),"/",SUBSTR(?uid, 3,2),
+            "/",SUBSTR(?uid, 5,2),"/",SUBSTR(?uid, 7,2),"/",?uid)) AS ?uri) .""".format(uuid),
         object_type = "Assertion")
     assertion_response = requests.post( 
         open_badge.config.get('TRIPLESTORE_URL'),
@@ -101,7 +101,8 @@ def add_badge_class():
         redirect(url_for('open_badge.badge_class', badge_classname=badge_slug))
     return render_template(
         "badge_class.html",
-        form=badge_class_form)
+        form=badge_class_form,
+        badges=get_badge_classes)
 
     
 
