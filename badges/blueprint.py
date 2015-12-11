@@ -111,7 +111,7 @@ def add_badge_class():
 @open_badge.route("/BadgeClass/<badge_classname>.json")
 @produces('application/json', 'application/rdf+xml', 'text/html')
 def badge_class(badge_classname):
-    """Route generates a JSON BadgeClass
+    """Route generates a JSON BadgeClass 
     <https://github.com/mozilla/openbadges-specification/> for each Islandora
     badge.
 
@@ -195,3 +195,5 @@ def badge_image(badge=None, uid=None):
     if img_response.status_code > 399:
         abort(500)
     return Response(img_response.text, mimetype='image/png')
+
+"""Test"""
