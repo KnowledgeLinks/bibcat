@@ -88,6 +88,7 @@ def badge_assertion(uuid):
 def add_badge_class():
     """Displays Form for adding a BadgeClass Form"""
     badge_class_form = NewBadgeClass()
+    existing_badges = get_badge_classes()
     if request.method.startswith("POST"):
         badge_url, badge_slug = new_badge_class(
             name=badge_class_form.name.data,
@@ -102,7 +103,7 @@ def add_badge_class():
     return render_template(
         "badge_class.html",
         form=badge_class_form,
-        badges=get_badge_classes)
+        badges=existing_badges)
 
     
 
@@ -132,7 +133,7 @@ def badge_class(badge_classname):
         abort(505)
     raw_text = badge_class_response.json().get('results').get('bindings')[0]['jsonString']['value']
     raw_text = "{" + raw_text + "}"
-    return json.dumps(json.loads(raw_text),indent=4, sort_keys=True)
+    return "<pre>" + json.dumps(json.loads(raw_text),indent=4, sort_keys=True) +"</pre>"
 
 @open_badge.route("/Criteria/<badge>")
 @produces('application/json')

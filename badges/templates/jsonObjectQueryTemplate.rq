@@ -32,7 +32,8 @@ SELECT (GROUP_CONCAT(?json; SEPARATOR=",") AS ?jsonString)
     # return property value otherwise return default value
     BIND (COALESCE(?val,?defaultVal) AS ?rtnVal) .
     # add quotes for string data types and URIs
-    BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+    BIND (IF(dataType(?rtnVal)=xsd:string,REPLACE(?rtnVal,'"','&quot;'),?rtnVal) AS ?rtnVal2) .
+    BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal2),CONCAT('"',STR(?rtnVal2),'"'),?rtnVal2) AS ?jsonVal) .
     BIND (CONCAT('"',?objName,'":',STR(?jsonVal)) AS ?json)
 	} UNION {
    	{{ uri_sparql_select }}                    #enter the sqarql lines that will resolve the resource subject to "?uri" variable
