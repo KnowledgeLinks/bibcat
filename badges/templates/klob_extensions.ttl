@@ -1,0 +1,247 @@
+@prefix klob: <http://knowledgelinks.io/ns/openbadges/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+
+#------- Explanation of fields and uses -------------------------------------------------
+#    klob:jsonObjName     "literal"       -The name to be used in the json return for the object portion i.e. {"jsonObjName": .... }
+#    klob:useFor          obi:ClassName   -The classes that use that property  
+#    klob:propertyField   <propertyUri>   -Specifies which property to use in the Resource graph (optional)
+#    klob:defaultVal      "literal"       -will return the value if the specified klob:propertyField does not exist in the resource (OPTIONAL)
+#    klob:jsonValFormat   "literal"       -The type of lookup to be used. Options are:
+#                                              "objectValue"        -> This will return the value of the specified property or a default value
+#                                              "lookup"             -> Will use the resources object to lookup the value that is specified 
+#                                                                      in the klob:lookupReturnField
+#                                              "subjectCalc"        -> will calculate a return value based on the resource URI
+#                                                                      only available parseType is "afterLastSlash" 
+#                                                                      need to use klob:parseType and klob:unionUrl(optional) with this action
+#                                              "urlSub"             -> will substitue a value as a url with 
+#                                                                           - klob:url             specifies the main url
+#																															      				-	klob:urlendfld       specifies with resource field to append to the url
+#																							 "lookupUrlSub"       -> functions as urlSub but will lookup a property of the specified URI 
+#																							                              - klob:propertyField   must be specified
+#																							 "lookupProperties"   -> return a json object of the the defined properties.
+#																							                         add a klob:propertyField with a blank node for each desired property to return
+#																							                         example:   klob:lookupReturnField [
+#																							                                                   		       klob:jsonObjName "type";
+#																							                                                   		       klob:jsonValFormat "objectValue" ;
+#																							                                                   		       klob:defaultVal "hosted"
+#																							                                                   		     ] ;
+#																							 "multiValArray"      -> will return an array of all values list with with property field specified in
+#																							                         klob:propertyField   Example: klob:propertyField obi:tags
+#																							                         resource Data = <> obi:tags "home"
+#																							                                         <> obi:tags "house"
+#																							                                         <> obi:tags "farm"
+#																							                         returns -> ["home","house","farm"]
+#    klob:parseType  "afterLastSlash"      -is the only available option: used with "subjectCalc"
+#    klob:unionUrl   "literal"             -string to be prepended to the the afterLastSlash return of the subject URI
+#    klob:url        "literal"             -tring to prepend in a "urlSub" or "lookupUrlSub" call
+#	   klob:urlendfld  <propertyUri>         -the fiel value to append to a "urlSub" or "lookupUrlSub" call
+#    klob:lookupReturnField   <propUri>    -used with "lookup" call to specify which property field value wil be returned
+    
+obi:BadgeClass a rdf:Class;
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:Literal;	
+	rdfs:comment "Class for open badges.";	
+	rdfs:label "Open Badge Class";
+	klob:jsonObjName "BadgeClass" .
+	
+obi:Assertion a rdf:Class;  
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:Literal;	
+	rdfs:comment "Assertion for open badges.";	
+	rdfs:label "Open Badge Assertion";
+	klob:jsonObjName "Assertion" .
+	
+obi:context a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Name of the open badge instance.";	
+	klob:jsonObjName "@context";
+	klob:jsonValFormat "objectValue" ;
+	klob:defaultVal "https://w3id.org/openbadges/v1" ;
+	klob:propertyField obi:context ;
+	klob:useFor obi:BadgeClass ;
+	klob:useFor obi:Assertion .
+
+obi:assertionid a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Uuid of the open badge assertion.";	
+	klob:jsonObjName "id";
+	klob:jsonValFormat "subjectCalc" ;
+	klob:parseType "afterLastSlash" ;
+	klob:unionUrl "{{ base_url }}/badges/Assertion/";
+	klob:useFor obi:Assertion .
+
+obi:assertionImage a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Image URL of the open badge assertion.";	
+	klob:jsonObjName "image";
+	klob:jsonValFormat "subjectCalc" ;
+	klob:parseType "afterLastSlash" ;
+	klob:unionUrl "{{ base_url }}/badges/AssertionImage/";
+	klob:useFor obi:Assertion .
+	
+obi:uid a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "uid of the open badge assertion.";	
+	klob:jsonObjName "uid";
+	klob:jsonValFormat "subjectCalc" ;
+	klob:parseType "afterLastSlash" ;
+	klob:useFor obi:Assertion .
+	
+obi:hasBadge a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Badge used for the badge assertion.";	
+	klob:jsonObjName "badge";
+	klob:jsonValFormat "lookupUrlSub" ;
+	klob:propertyField obi:hasBadge ;
+	klob:url "{{ base_url }}/badges/BadgeClass/";
+	klob:urlendfld schema:alternativeName;
+	klob:useFor obi:Assertion .
+
+obi:issuedOn a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Timestamp when badge was issued.";	
+	klob:jsonObjName "issuedOn";
+	klob:jsonValFormat "objectValue" ;
+	klob:propertyField obi:issuedOn ;
+	klob:useFor obi:Assertion .
+
+obi:expires a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Timestamp when badge expires.";	
+	klob:jsonObjName "expires";
+	klob:jsonValFormat "objectValue" ;
+	klob:propertyField obi:expires ;
+	klob:useFor obi:Assertion .
+	
+obi:recipient a rdf:Property;
+	rdfs:domain obi:Recipient;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Recipient of a Badge.";	
+	klob:jsonObjName "recipient";
+	klob:jsonValFormat "lookupProperties" ;
+	klob:lookupReturnField [
+		klob:jsonObjName "type";
+		klob:jsonValFormat "objectValue" ;
+		klob:defaultVal "email";
+		klob:propertyField obi:assertionType
+	] ;
+	klob:lookupReturnField [
+		klob:jsonObjName "hashed";
+		klob:jsonValFormat "objectValue" ;
+		klob:defaultVal true ;
+		klob:propertyField obi:hash
+	] ;
+	klob:lookupReturnField [
+		klob:jsonObjName "salt";
+		klob:jsonValFormat "objectValue" ;
+		klob:defaultVal "secretKey";
+		klob:propertyField obi:secretKey
+	] ;
+	klob:lookupReturnField [
+		klob:jsonObjName "identity";
+		klob:jsonValFormat "objectValue" ;
+		klob:propertyField obi:identity
+	] ;
+	klob:useFor obi:Assertion .
+
+obi:verify a rdf:Property;
+	rdfs:domain obi:Recipient;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Instructions for third parties to verify this assertion.";	
+	klob:jsonObjName "verify";
+	klob:jsonValFormat "lookupProperties" ;
+	klob:lookupReturnField [
+		klob:jsonObjName "type";
+		klob:jsonValFormat "objectValue" ;
+		klob:defaultVal "hosted"
+	] ;
+	klob:lookupReturnField [
+		klob:jsonObjName "url";
+		klob:jsonValFormat "subjectCalc" ;
+		klob:parseType "afterLastSlash" ;
+		klob:unionUrl "{{ base_url }}/badges/Assertion/"
+	] ;
+	klob:useFor obi:Assertion .
+	
+obi:name a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:Literal;	
+	rdfs:comment "Name of the open badge instance.";	
+	klob:jsonObjName "name";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:BadgeClass .
+
+obi:description a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:Literal;	
+	rdfs:comment "Description of the open badge instance.";	
+	klob:jsonObjName "description";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:BadgeClass .
+
+obi:issuer a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	obi:Issuer;	
+	rdfs:comment "Issuer of the open badge instance.";	
+	klob:jsonObjName "issuer";
+	klob:jsonValFormat "lookup";
+	klob:lookupReturnField obi:url;
+	klob:useFor obi:BadgeClass .
+
+obi:type a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	obi:Resource;	
+	rdfs:comment "Type of item";	
+	klob:jsonObjName "type";
+	klob:jsonValFormat "lookup";
+	klob:lookupReturnField klob:jsonObjName;
+	klob:useFor obi:BadgeClass ;
+	klob:useFor obi:Assertion .	
+
+obi:image a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Issuer of the open badge instance.";	
+	klob:jsonObjName "image";
+	klob:jsonValFormat "urlSub";
+	klob:url "{{ base_url }}/badges/BadgeImage/";
+	klob:urlendfld schema:alternativeName;
+	klob:useFor obi:BadgeClass .
+
+obi:criteria a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Issuer of the open badge instance.";	
+	klob:jsonObjName "criteria";
+	klob:jsonValFormat "urlSub";
+	klob:url "{{ base_url }}/badges/BadgeCriteria/";
+	klob:urlendfld schema:alternativeName;
+	klob:useFor obi:BadgeClass .	
+	
+obi:id a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Issuer of the open badge instance.";	
+	klob:jsonObjName "id";
+	klob:jsonValFormat "urlSub";
+	klob:url "{{ base_url }}/badges/BadgeClass/";
+	klob:urlendfld schema:alternativeName;
+	klob:useFor obi:BadgeClass .
+
+obi:tags a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Tags for the badges.";	
+	klob:jsonObjName "tags";
+	klob:jsonValFormat "multiValArray";
+	klob:useFor obi:BadgeClass .	

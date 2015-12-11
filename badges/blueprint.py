@@ -15,10 +15,18 @@ open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
 open_badge.config = {}
 
+
 @open_badge.record
 def record_params(setup_state):
     app = setup_state.app
     open_badge.config = dict([(key, value) for (key,value) in app.config.items()])
+    base_url = open_badge.config.get('ORGANIZATION').get('url')
+    # Strip off trailing forward slash for TTL template
+    if base_url.endswith("/"):
+        base_url = base_url[:-1]
+#    turtle_extension = render_template(
+#        'klob_extension.ttl',
+#        base_url=base_url)
 
 def get_badge_classes():
     all_badges_response = requests.post(
@@ -89,6 +97,7 @@ def add_badge_class():
     """Displays Form for adding a BadgeClass Form"""
     badge_class_form = NewBadgeClass()
     if request.method.startswith("POST"):
+        print("Size of image {}".format(badge_class_form.image_file.raw_data))
         badge_url, badge_slug = new_badge_class(
             name=badge_class_form.name.data,
             description=badge_class_form.description.data,
