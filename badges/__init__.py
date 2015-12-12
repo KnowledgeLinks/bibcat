@@ -275,6 +275,8 @@ def new_badge_class(**kwargs):
 	    new_badge_result.status_code,
 	    new_badge_result.text))
     badge_class_uri = rdflib.URIRef(new_badge_result.text)
+    print(badge_image)
+    print("****/n",kwargs)
     image_add_response = requests.post(
         str(badge_class_uri),
         data=badge_image,
