@@ -10,11 +10,9 @@ from .forms import NewBadgeClass, NewAssertion
 from .graph import *
        
     
-
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
 open_badge.config = {}
-
 
 @open_badge.record
 def record_params(setup_state):
@@ -42,8 +40,6 @@ def record_params(setup_state):
         params = {"context-uri":"http://knowledgelinks.io/ns/openbadges/extensions"},
         data = klob_extension)
 
-
-
 def get_badge_classes():
     all_badges_response = requests.post(
        open_badge.config.get('TRIPLESTORE_URL'),
@@ -53,7 +49,7 @@ def get_badge_classes():
         abort(502)
     bindings = all_badges_response.json().get('results').get('bindings')
     return [(r.get('altName')['value'], r.get('name')['value']) for r in bindings]
-      
+
 
 @open_badge.route("/Assertion/", methods=["POST", "GET"])
 def add_badge_assertion():
@@ -104,7 +100,6 @@ def badge_assertion(uuid):
     if assertion_response.status_code > 399:
         abort(505)
     raw_text = assertion_response.json().get('results').get('bindings')[0]['jsonString']['value']
-    raw_text = "{" + raw_text + "}"
     return json.dumps(json.loads(raw_text),indent=4, sort_keys=True)
 
 
@@ -157,7 +152,6 @@ def badge_class(badge_classname):
     if badge_class_response.status_code > 399:
         abort(505)
     raw_text = badge_class_response.json().get('results').get('bindings')[0]['jsonString']['value']
-    raw_text = "{" + raw_text + "}"
     return "<pre>" + json.dumps(json.loads(raw_text),indent=4, sort_keys=True) +"</pre>"
 
 @open_badge.route("/Criteria/<badge>")

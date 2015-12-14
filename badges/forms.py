@@ -1,6 +1,5 @@
 __author__ = "Jeremy Nelson"
 
-from datetime import datetime as datetime
 
 try:
     from flask_wtf import Form
@@ -9,6 +8,31 @@ except ImportError:
 from wtforms.fields import BooleanField, DateTimeField, Field, FileField 
 from wtforms.fields import SelectField, StringField, TextAreaField
 from wtforms.widgets import TextInput
+import requests
+from jinja2 import Environment, FileSystemLoader, PackageLoader
+from datetime import datetime as datetime
+
+def render_without_request(template_name, **template_vars):
+    """
+    Usage is the same as flask.render_template:
+
+    render_without_request('my_template.html', var1='foo', var2='bar')
+    """
+    env = Environment(loader=FileSystemLoader(os.path.join(PROJECT_ROOT, "templates")))
+    '''Environment(
+        loader= PackageLoader('web/ebadges/badges','templates')
+    )'''
+    template = env.get_template(template_name)
+    return template.render(**template_vars)
+    
+def LoadClassFields():
+    sparql = render_without_request(
+        "jsonFormQueryTemplate.rq",
+        object_class = "obi:UserClass") 
+    fieldList =  requests.post( 
+        open_badge.config.get('TRIPLESTORE_URL'),
+        data={"query": sparql,
+              "format": "json"})
 
 class CollectionListField(Field):
     """Form represents a comma-separate list of items"""
@@ -46,3 +70,6 @@ class NewAssertion(Form):
     familyName = StringField("Recipient family Name")
     givenName = StringField("Recipient given Name")
     issuedOn = DateTimeField("issuedOn", default=datetime.utcnow())
+
+#class NewUserForm(Form):
+    

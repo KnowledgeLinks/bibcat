@@ -1,4 +1,5 @@
 @prefix klob: <http://knowledgelinks.io/ns/openbadges/> .
+@prefix klff: <http://knowledgelinks.io/ns/formfields/> .
 @prefix obi: <https://w3id.org/openbadges#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -39,7 +40,14 @@
 #    klob:url        "literal"             -tring to prepend in a "urlSub" or "lookupUrlSub" call
 #	   klob:urlendfld  <propertyUri>         -the fiel value to append to a "urlSub" or "lookupUrlSub" call
 #    klob:lookupReturnField   <propUri>    -used with "lookup" call to specify which property field value wil be returned
-    
+#    klff:fieldType  "literal"             -string representing the type field to be used in a form. Options are:
+#                                              "text", "textbox", "date", "datetime", "select", "password", "email"
+#    klff:fieldDefault                     - Default form field value
+#    klff:fieldOptions  blanknode          - blank node contains instructions on how to get list of options
+#    klff:fieldSecurity blanknode          - blank node contains instructions on who is allowed access to the field/property
+#    klff:formLabelName "literal"          - name of the field to be used in the form.
+#    klff:formFieldName "literal"         - name of that should be used in html name/id attribute
+
 obi:BadgeClass a rdf:Class;
 	rdfs:domain	obi:Resource;	
 	rdfs:range	rdfs:Literal;	
@@ -245,3 +253,138 @@ obi:tags a rdf:Property;
 	klob:jsonObjName "tags";
 	klob:jsonValFormat "multiValArray";
 	klob:useFor obi:BadgeClass .	
+
+obi:userName a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Open Badge username.";	
+	klob:jsonObjName "username";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:UserClass;               
+	klff:fieldType "text";
+	klff:fieldValidation "uniqueValue";          
+	klff:fieldSecurity [
+			klff:userGroup "self";
+			klff:permissions "read, write"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "none";
+			klff:permissions "read"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "admin";
+			klff:permissions "read, write, delete"
+		];          
+	klff:formLabelName "Username";
+	klff:formFieldOrder 1; 
+	klff:formLayoutRow 1;          
+	klff:formFieldName "username" .
+	
+schema:givenName a rdf:Property;	
+	rdfs:domain	obi:Person;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "First name or given name for an individual.";	
+	klob:jsonObjName "givenname";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:UserClass;
+	klob:useFor obi:Person;               
+	klff:fieldType "text";
+	klff:fieldValidation "none";          
+	klff:fieldSecurity [
+			klff:userGroup "self";
+			klff:permissions "read, write"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "none";
+			klff:permissions "read"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "admin";
+			klff:permissions "read, write, delete"
+		];          
+	klff:formLabelName "Given name"; 
+	klff:formFieldOrder 2;
+	klff:formLayoutRow 2;          
+	klff:formFieldName "givenName" .
+	
+schema:familyName a rdf:Property;	
+	rdfs:domain	obi:Person;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Last name or family name for an individual.";	
+	klob:jsonObjName "familyname";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:UserClass;
+	klob:useFor obi:Person;               
+	klff:fieldType "text";
+	klff:fieldValidation "none";          
+	klff:fieldSecurity [
+			klff:userGroup "self";
+			klff:permissions "read, write"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "none";
+			klff:permissions "read"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "admin";
+			klff:permissions "read, write, delete"
+		];          
+	klff:formLabelName "Family name";
+	klff:formFieldOrder 3;  
+	klff:formLayoutRow 2;         
+	klff:formFieldName "familyName" .
+	
+schema:email a rdf:Property;	
+	rdfs:domain	obi:Person;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "email address.";	
+	klob:jsonObjName "familyname";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:UserClass;
+	klob:useFor obi:Person;               
+	klff:fieldType "email";
+	klff:fieldValidation "email";          
+	klff:fieldSecurity [
+			klff:userGroup "self";
+			klff:permissions "read, write"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "none";
+			klff:permissions "read"
+		];
+	klff:fieldSecurity [
+			klff:userGroup "admin";
+			klff:permissions "read, write, delete"
+		];          
+	klff:formLabelName "Email"; 
+	klff:formFieldOrder 4; 
+	klff:formLayoutRow 3;        
+	klff:formFieldName "email" .
+	
+klff:forms a rdf:Property.
+
+klff:fieldType a rdf:Property;
+	rdfs:subPropertyOf klff:forms;
+	rdfs:domain	rdf:Property;	
+	rdfs:range	klff:FieldClass.
+		
+klff:fieldValidation a rdf:Property;          
+	rdfs:subPropertyOf klff:forms.
+
+klff:fieldSecurity a rdf:Property;
+	rdfs:subPropertyOf klff:forms.
+
+klff:userGroup a rdf:Property;
+	rdfs:subPropertyOf klff:forms.
+
+klff:permissions a rdf:Property;
+	rdfs:subPropertyOf klff:forms.
+
+klff:formLabelName a rdf:Property;         
+	rdfs:subPropertyOf klff:forms.
+	
+klff:formFieldName a rdf:Property;
+	rdfs:subPropertyOf klff:forms.
+
+klff:formLayoutRow a rdf:Property;
+  rdfs:subPropertyOf klff:forms.

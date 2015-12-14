@@ -2,7 +2,7 @@ prefix obi: <https://w3id.org/openbadges#>
 prefix schema: <https://schema.org/> 
 prefix klob: <http://knowledgelinks.io/ns/openbadges/> 
 
-SELECT (GROUP_CONCAT(?json; SEPARATOR=",") AS ?jsonString)
+SELECT (CONCAT('{',GROUP_CONCAT(?json; SEPARATOR=","),'}') AS ?jsonString)
 {
   {{ uri_sparql_select }}                    #enter the sqarql lines that will resolve the resource subject to "?uri" variable
 	BIND (obi:{{ object_type }} AS ?objType) . #Set the obi:??? to the return that which you want BadgeClass, Assertion, etc.

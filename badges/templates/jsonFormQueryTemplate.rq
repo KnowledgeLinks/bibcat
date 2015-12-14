@@ -1,0 +1,31 @@
+prefix klob: <http://knowledgelinks.io/ns/openbadges/> 
+prefix klff: <http://knowledgelinks.io/ns/formfields/> 
+prefix obi: <https://w3id.org/openbadges#> 
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+prefix schema: <https://schema.org/> 
+SELECT (CONCAT('[',GROUP_CONCAT(?json; SEPARATOR=","),']') AS ?jsonString)
+FROM NAMED klob:extensions
+{
+  SELECT ?fldOrder ?name (CONCAT('{"propUri":"',STR(?fields),'",',(GROUP_CONCAT(?fld; SEPARATOR=",")),'}') AS ?json)
+  
+  {
+
+    GRAPH klob:extensions
+          {
+            ?fields klob:useFor {{ object_class }} .
+            ?fields klff:formFieldName ?name .
+            OPTIONAL { ?fields klff:formFieldOrder ?order }. 
+            BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
+            ?props rdfs:subPropertyOf+  klff:forms .
+            BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
+            ?fields ?props ?o .
+            BIND (IF(dataType(?o)=xsd:string,REPLACE(REPLACE(?o,'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
+            BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+            BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld)
+            FILTER (!isBlank(?o)).
+          }
+  } 
+  GROUP BY ?name ?fields ?fldOrder
+  ORDER BY ?fldOrder ?name
+}
