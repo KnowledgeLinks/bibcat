@@ -4,12 +4,12 @@ Purpose:     Islandora Badges Application is a Falcon REST API for creating
              Open Badges using the Open Badges RDF Linked-Data specification 
              at <http://specification.openbadges.org/> 
 
-Author:      Jeremy Nelson
+Authors:      Jeremy Nelson, Mike Stabile
 Created:     16/09/2014
 Copyright:   (c) Jeremy Nelson, Colorado College, Islandora Foundation 2014-
 Licence:     GPLv3
 """
-__author__ = "Jeremy Nelson"
+__author__ = ",".join(["Jeremy Nelson", "Mike Stabile"])
 __license__ = "GPLv3"
 __version_info__ = ('0', '6', '0')
 __version__ = '.'.join(__version_info__)
@@ -507,9 +507,6 @@ def render_without_request(template_name, **template_vars):
     render_without_request('my_template.html', var1='foo', var2='bar')
     """
     env = Environment(loader=FileSystemLoader(os.path.join(PROJECT_ROOT, "templates")))
-    '''Environment(
-        loader= PackageLoader('web/ebadges/badges','templates')
-    )'''
     template = env.get_template(template_name)
     return template.render(**template_vars)
 

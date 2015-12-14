@@ -4,9 +4,11 @@ from datetime import datetime as datetime
 
 try:
     from flask_wtf import Form
+    from flask_wtf.file import FileField
 except ImportError:
     from wtforms import Form
-from wtforms.fields import BooleanField, DateTimeField, Field, FileField 
+    from wtforms.fields import FieldField
+from wtforms.fields import BooleanField, DateTimeField, Field
 from wtforms.fields import SelectField, StringField, TextAreaField
 from wtforms.widgets import TextInput
 
@@ -21,7 +23,6 @@ class CollectionListField(Field):
             return ''
 
     def process_formdata(self, valuelist):
-        print("In CollectionListField {}".format(valuelist))
         if valuelist:
             self.data = [x.strip() for x in valuelist[0].split(',')]
         else:

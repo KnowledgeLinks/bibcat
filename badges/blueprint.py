@@ -1,4 +1,4 @@
-__author__ = "Jeremy Nelson"
+__author__ = "Jeremy Nelson, Mike Stabile"
 
 import json
 import requests
@@ -22,7 +22,6 @@ def record_params(setup_state):
     open_badge.config = dict([(key, value) for (key,value) in app.config.items()])
     base_url = open_badge.config.get('ORGANIZATION').get('url')
     triplestore_url = open_badge.config.get('TRIPLESTORE_URL')
-    print("*****",base_url,"--",triplestore_url)
     # Strip off trailing forward slash for TTL template
     if base_url.endswith("/"):
         base_url = base_url[:-1]
