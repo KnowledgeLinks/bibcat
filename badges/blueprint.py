@@ -5,7 +5,7 @@ import requests
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
-from . import new_badge_class, issue_badge
+from . import new_badge_class, issue_badge, render_without_request
 from .forms import NewBadgeClass, NewAssertion
 from .graph import *
        
@@ -21,12 +21,28 @@ def record_params(setup_state):
     app = setup_state.app
     open_badge.config = dict([(key, value) for (key,value) in app.config.items()])
     base_url = open_badge.config.get('ORGANIZATION').get('url')
+    triplestore_url = open_badge.config.get('TRIPLESTORE_URL')
+    print("*****",base_url,"--",triplestore_url)
     # Strip off trailing forward slash for TTL template
     if base_url.endswith("/"):
         base_url = base_url[:-1]
-#    turtle_extension = render_template(
-#        'klob_extension.ttl',
-#        base_url=base_url)
+    # if the extensions exist in the triplestore drop the graph
+    drop_extensions = requests.post(
+        url=triplestore_url,
+        params = {"update":"DROP GRAPH <http://knowledgelinks.io/ns/openbadges/extensions>;"})
+    # render the extensions with the base URL
+    # must use a ***NON FLASK*** routing since flask is not completely initiated 
+    klob_extension = render_without_request(
+        'klob_extensions.ttl',
+        base_url=base_url)
+    # load the extensions in the triplestore 
+    result = requests.post(
+        url=triplestore_url,
+        headers = {"Content-Type":"text/turtle"},
+        params = {"context-uri":"http://knowledgelinks.io/ns/openbadges/extensions"},
+        data = klob_extension)
+
+
 
 def get_badge_classes():
     all_badges_response = requests.post(

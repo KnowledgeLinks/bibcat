@@ -29,7 +29,7 @@ import requests
 import time
 import urllib.parse
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, PackageLoader
 from .graph import *
 from .forms import NewAssertion, NewBadgeClass
 from wsgiref import simple_server
@@ -499,6 +499,19 @@ def main(args):
         email = args.email
         event = args.event
         revoke_badge(email, event)
+
+def render_without_request(template_name, **template_vars):
+    """
+    Usage is the same as flask.render_template:
+
+    render_without_request('my_template.html', var1='foo', var2='bar')
+    """
+    env = Environment(loader=FileSystemLoader(os.path.join(PROJECT_ROOT, "templates")))
+    '''Environment(
+        loader= PackageLoader('web/ebadges/badges','templates')
+    )'''
+    template = env.get_template(template_name)
+    return template.render(**template_vars)
 
 
 if __name__ == '__main__':
