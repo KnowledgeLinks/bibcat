@@ -1,5 +1,7 @@
 @prefix klob: <http://knowledgelinks.io/ns/openbadges/> .
 @prefix klff: <http://knowledgelinks.io/ns/formfields/> .
+@prefix klr: <http://knowledgelinks.io/ns/resources/> .
+@prefix kls: <http://knowledgelinks.io/ns/security/> .
 @prefix obi: <https://w3id.org/openbadges#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -264,21 +266,106 @@ obi:userName a rdf:Property;
 	klff:fieldType "text";
 	klff:fieldValidation "uniqueValue";          
 	klff:fieldSecurity [
-			klff:userGroup "self";
-			klff:permissions "read, write"
+			kls:userGroup "self";
+			kls:permissions "read, write"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "none";
-			klff:permissions "read"
+			kls:userGroup "none";
+			kls:permissions "read"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "admin";
-			klff:permissions "read, write, delete"
+			kls:userGroup "admin";
+			kls:permissions "read, write, delete"
 		];          
 	klff:formLabelName "Username";
 	klff:formFieldOrder 1; 
 	klff:formLayoutRow 1;          
 	klff:formFieldName "username" .
+
+obi:salt a rdf:Property;	
+	rdfs:domain	obi:PasswordClass;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Salt used for hash.";	
+	klob:jsonObjName "salt";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:UserClass;               
+	klff:fieldType "serverOnly";
+	klff:fieldProccessing "salt";
+	klff:fieldValidation "uniqueValue";         
+	klff:fieldSecurity [
+			kls:userGroup "self";
+			kls:permissions "read, write"
+		];
+	klff:fieldSecurity [
+			kls:userGroup "none";
+			kls:permissions "none"
+		];
+	klff:fieldSecurity [
+			kls:userGroup "admin";
+			kls:permissions "read"
+		];
+	klff:formFieldName "salt".
+	
+obi:password a rdf:Property;	
+	rdfs:domain	obi:PasswordClass;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "User's account password.";	
+	klob:jsonObjName "username";
+	klob:jsonValFormat "objectValue";
+	klob:useFor obi:UserClass;               
+	klff:fieldType "password";
+	klff:fieldValidation "passwordValidation"; 
+	klff:fieldSaveType "secureHash";         
+	klff:fieldSecurity [
+			kls:userGroup "self";
+			kls:permissions "read, write"
+		];
+	klff:fieldSecurity [
+			kls:userGroup "none";
+			kls:permissions "read"
+		];
+	klff:fieldSecurity [
+			kls:userGroup "admin";
+			kls:permissions "read, write, delete"
+		];          
+	klff:formLabelName "Password";
+	klff:formFieldOrder 1; 
+	klff:formLayoutRow 1;          
+	klff:formFieldName "password" .
+
+obi:hasPassword a rdf:Property;	
+	rdfs:domain	obi:Resource;	
+	rdfs:range	obi:PasswordClass;	
+	rdfs:comment "User's account password object.";	
+	klob:jsonObjName "Password";
+	klob:jsonValFormat "lookupProperties";
+	klob:lookupReturnField [
+		klob:jsonObjName "salt";
+		klob:jsonValFormat "objectValue" ;
+		klob:propertyField obi:salt
+	] ;
+	klob:lookupReturnField [
+		klob:jsonObjName "type";
+		klob:jsonValFormat "objectValue" ;
+		klob:propertyField obi:password
+	] ;
+	klob:useFor obi:UserClass;               
+	klff:fieldType "objectStore";
+	klff:objectStore obi:PasswordClass;	        
+	klff:fieldSecurity [
+			kls:userGroup "self";
+			kls:permissions "read, write"
+		];
+	klff:fieldSecurity [
+			kls:userGroup "none";
+			kls:permissions "read"
+		];
+	klff:fieldSecurity [
+			kls:userGroup "admin";
+			kls:permissions "read, write, delete"
+		];                   
+	klff:formFieldName "PasswordClass" .
+
 	
 schema:givenName a rdf:Property;	
 	rdfs:domain	obi:Person;	
@@ -291,16 +378,16 @@ schema:givenName a rdf:Property;
 	klff:fieldType "text";
 	klff:fieldValidation "none";          
 	klff:fieldSecurity [
-			klff:userGroup "self";
-			klff:permissions "read, write"
+			kls:userGroup kls:Self;
+			kls:permissions "read,write"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "none";
-			klff:permissions "read"
+			kls:userGroup kls:Public;
+			kls:permissions "read"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "admin";
-			klff:permissions "read, write, delete"
+			kls:userGroup kls:Admin;
+			kls:permissions "read,write,delete"
 		];          
 	klff:formLabelName "Given name"; 
 	klff:formFieldOrder 2;
@@ -318,16 +405,16 @@ schema:familyName a rdf:Property;
 	klff:fieldType "text";
 	klff:fieldValidation "none";          
 	klff:fieldSecurity [
-			klff:userGroup "self";
-			klff:permissions "read, write"
+			kls:userGroup kls:Self;
+			kls:permissions "read,write"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "none";
-			klff:permissions "read"
+			kls:userGroup kls:Public;
+			kls:permissions "read"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "admin";
-			klff:permissions "read, write, delete"
+			kls:userGroup kls:Admin;
+			kls:permissions "read,write,delete"
 		];          
 	klff:formLabelName "Family name";
 	klff:formFieldOrder 3;  
@@ -338,23 +425,23 @@ schema:email a rdf:Property;
 	rdfs:domain	obi:Person;	
 	rdfs:range	rdfs:literal;	
 	rdfs:comment "email address.";	
-	klob:jsonObjName "familyname";
+	klob:jsonObjName "email";
 	klob:jsonValFormat "objectValue";
 	klob:useFor obi:UserClass;
 	klob:useFor obi:Person;               
 	klff:fieldType "email";
 	klff:fieldValidation "email";          
 	klff:fieldSecurity [
-			klff:userGroup "self";
-			klff:permissions "read, write"
+			kls:userGroup kls:Self;
+			kls:permissions "read,write"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "none";
-			klff:permissions "read"
+			kls:userGroup kls:Public;
+			kls:permissions "read"
 		];
 	klff:fieldSecurity [
-			klff:userGroup "admin";
-			klff:permissions "read, write, delete"
+			kls:userGroup kls:Admin;
+			kls:permissions "read,write,delete"
 		];          
 	klff:formLabelName "Email"; 
 	klff:formFieldOrder 4; 
@@ -374,11 +461,11 @@ klff:fieldValidation a rdf:Property;
 klff:fieldSecurity a rdf:Property;
 	rdfs:subPropertyOf klff:forms.
 
-klff:userGroup a rdf:Property;
-	rdfs:subPropertyOf klff:forms.
+kls:userGroup a rdf:Property;
+	rdfs:subPropertyOf klff:fieldSecurity.
 
-klff:permissions a rdf:Property;
-	rdfs:subPropertyOf klff:forms.
+kls:permissions a rdf:Property;
+	rdfs:subPropertyOf klff:fieldSecurity.
 
 klff:formLabelName a rdf:Property;         
 	rdfs:subPropertyOf klff:forms.
@@ -388,3 +475,40 @@ klff:formFieldName a rdf:Property;
 
 klff:formLayoutRow a rdf:Property;
   rdfs:subPropertyOf klff:forms.
+  
+klff:fieldSaveType a rdf:Property;
+  rdfs:subPropertyOf klff:forms.
+  
+klff:fieldProccessing a rdf:Property;
+  rdfs:subPropertyOf klff:forms.
+
+klff:fieldValidation a rdf:Property;
+  rdfs:subPropertyOf klff:forms.
+  
+klr:UserGroup a rdf:Class;
+	rdfs:label "User group";
+	rdfs:comment "a group of users".
+	
+kls:SysAdmin a klr:UserGroup;
+	rdfs:label "SysAdmin-SG";
+	rdfs:comment "The application system admin security group";
+	kls:basePermissions "full";
+	kls:specifiedPermissions "override".
+
+kls:Admin a klr:UserGroup;
+	rdfs:label "Admin-SG";
+	rdfs:comment "The application admin security group for managing content";
+	kls:basePermissions "full";
+	kls:specifiedPermissions "adhere".
+	
+kls:Self a klr:UserGroup;
+	rdfs:label "Self-SG";
+	rdfs:comment "The security group pertaining to logged in user level permissions";
+	kls:basePermissions "read";
+	kls:specifiedPermissions "adhere".
+
+kls:Public a klr:UserGroup;
+	rdfs:label "Public-SG";
+	rdfs:comment "The security group for public access";
+	kls:basePermissions "none";
+	kls:specifiedPermissions "adhere".

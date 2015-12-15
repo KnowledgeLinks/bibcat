@@ -28,11 +28,15 @@ import re
 import requests
 import time
 import urllib.parse
-
+try:
+    from flask_wtf import Form
+except ImportError:
+    from wtforms import Form
 from jinja2 import Environment, FileSystemLoader, PackageLoader
 from .graph import *
 from .forms import NewAssertion, NewBadgeClass
 from wsgiref import simple_server
+from wtforms.fields import *
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
@@ -526,3 +530,32 @@ if __name__ == '__main__':
     parser.add_argument('--event', help='Event to issue badge')
     args = parser.parse_args()
     main(args)
+    
+def LoadClassFields():
+    sparql = render_without_request(
+        "jsonFormQueryTemplate.rq",
+        object_class = "obi:UserClass") 
+    fieldList =  requests.post( 
+        "http://localhost:8080/bigdata/sparql",
+        data={"query": sparql,
+              "format": "json"})
+                
+    return json.loads(fieldList.json().get('results').get('bindings')[0]['jsonString']['value'])
+    
+class it(type):
+    def __iter__(self):
+        # Wanna iterate over a class? Then ask that class for iterator.
+        return self.classiter()
+        
+class NewUserForm(Form):
+    __metaclass__ = it
+    def __init__(self):
+        fields = LoadClassFields()
+        for k in fields:
+             setattr(self, k['formFieldName'], getFormField(k))
+             
+def getFormField(field):
+    if field['fieldType'] == 'text':
+        return StringField(field.get('formLabelName',field['formFieldName']))
+    else:
+        return "none"

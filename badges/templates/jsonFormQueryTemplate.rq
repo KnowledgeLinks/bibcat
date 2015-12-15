@@ -7,25 +7,85 @@ prefix schema: <https://schema.org/>
 SELECT (CONCAT('[',GROUP_CONCAT(?json; SEPARATOR=","),']') AS ?jsonString)
 FROM NAMED klob:extensions
 {
-  SELECT ?fldOrder ?name (CONCAT('{"propUri":"',STR(?fields),'",',(GROUP_CONCAT(?fld; SEPARATOR=",")),'}') AS ?json)
-  
-  {
-
-    GRAPH klob:extensions
-          {
-            ?fields klob:useFor {{ object_class }} .
-            ?fields klff:formFieldName ?name .
-            OPTIONAL { ?fields klff:formFieldOrder ?order }. 
-            BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
-            ?props rdfs:subPropertyOf+  klff:forms .
-            BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
-            ?fields ?props ?o .
-            BIND (IF(dataType(?o)=xsd:string,REPLACE(REPLACE(?o,'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
-            BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
-            BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld)
-            FILTER (!isBlank(?o)).
-          }
-  } 
-  GROUP BY ?name ?fields ?fldOrder
-  ORDER BY ?fldOrder ?name
-}
+	  SELECT ?fldOrder ?name (CONCAT('{"propUri":"',STR(?fields),'",',(GROUP_CONCAT(?fld; SEPARATOR=",")),'}') AS ?json)
+	  {
+	
+	    GRAPH klob:extensions {
+	          { # Read field contruct information
+	            #?fields klob:useFor obi:UserClass .
+		          ?fields klob:useFor {{ object_class }} .
+	            ?fields klff:formFieldName ?name .
+	            OPTIONAL { ?fields klff:formFieldOrder ?order }. 
+	            ?fields klff:fieldType ?type .          
+	            BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
+	            ?props rdfs:subPropertyOf+  klff:forms .
+	            BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
+	            ?fields ?props ?o .
+	            BIND (IF(dataType(?o)=xsd:string,REPLACE(REPLACE(?o,'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
+	            BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+	            BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld) .
+	            FILTER (!isBlank(?o)).
+	            FILTER (?type != "objectStore").
+	          } UNION {
+	          	{ # Read form proprerties that are stored as an RDF object
+						  	?prop klff:fieldType "objectStore" .
+			          ?prop klff:objectStore ?objClass .
+			          ?fields rdfs:domain ?objClass .
+	            	#?fields klob:useFor obi:UserClass .
+		            ?fields klob:useFor {{ object_class }} .
+			          ?fields klff:formFieldName ?name .
+			          OPTIONAL { ?fields klff:formFieldOrder ?order }.
+			          BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
+									{                
+			              ?props rdfs:subPropertyOf+  klff:forms .
+			              BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
+			              ?fields ?props ?o .		              
+			              BIND (IF(dataType(?o)=xsd:string,REPLACE(REPLACE(?o,'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
+			              BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+			              BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld)
+			              FILTER (!isBlank(?o)).
+			            } UNION {
+			              BIND (?objClass as ?val) .
+			              BIND (CONCAT('"objSaveClass":"',str(?val),'"') AS ?fld) .
+			            } UNION {
+			              BIND (?prop as ?val) .
+			              BIND (CONCAT('"objPropertyFld":"',str(?val),'"') AS ?fld)
+			            }
+							}
+						} UNION {
+							SELECT ?name ?fldOrder ?fields (CONCAT('"',?property,'":[',GROUP_CONCAT(?subVal; SEPARATOR=","),']') AS ?fld)  
+							{
+							  SELECT ?name ?fields ?fldOrder ?property ?bn (CONCAT('{',GROUP_CONCAT(?subfld; SEPARATOR=","),'}') AS ?subVal)
+							  {
+							
+							    GRAPH klob:extensions {
+							          {
+							            #?fields klob:useFor obi:UserClass .
+							            ?fields klob:useFor {{ object_class }} .
+							            ?fields klff:formFieldName ?name .
+							            OPTIONAL { ?fields klff:formFieldOrder ?order }. 
+							            ?fields klff:fieldType ?type .          
+							            BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
+							            ?props rdfs:subPropertyOf+  klff:forms .
+							            BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
+							            ?fields ?props ?o .
+							            BIND (if(isBlank(?o),?o,"") AS ?bn).
+							            ?bn ?subProp ?subObj .
+							            BIND (REPLACE(STR(?subProp),  "^(.*[/])", "") AS  ?subProperty) .
+							            BIND (?subObj as ?rtnVal).
+							            #BIND (IF(dataType(?subObj)=xsd:string,REPLACE(REPLACE(?subObj,'"','&quot;'),"\\\\","&#92;"),?subObj) AS ?rtnVal) .
+									    		BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+							            BIND (CONCAT('"',?subProperty,'":',STR(?jsonVal)) AS ?subfld)
+							          } 
+									}
+							  } 
+							  GROUP BY ?name ?fields ?fldOrder ?property ?bn 
+							  ORDER BY ?fldOrder ?name
+							}
+							GROUP BY ?name ?fields ?fldOrder ?property
+						}
+			}
+	  } 
+	  GROUP BY ?name ?fields ?fldOrder
+	  ORDER BY ?fldOrder ?name
+}	

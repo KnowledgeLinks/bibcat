@@ -1,6 +1,8 @@
 __author__ = "Jeremy Nelson"
 
-
+import os
+import json
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 try:
     from flask_wtf import Form
 except ImportError:
@@ -25,14 +27,7 @@ def render_without_request(template_name, **template_vars):
     template = env.get_template(template_name)
     return template.render(**template_vars)
     
-def LoadClassFields():
-    sparql = render_without_request(
-        "jsonFormQueryTemplate.rq",
-        object_class = "obi:UserClass") 
-    fieldList =  requests.post( 
-        open_badge.config.get('TRIPLESTORE_URL'),
-        data={"query": sparql,
-              "format": "json"})
+
 
 class CollectionListField(Field):
     """Form represents a comma-separate list of items"""
@@ -63,6 +58,7 @@ class NewBadgeClass(Form):
     tags = CollectionListField()
     startDate = DateTimeField("Start Date")
 
+
 class NewAssertion(Form):
     """Form for adding a new Assertion"""
     badge = SelectField("Badge")
@@ -71,5 +67,5 @@ class NewAssertion(Form):
     givenName = StringField("Recipient given Name")
     issuedOn = DateTimeField("issuedOn", default=datetime.utcnow())
 
-#class NewUserForm(Form):
+
     

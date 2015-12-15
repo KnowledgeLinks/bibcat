@@ -37,50 +37,50 @@
        </div>
        <div class="row form-group">
         <section class="col-md-8">
-          <label>{{ form.description.label }}</label>
-          {{ form.description(class_='form-control') }}
+          <label>{{ form.f['description'].label }}</label>
+          {{ form.f['description'](class_='form-control') }}
         </section>
        </div>
        <div class="row form-group">
         <section class="col-md-6">
-          <label>{{ form.startDate.label }}</label>
+          <label>{{ form.f['startDate'].label }}</label>
           <!-- datepicker docs found at http://bootstrap-datepicker.readthedocs.org/en/latest/ -->
-          {{ form.startDate(class_='form-control dp') }}
+          {{ form.f['startDate'](class_='form-control dp') }}
         </section>
         <section class="col-md-6">
-          <label>{{ form.endDate.label }} </label>
-          {{ form.endDate(class_='form-control dp') }}
+          <label>{{ form.f['endDate'].label }} </label>
+          {{ form.f['endDate'](class_='form-control dp') }}
         </section>
        </div>
        <div class="row form-group">
         <section class="col-md-5">
-          <label>{{ form.image_file.label }}</label>
-          {{ form.image_file(class_='form-control btn btn-upload') }}
+          <label>{{ form.f['image_file'].label }}</label>
+          {{ form.f['image_file'](class_='form-control btn btn-upload') }}
         </section>
         <section class="col-md-1">
            <h3>OR</h3>
         </section>
         <section class="col-md-6">
-          <label>{{ form.image_url.label }}</label>
-          {{ form.image_url(class_='form-control') }}
+          <label>{{ form.f['image_url'].label }}</label>
+          {{ form.f['image_url'](class_='form-control') }}
         </section>
        </div>
        <div class="row form-group">
         <section class="col-md-4">
-          <label>{{ form.criteria.label }}</label>
+          <label>{{ form.f['criteria'].label }}</label>
         </section>
         <section class="col-md-8">
-          {{ form.criteria(class_='form-control') }}
+          {{ form.f['criteria'](class_='form-control') }}
         </section>
        </div>
        <div class="row form-group">
         <section class="col-md-4">
-          <label>{{ form.tags.label }}</label>
+          <label>{{ form.f['tags'].label }}</label>
           <p class="pull-right">Separate tags by commas</p>
           
         </section>
         <section class="col-md-8">
-          {{ form.tags(class_='form-control') }}
+          {{ form.f['tags'](class_='form-control') }}
         </section>
        </div>
        <div class="row">
