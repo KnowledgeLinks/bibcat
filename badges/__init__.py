@@ -117,8 +117,6 @@ def add_get_participant(**kwargs):
     email = kwargs.get('email')
     if email is None:
         raise ValueError("Email cannot be none")
-    for key, val in kwargs.items():
-        print(key, val, type(val))
     email_result = requests.post(
         TRIPLESTORE_URL,
         data={"query": CHECK_PERSON_SPARQL.format(email),
@@ -252,7 +250,7 @@ def new_badge_class(**kwargs):
                    good candidate for controlled vocabulary, Optional default  
                    is an empty string
        tags --  List of descriptive key-word tags, Required
-       badge_image -- Binary of Open Badge Image to be used in badge baking,
+       image -- Binary of Open Badge Image to be used in badge baking,
                       Required
        issuer -- Dictionary with name and url fields. Required
 
@@ -268,15 +266,13 @@ def new_badge_class(**kwargs):
     keywords = kwargs.get('tags')
     criteria = kwargs.get('criteria', None)
     issuer = kwargs.get('issuer')
-    badge_image = kwargs.get('image_file')
+    badge_image = kwargs.get('image')
     new_badge_result = requests.post(REPOSITORY_URL)
     if new_badge_result.status_code > 399:
         raise falcon.HTTPBadGateway("Error adding new badge {}\n{}".format(
 	    new_badge_result.status_code,
 	    new_badge_result.text))
     badge_class_uri = rdflib.URIRef(new_badge_result.text)
-    print(badge_image)
-    print("****/n",kwargs)
     image_add_response = requests.post(
         str(badge_class_uri),
         data=badge_image,

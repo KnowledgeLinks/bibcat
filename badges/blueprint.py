@@ -113,11 +113,11 @@ def add_badge_class():
     badge_class_form = NewBadgeClass()
     existing_badges = get_badge_classes()
     if request.method.startswith("POST"):
-        print("Size of image {}".format(badge_class_form.image_file.raw_data))
+        raw_data = badge_class_form.image_file.data.read()
         badge_url, badge_slug = new_badge_class(
             name=badge_class_form.name.data,
             description=badge_class_form.description.data,
-            image=badge_class_form.image_file.data,
+            image=raw_data,
             startDate=badge_class_form.startDate.raw_data,
             endDate=badge_class_form.endDate.data,
             tags=badge_class_form.tags.data,
