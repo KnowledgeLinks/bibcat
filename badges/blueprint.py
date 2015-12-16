@@ -1,4 +1,4 @@
-__author__ = "Jeremy Nelson"
+__author__ = "Jeremy Nelson, Mike Stabile"
 
 import json
 import requests
@@ -20,7 +20,6 @@ def record_params(setup_state):
     open_badge.config = dict([(key, value) for (key,value) in app.config.items()])
     base_url = open_badge.config.get('ORGANIZATION').get('url')
     triplestore_url = open_badge.config.get('TRIPLESTORE_URL')
-    print("*****",base_url,"--",triplestore_url)
     # Strip off trailing forward slash for TTL template
     if base_url.endswith("/"):
         base_url = base_url[:-1]
@@ -110,11 +109,11 @@ def add_badge_class():
     badge_class_form = NewBadgeClass()
     existing_badges = get_badge_classes()
     if request.method.startswith("POST"):
-        print("Size of image {}".format(badge_class_form.image_file.raw_data))
+        raw_data = badge_class_form.image_file.data.read()
         badge_url, badge_slug = new_badge_class(
             name=badge_class_form.name.data,
             description=badge_class_form.description.data,
-            image=badge_class_form.image_file.data,
+            image=raw_data,
             startDate=badge_class_form.startDate.raw_data,
             endDate=badge_class_form.endDate.data,
             tags=badge_class_form.tags.data,
@@ -232,3 +231,4 @@ def badge_image(badge=None, uid=None):
     if img_response.status_code > 399:
         abort(500)
     return Response(img_response.text, mimetype='image/png')
+
