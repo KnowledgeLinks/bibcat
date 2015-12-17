@@ -5,8 +5,8 @@ import requests
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
-from . import new_badge_class, issue_badge, render_without_request, NewUserForm, LoadClassFields, setFieldElement
-from .forms import NewBadgeClass, NewAssertion
+from . import new_badge_class, issue_badge, render_without_request
+from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import *
        
     
@@ -128,11 +128,13 @@ def add_badge_class():
 @open_badge.route("/user/", methods=["POST", "GET"])
 def add_user_class():
     """Displays Form for adding a user Form"""
-    user_form = setFieldElement(NewUserForm())
+    user_form = rdf_form_factory(
+        "NewUserForm", 
+        "obi:UserClass",
+        open_badge.config.get('TRIPLESTORE_URL'))
     return render_template(
         "user_class.html",
-        form=user_form,
-        fields=LoadClassFields()) 
+        form=user_form()) 
 
 @open_badge.route("/BadgeClass/<badge_classname>")
 @open_badge.route("/BadgeClass/<badge_classname>.json")

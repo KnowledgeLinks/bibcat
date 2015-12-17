@@ -1,3 +1,5 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix klob: <http://knowledgelinks.io/ns/openbadges/> .
 @prefix klff: <http://knowledgelinks.io/ns/formfields/> .
 @prefix klr: <http://knowledgelinks.io/ns/resources/> .
@@ -264,7 +266,22 @@ obi:userName a rdf:Property;
 	klob:jsonValFormat "objectValue";
 	klob:useFor obi:UserClass;               
 	klff:fieldType "text";
-	klff:fieldValidation "uniqueValue";          
+	klff:fieldValidation "uniqueValue";   
+        # foaf:Agent required by all servers to represent public access       
+        acl:accessTo [
+                        acl:mode acl:Read;
+                        acl:agentClass foaf:Agent
+                ];
+        acl:accessToClass [
+                        acl:mode acl:Append;
+                        acl:agentClass klff:self;
+                        acl:agentClass klff:Admin
+        ];               
+        acl:accessToClass [
+                        acl:mode acl:Write;
+                        acl:mode acl:Control;
+                        acl:agentClass klff:Admin
+        ]; 
 	klff:fieldSecurity [
 			kls:userGroup "self";
 			kls:permissions "read, write"

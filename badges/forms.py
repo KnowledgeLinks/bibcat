@@ -1,4 +1,4 @@
-__author__ = "Jeremy Nelson"
+__author__ = "Jeremy Nelson, Mike Stabile"
 
 import os
 import json
@@ -11,6 +11,7 @@ except ImportError:
     from wtforms.fields import FieldField
 from wtforms.fields import BooleanField, DateTimeField, Field
 from wtforms.fields import SelectField, StringField, TextAreaField
+import wtforms.form
 from wtforms.widgets import TextInput
 import requests
 from jinja2 import Environment, FileSystemLoader, PackageLoader
@@ -69,4 +70,40 @@ class NewAssertion(Form):
     issuedOn = DateTimeField("issuedOn", default=datetime.utcnow())
 
 
-    
+def getFormField(field):
+    form_field = None
+    if field['fieldType'] in ['text', 'email', 'password']:
+        form_field = StringField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'serverOnly':
+        form_field = "serverVar"
+    elif field['fieldType'] == 'textarea':
+        form_field = TextAreaField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'boolean':
+        form_field = BooleanField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'file':
+        form_field = FileField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'date':
+        form_field = DateField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'dateTime':
+        form_field = DateTimeField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] in ['lookup', 'valueList', 'image']:
+        form_field = ""
+    return form_field 
+     
+def rdf_form_factory(name,
+                     object_class, 
+                     triplestore_url="http://localhost:8080/bigdata/sparql"):
+    rdf_form = type(name, (Form, ), {})
+    sparql = render_without_request(
+        "jsonFormQueryTemplate.rq",
+        object_class = object_class) 
+    fieldList =  requests.post( 
+        triplestore_url,
+        data={"query": sparql,
+              "format": "json"})
+    fields = json.loads(fieldList.json().get('results').get('bindings')[0]['jsonString']['value'])
+    for field in fields:
+        form_field = getFormField(field)
+        if form_field:
+            setattr(rdf_form, field['formFieldName'], form_field)
+    return rdf_form
