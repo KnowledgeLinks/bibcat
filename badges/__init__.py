@@ -539,16 +539,53 @@ class it(type):
     def __iter__(self):
         # Wanna iterate over a class? Then ask that class for iterator.
         return self.classiter()
+
+def getFormField(wtfForm,field):
+    if field['fieldType'] == 'text':
+        return  StringField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'email':
+        return  StringField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'serverOnly':
+        return "serverVar"
+    elif field['fieldType'] == 'password':
+        return  StringField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'textarea':
+        return  textarea(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'boolean':
+        return  BooleanField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'file':
+        return  FileField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'image':
+        return "" # (field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'date':
+        return  DateField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'dateTime':
+        return  DateTimeField(field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'lookup':
+        return "" 
+        # (field.get('formLabelName',field['formFieldName']))
+    elif field['fieldType'] == 'valueList':
+        return ""
+        # (field.get('formLabelName',field['formFieldName']))
         
 class NewUserForm(Form):
-    __metaclass__ = it
-    def __init__(self):
-        fields = LoadClassFields()
-        for k in fields:
-             setattr(self, k['formFieldName'], getFormField(k))
+    fields = LoadClassFields()
+    i = 0
+    for k in fields:
+        setattr(Form, k['formFieldName'], getFormField(Form,k))
+        
+def setFieldElement(Form):
+    '''This function will read from the passed in form class and set the form html element
+       with the repsectived wtForm function call to the form.fields[i]['fieldElement'] variable
+       This will allow for easy usage in the form template call
+    '''
+    
+    i = 0
+    for fld in Form.fields:
+        try:
+            Form.fields[i]['formElement'] = getattr(Form, fld['formFieldName'])()
+        except:
+            Form.fields[i]['formElement'] = "none"
+        i += 1
+    return Form
              
-def getFormField(field):
-    if field['fieldType'] == 'text':
-        return StringField(field.get('formLabelName',field['formFieldName']))
-    else:
-        return "none"

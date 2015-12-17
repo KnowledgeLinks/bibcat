@@ -25,7 +25,7 @@ FROM NAMED klob:extensions
 	            BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
 	            BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld) .
 	            FILTER (!isBlank(?o)).
-	            FILTER (?type != "objectStore").
+	            #FILTER (?type != "objectStore").
 	          } UNION {
 	          	{ # Read form proprerties that are stored as an RDF object
 						  	?prop klff:fieldType "objectStore" .

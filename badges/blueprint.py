@@ -5,7 +5,7 @@ import requests
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
-from . import new_badge_class, issue_badge, render_without_request, NewUserForm
+from . import new_badge_class, issue_badge, render_without_request, NewUserForm, LoadClassFields, setFieldElement
 from .forms import NewBadgeClass, NewAssertion
 from .graph import *
        
@@ -128,21 +128,11 @@ def add_badge_class():
 @open_badge.route("/user/", methods=["POST", "GET"])
 def add_user_class():
     """Displays Form for adding a user Form"""
-    user_form = NewUserForm()
-    if request.method.startswith("POST"):
-        print("Size of image {}".format(badge_class_form.image_file.raw_data))
-        badge_url, badge_slug = new_badge_class(
-            name=badge_class_form.name.data,
-            description=badge_class_form.description.data,
-            image=badge_class_form.image_file.data,
-            startDate=badge_class_form.startDate.raw_data,
-            endDate=badge_class_form.endDate.data,
-            tags=badge_class_form.tags.data,
-            issuer=open_badge.config.get("ORGANIZATION"),
-            criteria=badge_class_form.criteria.data)
-        redirect(url_for('open_badge.badge_class', badge_classname=badge_slug))
-    print(user_form.__dict__)
-    return user_form.password  
+    user_form = setFieldElement(NewUserForm())
+    return render_template(
+        "user_class.html",
+        form=user_form,
+        fields=LoadClassFields()) 
 
 @open_badge.route("/BadgeClass/<badge_classname>")
 @open_badge.route("/BadgeClass/<badge_classname>.json")
