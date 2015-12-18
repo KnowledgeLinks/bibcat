@@ -14,6 +14,7 @@ from wtforms.fields import SelectField, StringField, TextAreaField
 import wtforms.form
 from wtforms.widgets import TextInput
 import requests
+from flask import current_app
 from jinja2 import Environment, FileSystemLoader, PackageLoader
 from datetime import datetime as datetime
 
@@ -91,14 +92,13 @@ def getFormField(field):
     return form_field 
      
 def rdf_form_factory(name,
-                     object_class, 
-                     triplestore_url="http://localhost:8080/bigdata/sparql"):
+                     object_class): 
     rdf_form = type(name, (Form, ), {})
     sparql = render_without_request(
         "jsonFormQueryTemplate.rq",
         object_class = object_class) 
     fieldList =  requests.post( 
-        triplestore_url,
+        current_app.config.get('TRIPLESTORE_URL'),
         data={"query": sparql,
               "format": "json"})
     fields = json.loads(fieldList.json().get('results').get('bindings')[0]['jsonString']['value'])

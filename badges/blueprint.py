@@ -130,8 +130,7 @@ def add_user_class():
     """Displays Form for adding a user Form"""
     user_form = rdf_form_factory(
         "NewUserForm", 
-        "obi:UserClass",
-        open_badge.config.get('TRIPLESTORE_URL'))
+        "obi:UserClass")
     return render_template(
         "user_class.html",
         form=user_form()) 
