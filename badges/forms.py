@@ -17,6 +17,7 @@ import requests
 from jinja2 import Environment, FileSystemLoader, PackageLoader
 from datetime import datetime as datetime
 
+
 def render_without_request(template_name, **template_vars):
     """
     Usage is the same as flask.render_template:
@@ -90,20 +91,43 @@ def getFormField(field):
         form_field = ""
     return form_field 
      
+'''class rdf_class_fields:
+    def __init__(self,name, object_class, triplestore_url):
+        fields = []'''
+        
 def rdf_form_factory(name,
                      object_class, 
                      triplestore_url="http://localhost:8080/bigdata/sparql"):
     rdf_form = type(name, (Form, ), {})
-    sparql = render_without_request(
-        "jsonFormQueryTemplate.rq",
-        object_class = object_class) 
-    fieldList =  requests.post( 
-        triplestore_url,
-        data={"query": sparql,
-              "format": "json"})
-    fields = json.loads(fieldList.json().get('results').get('bindings')[0]['jsonString']['value'])
+    fields = get_form_fields(object_class)
+    
+    #print(json.dumps(fields,indent=4))
     for field in fields:
         form_field = getFormField(field)
         if form_field:
             setattr(rdf_form, field['formFieldName'], form_field)
     return rdf_form
+
+def load_form_fields(object_class):
+    TRIPLESTORE_URL = "http://localhost:8080/bigdata/sparql"
+    sparql = render_without_request(
+        "jsonFormQueryTemplate.rq",
+        object_class = object_class) 
+    fieldList =  requests.post( 
+        TRIPLESTORE_URL,
+        data={"query": sparql,
+              "format": "json"})
+    print("***** Querying tipplestore ****")
+    return json.loads(fieldList.json().get('results').get('bindings')[0]['jsonString']['value'])
+  
+def get_form_fields(form_name):
+    global loadedFields
+    try:
+        test = loadedFields
+    except:
+        loadedFields = {}
+    try:
+        return loadedFields[form_name]
+    except:
+        loadedFields[form_name] = load_form_fields(form_name)
+        return loadedFields[form_name] 

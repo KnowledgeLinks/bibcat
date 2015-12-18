@@ -18,11 +18,15 @@ FROM NAMED klob:extensions
 	            OPTIONAL { ?fields klff:formFieldOrder ?order }. 
 	            ?fields klff:fieldType ?type .          
 	            BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
-	            ?props rdfs:subPropertyOf+  klff:forms .
+	            {
+	            	?props rdfs:subPropertyOf+  klff:forms .
+	            } UNION {
+	            	BIND (rdfs:domain as ?props)
+	            }
 	            BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
 	            ?fields ?props ?o .
-	            BIND (IF(dataType(?o)=xsd:string,REPLACE(REPLACE(?o,'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
-	            BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+	            BIND (IF(dataType(?o)=xsd:string || isIRI(?o),REPLACE(REPLACE(STR(?o),'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
+	            BIND (IF(dataType(?rtnVal)=xsd:string,CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
 	            BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld) .
 	            FILTER (!isBlank(?o)).
 	            #FILTER (?type != "objectStore").
@@ -40,8 +44,8 @@ FROM NAMED klob:extensions
 			              ?props rdfs:subPropertyOf+  klff:forms .
 			              BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
 			              ?fields ?props ?o .		              
-			              BIND (IF(dataType(?o)=xsd:string,REPLACE(REPLACE(?o,'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
-			              BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+			              BIND (IF(dataType(?o)=xsd:string || isIRI(?o),REPLACE(REPLACE(STR(?o),'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
+	            			BIND (IF(dataType(?rtnVal)=xsd:string,CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
 			              BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld)
 			              FILTER (!isBlank(?o)).
 			            } UNION {
@@ -73,8 +77,8 @@ FROM NAMED klob:extensions
 							            ?bn ?subProp ?subObj .
 							            BIND (REPLACE(STR(?subProp),  "^(.*[/])", "") AS  ?subProperty) .
 							            BIND (?subObj as ?rtnVal).
-							            #BIND (IF(dataType(?subObj)=xsd:string,REPLACE(REPLACE(?subObj,'"','&quot;'),"\\\\","&#92;"),?subObj) AS ?rtnVal) .
-									    		BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+							            BIND (IF(dataType(?o)=xsd:string || isIRI(?o),REPLACE(REPLACE(STR(?o),'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
+	            						BIND (IF(dataType(?rtnVal)=xsd:string,CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
 							            BIND (CONCAT('"',?subProperty,'":',STR(?jsonVal)) AS ?subfld)
 							          } 
 									}

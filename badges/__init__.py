@@ -41,6 +41,7 @@ from wtforms.fields import *
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
 
+global TRIPLESTORE_URL
 ENV = Environment(loader=FileSystemLoader(os.path.join(PROJECT_ROOT, "templates")))
 try:
     CONFIG = configparser.ConfigParser()
@@ -53,6 +54,9 @@ except:
     # Sets to sensible Semantic Server Core defaults
     REPOSITORY_URL = "http://localhost:8080/fedora/rest"
     TRIPLESTORE_URL = "http://localhost:8080/bigdata/sparql"
+
+ 
+
 
 def bake_badge_dev(badge_uri):
     with open("E:\\2015\\open-badge-atla2015.png", "rb") as img:
@@ -482,6 +486,8 @@ def main(args):
         args(argpare.ArgumentParser.args): Argument list
 
     """
+    global TRIPLESTORE_URL
+    TRIPLESTORE_URL = ""
     if args.action.startswith('serve'):
         from api import api
         print("Starting REST API on port 7500")
