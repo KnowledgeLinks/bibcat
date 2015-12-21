@@ -16,22 +16,8 @@ from wtforms.widgets import TextInput
 import requests
 from jinja2 import Environment, FileSystemLoader, PackageLoader
 from datetime import datetime as datetime
-
-
-def render_without_request(template_name, **template_vars):
-    """
-    Usage is the same as flask.render_template:
-
-    render_without_request('my_template.html', var1='foo', var2='bar')
-    """
-    env = Environment(loader=FileSystemLoader(os.path.join(PROJECT_ROOT, "templates")))
-    '''Environment(
-        loader= PackageLoader('web/ebadges/badges','templates')
-    )'''
-    template = env.get_template(template_name)
-    return template.render(**template_vars)
-    
-
+from .utilities import render_without_request
+from .rdfframework import *
 
 class CollectionListField(Field):
     """Form represents a comma-separate list of items"""
@@ -90,18 +76,13 @@ def getFormField(field):
     elif field['fieldType'] in ['lookup', 'valueList', 'image']:
         form_field = ""
     return form_field 
-     
-'''class rdf_class_fields:
-    def __init__(self,name, object_class, triplestore_url):
-        fields = []'''
         
 def rdf_form_factory(name,
                      object_class, 
                      triplestore_url="http://localhost:8080/bigdata/sparql"):
     rdf_form = type(name, (Form, ), {})
     fields = get_form_fields(object_class)
-    
-    #print(json.dumps(fields,indent=4))
+    print(json.dumps(fields,indent=4))
     for field in fields:
         form_field = getFormField(field)
         if form_field:

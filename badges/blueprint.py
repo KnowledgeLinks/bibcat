@@ -5,10 +5,11 @@ import requests
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
-from . import new_badge_class, issue_badge, render_without_request
+from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import *
-       
+from .utilities import render_without_request 
+from .rdfframework import *   
     
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
@@ -224,3 +225,7 @@ def badge_image(badge=None, uid=None):
         abort(500)
     return Response(img_response.text, mimetype='image/png')
 
+@open_badge.route("/classtest")
+def test_rdf_class():
+    rdf = rdf_framework()
+    return x

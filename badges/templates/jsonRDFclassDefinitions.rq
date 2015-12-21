@@ -1,0 +1,59 @@
+prefix klob: <http://knowledgelinks.io/ns/openbadges/> 
+prefix klff: <http://knowledgelinks.io/ns/formfields/> 
+prefix obi: <https://w3id.org/openbadges#> 
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+prefix schema: <https://schema.org/> 
+SELECT (CONCAT('{',GROUP_CONCAT(?json; SEPARATOR=','),'}') AS ?appClasses) 
+	{
+	  SELECT  (CONCAT('"',?class,'":{"className":"',?class,'",',?classUri,',',GROUP_CONCAT(?jsonProps; SEPARATOR=","),'}') AS ?json)
+	  {
+	
+	    GRAPH {{ graph }} {
+	          {
+                SELECT ?class ?classUri (GROUP_CONCAT(?valObj; SEPARATOR=',') AS ?jsonProps)
+                {
+                  {
+                    SELECT ?class ?classUri ?prop (GROUP_CONCAT(?val; SEPARATOR=',') AS ?vals)
+                    {
+                    ?klClasses a klff:objectClass .
+                    ?klClasses ?p ?o . 
+                    BIND (REPLACE(STR(?klClasses),  "^(.*[#/])", "") AS  ?class) .
+                    BIND (CONCAT('"',REPLACE(STR(?p),  "^(.*[#/])", ""),'"') AS  ?prop) .
+                    BIND (CONCAT('"',STR(?o),'"') AS ?val).
+                    BIND (CONCAT('"classUri":"',STR(?klClasses),'"') as ?classUri) .
+                    FILTER (?p != rdf:type)
+                    }
+                    GROUP BY ?class ?classUri ?prop
+                  }
+                  BIND (IF(regex(?vals,'","'),CONCAT('[',?vals,']'),?vals) AS ?cVal) .
+                  BIND (CONCAT(?prop,':',?cVal) AS ?valObj)
+                }
+                GROUP BY ?class ?classUri
+              } UNION {
+								SELECT ?class ?classUri ?jsonProps
+								{  
+				          { 
+										SELECT ?class ?classUri (CONCAT('"properties":{',GROUP_CONCAT(?prop; SEPARATOR=','),'}') AS ?jsonProps)
+										{
+										?klClasses a klff:objectClass .
+										?classProperties rdfs:domain ?klClasses  .
+										OPTIONAL {?classProperties rdfs:range ?r }.
+										OPTIONAL {?r klff:storageType ?sto }.
+										BIND (CONCAT('"storageType":"',IF(!bound(?sto),"literal",?sto),'"') AS ?storage ) .
+										BIND (CONCAT('"propUri":"',STR(?classProperties),'"') AS ?propUri) .
+										BIND (CONCAT('"range":"',STR(?r),'"') AS ?range).
+										BIND (REPLACE(STR(?klClasses),  "^(.*[/])", "") AS  ?class) .
+										BIND (CONCAT('"classUri":"',STR(?klClasses),'"') as ?classUri) .
+										BIND (REPLACE(STR(?classProperties),  "^(.*[/])", "") AS  ?property) .
+										BIND (CONCAT('"classUri":"',STR(?klClasses),'"') as ?classUri) .
+										BIND (CONCAT('"',?property,'":{',?propUri,',',?storage,',',?range,'}') AS ?prop) .
+										}
+										GROUP BY ?class ?classUri
+								  }
+						  	}
+						  }
+  					} 
+    			}
+	  GROUP BY ?class ?classUri
+	}
