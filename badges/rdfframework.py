@@ -4,7 +4,7 @@ import requests
 #from rdflib import RDF, RDFS, OWL, XSD, FOAF, SKOS, DOAP, DC, DCTERMS, VOID
 
 class rdf_framework:
-    "base class for Knowledge Links' Graph database RDF vocabulary framework"
+    '''base class for Knowledge Links' Graph database RDF vocabulary framework'''
     
     rdf_class_dict = {}        #stores the Triplestore defined class defintions
     class_initialized = False  #used to state if the the class was properly initialized with RDF definitions
@@ -13,8 +13,8 @@ class rdf_framework:
         self.__generateClasses()
         
     def saveForm(self,Form):
-        "*** to be written ***
-         recieves RDF_formfactory form, validates and saves the data"
+        '''*** to be written ***
+         recieves RDF_formfactory form, validates and saves the data'''
          
     
     def __generateClasses(self):
@@ -26,7 +26,7 @@ class rdf_framework:
                 setattr(self,c,rdf_class(classJson[c]))  
     
     def __load_rdf_class_defintions(self):
-        "Queries the triplestore for list of classes used in the app as defined in the kl_app.ttl file"
+        '''Queries the triplestore for list of classes used in the app as defined in the kl_app.ttl file'''
         sparql = render_without_request(
             "jsonRDFclassDefinitions.rq",
             graph= "klob:extensions") #current_app.config.get('RDF_DEFINITION_GRAPH')) 
@@ -38,23 +38,26 @@ class rdf_framework:
         return json.loads(classList.json().get('results').get('bindings')[0]['appClasses']['value'])
         
 class rdf_class:
+    '''RDF Class for a an RDF Class object. 
+       Uesed for manipulating and validating an RDF Class subject'''
+       
     def __init__(self,jsonObj):
         for p in jsonObj:
             setattr(self,p,jsonObj[p])
     
     def save(self, data):
-        "validates and saves passed data for the class"
+        '''validates and saves passed data for the class'''
         print("save",self.className)
         
     def newUri(self):
-        "*** to be written ***
+        '''*** to be written ***
         generates a new URI 
           -- for fedora generates the container and returns the URI
-          -- for blazegraph process will need to be created"
+          -- for blazegraph process will need to be created'''
         print("generating new URI")
         
     def validatePrimaryKey(self, dataValue):
-        "query to see if PrimaryKey is Valid"
+        '''query to see if PrimaryKey is Valid'''
         returnVal = False
         try:
             pkey = self.primaryKey

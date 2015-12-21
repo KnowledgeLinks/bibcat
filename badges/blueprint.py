@@ -2,6 +2,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import json
 import requests
+import re
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
@@ -14,7 +15,6 @@ from .rdfframework import *
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
 open_badge.config = {}
-
 @open_badge.record
 def record_params(setup_state):
     app = setup_state.app
@@ -48,7 +48,8 @@ def get_badge_classes():
     if all_badges_response.status_code > 399:
         abort(502)
     bindings = all_badges_response.json().get('results').get('bindings')
-    return [(r.get('altName')['value'], r.get('name')['value']) for r in bindings]
+    uid = re.sub(r'^(.*[#/])','',bindings[0].get('subject')['value'])
+    return [(r.get('altName')['value'], r.get('name')['value'], re.sub(r'^(.*[#/])','',r.get('subject')['value'])) for r in bindings]
 
 
 @open_badge.route("/Assertion/", methods=["POST", "GET"])
