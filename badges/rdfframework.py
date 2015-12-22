@@ -3,7 +3,7 @@ from .utilities import render_without_request
 import requests
 #from rdflib import RDF, RDFS, OWL, XSD, FOAF, SKOS, DOAP, DC, DCTERMS, VOID
 
-class rdf_framework:
+class rdf_framework(object):
     '''base class for Knowledge Links' Graph database RDF vocabulary framework'''
     
     rdf_class_dict = {}        #stores the Triplestore defined class defintions
@@ -15,13 +15,14 @@ class rdf_framework:
     def saveForm(self,Form):
         '''*** to be written ***
          recieves RDF_formfactory form, validates and saves the data'''
+        pass
          
     
     def __generateClasses(self):
-        if (self.class_initialized != True):
+        if (rdf_framework.class_initialized != True):
             classJson = self.__load_rdf_class_defintions()
             self.rdf_class_dict =  classJson
-            self.class_initialized = True 
+            rdf_framework.class_initialized = True 
             for c in self.rdf_class_dict:
                 setattr(self,c,rdf_class(classJson[c]))  
     
@@ -37,13 +38,13 @@ class rdf_framework:
         print("***** Querying tipplestore ****")
         return json.loads(classList.json().get('results').get('bindings')[0]['appClasses']['value'])
         
-class rdf_class:
-    '''RDF Class for a an RDF Class object. 
+class rdf_class(object):
+    '''RDF Class for a RDF Class object. 
        Uesed for manipulating and validating an RDF Class subject'''
        
     def __init__(self,jsonObj):
         for p in jsonObj:
-            setattr(self,p,jsonObj[p])
+            setattr(self, p, jsonObj[p])
     
     def save(self, data):
         '''validates and saves passed data for the class'''
@@ -72,7 +73,7 @@ class rdf_class:
         
     def __makeTriple (self,s,p,o):
         "takes a subject predicate and object and joins them with a space in between"
-        return s + " " + p + " " + o + " . "
+        return "{} {} {} .".format(s, p, o)
         
     def findPropName (self,propUri):
         "cycle through the class properties object to find the property name"
@@ -92,7 +93,7 @@ class rdf_class:
         else:
             return dataValue
     
-class rdf_datatype:
+class rdf_datatype(object):
     "This class will generate a rdf data type"
     def __init__(self, rdfDataType):
         self.__dataTypes(rdfDataType)
@@ -102,20 +103,24 @@ class rdf_datatype:
         if self.name == "object":
             return iri(dataValue)
         elif self.name == "literal":
-            return '"' + dataValue + '"'
+            return '"{}"'.format(dataValue)
         elif self.name == "boolean":
-            return '"' + str(dataValue).lower() + '"^^' + self.prefix
+            return '"{}""^^{}'.format(str(dataValue).lower(),
+                                      self.prefix)
         else:
-            return '"' + dataValue + '"^^' + self.prefix
+            return '"{}"^^{}'.format(dataValue, self.prefix)
         
     def __dataTypes(self,lookup):
         "sets the class attributes"
-        val = lookup.replace("http://www.w3.org/2001/XMLSchema#","").replace("xsd:","").replace("rdf:","").replace("http://www.w3.org/1999/02/22-rdf-syntax-ns#","")
-        self.prefix = "xsd:" + val
-        self.iri = iri("http://www.w3.org/2001/XMLSchema#" + val)
+        val = lookup.replace("http://www.w3.org/2001/XMLSchema#","").\
+                replace("xsd:","").\
+                replace("rdf:","").\
+                replace("http://www.w3.org/1999/02/22-rdf-syntax-ns#","")
+        self.prefix = "xsd:{}".format(val)
+        self.iri = iri("http://www.w3.org/2001/XMLSchema#{}".format(val))
         self.name = val
         if val.lower() == "literal" or val.lower() == "langstring":
-            self.prefix = "rdf:" + val
+            self.prefix = "rdf:{}".format(val)
             self.iri = iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#" + val)
         elif val.lower() == "object":
             self.prefix = "objInject"
@@ -123,10 +128,10 @@ class rdf_datatype:
         
         
 def iri(uriString):
-        "converts a string to an IRI or returns an IRI if already formated"
-        if uriString[:1] != "<":
-            uriString = "<" + uriString.strip()
-        if uriString[len(uriString)-1:] != ">":
-            uriString = uriString.strip() + ">"
-        return uriString
+    "converts a string to an IRI or returns an IRI if already formated"
+    if uriString[:1] != "<":
+        uriString = "<" + uriString.strip()
+    if uriString[len(uriString)-1:] != ">":
+        uriString = uriString.strip() + ">"
+    return uriString
 
