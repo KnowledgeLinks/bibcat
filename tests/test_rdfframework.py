@@ -60,13 +60,29 @@ class TestRdfClass(unittest.TestCase):
         }
     }
 }""")
+        self.person = rdf_class(self.person_json["Person"])
         
 
     def test_init(self):
-        person = rdf_class(self.person_json)
+        person = rdf_class(self.person_json["Person"])
         self.assertEqual(
-            person.Person.get('classUri'), 
+            person.classUri, 
             "https://schema.org/Person")
+
+
+    def test_newUri(self):
+        self.assertEqual(self.person.newUri(), None)
+
+    def test_save(self):
+        self.assertEqual(self.person.save(data=None), None)
+
+    def test_validatePrimaryKey(self):
+        print(self.person.primaryKey, self.person.properties[self.person.findPropName(self.person.primaryKey)]['storageType'])
+        self.assertEqual(self.person.validatePrimaryKey("help@gmail.com"),
+                "?uri a 0 .?uri <https://schema.org/email> 0 .")
+        self.assertEqual(self.person.validatePrimaryKey(None), None)
+        
+
         
 class TestRdfDatatype(unittest.TestCase):
 
