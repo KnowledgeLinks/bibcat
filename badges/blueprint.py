@@ -48,8 +48,9 @@ def get_badge_classes():
     if all_badges_response.status_code > 399:
         abort(502)
     bindings = all_badges_response.json().get('results').get('bindings')
-    uid = re.sub(r'^(.*[#/])','',bindings[0].get('subject')['value'])
-    return [(r.get('altName')['value'], r.get('name')['value'], re.sub(r'^(.*[#/])','',r.get('subject')['value'])) for r in bindings]
+    #uid = re.sub(r'^(.*[#/])','',bindings[0].get('subject')['value'])
+    #, re.sub(r'^(.*[#/])','',r.get('subject')['value'])
+    return [(r.get('altName')['value'], r.get('name')['value']) for r in bindings]
 
 
 @open_badge.route("/Assertion/", methods=["POST", "GET"])

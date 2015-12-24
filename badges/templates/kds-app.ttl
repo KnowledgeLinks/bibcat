@@ -1,0 +1,438 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+
+
+obi:AssertionClass a rdf:Class;
+	a kds:objectClass;
+	rdfs:label "Open Badge Assertion";
+	rdfs:comment "Assertion for open badges.";
+	kds:storageType "object";
+	kds:primaryKey [
+		kds:keyCombo schema:Person;
+		kds:keyCombo obi:BadgeClass
+	]; 
+	kds:json [
+		kds:useFor "default" ;
+		kds:jsonObjName "Assertion" 
+	] .
+	
+obi:context a kds:FormProperty;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Name of the open badge instance.";
+	kds:json [	
+		kds:useFor "default" ;
+		kds:jsonObjName "@context";
+		kds:jsonValFormat "objectValue" ;
+		kds:defaultVal "https://w3id.org/openbadges/v1" ;
+		kds:propertyField obi:context 
+	];
+	kds:json [
+		kds:useFor obi:BadgeClass ;
+		kds:useFor obi:Assertion .
+	] .
+
+obi:uid a kds:FormProperty;
+	rdfs:domain obi:Assertion;
+	rdfs:range kds:calculated;
+	kds:storageType "none";
+	rdfs:comment "Uuid of the open badge assertion.";	
+	kds:useFor [
+		kds:class obi:Assertion;
+		kds:jsonObjName "id";
+		kds:jsonValFormat "subjectCalc" ;
+		kds:parseType "afterLastSlash" ;
+		kds:unionUrl "{{ base_url }}/badges/Assertion/"
+		].
+	
+obi:hasBadge a kds:FormProperty;
+	rdfs:domain obi:Assertion;
+	rdfs:range obi:BadgeClass;
+	rdfs:comment "Badge used for the badge assertion.";
+	kds:requiredByDomain obi:Assertion;
+	kds:useFor [
+		kds:class obi:Assertion;
+		kds:jsonObjName "badge";
+		kds:jsonValFormat "lookupUrlSub" ;
+		kds:propertyField obi:hasBadge ;
+		kds:url "{{ base_url }}/badges/BadgeClass/";
+		kds:urlendfld schema:alternativeName
+	].
+		
+
+obi:issuedOn a kds:FormProperty;
+	rdfs:domain obi:Assertion;
+	rdfs:range xsd:dateTime;
+	rdfs:comment "Timestamp when badge was issued.";	
+	kds:requiredByDomain obi:Assertion;
+	kds:defaultVal "now";
+	kds:useFor [
+		kds:class obi:Assertion ;
+		kds:jsonObjName "issuedOn";
+		kds:jsonValFormat "objectValue" ;
+		kds:propertyField obi:issuedOn 
+	].
+	
+obi:expires a kds:FormProperty;
+	rdfs:domain obi:Assertion;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Timestamp when badge expires.";	
+	kds:useFor [
+		kds:class obi:Assertion ;
+		kds:jsonObjName "expires";
+		kds:jsonValFormat "objectValue" ;
+		kds:propertyField obi:expires 
+	] .
+	
+obi:recipient a kds:FormProperty;
+	rdfs:domain obi:Recipient;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Recipient of a Badge.";	
+	kds:useFor [
+		kds:class obi:Assertion ;
+		kds:jsonObjName "recipient";
+		kds:jsonValFormat "lookupProperties" ;
+		kds:lookupReturnField [
+			kds:jsonObjName "type";
+			kds:jsonValFormat "objectValue" ;
+			kds:defaultVal "email";
+			kds:propertyField obi:assertionType
+		] ;
+		kds:lookupReturnField [
+			kds:jsonObjName "hashed";
+			kds:jsonValFormat "objectValue" ;
+			kds:defaultVal true ;
+			kds:propertyField obi:hash
+		] ;
+		kds:lookupReturnField [
+			kds:jsonObjName "salt";
+			kds:jsonValFormat "objectValue" ;
+			kds:defaultVal "secretKey";
+			kds:propertyField obi:secretKey
+		] ;
+		kds:lookupReturnField [
+			kds:jsonObjName "identity";
+			kds:jsonValFormat "objectValue" ;
+			kds:propertyField obi:identity
+		]
+	] .
+	
+obi:verify a kds:FormProperty;
+	rdfs:domain obi:Recipient;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Instructions for third parties to verify this assertion.";	
+	kds:json [
+		kds:useFor obi:Assertion;
+		kds:jsonObjName "verify";
+		kds:jsonValFormat "lookupProperties" ;
+		kds:lookupReturnField [
+			kds:jsonObjName "type";
+			kds:jsonValFormat "objectValue" ;
+			kds:defaultVal "hosted"
+		] ;
+		kds:lookupReturnField [
+			kds:jsonObjName "url";
+			kds:jsonValFormat "subjectCalc" ;
+			kds:parseType "afterLastSlash" ;
+			kds:unionUrl "{{ base_url }}/badges/Assertion/"
+		]
+	] .
+	
+	
+schema:name a kds:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Name of the open badge instance.";	
+	kds:json [
+		kds:useFor obi:BadgeClass ;
+		kds:jsonObjName "name";
+		kds:jsonValFormat "objectValue"
+	] .
+
+schema:description a kds:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Description of the open badge instance.";	
+	kds:useFor [
+		kds:class obi:BadgeClass;
+		kds:jsonObjName "description";
+		kds:jsonValFormat "objectValue"
+	] .
+	
+
+obi:issuer a kds:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	schema:Organization;	
+	rdfs:label "Issuer";
+	rdfs:comment "Issuer of the open badge instance.";	
+	kds:useFor [
+		kds:class obi:BadgeClass;
+		kds:jsonObjName "issuer";
+		kds:jsonValFormat "lookup";
+		kds:lookupReturnField schema:URL;
+	] .
+	
+
+obi:type a kds:FormProperty;	
+	rdfs:domain	obi:BadgeClass;
+	rdfs:domain obi:Assertion;
+	rdfs:range	xsd:string;	
+	rdfs:comment "Type of item";	
+	kds:defaultVal "";
+	kds:useFor [
+		kds:class obi:BadgeClass ;
+		kds:jsonObjName "type";
+		kds:jsonValFormat "lookup";
+		kds:lookupReturnField kds:jsonObjName
+	];
+	kds:useFor [
+		kds:class obi:Assertion ;
+		kds:jsonObjName "type";
+		kds:jsonValFormat "lookup";
+		kds:lookupReturnField kds:jsonObjName
+	] .
+
+schema:image a kds:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:domain obi:Assertion;
+	rdfs:range	schema:ImageObject;
+	rdfs:range	schema:URL;
+	rdfs:comment "Image of the item.";	
+	kds:useFor [ 
+		kds:class obi:BadgeClass ;
+		kds:jsonObjName "image";
+		kds:jsonObjName "image";
+		kds:jsonValFormat "urlSub";
+		kds:url "{{ base_url }}/badges/BadgeImage/"
+	];
+	kds:useFor [
+		kds:class obi:Assertion ;
+		kds:urlendfld schema:alternativeName;
+		kds:jsonValFormat "subjectCalc" ;
+		kds:parseType "afterLastSlash" ;
+		kds:unionUrl "{{ base_url }}/badges/AssertionImage/"
+	].
+
+
+obi:criteria a kds:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Criteria for earning the Badge.";	
+	kds:useFor [
+		kds:class obi:BadgeClass ;
+		kds:jsonObjName "criteria";
+		kds:jsonValFormat "urlSub";
+		kds:url "{{ base_url }}/badges/BadgeCriteria/";
+		kds:urlendfld schema:alternativeName
+	] .
+
+schema:alternativeName a kds:FormProperty;
+	rdfs:domain	obi:BadgeClass;
+	rdfs:range	xsd:string;
+	kds:requiredByDomain obi:BadgeClass.
+	
+obi:id a kds:FormProperty;		
+	rdfs:comment "Issuer of the open badge instance.";	
+	kds:useFor [
+		kds:class obi:BadgeClass ;
+		kds:jsonObjName "id";
+		kds:jsonValFormat "urlSub";
+		kds:url "{{ base_url }}/badges/BadgeClass/";
+		kds:urlendfld schema:alternativeName
+	] .
+
+obi:tags a kds:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Tags for the badges.";	
+	kds:useFor [
+		kds:class obi:BadgeClass ;
+		kds:jsonObjName "tags";
+		kds:jsonValFormat "multiValArray"
+	] .
+		
+
+
+	
+schema:Organization a rdf:Class;
+	a kds:objectClass ;
+	kds:storageType "object";
+	kds:primaryKey schema:name.
+	
+obi:BadgeClass a rdf:Class;
+	a kds:objectClass ;
+	kds:storageType "object";
+	kds:primaryKey schema:alternativeName;
+	rdfs:comment "Class for open badges.";	
+	rdfs:label "Open Badge Class";
+	kds:jsonObjName "BadgeClass" .
+	
+kds:UserClass a rdf:Class;
+	a kds:objectClass ;
+	kds:storageType "object";
+	kds:primaryKey kds:hasPerson.
+	
+kds:PasswordClass a kds:ControlledClass;
+	kds:storageType "blanknode" .
+
+kds:FormClass a rdf:Class;
+	rdfs:label "Form Class";
+	rdfs:comment "Class is used to define a form";
+	kds:addOnCss "form-control";
+	kds:overrideCss "".
+
+
+schema:Person a kds:ControlledClass ;
+	kds:storageType "object";
+	kds:primaryKey schema:email.
+	
+schema:givenName a kds:FormProperty;	
+	rdfs:domain	schema:Person;	
+	rdfs:range	xsd:literal;	
+	rdfs:comment "First name or given name for an individual.";	
+	kds:jsonObjName "givenname";
+	kds:jsonValFormat "objectValue";
+	kds:requiredByDomain true ;
+	kds:fieldType "text";
+	kds:propertyValidation "none"; 
+	kds:formLabelName "First name";
+	kds:formFieldName "givenName" .
+	
+schema:familyName a kds:FormProperty;	
+	rdfs:domain	schema:Person;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Last name or family name for an individual.";	
+	kds:jsonObjName "familyname";
+	kds:jsonValFormat "objectValue";            
+	kds:fieldType "text";
+	kds:propertyValidation "none";                   
+	kds:formLabelName "Last name";        
+	kds:formFieldName "familyName" .
+	
+schema:email a kds:FormProperty;	
+	rdfs:domain	schema:Person;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "email address.";	
+	kds:jsonObjName "email";
+	kds:jsonValFormat "objectValue";              
+	kds:fieldType "email";
+	kds:propertyValidation "email";                    
+	kds:formLabelName "Email";       
+	kds:formFieldName "email" .
+
+kds:userName a kds:FormProperty;	
+	rdfs:domain	kds:UserClass;	
+	rdfs:range	rdfs:literal;	
+	rdfs:comment "Individual's username.";	
+	kds:useFor [
+		kds:class obi:UserClass;
+		kds:jsonObjName "username";
+		kds:jsonValFormat "objectValue"
+	];
+	kds:fieldType "text";
+	kds:propertyValidation "uniqueValue";    
+	kds:formLabelName "Username";        
+	kds:formFieldName "username" .
+
+kds:salt a kds:FormProperty;	
+	rdfs:domain	kds:PasswordClass;
+	rdfs:domain obi:Assertion;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Salt used for hash.";
+	kds:requiredByDomain kds:PasswordClass;
+	kds:requiredByDomain obi:Assertion;
+	kds:defaultVal "@calc//randomvalue(26)" ;	
+	kds:useFor [
+		kds:class obi:UserClass;
+		kds:jsonObjName "salt";
+		kds:jsonValFormat "objectValue"
+	] ;
+	kds:fieldType "serverOnly";
+	kds:fieldProccessing "salt";
+	kds:propertyValidation "uniqueValue";         
+	kds:formFieldName "salt".
+	
+kds:password a kds:FormProperty;	
+	rdfs:domain	kds:PasswordClass;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "User's account password.";
+	kds:requiredByDomain kds:PasswordClass;	
+	kds:useFor [
+		kds:class obi:UserClass;
+		kds:jsonObjName "username";
+		kds:jsonValFormat "objectValue"
+	];
+	kds:fieldType "password";
+	kds:propertyValidation "passwordValidation"; 
+	kds:fieldSaveType "secureHash";                  
+	kds:formLabelName "Password";        
+	kds:formFieldName "password".
+
+kds:hasPerson kds:requiredByDomain kds:UserClass.
+	
+kds:hasPassword a kds:FormProperty;	
+	rdfs:domain	kds:UserClass;	
+	rdfs:range	kds:PasswordClass;	
+	rdfs:comment "User's account password object.";
+	kds:requiredByDomain kds:UserClass;
+	kds:fieldType "objectStore";                           
+	kds:formFieldName "PasswordClass";
+	kds:useFor [
+		kds:class obi:UserClass;
+		kds:jsonObjName "Password";
+		kds:jsonValFormat "lookupProperties";
+		kds:lookupReturnField [
+			kds:jsonObjName "salt";
+			kds:jsonValFormat "objectValue" ;
+			kds:propertyField obi:salt
+		] ;
+		kds:lookupReturnField [
+			kds:jsonObjName "type";
+			kds:jsonValFormat "objectValue" ;
+			kds:propertyField obi:password
+		]
+	] .
+  
+
+obi:UserForm a kds:FormClass;
+	rdfs:label "User form";
+	rdfs:comment "Use this form for generating a new user. It will store results in a UserClass and Person RDF classes";
+	kds:addOnCss "";
+	kds:overrideCss "";
+	kds:hasProperty [
+		kds:propName schema:email;
+		kds:formFieldOrder 1;
+		kds:addOnCss "";
+		kds:overrideCss "";
+		kds:formInstance [
+					kds:formInstanceType "new";
+					kds:fromAction "hide" 
+				]
+		];
+	kds:hasProperty [
+		kds:propName schema:familyName;
+		kds:formFieldOrder 4;
+		kds:addOnCss "";
+		kds:overrideCss "";
+		kds:formInstance [
+			kds:formInstanceType "new";
+			kds:fromAction "hide"
+			]
+		];
+	kds:hasProperty [
+		kds:propName schema:givenName;
+		kds:formFieldOrder 4;
+		kds:addOnCss "";
+		kds:overrideCss "";
+		kds:formInstance [
+			kds:formInstanceType "new";
+			kds:fromAction "hide"
+			]
+		].
