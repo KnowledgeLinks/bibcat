@@ -1,7 +1,7 @@
 @prefix acl: <http://www.w3.org/ns/auth/acl#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
-@prefix klr: <http://knowledgelinks.io/ns/resource/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
 @prefix obi: <https://w3id.org/openbadges#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -27,36 +27,20 @@ kds:permissions	 a 	rdf:Property;
 	rdfs:range kds:PermissionsClass;
 	rdfs:label "Permissions";
 	rdfs:comment "Permissions for a item. Can be applied application wide down to the property level.".
-		
-kds:Public-SG	 a 	kds:UserGroup;
-	rdfs:label "Public-SG";
-	rdfs:comment "The security group for public access".
-		
+
 kds:salt a rdf:Property;
 	rdfs:subPropertyOf kds:securityProperty;	
 	rdfs:domain	kds:PasswordClass;
 	rdfs:range	xsd:string;
 	rdfs:label "Salt";
 	rdfs:comment "Salt used for hashing an item/password".
-	
-kds:Self-SG	 a 	kds:UserGroup;
-	rdfs:label "Self-SG";
-	rdfs:comment "The security group pertaining to logged in user level permissions".
 		
-kds:SysAdmin-SG	 a 	kds:UserGroup;
-	rdfs:label "SysAdmin-SG";
-	rdfs:comment "The application system admin security group".
-	
 kds:userName a rdf:Property; 
 	rdfs:subPropertyOf kds:securityProperty;
 	rdfs:domain	kds:UserClass;
 	rdfs:range	xsd:string;
 	rdfs:label "Username";
 	rdfs:comment "Individual's username".
-
-kds:PasswordHash a kds:DataType;
-	rdfs:label "Password Hash";
-	rdfs:comment "A data type that requries a hashed and salted password".
 	
 kds:PasswordClass a rdf:Class; 
 	rdfs:subClassOf kds:SecurityClass;		
@@ -91,15 +75,6 @@ kds:PropertyProccessor a rdf:Class;
 	rdfs:subClassOf kds:InternalClass;
 	rdfs:label "Property Proccessor";
 	rdfs:comment "Object instructions on how to proccess a property before saving to the triplestore.".
-	
-kds:SaltProccessor a kds:PropertyProccessor;
-	rdfs:label "Salt Proccessor";
-	rdfs:comment "Application should generate a random Salt value to store.".
-	
-kds:PasswordProccessor a kds:PropertyProccessor;
-	rdfs:label "Password Proccessor";
-	rdfs:comment "Application should proccess as a password for storage. i.e. salting and hashing".
-	
 		
 kds:propertySecurity a rdf:Property;
 	rdfs:subPropertyOf 	kds:securityProperty;		
@@ -129,7 +104,7 @@ kds:formLayoutRow	 a 	rdf:Property;
 	rdfs:label "Form Row";
 	rdfs:comment "specifies which row in the form the field should be displayed".
 			
-kds:propertyValidation	 a 	kds:Property;		
+kds:propertyValidation	 a 	rdf:Property;		
 	rdfs:domain rdf:Property;
 	rdfs:range kds:Validator;
 	rdfs:label "Validation Rule";
@@ -140,18 +115,35 @@ kds:Validator a rdf:Class;
 	rdfs:label "Validator";
 	rdfs:comment "Object for defining a validation rule".
 	
-kds:PasswordValidator a kds:Validator;
-	rdfs:label "Password validator";
-	rdfs:comment "The application should validate the property as a password before saving.".
+kds:formInstructions a rdf:Property;
+	rdfs:subPropertyOf kds:properties;
+	rdfs:domain kds:FormClass;
+	rdfs:range kds:FormInstructionsClass;
+	rdfs:label "Form Instructions";
+	rdfs:comment "States default form instructions.". 
+	
+kds:FormInstructionsClass a rdf:Class;
+	rdfs:label "Form Instructions Class";
+	rdfs:comment "This object stores the initial form parameters." .
 
-kds:EmailValidator a kds:Validator;
-	rdfs:label "Email validator";
-	rdfs:comment "The application should validate the property object that it is a valid email address.".
+kds:form_Method a rdf:Property;
+	rdfs:domain kds:FormInstructionsClass;
+	rdfs:range xsd:string;
+	rdfs:label "Form Method";
+	rdfs:comment "Method for the Form 'GET', 'POST'".
 	
-kds:UrlValidator a kds:Validator;
-	rdfs:label "URL validator";
-	rdfs:comment "The application should validate the property object is a valid URL.".
-	
+kds:form_enctype a rdf:Property;
+	rdfs:domain kds:FormInstructionsClass;
+	rdfs:range xsd:string;
+	rdfs:label "form enctype";
+	rdfs:comment "enctype for the form".
+
+kds:propertyAddOnCss a rdf:Property;
+	rdfs:domain kds:FormInstructionsClass;
+	rdfs:range xsd:string;
+	rdfs:label "Property add-on Css";
+	rdfs:comment "add on Css for each form element".
+
 kds:requiredByDomain a rdf:Property; 
 	rdfs:subPropertyOf kds:classProperty;
 	rdfs:domain rdf:Property;
@@ -159,6 +151,13 @@ kds:requiredByDomain a rdf:Property;
 	rdfs:label "Required";
 	rdfs:comment "States whether the class in the object position requires the property".
 
+kds:requiredFormField a rdf:Property; 
+	rdfs:subPropertyOf kds:properties;
+	rdfs:domain kds:FormClass;
+	rdfs:range xsd:boolean;
+	rdfs:label "Required";
+	rdfs:comment "States if the form requires the field".
+	
 kds:JsonClass a rdf:Class; 
 	rdfs:subClassOf kds:InternalClass;
 	rdfs:label "json Class";
@@ -183,15 +182,47 @@ kds:json a rdf:Property;
 	rdfs:range kds:JsonClass;
 	rdfs:label "json format";
 	rdfs:comment "The property contains instructions on how to format the property for a json object".
+
+kds:jsonDefault a rdf:Property;
+	rdfs:subPropertyOf kds:properties;
+	rdfs:domain rdf:Property;
+	rdfs:range kds:JsonClass;
+	rdfs:label "Default json format";
+	rdfs:comment "The property contains the default instructions on how to format the property for a json object".
+
 	
 kds:jsonValFormat	 a 	rdf:Property;
 	rdfs:subPropertyOf kds:jsonProperty;		
 	rdfs:domain kds:JsonClass;
 	rdfs:range xsd:string;
 	rdfs:label "json lookup";
-	rdfs:comment "The type of lookup to be used".
+	rdfs:comment '-The type of lookup to be used. Options are:
+	"objectValue"		-> This will return the value of the specified property or a default value
+	"lookup"			-> Will use the resources object to lookup the value that is specified 
+							in the kds:lookupReturnField
+	"subjectCalc"		-> will calculate a return value based on the resource URI
+							only available parseType is "afterLastSlash" 
+							need to use kds:parseType and kds:unionUrl(optional) with this action
+	"urlSub"			-> will substitue a value as a url with 
+							- kds:baseUrl		specifies the main url
+							- kds:urlendfld		specifies with resource field to append to the url
+	"lookupUrlSub"		-> functions as urlSub but will lookup a property of the specified URI 
+							- kds:propertyField   must be specified
+	"lookupProperties"	-> return a json object of the the defined properties.
+							add a kds:propertyField with a blank node for each desired property to return
+							example: kds:lookupReturnField [
+										kds:jsonObjName "type";
+										kds:jsonValFormat "objectValue" ;
+										kds:defaultVal "hosted"
+                          		     ] ;
+	"multiValArray"     -> will return an array of all values list with with property field specified in
+								kds:propertyField   Example: kds:propertyField obi:tags
+									resource Data = <> obi:tags "home"
+													<> obi:tags "house"
+													<> obi:tags "farm"
+									returns -> ["home","house","farm"]'.
 	
-kds:primaryKey	 a rdf:Property; 
+kds:primaryKey a rdf:Property; 
 	rdfs:subPropertyOf kds:classProperty;			
 	rdfs:domain kds:ControlledClass;
 	rdfs:range rdf:Property;
@@ -272,20 +303,8 @@ kds:FormInstanceTypeClass a rdf:Class;
 	rdfs:subClassOf kds:InternalClass;
 	rdfs:label "Form Instance Type Class";
 	rdfs:comment "Class for defining the differnt types of form instances. i.e. new, edit, display".
-
-kds:NewForm a kds:FormInstanceTypeClass;
-	rdfs:label "New form";
-	rdfs:comment "A form for creating a new data".
 	
-kds:EditForm a kds:FormInstanceTypeClass;
-	rdfs:label "Edit form";
-	rdfs:comment "A form for editing data".
-	
-kds:DisplayForm a kds:FormInstanceTypeClass;
-	rdfs:label "Display form";
-	rdfs:comment "A form for displaying data".
-	
-kds:applicationAction	 a 	rdf:Property; 
+kds:applicationAction a rdf:Property; 
 	rdfs:subPropertyOf kds:formProperty;		
 	rdfs:domain kds:FormInstanceClass;
 	rdfs:range kds:ApplicationActionClass;
@@ -301,12 +320,8 @@ kds:InternalClass a rdf:Class;
 	rdfs:subClassOf rdf:Class;
 	rdfs:label "Internal Vocabulary Class";
 	rdfs:comment "Sub-classes of this class are for only internal usage within the vocabulary." .
-	
-kds:HideUnless a kds:ApplicationActionClass;
-	rdfs:label "Hide field Unless data needed";
-	rdfs:comment "Application should generate the field but keep it hidden.".
-	
-kds:parseType	 a 	rdf:Property;
+
+kds:parseType a rdf:Property;
 	rdfs:subPropertyOf kds:jsonProperty;		
 	rdfs:domain kds:JsonClass;
 	rdfs:range xsd:string;
@@ -326,13 +341,34 @@ kds:formFieldOrder	 a 	rdf:Property;
 	rdfs:range xsd:integer;
 	rdfs:label "Form Field Order";
 	rdfs:comment "The order the in which the field should appear in the specified form".
+
+kds:kds:selectQuery	 a 	rdf:Property; 
+	rdfs:subPropertyOf kds:formProperty;		
+	rdfs:domain kdr:SelectField;
+	rdfs:range xsd:string;
+	rdfs:label "Select Options Query";
+	rdfs:comment "Query String or query file(format as file://) to retrieve the options".
 	
-kds:formInstance	 a 	rdf:Property; 
+kds:kds:selectBoundValue a 	rdf:Property; 
+	rdfs:subPropertyOf kds:formProperty;		
+	rdfs:domain kdr:SelectField;
+	rdfs:range xsd:string;
+	rdfs:label "Select Bound Value";
+	rdfs:comment "query field/Value to bind to the Select list".
+
+kds:selectDisplay a rdf:Property; 
+	rdfs:subPropertyOf kds:formProperty;		
+	rdfs:domain kdr:SelectField;
+	rdfs:range xsd:string;
+	rdfs:label "Select Display Value";
+	rdfs:comment "query field/Value to Display to the Select list".
+	
+kds:formInstance a rdf:Property; 
 	rdfs:subPropertyOf kds:formProperty;		
 	rdfs:domain kds:FormPropertyClass;
 	rdfs:range kds:FormInstanceClass;
 	rdfs:label "Form Instance";
-	rdfs:comment "A certain instance of a form. i.e. new form, edit form, display form".
+	rdfs:comment "A special(override) insturctions for an instance of a form. i.e. new form, edit form, display form".
 
 kds:FormInstanceClass a rdf:Class; 
 	rdfs:subClassOf kds:FormClass;
@@ -351,14 +387,14 @@ kds:propUri	 a 	rdf:Property;
 	rdfs:label "Property URI";
 	rdfs:comment "The URI of the property/field in the form".
 
-kds:classUri	 a 	rdf:Property; 
+kds:classUri a 	rdf:Property; 
 	rdfs:subPropertyOf kds:formProperty;	
 	rdfs:domain kds:FormClass;
 	rdfs:range kds:ControlledClass;
 	rdfs:label "Class URI";
 	rdfs:comment "The URI of the class of the property in the form".
 	
-kds:addOnCss	 a 	rdf:Property; 
+kds:addOnCss a 	rdf:Property; 
 	rdfs:subPropertyOf kds:formProperty;		
 	rdfs:domain kds:FormPropertyClass;
 	rdfs:range xsd:string;
@@ -371,6 +407,13 @@ kds:hasProperty	 a 	rdf:Property;
 	rdfs:range kds:FormPropertyClass;
 	rdfs:label "Form property/field";
 	rdfs:comment "The property to add defined properties to the form".
+
+kds:formDefault	 a 	rdf:Property; 
+	rdfs:subPropertyOf kds:formProperty;		
+	rdfs:domain rdf:Property;
+	rdfs:range kds:FormPropertyClass;
+	rdfs:label "Form property/field";
+	rdfs:comment "The property to add the default descriptions on how a form should use the property.".
 
 kds:FormPropertyClass a rdf:Class;
 	rdfs:subClassOf kds:FormClass;
@@ -406,19 +449,7 @@ kds:ControlledClass	 a 	rdf:Class;
 kds:FieldClass	 a 	rdf:Class; 
 	rdfs:subClassOf kds:FormClass;		
 	rdfs:label "Field Class/Type";
-	rdfs:comment "Class used for defining the different field types/classes. i.e. a text field".
-	
-kds:TextField a kds:FieldClass;
-	rdfs:label "Text field.";
-	rdfs:comment "Standard form text field".
-	
-kds:SelectField a kds:FieldClass;
-	rdfs:label "Select field";
-	rdfs:comment "Standard select field." .
-
-kds:Admin-SG	 a 	kds:UserGroup;	
-	rdfs:comment	"The application admin security group for managing content";
-	rdfs:label	"Admin-SG" .	
+	rdfs:comment "Class used for defining the different field types/classes. i.e. a text field".	
 	
 kds:hasPassword	 a 	rdf:Property; 
 	rdfs:subPropertyOf kds:securityProperty;	

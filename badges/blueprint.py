@@ -27,19 +27,23 @@ def record_params(setup_state):
     # if the extensions exist in the triplestore drop the graph
     drop_extensions = requests.post(
         url=triplestore_url,
-        params = {"update":"DROP GRAPH <http://knowledgelinks.io/ns/openbadges/extensions>;"})
+        params = {"update":"DROP GRAPH <http://knowledgelinks.io/ns/application-framework/>;"})
     # render the extensions with the base URL
     # must use a ***NON FLASK*** routing since flask is not completely initiated 
-    klob_extension = render_without_request(
-        'klob_extensions.ttl',
-        base_url=base_url)
+    rdf_resource_templates = ["kds-app.ttl","kds-vocab.ttl","kds-resources.ttl"]
+    rdf_data = []
+    for template in rdf_resource_templates:
+        rdf_data.append(render_without_request(
+        template,
+        base_url=base_url))
     # load the extensions in the triplestore 
-    result = requests.post(
-        url=triplestore_url,
-        headers = {"Content-Type":"text/turtle"},
-        params = {"context-uri":"http://knowledgelinks.io/ns/openbadges/extensions"},
-        data = klob_extension)
-
+    for data in rdf_data:
+        result = requests.post(
+            url=triplestore_url,
+            headers = {"Content-Type":"text/turtle"},
+            params = {"context-uri":"http://knowledgelinks.io/ns/application-framework/"},
+            data = data)
+ 
 def get_badge_classes():
     all_badges_response = requests.post(
        open_badge.config.get('TRIPLESTORE_URL'),

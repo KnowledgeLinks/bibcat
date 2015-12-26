@@ -1,9 +1,13 @@
-prefix klob: <http://knowledgelinks.io/ns/openbadges/> 
-prefix klff: <http://knowledgelinks.io/ns/formfields/> 
+prefix acl: <http://www.w3.org/ns/auth/acl#> 
+prefix foaf: <http://xmlns.com/foaf/0.1/> 
+prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
+prefix kdr: <http://knowledgelinks.io/ns/data-resources/> 
 prefix obi: <https://w3id.org/openbadges#> 
 prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
 prefix schema: <https://schema.org/> 
+prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
+
 SELECT (CONCAT('{',GROUP_CONCAT(?json; SEPARATOR=','),'}') AS ?appClasses) 
 	{
 	  SELECT  (CONCAT('"',?class,'":{"className":"',?class,'",',?classUri,',',GROUP_CONCAT(?jsonProps; SEPARATOR=","),'}') AS ?json)
