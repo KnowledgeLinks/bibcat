@@ -35,7 +35,7 @@ WHERE {{{{
 }}}}""".format(PREFIX)
 
 FIND_ALL_CLASSES = """{}
-SELECT DISTINCT ?name ?altName ?subject
+SELECT DISTINCT ?name ?altName
 WHERE {{{{
   ?subject rdf:type obi:BadgeClass .
   ?subject obi:name ?name .

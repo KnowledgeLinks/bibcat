@@ -1,0 +1,46 @@
+SELECT ?Item ?Description
+
+{{
+	 {{
+      ?s rdfs:subClassOf rdf:Class .
+      BIND (REPLACE(STR(?s),"http://knowledgelinks.io/ns/data-structures/","kds:") AS ?MainClasses) .
+      ?s rdfs:comment ?d .
+  	} UNION {
+	  ?s rdfs:subClassOf rdf:Class .
+      ?p rdfs:domain ?s .
+      ?p rdfs:comment ?pd .
+      ?p rdfs:range ?r .
+      BIND (IF(STRSTARTS(STR(?r),"http://knowledgelinks.io/ns/data-structures/"),REPLACE(STR(?r),"http://knowledgelinks.io/ns/data-structures/","kds:"),STR(?r)) AS ?rf1) .
+      BIND (IF(STRSTARTS(STR(?rf1),"http://www.w3.org/2001/XMLSchema#"),REPLACE(STR(?rf1),"http://www.w3.org/2001/XMLSchema#","xsd:"),STR(?rf1)) AS ?rf2) .
+      BIND (IF(STRSTARTS(STR(?rf2),"http://www.w3.org/1999/02/22-rdf-syntax-ns#"),REPLACE(STR(?rf2),"http://www.w3.org/1999/02/22-rdf-syntax-ns#","rdf:"),STR(?rf2)) AS ?rf) .
+      BIND (CONCAT(REPLACE(STR(?p),"http://knowledgelinks.io/ns/data-structures/","      (p)kds:"),"  (",?rf,")") AS ?MainClassesP) .
+    }} UNION {
+      {{
+	    ?s rdfs:subClassOf rdf:Class .
+        ?ss rdfs:subClassOf ?s .
+        BIND (REPLACE(STR(?ss),"http://knowledgelinks.io/ns/data-structures/","    kds:") AS ?SubClasses) .
+        ?ss rdfs:comment ?dd .     
+      } UNION {
+        ?s rdfs:subClassOf rdf:Class .
+		?ss rdfs:subClassOf ?s .
+        ?pp rdfs:domain ?ss .
+      	?pp rdfs:comment ?pdd .
+        ?pp rdfs:range ?rr .
+        BIND (IF(STRSTARTS(STR(?rr),"http://knowledgelinks.io/ns/data-structures/"),REPLACE(STR(?rr),"http://knowledgelinks.io/ns/data-structures/","kds:"),STR(?rr)) AS ?rrf1) .
+        BIND (IF(STRSTARTS(STR(?rrf1),"http://www.w3.org/2001/XMLSchema#"),REPLACE(STR(?rrf1),"http://www.w3.org/2001/XMLSchema#","xsd:"),STR(?rrf1)) AS ?rrf2) .
+        BIND (IF(STRSTARTS(STR(?rrf2),"http://www.w3.org/1999/02/22-rdf-syntax-ns#"),REPLACE(STR(?rrf2),"http://www.w3.org/1999/02/22-rdf-syntax-ns#","rdf:"),STR(?rrf2)) AS ?rrf) .
+        BIND (CONCAT(REPLACE(STR(?pp),"http://knowledgelinks.io/ns/data-structures/","        (p)kds:"),"  (",?rrf,")") AS ?subClassesP) .
+      }} UNION {
+        ?s rdfs:subClassOf rdf:Class .
+        ?ss rdfs:subClassOf ?s .
+        ?sss rdfs:subClassOf ?ss .
+        BIND (REPLACE(STR(?sss),"http://knowledgelinks.io/ns/data-structures/","        (p)kds:") AS ?childClasses) .
+        ?sss rdfs:comment ?ddd .
+       }
+     } 
+    } .
+  	BIND (COALESCE(?pddd,?ddd,?pdd,?dd,?pd,?d) AS ?Description) .
+  	BIND (COALESCE(?childClassesP,?childClasses,?subClassesP,?SubClasses,?MainClassesP,?MainClasses) AS ?Item) .
+    BIND (COALESCE(?ppp,?sss,?pp,?ss,?p,?s) AS ?uri) .
+ }
+ORDER BY ?s ?ss ?sss

@@ -53,17 +53,14 @@
 #    klff:formLabelName "literal"          - name of the field to be used in the form.
 #    klff:formFieldName "literal"         - name of that should be used in html name/id attribute
 
-obi:BadgeClass a rdf:Class;	
-	rdfs:comment "Class for open badges.";	
-	rdfs:label "Open Badge Class";
-	klob:jsonObjName "BadgeClass" .
+
 	
 obi:Assertion a rdf:Class;  
 	rdfs:comment "Assertion for open badges.";	
 	rdfs:label "Open Badge Assertion";
 	klob:jsonObjName "Assertion" .
 	
-obi:context a rdf:Property;
+obi:context a klff:FormProperty;
 	rdfs:domain obi:Resource;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Name of the open badge instance.";	
@@ -74,7 +71,7 @@ obi:context a rdf:Property;
 	klob:useFor obi:BadgeClass ;
 	klob:useFor obi:Assertion .
 
-obi:assertionid a rdf:Property;
+obi:assertionid a klff:FormProperty;
 	rdfs:domain obi:Resource;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Uuid of the open badge assertion.";	
@@ -84,7 +81,7 @@ obi:assertionid a rdf:Property;
 	klob:unionUrl "{{ base_url }}/badges/Assertion/";
 	klob:useFor obi:Assertion .
 
-obi:assertionImage a rdf:Property;
+obi:assertionImage a klff:FormProperty;
 	rdfs:domain obi:Resource;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Image URL of the open badge assertion.";	
@@ -94,7 +91,7 @@ obi:assertionImage a rdf:Property;
 	klob:unionUrl "{{ base_url }}/badges/AssertionImage/";
 	klob:useFor obi:Assertion .
 	
-obi:uid a rdf:Property;
+obi:uid a klff:FormProperty;
 	rdfs:domain obi:Resource;
 	rdfs:range rdfs:literal;
 	rdfs:comment "uid of the open badge assertion.";	
@@ -103,7 +100,7 @@ obi:uid a rdf:Property;
 	klob:parseType "afterLastSlash" ;
 	klob:useFor obi:Assertion .
 	
-obi:hasBadge a rdf:Property;
+obi:hasBadge a klff:FormProperty;
 	rdfs:domain obi:Resource;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Badge used for the badge assertion.";	
@@ -114,7 +111,7 @@ obi:hasBadge a rdf:Property;
 	klob:urlendfld schema:alternativeName;
 	klob:useFor obi:Assertion .
 
-obi:issuedOn a rdf:Property;
+obi:issuedOn a klff:FormProperty;
 	rdfs:domain obi:Resource;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Timestamp when badge was issued.";	
@@ -123,7 +120,7 @@ obi:issuedOn a rdf:Property;
 	klob:propertyField obi:issuedOn ;
 	klob:useFor obi:Assertion .
 
-obi:expires a rdf:Property;
+obi:expires a klff:FormProperty;
 	rdfs:domain obi:Resource;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Timestamp when badge expires.";	
@@ -132,7 +129,7 @@ obi:expires a rdf:Property;
 	klob:propertyField obi:expires ;
 	klob:useFor obi:Assertion .
 	
-obi:recipient a rdf:Property;
+obi:recipient a klff:FormProperty;
 	rdfs:domain obi:Recipient;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Recipient of a Badge.";	
@@ -163,7 +160,7 @@ obi:recipient a rdf:Property;
 	] ;
 	klob:useFor obi:Assertion .
 
-obi:verify a rdf:Property;
+obi:verify a klff:FormProperty;
 	rdfs:domain obi:Recipient;
 	rdfs:range rdfs:literal;
 	rdfs:comment "Instructions for third parties to verify this assertion.";	
@@ -182,32 +179,33 @@ obi:verify a rdf:Property;
 	] ;
 	klob:useFor obi:Assertion .
 	
-obi:name a rdf:Property;	
-	rdfs:domain	obi:Resource;	
+obi:name a klff:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
 	rdfs:range	rdfs:Literal;	
 	rdfs:comment "Name of the open badge instance.";	
 	klob:jsonObjName "name";
 	klob:jsonValFormat "objectValue";
 	klob:useFor obi:BadgeClass .
 
-obi:description a rdf:Property;	
-	rdfs:domain	obi:Resource;	
+obi:description a klff:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
 	rdfs:range	rdfs:Literal;	
 	rdfs:comment "Description of the open badge instance.";	
 	klob:jsonObjName "description";
 	klob:jsonValFormat "objectValue";
 	klob:useFor obi:BadgeClass .
 
-obi:issuer a rdf:Property;	
-	rdfs:domain	obi:Resource;	
-	rdfs:range	obi:Issuer;	
+obi:issuer a klff:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	schema:Organization;	
+	rdfs:label "Issuer";
 	rdfs:comment "Issuer of the open badge instance.";	
 	klob:jsonObjName "issuer";
 	klob:jsonValFormat "lookup";
 	klob:lookupReturnField obi:url;
 	klob:useFor obi:BadgeClass .
 
-obi:type a rdf:Property;	
+obi:type a klff:FormProperty;	
 	rdfs:domain	obi:Resource;	
 	rdfs:range	obi:Resource;	
 	rdfs:comment "Type of item";	
@@ -217,27 +215,33 @@ obi:type a rdf:Property;
 	klob:useFor obi:BadgeClass ;
 	klob:useFor obi:Assertion .	
 
-obi:image a rdf:Property;	
-	rdfs:domain	obi:Resource;	
-	rdfs:range	rdfs:literal;	
-	rdfs:comment "Issuer of the open badge instance.";	
+schema:image a klff:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:domain obi:Assertion;
+	rdfs:range	schema:ImageObject;	
+	rdfs:comment "Image of the item.";	
 	klob:jsonObjName "image";
 	klob:jsonValFormat "urlSub";
 	klob:url "{{ base_url }}/badges/BadgeImage/";
 	klob:urlendfld schema:alternativeName;
 	klob:useFor obi:BadgeClass .
 
-obi:criteria a rdf:Property;	
-	rdfs:domain	obi:Resource;	
+obi:criteria a klff:FormProperty;	
+	rdfs:domain	obi:BadgeClass;	
 	rdfs:range	rdfs:literal;	
-	rdfs:comment "Issuer of the open badge instance.";	
+	rdfs:comment "Criteria for earning the Badge.";	
 	klob:jsonObjName "criteria";
 	klob:jsonValFormat "urlSub";
 	klob:url "{{ base_url }}/badges/BadgeCriteria/";
 	klob:urlendfld schema:alternativeName;
 	klob:useFor obi:BadgeClass .	
+
+schema:alternativeName a klff:FormProperty;
+	rdfs:domain	obi:BadgeClass;
+	rdfs:range	xsd:string;
+	klff:requiredByDomain obi:BadgeClass.
 	
-obi:id a rdf:Property;	
+obi:id a klff:FormProperty;	
 	rdfs:domain	obi:Resource;	
 	rdfs:range	rdfs:literal;	
 	rdfs:comment "Issuer of the open badge instance.";	
@@ -247,7 +251,7 @@ obi:id a rdf:Property;
 	klob:urlendfld schema:alternativeName;
 	klob:useFor obi:BadgeClass .
 
-obi:tags a rdf:Property;	
+obi:tags a klff:FormProperty;	
 	rdfs:domain	obi:Resource;	
 	rdfs:range	rdfs:literal;	
 	rdfs:comment "Tags for the badges.";	
@@ -263,7 +267,10 @@ schema:Person a rdf:Class;
 obi:BadgeClass a rdf:Class;
 	a klff:objectClass ;
 	klff:storageType "object";
-	klff:primaryKey obi:name.
+	klff:primaryKey schema:alternativeName;
+	rdfs:comment "Class for open badges.";	
+	rdfs:label "Open Badge Class";
+	klob:jsonObjName "BadgeClass" .
 	
 kls:UserClass a rdf:Class;
 	a klff:objectClass ;
@@ -292,45 +299,14 @@ klff:FormClass a rdf:Class;
 	klff:overrideCss "".
 
 klff:FormProperty a rdf:Class;
-	rdfs:subClassOf rdf:Property;
+	rdfs:subClassOf klff:FormProperty;
 	klff:addOnCss "form-control" .
-	
-obi:UserForm a klff:FormClass;
-	rdfs:label "User form";
-	rdfs:comment "Use this form for generating a new user. It will store results in a UserClass and Person RDF classes";
-	klff:addOnCss "";
-	klff:overrideCss "";
-	klff:hasProperty [
-		klff:propName schema:email;
-		klff:formFieldOrder 1;
-		klff:addOnCss "";
-		klff:overrideCss "";
-		klff:formInstance [
-					klff:formInstanceType "new";
-					klff:fromAction "hide" 
-				]
-		];
-	klff:hasProperty [
-		klff:propName schema:familyName;
-		klff:formFieldOrder 4;
-		klff:addOnCss "";
-		klff:overrideCss "";
-		klff:formInstance [
-			klff:formInstanceType "new";
-			klff:fromAction "hide"
-			]
-		];
-	klff:hasProperty [
-		klff:propName schema:givenName;
-		klff:formFieldOrder 4;
-		klff:addOnCss "";
-		klff:overrideCss "";
-		klff:formInstance [
-			klff:formInstanceType "new";
-			klff:fromAction "hide"
-			]
-		].
-	
+
+schema:Person a rdf:Class;
+	a klff:objectClass ;
+	klff:storageType "object";
+	klff:primaryKey schema:email.
+		
 schema:givenName a klff:FormProperty;	
 	rdfs:domain	schema:Person;	
 	rdfs:range	rdfs:literal;	
@@ -469,7 +445,7 @@ klff:forms a klff:FormProperty.
 
 klff:fieldType a klff:FormProperty;
 	rdfs:subPropertyOf klff:forms;
-	rdfs:domain	rdf:Property;	
+	rdfs:domain	klff:FormProperty;	
 	rdfs:range	klff:FieldClass.
 		
 klff:fieldValidation a klff:FormProperty.
@@ -531,3 +507,39 @@ kls:Public a kls:UserGroup;
 	rdfs:comment "The security group for public access";
 	kls:basePermissions "none";
 	kls:specifiedPermissions "adhere".
+
+obi:UserForm a klff:FormClass;
+	rdfs:label "User form";
+	rdfs:comment "Use this form for generating a new user. It will store results in a UserClass and Person RDF classes";
+	klff:addOnCss "";
+	klff:overrideCss "";
+	klff:hasProperty [
+		klff:propName schema:email;
+		klff:formFieldOrder 1;
+		klff:addOnCss "";
+		klff:overrideCss "";
+		klff:formInstance [
+					klff:formInstanceType "new";
+					klff:fromAction "hide" 
+				]
+		];
+	klff:hasProperty [
+		klff:propName schema:familyName;
+		klff:formFieldOrder 4;
+		klff:addOnCss "";
+		klff:overrideCss "";
+		klff:formInstance [
+			klff:formInstanceType "new";
+			klff:fromAction "hide"
+			]
+		];
+	klff:hasProperty [
+		klff:propName schema:givenName;
+		klff:formFieldOrder 4;
+		klff:addOnCss "";
+		klff:overrideCss "";
+		klff:formInstance [
+			klff:formInstanceType "new";
+			klff:fromAction "hide"
+			]
+		].
