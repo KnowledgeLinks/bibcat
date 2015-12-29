@@ -1,95 +1,109 @@
-prefix klob: <http://knowledgelinks.io/ns/openbadges/> 
-prefix klff: <http://knowledgelinks.io/ns/formfields/> 
+prefix acl: <http://www.w3.org/ns/auth/acl#> 
+prefix foaf: <http://xmlns.com/foaf/0.1/> 
+prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
+prefix kdr: <http://knowledgelinks.io/ns/data-resources/> 
 prefix obi: <https://w3id.org/openbadges#> 
 prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
 prefix schema: <https://schema.org/> 
-SELECT (CONCAT('[',GROUP_CONCAT(?json; SEPARATOR=","),']') AS ?jsonString)
-FROM NAMED klob:extensions
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT (CONCAT('{',GROUP_CONCAT(?fJson; SEPARATOR=','),'}') AS ?appForms)
 {
-	  SELECT ?fldOrder ?name (CONCAT('{"propUri":"',STR(?fields),'",',(GROUP_CONCAT(?fld; SEPARATOR=",")),'}') AS ?json)
-	  {
-	
-	    GRAPH klob:extensions {
-	          { # Read field contruct information
-	            #?fields klob:useFor obi:UserClass .
-		          ?fields klob:useFor {{ object_class }} .
-	            ?fields klff:formFieldName ?name .
-	            OPTIONAL { ?fields klff:formFieldOrder ?order }. 
-	            ?fields klff:fieldType ?type .          
-	            BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
-	            {
-	            	?props rdfs:subPropertyOf+  klff:forms .
-	            } UNION {
-	            	BIND (rdfs:domain as ?props)
-	            }
-	            BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
-	            ?fields ?props ?o .
-	            BIND (IF(dataType(?o)=xsd:string || isIRI(?o),REPLACE(REPLACE(STR(?o),'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
-	            BIND (IF(dataType(?rtnVal)=xsd:string,CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
-	            BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld) .
-	            FILTER (!isBlank(?o)).
-	            #FILTER (?type != "objectStore").
-	          } UNION {
-	          	{ # Read form proprerties that are stored as an RDF object
-						  	?prop klff:fieldType "objectStore" .
-			          ?prop klff:objectStore ?objClass .
-			          ?fields rdfs:domain ?objClass .
-	            	#?fields klob:useFor obi:UserClass .
-		            ?fields klob:useFor {{ object_class }} .
-			          ?fields klff:formFieldName ?name .
-			          OPTIONAL { ?fields klff:formFieldOrder ?order }.
-			          BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
-									{                
-			              ?props rdfs:subPropertyOf+  klff:forms .
-			              BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
-			              ?fields ?props ?o .		              
-			              BIND (IF(dataType(?o)=xsd:string || isIRI(?o),REPLACE(REPLACE(STR(?o),'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
-	            			BIND (IF(dataType(?rtnVal)=xsd:string,CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
-			              BIND (CONCAT('"',?property,'":',STR(?jsonVal)) AS ?fld)
-			              FILTER (!isBlank(?o)).
-			            } UNION {
-			              BIND (?objClass as ?val) .
-			              BIND (CONCAT('"objSaveClass":"',str(?val),'"') AS ?fld) .
-			            } UNION {
-			              BIND (?prop as ?val) .
-			              BIND (CONCAT('"objPropertyFld":"',str(?val),'"') AS ?fld)
-			            }
-							}
-						} UNION {
-							SELECT ?name ?fldOrder ?fields (CONCAT('"',?property,'":[',GROUP_CONCAT(?subVal; SEPARATOR=","),']') AS ?fld)  
-							{
-							  SELECT ?name ?fields ?fldOrder ?property ?bn (CONCAT('{',GROUP_CONCAT(?subfld; SEPARATOR=","),'}') AS ?subVal)
-							  {
-							
-							    GRAPH klob:extensions {
-							          {
-							            #?fields klob:useFor obi:UserClass .
-							            ?fields klob:useFor {{ object_class }} .
-							            ?fields klff:formFieldName ?name .
-							            OPTIONAL { ?fields klff:formFieldOrder ?order }. 
-							            ?fields klff:fieldType ?type .          
-							            BIND (IF(!bound(?order),1000,?order) AS ?fldOrder) .
-							            ?props rdfs:subPropertyOf+  klff:forms .
-							            BIND (REPLACE(STR(?props),  "^(.*[/])", "") AS  ?property) .
-							            ?fields ?props ?o .
-							            BIND (if(isBlank(?o),?o,"") AS ?bn).
-							            ?bn ?subProp ?subObj .
-							            BIND (REPLACE(STR(?subProp),  "^(.*[/])", "") AS  ?subProperty) .
-							            BIND (?subObj as ?rtnVal).
-							            BIND (IF(dataType(?o)=xsd:string || isIRI(?o),REPLACE(REPLACE(STR(?o),'"','&quot;'),"\\\\","&#92;"),?o) AS ?rtnVal) .
-	            						BIND (IF(dataType(?rtnVal)=xsd:string,CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
-							            BIND (CONCAT('"',?subProperty,'":',STR(?jsonVal)) AS ?subfld)
-							          } 
-									}
-							  } 
-							  GROUP BY ?name ?fields ?fldOrder ?property ?bn 
-							  ORDER BY ?fldOrder ?name
-							}
-							GROUP BY ?name ?fields ?fldOrder ?property
-						}
-			}
-	  } 
-	  GROUP BY ?name ?fields ?fldOrder
-	  ORDER BY ?fldOrder ?name
-}	
+GRAPH <http://knowledgelinks.io/ns/application-framework/>
+{
+  SELECT ?klForms (CONCAT('"',REPLACE(STR(?klForms),  "^(.*[#/])", ""),'":{',GROUP_CONCAT(?fVal; SEPARATOR=','),'}') AS ?fJson)
+  {
+    {
+        SELECT ?klForms ?fVal
+        {
+                    {
+                      SELECT  ?klForms ?p ?o (CONCAT('{',GROUP_CONCAT(?instr; SEPARATOR=','),'}') AS ?jVal) 
+                      { 
+                        ?klForms a kds:FormClass .
+                        ?klForms ?p ?o .
+                        BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
+                        OPTIONAL {?bn ?pp ?oo .}
+                        BIND(CONCAT('"',REPLACE(STR(?pp),  "^(.*[#/])", ""),'":"',STR(?oo),'"') AS ?instr) .
+                        FILTER(?p!=kds:hasProperty).
+                        FILTER(?p!=rdf:type)
+                      }
+                      GROUP BY ?klForms ?p ?o
+                     }
+                     BIND(CONCAT('"',REPLACE(STR(?p),  "^(.*[#/])", ""),'":',IF(?jVal="{}",CONCAT('"',STR(?o),'"'),?jVal)) AS ?fVal) 
+        }
+    } UNION {
+        SELECT ?klForms (CONCAT('"fields":{',GROUP_CONCAT(?props1; SEPARATOR=','),'}') AS ?fVal)
+        {
+            SELECT ?klForms ?propUri (CONCAT('"',REPLACE(STR(?propUri), "^(.*[#/])",""),'":{"propUri":"',STR(?propUri),'",',GROUP_CONCAT(?dProps; SEPARATOR=','),'}') AS ?props1)
+            {
+                {
+                    SELECT ?klForms ?p  ?propUri ?fieldOrder (CONCAT('"settings":{',GROUP_CONCAT(?nObj; SEPARATOR=','),'}') AS ?dProps)
+                    {
+                        {
+                          SELECT  ?klForms ?p ?o ?bn ?pp ?oo ?fieldOrder  (CONCAT('{',GROUP_CONCAT(CONCAT('"',REPLACE(STR(?ppp),  "^(.*[#/])", ""),'":"',STR(?ooo),'"'); SEPARATOR=','),'}') AS ?obj) #?defaultp ?defaulto 
+                            #(CONCAT('"',REPLACE(STR(?defaultp),  "^(.*[#/])", ""),'":{',GROUP_CONCAT(CONCAT('"',REPLACE(STR(?defaultbnp),  "^(.*[#/])", ""),'":"',STR(?defaultbno),'"'); SEPARATOR=','),'}') AS ?obj)
+                          { 
+                            ?klForms a kds:FormClass .
+                            ?klForms ?p ?o .
+                            BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
+                            ?bn ?pp ?oo .
+                            #BIND (IRI(?bn) AS ?nBn) .
+                            OPTIONAL { ?bn kds:formFieldOrder ?fieldOrder . }
+                              #?bn kds:formLayoutRow ?layoutRow .
+
+                            #OPTIONAL {?Bn kds:propName ?propUri } .
+                            BIND(IF(ISBLANK(?oo),?oo,"") AS ?bn2) .
+                            OPTIONAL {
+                              ?bn2 ?ppp ?ooo
+                            } .
+                          }
+                          GROUP BY ?klForms ?p ?o ?bn ?pp ?oo ?fieldOrder #?propUri 
+                        }
+                        ?bn kds:propName ?propUri	
+                        BIND(CONCAT('"',REPLACE(STR(?pp),  "^(.*[#/])", ""),'":',IF(bound(?obj),?obj,CONCAT('"',STR(?oo),'"'))) AS ?nObj).
+                    }
+                    GROUP BY ?klForms ?p  ?propUri ?fieldOrder
+                    ORDER BY ?klForms ?fieldOrder ?p ?o  ?pp
+                } UNION {
+                    SELECT ?klForms ?p ?propUri (CONCAT('"propertyDefaults":{',GROUP_CONCAT(?nObj; SEPARATOR=','),'}') AS ?dProps)
+                    {
+                        {
+                          SELECT  ?klForms ?p ?o ?propUri ?bn ?pp ?oo ?bn2 ?bn3 ?defaultp ?defaulto (CONCAT('{',GROUP_CONCAT(?bn5Data; SEPARATOR=','),'}') AS ?obj) #?defaultp ?defaulto 
+                          { 
+                            ?klForms a kds:FormClass .
+                            ?klForms ?p ?o .
+                            BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
+                            ?bn ?pp ?oo
+                            BIND(IF(ISBLANK(?oo),?oo,"") AS ?bn2) .
+                            OPTIONAL {
+                              ?bn2 ?ppp ?ooo
+                            }
+                            BIND(IF(?pp=kds:propName,?oo,"") AS ?propUri) .
+                            OPTIONAL {
+                              ?propUri kds:formDefault ?bn3 .
+                              ?bn3 ?defaultp ?defaulto .
+                              BIND(IF(ISBLANK(?defaulto),?defaulto,"") AS ?bn5) .
+                              OPTIONAL {
+                                ?bn5 ?defaultbnp ?defaultbno
+                              }
+                            } .
+                            BIND(CONCAT('"',REPLACE(STR(?defaultp),  "^(.*[#/])", ""),'"') AS ?defaultProp) .
+                            BIND(CONCAT('"',REPLACE(STR(?defaultbnp),  "^(.*[#/])", ""),'":"',REPLACE(REPLACE(STR(?defaultbno),"\n",""),"\t",""),'"') AS ?bn5Data) .
+                          }
+                          GROUP BY ?klForms ?p ?o ?propUri ?bn ?pp ?oo ?bn2 ?bn3 ?defaultp ?defaulto 
+                        }
+                        BIND(CONCAT('"',REPLACE(STR(?defaultp),  "^(.*[#/])", ""),'":',IF(?obj='{}',CONCAT('"',STR(?defaulto),'"'),?obj)) AS ?nObj).
+                    }
+                    GROUP BY ?klForms ?p  ?propUri
+                    ORDER BY ?klForms ?p  ?pp
+                }
+            }
+            GROUP BY ?klForms ?propUri
+        }
+        GROUP BY ?klForms 
+    }
+  }
+  GROUP BY ?klForms
+}
+}

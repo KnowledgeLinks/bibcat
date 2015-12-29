@@ -10,16 +10,15 @@
 
 
 
-obi:AssertionClass a rdf:Class;
+obi:Assertion a rdf:Class;
 	a kds:ControlledClass;
 	rdfs:label "Open Badge Assertion";
 	rdfs:comment "Assertion for open badges.";
 	kds:storageType "object";
 	kds:primaryKey [
-		kds:keyCombo schema:Person;
+		kds:keyCombo obi:recipient;
 		kds:keyCombo obi:BadgeClass
 	]; 
-	kds:primaryKey kds:User;
 	kds:jsonDefault [
 		kds:jsonObjName "Assertion" 
 	] .
@@ -141,9 +140,41 @@ obi:expires a rdf:Property;
 		kds:addonCss "dp";
 	] .
 	
+obi:startDate a rdf:Property;
+	rdfs:domain obi:BadgeClass;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Date the badge is available.";	
+	kds:defaultVal "now";
+	kds:jsonDefault [
+		kds:jsonObjName "expires";
+		kds:jsonValFormat "objectValue" ;
+		kds:propertyField obi:expires 
+	] ;
+	kds:formDefault [
+		kds:formFieldName "startDate";
+		kds:formLabelName "Start Date";
+		kds:formFieldHelp "Enter the date that the badge is available.";
+		kds:fieldType kdr:DateTimeField;
+		kds:addonCss "dp";
+	] .
+	
+obi:endDate a rdf:Property;
+	rdfs:domain obi:BadgeClass;
+	rdfs:range rdfs:literal;
+	rdfs:comment "Date the badge is no longer available.";	
+	kds:defaultVal "now";
+	kds:formDefault [
+		kds:formFieldName "endDate";
+		kds:formLabelName "End Date";
+		kds:formFieldHelp "Enter the date that the badge is no longer available.";
+		kds:fieldType kdr:DateTimeField;
+		kds:addonCss "dp";
+	] .
+
 obi:recipient a rdf:Property;
 	rdfs:domain obi:Assertion;
 	rdfs:range schema:Person;
+	kds:requiredByDomain obi:Assertion;
 	rdfs:comment "Recipient of a Badge.";	
 	kds:jsonDefault [
 		kds:jsonObjName "recipient";
@@ -306,6 +337,25 @@ obi:issuer a rdf:Property;
 		]
 	] .
 	
+schema:affliation	a rdf:Property;
+	rdfs:domain schema:Person;
+	rdfs:range schema:Organization;
+	rdfs:label "Affiliated with";
+	kds:formDefault [
+		kds:fromFieldName "affiliation";
+		kds:formLabelName "Organization";
+		kds:formFieldHelp "Enter an affiliated organization.";
+		kds:fieldType [
+			a kdr:SelectField;
+			kds:selectQuery "SELECT * {
+																?s a schema:Organizatioin . 
+																?s schema:name ?name . 
+																} 
+																ORDER BY ?name";
+			kds:selectBoundValue "?s";
+			kds:selectDisplay "?name" 
+		]
+	] .
 
 obi:type a rdf:Property;	
 	rdfs:domain	obi:BadgeClass;
@@ -445,7 +495,12 @@ schema:Organization a rdf:Class;
 	] .
 	
 schema:ImageObject a rdf:Class;
-	a kds:ControlledClass .
+	a kds:ControlledClass ;
+	kds:storageType "object".
+	
+schema:URL a rdf:Class;
+	a kds:ControlledClass ;
+	kds:storageType "literal".
 	
 	
 	
@@ -553,10 +608,9 @@ kds:userName a rdf:Property;
 	] .
 
 kds:salt a rdf:Property;	
-	rdfs:domain	kds:PasswordClass;
+	#rdfs:domain	kds:PasswordClass; listed in Vocab def
 	rdfs:domain obi:Assertion;	
-	rdfs:range	xsd:string;	
-	rdfs:comment "Salt used for hash.";
+	# rdfs:range	xsd:string;	stated in vocab
 	kds:requiredByDomain kds:PasswordClass;
 	kds:requiredByDomain obi:Assertion;
 	kds:propertyProccessing kdr:SaltProccessor;
@@ -576,10 +630,9 @@ kds:salt a rdf:Property;
 	];
 	kds:formFieldName "salt".
 	
-kds:password a rdf:Property;	
-	rdfs:domain	kds:PasswordClass;	
-	rdfs:range	xsd:string;	
-	rdfs:comment "User's account password.";
+kds:password 	
+	#rdfs:domain	kds:PasswordClass;	Stated in Vocab
+	#rdfs:range	xsd:string;	stated in Vocab
 	kds:requiredByDomain kds:PasswordClass;	
 	kds:propertyValidation kdr:PasswordValidator; 
 	kds:propertyProccessing  kdr:PasswordProccessor;
@@ -640,7 +693,7 @@ kds:hasPassword a rdf:Property;
 	rdfs:range	kds:PasswordClass;	
 	rdfs:comment "User's account password object.";
 	kds:requiredByDomain kds:UserClass;
-	kds:storageType "objectStore";                           
+	kds:storageType "object";                           
 	kds:jsonDefault [
 		kds:jsonObjName "Password";
 		kds:jsonValFormat "lookupProperties";
@@ -667,15 +720,13 @@ obi:UserForm a kds:FormClass;
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
 		kds:addOnCss "form_css";
-		kds:propertyAddOnCss "from-control"
+		kds:propertyAddOnCss " form-control"
 	];
 	kds:hasProperty [
 		kds:propName schema:email;
 		kds:classUri schema:Person;
 		kds:formFieldOrder 1;
 		kds:fromLayoutRow 1;
-		kds:addOnCss "";
-		kds:overrideCss "";
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:applicationAction kdr:LookupAddNewWorkFlow; 
@@ -698,4 +749,76 @@ obi:UserForm a kds:FormClass;
 	kds:hasProperty [
 		kds:propName kds:password;
 		kds:formFieldOrder 5;
+	].
+	
+obi:BadgeForm a kds:FormClass;
+	rdfs:label "Badge form";
+	rdfs:comment "Use this form for generating a new Badge.";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:addOnCss "form_css";
+		kds:propertyAddOnCss " form-control"
+	];
+	kds:hasProperty [
+		kds:propName schema:name;
+		kds:classUri obi:BadgeClass;
+		kds:formFieldOrder 1;
+		kds:fromLayoutRow 1;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:LookupAddNewWorkFlow; 
+		]
+	];
+	kds:hasProperty [
+		kds:propName schema:description;
+		kds:formFieldOrder 3;
+		kds:fromLayoutRow 2;
+	];
+	kds:hasProperty [
+		kds:propName obi:startDate;
+		kds:formFieldOrder 2;
+		kds:fromLayoutRow 2;
+	];
+	kds:hasProperty [
+		kds:propName obi:endDate;
+		kds:formFieldOrder 4;
+	];
+	kds:hasProperty [
+		kds:propName schema:image;
+		kds:formFieldOrder 5;
+	];
+	kds:hasProperty [
+		kds:propName obi:tags;
+		kds:formFieldOrder 5;
+	];
+	kds:hasProperty [
+		kds:propName obi:criteria;
+		kds:formFieldOrder 5;
+	].
+	
+obi:AssertionForm a kds:FormClass;
+	rdfs:label "Assertion form";
+	rdfs:comment "Use this form for generating a badge assertion.";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:addOnCss "form_css";
+		kds:propertyAddOnCss "form-control"
+	];
+	kds:hasProperty [
+		kds:propName obi:hasBadge;
+		kds:classUri obi:BadgeClass;
+		kds:formFieldOrder 1;
+		kds:fromLayoutRow 1;
+	];
+	kds:hasProperty [
+		kds:propName obi:issuedOn;
+		kds:formFieldOrder 2;
+		kds:fromLayoutRow 2;
+	];
+	kds:hasProperty [
+		kds:propName obi:recipient;
+		kds:formFieldOrder 3;
+		kds:fromLayoutRow 3;
 	].

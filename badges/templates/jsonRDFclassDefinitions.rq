@@ -8,59 +8,87 @@ prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 prefix schema: <https://schema.org/> 
 prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
 
-SELECT (CONCAT('{',GROUP_CONCAT(?json; SEPARATOR=','),'}') AS ?appClasses) 
-	{
-	  SELECT  (CONCAT('"',?class,'":{"className":"',?class,'",',?classUri,',',GROUP_CONCAT(?jsonProps; SEPARATOR=","),'}') AS ?json)
-	  {
-	
-	    GRAPH {{ graph }} {
-	          {
-                SELECT ?class ?classUri (GROUP_CONCAT(?valObj; SEPARATOR=',') AS ?jsonProps)
-                {
+SELECT  (CONCAT("{",GROUP_CONCAT(?classObj; SEPARATOR=","),"}") AS ?appClasses)
+{
+GRAPH <http://knowledgelinks.io/ns/application-framework/> 
+{
+  SELECT ?klClasses (CONCAT('"',REPLACE(STR(?klClasses),  "^(.*[#/])", ""),'":{"classUri":"',STR(?klClasses),'",',GROUP_CONCAT(?classJson; SEPARATOR=","),"}") AS ?classObj)
+  {
+  	{
+      SELECT ?klClasses (CONCAT(?prop,':',IF(?agType="obj","{",""),GROUP_CONCAT(?objJson; SEPARATOR=","),IF(?agType="obj","}","")) AS ?classJson)
+      {
+          SELECT ?klClasses ?prop ?agType (CONCAT(IF(?pp=kds:keyCombo,"[",""),GROUP_CONCAT(?rtn;SEPARATOR=","),IF(?pp=kds:keyCombo,"]","")) AS ?objJson)
+          {
+            ?klClasses a kds:ControlledClass .
+            ?klClasses ?p ?o . 
+            BIND (CONCAT('"',REPLACE(STR(?p),  "^(.*[#/])", ""),'"') AS  ?prop) .
+            BIND (IF(ISBLANK(?o),?o,"") AS ?bn) .
+            ?bn ?pp ?oo .
+            BIND (CONCAT('"',REPLACE(STR(?pp),  "^(.*[#/])", ""),'"') AS  ?prop2) .
+            BIND (IF(?pp=kds:keyCombo,CONCAT('"',STR(?oo),'"'),CONCAT(?prop2,':"',STR(?oo),'"')) AS ?rtn) .
+            BIND (IF(?pp=kds:keyCombo,"array","obj") AS ?agType) .
+          }
+          GROUP BY ?prop ?klClasses ?pp ?agType
+      }
+      GROUP BY ?klClasses ?prop ?agType
+	} UNION {
+		SELECT ?klClasses (CONCAT(?prop,':',?rtn) AS ?classJson)
+		{
+		  ?klClasses a kds:ControlledClass .
+		  ?klClasses ?p ?o . 
+		  BIND (CONCAT('"',REPLACE(STR(?p),  "^(.*[#/])", ""),'"') AS  ?prop) .
+		  BIND (CONCAT('"',STR(?o),'"') AS ?rtn)  .
+		  FILTER (?p!=rdf:type) .
+		  FILTER (!(ISBLANK(?o))) .
+		}	
+	} UNION {
+      	SELECT ?klClasses (CONCAT('"properties":{',GROUP_CONCAT(?propVals; SEPARATOR=","),'}') AS ?classJson)
+      	{
+          SELECT ?klClasses  (CONCAT(?props,':{"propUri":"',STR(?properties),'",',?newRange,',',GROUP_CONCAT(?jVal; SEPARATOR=","),'}') AS ?propVals)
+          {
+              SELECT DISTINCT ?klClasses ?properties ?props ?jVal ?newRange
+              {
                   {
-                    SELECT ?class ?classUri ?prop (GROUP_CONCAT(?val; SEPARATOR=',') AS ?vals)
-                    {
-                    ?klClasses a klff:objectClass .
-                    ?klClasses ?p ?o . 
-                    BIND (REPLACE(STR(?klClasses),  "^(.*[#/])", "") AS  ?class) .
-                    BIND (CONCAT('"',REPLACE(STR(?p),  "^(.*[#/])", ""),'"') AS  ?prop) .
-                    BIND (CONCAT('"',STR(?o),'"') AS ?val).
-                    BIND (CONCAT('"classUri":"',STR(?klClasses),'"') as ?classUri) .
-                    FILTER (?p != rdf:type)
-                    }
-                    GROUP BY ?class ?classUri ?prop
+                    SELECT ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra  (GROUP_CONCAT(?rangeItems; SEPARATOR=",") AS ?rangeVal) (GROUP_CONCAT(?stoType1; SEPARATOR=",") AS ?stoVal)
+                    { 
+                      ?klClasses a kds:ControlledClass .
+                      ?properties rdfs:domain ?klClasses .
+                      ?properties ?attrs ?attrObjs .
+                      ?properties rdfs:range ?ra .
+
+                      BIND(IF(ISBLANK(?attrObjs),?attrObjs,"") AS ?bn).
+                      OPTIONAL {
+                        ?properties rdfs:range ?objLookup .
+                        ?objLookup a kds:ControlledClass .
+                        ?objLookup kds:storageType ?stoType 
+                      } .
+                      OPTIONAL {
+                        ?bn kds:appliesTo ?klClasses .
+                        ?bn ?attrs ?bnVal .
+                      }.
+
+                      BIND (CONCAT('"',IF(bound(?stoType),?stoType,"literal"),'"') AS ?stoType1) .
+                      BIND (IF(bound(?objLookup),CONCAT('{"rangeClass":"',STR(?objLookup),'","storageType":',?stoType1,'}'),"") AS ?rangeItems) .
+                      BIND (CONCAT('"',REPLACE(STR(?properties),  "^(.*[#/])", ""),'"') AS  ?props) .
+                      BIND (CONCAT('"',REPLACE(STR(?attrs),  "^(.*[#/])", ""),'"') AS  ?attrJson) .
+                      BIND (IF(?attrs=rdfs:range,IF(?rangeItems!='','',CONCAT('"range":[{"rangeClass":"',STR(?attrObjs),'","storageType":',?stoType1,'}]')),(CONCAT(?attrJson,':"',STR(COALESCE(?bnVal,?attrObjs)),'"'))) AS ?jVal ).
+                      FILTER ((?attrs!=kds:json && ?attrs!=kds:formDefault && ?attrs != kds:jsonDefault && !(?attrObjs != ?klClasses && ?attrs = kds:requiredByDomain) && ?attrs != rdfs:domain)) .
+                      FILTER (?jVal!="") .
+                     }
+                     GROUP BY ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra
                   }
-                  BIND (IF(regex(?vals,'","'),CONCAT('[',?vals,']'),?vals) AS ?cVal) .
-                  BIND (CONCAT(?prop,':',?cVal) AS ?valObj)
-                }
-                GROUP BY ?class ?classUri
-              } UNION {
-								SELECT ?class ?classUri ?jsonProps
-								{  
-				          { 
-										SELECT ?class ?classUri (CONCAT('"properties":{',GROUP_CONCAT(?prop; SEPARATOR=','),'}') AS ?jsonProps)
-										{
-										?klClasses a klff:objectClass .
-										?classProperties rdfs:domain ?klClasses  .
-										OPTIONAL {?classProperties rdfs:range ?r }.
-					          OPTIONAL {?classProperties klff:requiredByDomain ?req }.
-										OPTIONAL {?r klff:storageType ?sto }.
-										BIND (CONCAT('"storageType":"',IF(!bound(?sto),"literal",?sto),'"') AS ?storage ) .
-										BIND (CONCAT('"propUri":"',STR(?classProperties),'"') AS ?propUri) .
-										BIND (CONCAT('"range":"',STR(?r),'"') AS ?range).
-										BIND (REPLACE(STR(?klClasses),  "^(.*[#/])", "") AS  ?class) .
-										BIND (CONCAT('"classUri":"',STR(?klClasses),'"') as ?classUri) .
-										BIND (REPLACE(STR(?classProperties),  "^(.*[#/])", "") AS  ?property) .
-										BIND (CONCAT('"classUri":"',STR(?klClasses),'"') as ?classUri) .
-                    BIND (CONCAT('"required":',IF(str(?klClasses) = str(?req),true,false)) AS ?req2) .
-                    BIND (IF(!(bound(?req2)),'"required":false',?req2) AS ?required) .
-										BIND (CONCAT('"',?property,'":{',?propUri,',',?storage,',',?range,',',?required,'}') AS ?prop) .
-										}
-										GROUP BY ?class ?classUri
-								  }
-						  	}
-						  }
-  					} 
-    			}
-	  GROUP BY ?class ?classUri
-	}
+                  BIND (CONCAT('"range":[',IF(?rangeVal='',CONCAT('{"rangeClass":"',STR(?ra),'","storageType":',?stoVal,'}'),?rangeVal),']') AS ?newRange)
+                  FILTER(?attrs!=rdfs:range)  
+              }
+          }
+          GROUP BY ?klClasses ?props ?properties ?newRange 
+        }
+        GROUP BY ?klClasses
+    }
+    BIND(CONCAT('"',REPLACE(STR(?klClasses),  "^(.*[#/])", ""),'"') AS  ?className) .
+  } 
+  GROUP BY ?klClasses 
+
+}
+}
+ORDER BY ?klClasses
