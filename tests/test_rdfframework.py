@@ -60,40 +60,46 @@ class TestRdfClass(unittest.TestCase):
         }
     }
 }""")
-        self.person = rdf_class(self.person_json["Person"])
+        self.person = RDFClass(self.person_json["Person"], "Person")
         
 
     def test_init(self):
-        person = rdf_class(self.person_json["Person"])
+        person = RDFClass(self.person_json["Person"], "Person")
         self.assertEqual(
             person.classUri, 
             "https://schema.org/Person")
+        self.assertEqual(
+            person.className,
+            "Person")
 
 
     def test_newUri(self):
         self.assertEqual(self.person.newUri(), None)
 
-    def test_save(self):
-        self.assertEqual(self.person.save(data=None), None)
+    def test_save_none(self):
+        self.assertRaises(ValueError, self.person.save, data=None)
+
+    def test_save_validate(self):
+        #self.assertEquals(self.person.save({"giveName": "Mark", "email": "mtwain@email.com"}), True)
+        pass
 
     def test_validatePrimaryKey(self):
-        print(self.person.primaryKey, self.person.properties[self.person.findPropName(self.person.primaryKey)]['storageType'])
-        self.assertEqual(self.person.validatePrimaryKey("help@gmail.com"),
-                "?uri a 0 .?uri <https://schema.org/email> 0 .")
-        self.assertEqual(self.person.validatePrimaryKey(None), None)
+        self.assertEqual(self.person.validatePrimaryKey("help@gmail.com"), None)
+               # "?uri a 0 .?uri <https://schema.org/email> 0 .")
+        #self.assertEqual(self.person.validatePrimaryKey(None), None)
         
 
         
 class TestRdfDatatype(unittest.TestCase):
 
     def setUp(self):
-        self.langstring_instance = rdf_datatype("langstring")
-        self.literal_instance = rdf_datatype("literal")
-        self.obj_instance = rdf_datatype("object")
-        self.str_instance = rdf_datatype("http://www.w3.org/2001/XMLSchema#string")
+        self.langstring_instance = RDFDataType("langstring")
+        self.literal_instance = RDFDataType("literal")
+        self.obj_instance = RDFDataType("object")
+        self.str_instance = RDFDataType("http://www.w3.org/2001/XMLSchema#string")
 
     def test_init(self):
-        instance = rdf_datatype("https://schema.org/Person")
+        instance = RDFDataType("https://schema.org/Person")
         self.assertEqual(instance.name, "https://schema.org/Person")
         self.assertEqual(
             instance.iri, 
@@ -102,7 +108,7 @@ class TestRdfDatatype(unittest.TestCase):
         self.assertEqual(instance.prefix, "xsd:https://schema.org/Person")
 
     def test_init_errors(self):
-        self.assertRaises(TypeError, rdf_datatype)
+        self.assertRaises(TypeError, RDFDataType)
 
     def test_literal_datatype(self):
         self.assertEqual(self.literal_instance.name, "literal")
@@ -152,14 +158,14 @@ class TestRdfDatatype(unittest.TestCase):
             '"Test String"^^xsd:string')
 
     def test_sparql_boolean(self):
-        boolean_instance = rdf_datatype("boolean")
+        boolean_instance = RDFDataType("boolean")
         self.assertEqual(
             boolean_instance.sparql(True),
             '"true"^^xsd:boolean')
 
             
     def test_sparql(self):
-        badge_class_instance = rdf_datatype(str(DC.name))
+        badge_class_instance = RDFDataType(str(DC.name))
         self.assertEqual(
             badge_class_instance.sparql("Test"),
             '"Test"^^xsd:http://purl.org/dc/elements/1.1/name')

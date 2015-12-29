@@ -58,15 +58,11 @@
 
 	kdr:CSVstringToMultiPropertyProccessor a kds:PropertyProccessor;
 		rdfs:label "CSV to Properties";
-		rdfs:comment "Application takes a CSV string and adds each value to the subject with the property." .
+		rdfs:comment "Application takes a CSV string and adds each value as a seperate triple to the class instance." .
 	
-	kdr:BadgeImageBakingProccessor a kds:PropertyProccessor;
-		rdfs:label "Badge Baker";
-		rdfs:comment "Application takes a CSV string and adds each value to the subject with the property." .
-
 	kdr:AssertionImageBakingProccessor a kds:PropertyProccessor;
 		rdfs:label "Assertion Baker";
-		rdfs:comment "Application takes a CSV string and adds each value to the subject with the property." .
+		rdfs:comment "Application sends badge image to the a badge baking service with the assertion." .
 	
 	kdr:EmailVerificationProccessor a kds:PropertyProccessor;
 		rdfs:label "Email Verifier";

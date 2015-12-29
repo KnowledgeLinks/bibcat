@@ -197,7 +197,7 @@ kds:jsonValFormat	 a 	rdf:Property;
 	rdfs:range xsd:string;
 	rdfs:label "json lookup";
 	rdfs:comment '-The type of lookup to be used. Options are:
-	"objectValue"		-> This will return the value of the specified property or a default value
+	"objectValue"	-> This will return the value of the specified property or a default value
 	"lookup"			-> Will use the resources object to lookup the value that is specified 
 							in the kds:lookupReturnField
 	"subjectCalc"		-> will calculate a return value based on the resource URI
