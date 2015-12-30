@@ -146,29 +146,33 @@ class RDFClass(object):
         "takes a subject predicate and object and joins them with a sp ace in between"
         return "{s} {p} {o} .".format(s=s, p=p, o=0)
 
-    def __validateRequiredProperties(self, data):
+    def validateRequiredProperties(self, data):
         '''Validates whether all required properties have been supplied and contain data '''
         returnError = []
         #create sets for evaluating requiredFields
-        req = self.listRequired()
+        required = self.listRequired()
         dataProps = set()
         for p in data:
             #remove empty data properties from consideration
             if IsNotNull(data[p]):
                 dataProps.add(p)
         #Test to see if all the required fields are supplied    
-        missingRequiredProperties = req - dataProps
+        missingRequiredProperties = required - dataProps
         if len(missingRequiredProperties)>0:
             missingUris = []
             for m in missingRequiredProperties:
                 missingUris.append(self.properties[m]['propUri'])
-            returnError.append({"errorType":"missingRequiredProperties","errorData":{"class":self.classUri,"properties":missingUris}})
+            returnError.append({
+                "errorType":"missingRequiredProperties",
+                "errorData":{
+                    "class":self.classUri,
+                    "properties":missingUris}})
         if len(returnError)>0:
             return returnError
         else:
             return ["valid"]
             
-    def __validateDependantProperties(self, data):
+    def validateDependantProperties(self, data):
         '''Validates that all supplied dependant properties have a uri as an object'''
         dep = self.listDependant()
         returnError = []
@@ -187,7 +191,11 @@ class RDFClass(object):
                     if i.get('storageType')=='literal':
                         literalOk = True
                 if not IsValidObject(dataValue) and not literalOk:
-                    returnError.append({"errorType":"missingDependantObject","errorData":{"class":self.classUri,"properties":propDetails.get('propUri')}})
+                    returnError.append({
+                        "errorType":"missingDependantObject",
+                        "errorData":{
+                            "class":self.classUri,
+                            "properties":propDetails.get('propUri')}})
         if len(returnError)>0:
             return returnError
         else:

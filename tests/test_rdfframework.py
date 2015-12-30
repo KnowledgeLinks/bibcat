@@ -87,6 +87,16 @@ class TestRdfClass(unittest.TestCase):
         self.assertEqual(self.person.validatePrimaryKey("help@gmail.com"), None)
                # "?uri a 0 .?uri <https://schema.org/email> 0 .")
         #self.assertEqual(self.person.validatePrimaryKey(None), None)
+
+    def test__validateDependantProperties(self):
+        pass
+
+    def test_validateRequiredProperties(self):
+        self.assertEqual(self.person.validateRequiredProperties(
+            {"givenName": "Jane",
+             "familyName": "Austen",
+             "email": "ja@example.com"}),
+            ["valid"])
         
 
         
