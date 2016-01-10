@@ -17,10 +17,18 @@ obi:Assertion a rdf:Class;
 	kds:storageType "object";
 	kds:primaryKey [
 		kds:keyCombo obi:recipient;
-		kds:keyCombo obi:BadgeClass
+		kds:keyCombo obi:hasBadge
 	]; 
 	kds:jsonDefault [
 		kds:jsonObjName "Assertion" 
+	];
+	kds:classSecurity [
+		acl:agent kdr:Admin-SG;
+		acl:mode acl:Read, acl:Write
+	] ;
+	kds:classSecurity [
+		acl:agent kdr:User-SG;
+		acl:mode acl:Read
 	] .
 	
 obi:context a rdf:Property;
@@ -207,9 +215,9 @@ obi:recipient a rdf:Property;
 		kds:useFor obi:Assertion 
 	] ;
 	kds:formDefault [
-		kds:formFieldName "Badge";
-		kds:formLabelName "Select a Badge";
-		kds:formFieldHelp "Please select the badge that you want to award.";
+		kds:formFieldName "Recipient";
+		kds:formLabelName "Select the Recipient";
+		kds:formFieldHelp "Please select or enter a new recipient.";
 		kds:fieldType [
 			a	kdr:SelectField;
 			kds:selectQuery "SELECT * {
@@ -342,7 +350,7 @@ schema:affliation	a rdf:Property;
 	rdfs:range schema:Organization;
 	rdfs:label "Affiliated with";
 	kds:formDefault [
-		kds:fromFieldName "affiliation";
+		kds:formFieldName "affiliation";
 		kds:formLabelName "Organization";
 		kds:formFieldHelp "Enter an affiliated organization.";
 		kds:fieldType [
@@ -556,8 +564,8 @@ schema:familyName a rdf:Property;
 		kds:jsonValFormat "objectValue"
 	] ;
 	kds:formDefault [
-		kds:formFieldName "givenname";
-		kds:formLabelName "First name";
+		kds:formFieldName "familyname";
+		kds:formLabelName "Last name";
 		kds:formFieldHelp "Enter the person's last/family name.";
 		kds:fieldType [
 			a	kdr:TextField; 
@@ -571,6 +579,10 @@ schema:email a rdf:Property;
 	kds:propertyProccessing kdr:EmailVerificationProccessor;                   
 	kds:requiredByDomain schema:Person;
 	kds:propertyValidation kdr:EmailValidator;
+	kds:propertySecurity [
+		acl:agent kdr:Self-SG;
+		acl:mode acl:Read, acl:Write
+	] ;
 	kds:jsonDefault [
 		kds:jsonObjName "email";
 		kds:jsonValFormat "objectValue"
@@ -592,7 +604,7 @@ kds:userName a rdf:Property;
 	kds:propertyValidation kdr:UniqueValueValidator;
 	kds:propertyValidation [
 		a kdr:StringLengthValidator;
-		kds:parameters "length=25"
+		kds:parameters "max=25,min=10"
 	];
 	kds:jsonDefault [
 		kds:jsonObjName "username";
@@ -614,6 +626,11 @@ kds:salt a rdf:Property;
 	kds:requiredByDomain kds:PasswordClass;
 	kds:requiredByDomain obi:Assertion;
 	kds:propertyProccessing kdr:SaltProccessor;
+	kds:propertySecurity [
+		kds:appliesTo kds:PasswordClass;
+		acl:agent kdr:Self-SG;
+		acl:mode acl:Read, acl:Write
+	] ;
 	kds:jsonDefault [
 		kds:jsonObjName "salt";
 		kds:jsonValFormat "objectValue"
@@ -644,7 +661,7 @@ kds:password
 		kds:useFor obi:UserClass;
 	];
 	kds:formDefault [
-		kds:fieldType kds:PasswordField;
+		kds:fieldType kdr:PasswordField;
 		kds:formLabelName "Password";        
 		kds:formFieldName "password"
 	] .	
@@ -715,18 +732,33 @@ kds:hasPassword a rdf:Property;
 
 obi:UserForm a kds:FormClass;
 	rdfs:label "User form";
-	rdfs:comment "Use this form for generating a new user. It will store results in a UserClass and Person RDF classes";
+	rdfs:comment "Use this form for creating, editing and displaying user information. It will store results in a UserClass and Person RDF classes";
 	kds:formInstructions [
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
-		kds:addOnCss "form_css";
-		kds:propertyAddOnCss " form-control"
+		kds:propertyAddOnCss " form-control";
+		kds:formTitle "User Information";
+		kds:formDescription "User infomation";
+		kds:rowAddOnCss "formFormRowCss";
+		kds:formAddOnCss "formFormCss";
+		kds:formInstance [
+			kds:propertyAddOnCss "instancePropertyCss";
+		  kds:formAddOnCss "instanceFormFormCss";
+		  kds:rowAddOnCss "instanceFormRowCss";
+			kds:formInstanceType kdr:NewForm;
+			kds:formTitle "New User";
+			kds:formDescription "Create a new user account"
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formDescription "Edit user information."
+		]
 	];
 	kds:hasProperty [
 		kds:propName schema:email;
 		kds:classUri schema:Person;
 		kds:formFieldOrder 1;
-		kds:fromLayoutRow 1;
+		kds:formLayoutRow 1;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:applicationAction kdr:LookupAddNewWorkFlow; 
@@ -735,20 +767,36 @@ obi:UserForm a kds:FormClass;
 	kds:hasProperty [
 		kds:propName schema:familyName;
 		kds:formFieldOrder 3;
-		kds:fromLayoutRow 2;
+		kds:formLayoutRow 2;
 	];
 	kds:hasProperty [
 		kds:propName schema:givenName;
 		kds:formFieldOrder 2;
-		kds:fromLayoutRow 2;
+		kds:formLayoutRow 2;
 	];
 	kds:hasProperty [
 		kds:propName kds:userName;
 		kds:formFieldOrder 4;
+		kds:formLayoutRow 3
 	];
 	kds:hasProperty [
 		kds:propName kds:password;
 		kds:formFieldOrder 5;
+		kds:formLayoutRow 4;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:fieldType [
+				a kdr:PasswordField;
+				kds:fieldMode kdr:InitialPassword
+			] 
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:fieldType [
+				a kdr:PasswordField;
+				kds:fieldMode kdr:ChangePassword
+			] 
+		]
 	].
 	
 obi:BadgeForm a kds:FormClass;
@@ -764,37 +812,46 @@ obi:BadgeForm a kds:FormClass;
 		kds:propName schema:name;
 		kds:classUri obi:BadgeClass;
 		kds:formFieldOrder 1;
-		kds:fromLayoutRow 1;
+		kds:formLayoutRow 1;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:applicationAction kdr:LookupAddNewWorkFlow; 
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:NotEditable 
 		]
 	];
 	kds:hasProperty [
 		kds:propName schema:description;
 		kds:formFieldOrder 3;
-		kds:fromLayoutRow 2;
+		kds:formLayoutRow 2;
 	];
 	kds:hasProperty [
 		kds:propName obi:startDate;
 		kds:formFieldOrder 2;
-		kds:fromLayoutRow 2;
+		kds:formLayoutRow 3;
 	];
 	kds:hasProperty [
 		kds:propName obi:endDate;
 		kds:formFieldOrder 4;
+		kds:formLayoutRow 3;
 	];
 	kds:hasProperty [
 		kds:propName schema:image;
+		kds:classUri obi:BadgeClass;
 		kds:formFieldOrder 5;
+		kds:formLayoutRow 4;
 	];
 	kds:hasProperty [
 		kds:propName obi:tags;
-		kds:formFieldOrder 5;
+		kds:formFieldOrder 6;
+		kds:formLayoutRow 5;
 	];
 	kds:hasProperty [
 		kds:propName obi:criteria;
-		kds:formFieldOrder 5;
+		kds:formFieldOrder 7;
+		kds:formLayoutRow 6;
 	].
 	
 obi:AssertionForm a kds:FormClass;
@@ -806,19 +863,59 @@ obi:AssertionForm a kds:FormClass;
 		kds:addOnCss "form_css";
 		kds:propertyAddOnCss "form-control"
 	];
+	kds:formSecurity [
+		acl:accessTo kdr:NewForm, kdr:EditForm;
+		acl:agent kdr:Admin;
+		acl:mode acl:Read, acl:Append
+	];
+	kds:formSecurity [
+		acl:accessTo kdr:DisplayForm;
+		acl:agent kdr:User-SG;
+		acl:mode acl:read
+	];
 	kds:hasProperty [
 		kds:propName obi:hasBadge;
-		kds:classUri obi:BadgeClass;
+		kds:classUri obi:Assertion;
 		kds:formFieldOrder 1;
-		kds:fromLayoutRow 1;
+		kds:formLayoutRow 1;
+		kds:formValidation [
+			a kds:TestValidator;
+			kds:parameters "asdfdas"
+		]
 	];
 	kds:hasProperty [
 		kds:propName obi:issuedOn;
 		kds:formFieldOrder 2;
-		kds:fromLayoutRow 2;
+		kds:formLayoutRow 2;
+		kds:requiredField true
 	];
 	kds:hasProperty [
 		kds:propName obi:recipient;
 		kds:formFieldOrder 3;
-		kds:fromLayoutRow 3;
+		kds:formLayoutRow 3;
+	];
+	kds:hasProperty [
+		kds:propName kds:salt;
+		kds:classUri obi:Assertion;
+		kds:formFieldOrder 4;
+		kds:formLayoutRow 4;
 	].
+	
+obi:BadgeApplication a kds:Application;
+	kds:applicationSecurity [
+		acl:mode kds:SuperUser;
+		acl:agent kdr:SysAdmin-SG
+	];
+	kds:applicationSecurity [
+		acl:mode acl:Read, acl:Write, acl:Control;
+		acl:agent kdr:Admin-SG
+	];
+	kds:applicationSecurity [
+		acl:mode acl:Read, acl:Append;
+		acl:agent kdr:User-SG
+	];
+	kds:formDefault [
+		kds:fieldCss "form-control";
+		kds:rowCss "appFormRowCss";
+		kds:formCss "appFormFormCss"
+	] .
