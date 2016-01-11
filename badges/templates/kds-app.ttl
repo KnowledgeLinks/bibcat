@@ -90,7 +90,7 @@ obi:hasBadge a rdf:Property;
 		kds:formFieldHelp "Please select the badge that you want to award.";
 		kds:fieldType [
 			a	kdr:SelectField;
-			kds:selectQuery "SELECT * {?s a obi:BadgeClass . ?s schema:name ?name .}";
+			kds:selectQuery "SELECT * {?s a obi:BadgeClass . ?s obi:name ?name .}";
 			kds:selectBoundValue "?s";
 			kds:selectDisplay "?name" 
 		];
@@ -444,7 +444,15 @@ obi:criteria a rdf:Property;
 	] ;
 	kds:json [
 		kds:useFor obi:BadgeClass 
-	] .
+	] ;
+	kds:formDefault [
+		kds:formFieldName "criteria";
+		kds:formLabelName "Criteria";
+		kds:formFieldHelp "Enter the criteria for earing the Badge.";
+		kds:fieldType [
+			a	kdr:TextField; 
+		]
+	].
 
 schema:alternativeName a rdf:Property;
 	rdfs:domain	obi:BadgeClass;
@@ -736,15 +744,9 @@ obi:UserForm a kds:FormClass;
 	kds:formInstructions [
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
-		kds:propertyAddOnCss " form-control";
 		kds:formTitle "User Information";
 		kds:formDescription "User infomation";
-		kds:rowAddOnCss "formFormRowCss";
-		kds:formAddOnCss "formFormCss";
 		kds:formInstance [
-			kds:propertyAddOnCss "instancePropertyCss";
-		  kds:formAddOnCss "instanceFormFormCss";
-		  kds:rowAddOnCss "instanceFormRowCss";
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New User";
 			kds:formDescription "Create a new user account"
@@ -805,8 +807,17 @@ obi:BadgeForm a kds:FormClass;
 	kds:formInstructions [
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
-		kds:addOnCss "form_css";
-		kds:propertyAddOnCss " form-control"
+		kds:formTitle "Open Badge";
+		kds:formDescription "Badge infomation";
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:formTitle "New Open Badge";
+			kds:formDescription "Create a new open badge"
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formDescription "Edit badge information."
+		]
 	];
 	kds:hasProperty [
 		kds:propName schema:name;
@@ -831,6 +842,7 @@ obi:BadgeForm a kds:FormClass;
 		kds:propName obi:startDate;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 3;
+		kds:addOnCss "dp";
 	];
 	kds:hasProperty [
 		kds:propName obi:endDate;
@@ -860,8 +872,17 @@ obi:AssertionForm a kds:FormClass;
 	kds:formInstructions [
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
-		kds:addOnCss "form_css";
-		kds:propertyAddOnCss "form-control"
+		kds:formTitle "Badge Assertion";
+		kds:formDescription "Awarded Badge information";
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:formTitle "New Badge Assertion";
+			kds:formDescription "Award a badge."
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formDescription "Edit assertion information."
+		]
 	];
 	kds:formSecurity [
 		acl:accessTo kdr:NewForm, kdr:EditForm;
