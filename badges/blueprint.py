@@ -231,9 +231,8 @@ def badge_image(badge=None, uid=None):
     return Response(img_response.text, mimetype='image/png')
 
 @open_badge.route("/user/<formInstance>.html", methods=["POST", "GET"])
-def test_rdf_class(formInstance):
+def user_rdf_class(formInstance):
     f = rdf_framework_form_factory("UserForm",'http://knowledgelinks.io/ns/data-resources/'+formInstance)
-
     return render_template(
         "app_form_template.html",
         form=f['form'](),
@@ -243,9 +242,31 @@ def test_rdf_class(formInstance):
 @open_badge.route("/badgeTestForm/<formInstance>.html", methods=["POST", "GET"])
 def badge_rdf_class(formInstance):
     f = rdf_framework_form_factory("BadgeForm",'http://knowledgelinks.io/ns/data-resources/'+formInstance)
-
     return render_template(
         "app_form_template.html",
         form=f['form'](),
         fieldList=f['fieldList'],
         instructions=f['instructions'])
+        
+@open_badge.route("/assertionTestForm/<formInstance>.html", methods=["POST", "GET"])
+def assertion_rdf_class(formInstance):
+    f = rdf_framework_form_factory("AssertionForm",'http://knowledgelinks.io/ns/data-resources/'+formInstance)
+    nform = f['form']()
+    nform = loadFormSelectOptions(nform,f['fieldList'])
+    return render_template(
+        "app_form_template.html",
+        form=nform,
+        fieldList=f['fieldList'],
+        instructions=f['instructions'])
+        
+@open_badge.route("/test/", methods=["POST", "GET"])
+def test_rdf_class():
+    f = rdf_framework_form_factory("AssertionForm",'http://knowledgelinks.io/ns/data-resources/NewForm')
+    result = {}
+    fldList = f['fieldList']
+    for row in fldList:
+        for fld in row:
+            if fld.get('fieldType',{}).get('type',"") == 'http://knowledgelinks.io/ns/data-resources/SelectField':
+                r = querySelectOptions(fld)
+                result.update(r)
+    return "<pre>" + json.dumps(result,indent=4) + "</pre>"

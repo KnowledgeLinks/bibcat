@@ -181,3 +181,22 @@ class TestRdfDatatype(unittest.TestCase):
             '"Test"^^xsd:http://purl.org/dc/elements/1.1/name')
 
 
+class TestRDFFramework(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+
+    def test_init(self):
+        rdf_framework = RDFFramework()
+        self.assertFalse(rdf_framework.app_initialzied)
+
+
+    def test_loadApp(self):
+        pass
+
+    def test__generateClasses(self):
+        pass
+
+    def test__generateForms(self):
+        pass

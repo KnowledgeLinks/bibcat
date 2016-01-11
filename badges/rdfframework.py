@@ -20,7 +20,7 @@ DOAP = Namespace("http://usefulinc.com/ns/doap#")
 FOAF = Namespace("http://xmlns.com/foaf/spec/")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 
-class rdf_framework(object):
+class RDFFramework(object):
     '''base class for Knowledge Links' Graph database RDF vocabulary framework'''
     
     rdf_class_dict = {}        #stores the Triplestore defined class defintions
@@ -376,8 +376,8 @@ def getWtFormField(field):
         form_field = DateTimeField(fieldLabel, fieldValidators)
     elif fieldType == 'kdr:SelectField':
         #print("--Select Field: ",fieldLabel, fieldValidators)
-        #form_field = SelectField(fieldLabel, fieldValidators)
-        form_field = StringField(fieldLabel, fieldValidators)
+        form_field = SelectField(fieldLabel, fieldValidators)
+        #form_field = StringField(fieldLabel, fieldValidators)
     elif fieldType == 'kdr:ImageFileOrURLField':
         form_field = [
                         {"fieldName":fieldName +"_image", "field":FileField("Image File")},
@@ -402,7 +402,7 @@ def getWtValidators(field):
         if vType == 'kdr:EmailValidator':
             fieldValidators.append(Email(message='Enter a valid email address'))
         if vType ==  'kdr:UrlValidator':
-            fieldValidators.append(Url(message='Enter a valid URL/web address'))
+            fieldValidators.append(URL(message='Enter a valid URL/web address'))
         if vType ==  'kdr:UniqueValueValidator':
             fieldValidators.append(UniqueDatabaseCheck(message='The Value enter is already exists'))
         if vType ==  'kdr:StringLengthValidator':
@@ -436,9 +436,6 @@ def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
 
     # Determine the field paramaters
     nField['formFieldName'] = formInstanceInfo.get('formFieldName',field.get("formFieldName",field.get('formDefault',{}).get('formFieldName',"")))
-    #if nField['formFieldName'] == "password":
-       # x=y
-    
     
     nField['fieldType'] = formInstanceInfo.get('fieldType',field.get('fieldType',field.get('formDefault',{}).get('fieldType',"")))
     #print("fieldType Type: ",nField['formFieldName']," - ",nField['fieldType'])
@@ -638,3 +635,44 @@ def get_framework():
     except:
         rdf = rdf_framework()
     return rdf
+    
+def querySelectOptions(field):
+    prefix = '''
+        prefix acl: <http://www.w3.org/ns/auth/acl#> 
+        prefix foaf: <http://xmlns.com/foaf/0.1/> 
+        prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
+        prefix kdr: <http://knowledgelinks.io/ns/data-resources/> 
+        prefix obi: <https://w3id.org/openbadges#> 
+        prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+        prefix schema: <https://schema.org/> 
+        prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+    '''
+    selectQuery = field.get('fieldType',{}).get('selectQuery',None)
+    selectList = {}
+    options = []
+    if selectQuery:
+        selectList =  requests.post( 
+            current_app.config.get('TRIPLESTORE_URL'),
+            data={"query": prefix + selectQuery,
+                  "format": "json"})
+        rawOptions = selectList.json().get('results',{}).get('bindings',[])
+        boundVar = field.get('fieldType',{}).get('selectBoundValue','').replace("?","")
+        displayVar = field.get('fieldType',{}).get('selectDisplay','').replace("?","")
+        for row in rawOptions:
+            options.append(
+                {
+                    "id":row.get(boundVar,{}).get('value',''),
+                    "value":row.get(displayVar,{}).get('value','')
+                })
+    return options
+    
+def loadFormSelectOptions(rdfForm,fldList):
+    for row in fldList:
+        for fld in row:
+            if fld.get('fieldType',{}).get('type',"") == 'http://knowledgelinks.io/ns/data-resources/SelectField':
+                options = querySelectOptions(fld)
+                print("oooooooo\n",options)
+                fldName = fld.get('formFieldName',None)
+                getattr(rdfForm,fldName).choices = [(o['id'], o['value']) for o in options]
+    return rdfForm
