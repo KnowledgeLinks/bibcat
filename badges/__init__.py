@@ -55,7 +55,7 @@ except:
     REPOSITORY_URL = "http://localhost:8080/fedora/rest"
     TRIPLESTORE_URL = "http://localhost:8080/bigdata/sparql"
 
- 
+
 
 
 def bake_badge_dev(badge_uri):

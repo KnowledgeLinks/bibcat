@@ -230,7 +230,22 @@ def badge_image(badge=None, uid=None):
         abort(500)
     return Response(img_response.text, mimetype='image/png')
 
-@open_badge.route("/classtest")
-def test_rdf_class():
-    rdf = rdf_framework()
-    return x
+@open_badge.route("/user/<formInstance>.html", methods=["POST", "GET"])
+def test_rdf_class(formInstance):
+    f = rdf_framework_form_factory("UserForm",'http://knowledgelinks.io/ns/data-resources/'+formInstance)
+
+    return render_template(
+        "app_form_template.html",
+        form=f['form'](),
+        fieldList=f['fieldList'],
+        instructions=f['instructions'])
+
+@open_badge.route("/badgeTestForm/<formInstance>.html", methods=["POST", "GET"])
+def badge_rdf_class(formInstance):
+    f = rdf_framework_form_factory("BadgeForm",'http://knowledgelinks.io/ns/data-resources/'+formInstance)
+
+    return render_template(
+        "app_form_template.html",
+        form=f['form'](),
+        fieldList=f['fieldList'],
+        instructions=f['instructions'])

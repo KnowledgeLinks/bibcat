@@ -1,0 +1,47 @@
+{% extends 'index.html' %}
+
+{% block head_title %}{% if name %}{{ name }}{% endif %} User Classes{% endblock %}
+
+{% block main %}
+<div class="container">
+	<div class="row">
+		<section class="col-md-12">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title">{{ instructions['formTitle'] }}</h3>
+				</div>
+				<div class="panel-body">
+					<p class="lead">{{ instructions['formDescription'] }}</p>
+					<form class="{{ instructions['formCss'] }}" method="{{ instructions['form_Method'] }}" action="{{ url_for('open_badge.add_badge_class') }}" >
+						{% for row in fieldList %}
+						<div class="row form-group {{ instructions['rowCss'] }}">
+							{% for fld in row %}
+							{% set field = form|attr(fld['formFieldName']) %}
+							<section class="col-md-6">
+								<label>{{ field.label }}</label>
+								{{ field(class_=fld['css']) }}
+							</section>
+							{% endfor %}
+						</div>
+						{% endfor %}
+						<div class="row">
+						<section class="col-md-6 col-md-offset-5">
+							<input type="submit" class="btn btn-success"></input>
+						</section>
+						</div>
+					</form>
+				</div>
+			</div>
+		</section>
+	</div>
+<div>
+{% endblock %}
+{% block more_js %}
+<script>
+	$('.dp').datepicker({
+		todayBtn: "linked",
+    clearBtn: true,
+    todayHighlight: true
+	});	
+</script>
+{% endblock %}

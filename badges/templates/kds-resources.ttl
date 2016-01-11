@@ -35,6 +35,22 @@
 	kdr:ImageFileOrURLField a kds:FieldClass;
 		rdfs:label "Image File or Url";
 		rdfs:comment "A Image file upload and Image URL field combo." .
+		
+	kdr:DateTimeField a kds:FieldClass;
+		rdfs:label "Date-time";
+		rdfs:comment "A Date time field." .
+		
+	kdr:DateField a kds:FieldClass;
+		rdfs:label "Date";
+		rdfs:comment "A Date field." .
+		
+	kdr:BooleanField a kds:FieldClass;
+		rdfs:label "Boolean" ;
+		rdfs:comment "A boolean field." .
+		
+  kdr:PasswordField a kds:FieldClass;
+  	rdfs:label "Password";
+  	rdfs:comment "A password field." .
 	
 # DataTypes ***********************************************	
 
@@ -108,6 +124,10 @@
 		rdfs:label "SysAdmin-SG";
 		rdfs:comment "The application system admin security group".
 
+	kdr:User-SG	a kds:UserGroup;
+		rdfs:label "User-SG";
+		rdfs:comment "The security class for any logged in User".
+		
 # ApplicationActionClasses ***********************************************	
 
 		
