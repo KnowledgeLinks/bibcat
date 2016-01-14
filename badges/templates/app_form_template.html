@@ -8,18 +8,29 @@
 		<section class="col-md-12">
 			<div class="panel panel-primary">
 				<div class="panel-heading">
-					<h3 class="panel-title">{{ instructions['formTitle'] }}</h3>
+					<h3 class="panel-title">{{ form.rdfInstructions['formTitle'] }}</h3>
 				</div>
 				<div class="panel-body">
-					<p class="lead">{{ instructions['formDescription'] }}</p>
-					<form class="{{ instructions['formCss'] }}" method="{{ instructions['form_Method'] }}" action="{{ url_for('open_badge.add_badge_class') }}" >
-						{% for row in fieldList %}
-						<div class="row form-group {{ instructions['rowCss'] }}">
+					<p class="lead">{{ form.rdfInstructions['formDescription'] }} VALIDATED: {{ validated }}</p>
+					<form class="{{ form.rdfInstructions['formCss'] }}" method="{{ form.rdfInstructions['form_Method'] }}" action="{{ actionUrl }}" >
+						{% for row in form.rdfFieldList %}
+						<div class="row {{ form.rdfInstructions['rowCss'] }}">
 							{% for fld in row %}
 							{% set field = form|attr(fld['formFieldName']) %}
+							{% set errorCss = '' %}
+							{% if field.errors %}{% set errorCss = " has-error" %}{% endif %}
 							<section class="col-md-6">
-								<label>{{ field.label }}</label>
-								{{ field(class_=fld['css']) }}
+								<div class="form-group{{ errorCss }}">								
+									<label class="control-label">{{ field.label }}{% if field.flags.required %} *{% endif %}</label>
+									<div title="{{ field.description }}" data-toggle="tooltip">
+										{{ field(class_=fld['css']) }}
+									</div>
+									{% if field.errors %}
+							    <ul class="help-block">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+							    
+							    {% endif %}	
+							    <div>{{ field.__dict__ }}</div>							
+								</div>
 							</section>
 							{% endfor %}
 						</div>
@@ -34,7 +45,9 @@
 			</div>
 		</section>
 	</div>
+	<pre>{{ jsonFields }}</pre>
 <div>
+
 {% endblock %}
 {% block more_js %}
 <script>
@@ -43,5 +56,8 @@
     clearBtn: true,
     todayHighlight: true
 	});	
+	$(function () {
+	  $('[data-toggle="tooltip"]').tooltip()
+	});
 </script>
 {% endblock %}

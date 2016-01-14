@@ -317,18 +317,18 @@ def getWtFormField(field):
     fieldType = "kdr:" + fieldTypeObj.get('type','').replace("http://knowledgelinks.io/ns/data-resources/","")
     #print("fieldType: ",fieldType)
     if fieldType == 'kdr:TextField':
-        form_field = StringField(fieldLabel, fieldValidators)
+        form_field = StringField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:ServerField':
         form_field = None
-        #form_field = StringField(fieldLabel, fieldValidators)
+        #form_field = StringField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:TextAreaField':
-        form_field = TextAreaField(fieldLabel, fieldValidators)
+        form_field = TextAreaField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:PasswordField':
-        #print("!!!! Mode: ",fieldTypeObj.get('fieldMode'))
+        print("!!!! Mode: ",fieldTypeObj.get('fieldMode'))
         #print(field)
         if fieldTypeObj.get('fieldMode') == "InitialPassword":   
             form_field = [
-                            {"fieldName":fieldName,"field":PasswordField(fieldLabel, fieldValidators)},
+                            {"fieldName":fieldName,"field":PasswordField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))},
                             {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter")}
                          ]
         elif fieldTypeObj.get('fieldMode') == "ChangePassword":
@@ -338,26 +338,26 @@ def getWtFormField(field):
                             {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter")}
                          ]
         elif fieldTypeObj.get('fieldMode') == "LoginPassword":
-            form_field = PasswordField(fieldLabel, fieldValidators)
+            form_field = PasswordField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:BooleanField':
-        form_field = BooleanField(fieldLabel, fieldValidators)
+        form_field = BooleanField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:FileField':
-        form_field = FileField(fieldLabel, fieldValidators)
+        form_field = FileField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:DateField':
-        form_field = DateField(fieldLabel, fieldValidators)
+        form_field = DateField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:DateTimeField':
-        form_field = DateTimeField(fieldLabel, fieldValidators)
+        form_field = DateTimeField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:SelectField':
-        #print("--Select Field: ",fieldLabel, fieldValidators)
-        form_field = SelectField(fieldLabel, fieldValidators)
-        #form_field = StringField(fieldLabel, fieldValidators)
+        #print("--Select Field: ",fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
+        form_field = SelectField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
+        #form_field = StringField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:ImageFileOrURLField':
         form_field = [
                         {"fieldName":fieldName +"_image", "field":FileField("Image File")},
                         {"fieldName":fieldName + "_url", "field":StringField("Image Url",[URL])}
                      ]
     else:
-        form_field = StringField(fieldLabel, fieldValidators)
+        form_field = StringField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     #print("--form_field: ",form_field)
     return form_field 
 
@@ -371,13 +371,14 @@ def getWtValidators(field):
     for v in validatorList:
         vType = v['type'].replace("http://knowledgelinks.io/ns/data-resources/","kdr:")
         if vType == 'kdr:PasswordValidator':
-            fieldValidators.append(EqualTo(fieldName +'_confirm', message='Passwords must match'))
+            fieldValidators.append(EqualTo(field.get("formFieldName",'') +'_confirm', message='Passwords must match'))
         if vType == 'kdr:EmailValidator':
             fieldValidators.append(Email(message='Enter a valid email address'))
         if vType ==  'kdr:UrlValidator':
             fieldValidators.append(URL(message='Enter a valid URL/web address'))
         if vType ==  'kdr:UniqueValueValidator':
-            fieldValidators.append(UniqueDatabaseCheck(message='The Value enter is already exists'))
+            #fieldValidators.append(UniqueDatabaseCheck(message='The Value enter is already exists'))
+            print("need to create uniqvalue validaotr")
         if vType ==  'kdr:StringLengthValidator':
             p = v.get('parameters')
             p1 = p.split(',')
@@ -385,14 +386,14 @@ def getWtValidators(field):
             for param in p1:
                 nParam = param.split('=')
                 pObj[nParam[0]]=nParam[1]
-            fieldValidators.append(Length(min=pObj.get('min'),max=pObj.get('max')))
+            fieldValidators.append(Length(min=int(pObj.get('min',0)),max=int(pObj.get('max',1028)),message="must be between"))
     return fieldValidators
       
 def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
     '''This function will read through the RDF defined info and proccess the json to retrun the correct values for the instance, security and details'''
     
     rdfApp = get_framework().rdf_app_dict['application']
-   
+    instance = instance.replace(".html","")
     # Determine Security Access
     nField={}
     accessLevel = getFieldSecurityAccess(field,userInfo,itemPermissions)
@@ -409,7 +410,8 @@ def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
 
     # Determine the field paramaters
     nField['formFieldName'] = formInstanceInfo.get('formFieldName',field.get("formFieldName",field.get('formDefault',{}).get('formFieldName',"")))
-    
+    #if nField['formFieldName'] == 'password':
+    #    x=y
     nField['fieldType'] = formInstanceInfo.get('fieldType',field.get('fieldType',field.get('formDefault',{}).get('fieldType',"")))
     #print("fieldType Type: ",nField['formFieldName']," - ",nField['fieldType'])
     if not isinstance(nField['fieldType'],dict):
@@ -419,6 +421,9 @@ def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
     nField['formFieldHelp'] = formInstanceInfo.get('formFieldHelp',field.get("formFieldHelp",field.get('formDefault',{}).get('formFieldHelp',"")))
     nField['formFieldOrder'] = formInstanceInfo.get('formFieldOrder',field.get("formFieldOrder",field.get('formDefault',{}).get('formFieldOrder',"")))
     nField['formLayoutRow'] = formInstanceInfo.get('formLayoutRow',field.get("formLayoutRow",field.get('formDefault',{}).get('formLayoutRow',"")))
+    nField['propUri'] = field.get('propUri')
+    nField['className'] = field.get('className')
+    nField['classUri'] = field.get('classUri')
     
     # get applicationActionList 
     nField['actionList'] = makeSet(formInstanceInfo.get('applicationAction',set()))
@@ -436,8 +441,10 @@ def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
         
     # get required state
     required = False
-    if (field.get('propName') in makeList(field.get('classInfo',{}).get('primaryKey',[]))) or (field.get('requiredField',False)) :
+    if (field.get('propUri') in makeList(field.get('classInfo',{}).get('primaryKey',[]))) or (field.get('requiredField',False)) :
         required = True
+    if field.get('classUri') in makeList(field.get('requiredByDomain',{})):
+        required= True
     nField['required'] = required
     
     # Determine EditState
@@ -544,7 +551,7 @@ def rdf_framework_form_factory(name,instance):
     appForm = get_framework().rdf_form_dict.get(name,{})
     fields = appForm.get('properties')
     instructions = getFormInstructionJson(appForm.get('formInstructions'),instance)
-    print('instructions: \n',json.dumps(instructions,indent=4))
+    #print('instructions: \n',json.dumps(instructions,indent=4))
     # get the number of rows in the form and define the fieldList as a mulit-demensional list
     fieldList = []
     formRows = fields[len(fields)-1].get('formLayoutRow',1)
@@ -582,7 +589,11 @@ def rdf_framework_form_factory(name,instance):
                     #print("set --- ",field)
                     fieldList[formRow].append(field)
                     setattr(rdf_form, field['formFieldName'], form_field)
-    return {"formInfo":appForm, "instructions":instructions, "fieldList": fieldList, "instance":instance, "form":rdf_form}
+    setattr(rdf_form, 'rdfFormInfo', appForm)
+    setattr(rdf_form, "rdfInstructions", instructions)
+    setattr(rdf_form, "rdfFieldList", list.copy(fieldList))
+    setattr(rdf_form, "rdfInstance", instance)    
+    return rdf_form
     #return rdf_form
     
 def makeList(value):
@@ -601,12 +612,15 @@ def makeSet(value):
         returnSet.add(value)
     return returnSet
     
-def get_framework():
+def get_framework(reset=False):
     global rdf
-    try:
-        test = rdf
-    except:
+    if reset:
         rdf = rdf_framework()
+    else:
+        try:
+            test = rdf
+        except:
+            rdf = rdf_framework()
     return rdf
     
 def querySelectOptions(field):
@@ -640,8 +654,8 @@ def querySelectOptions(field):
                 })
     return options
     
-def loadFormSelectOptions(rdfForm,fldList):
-    for row in fldList:
+def loadFormSelectOptions(rdfForm):
+    for row in rdfForm.rdfFieldList:
         for fld in row:
             if fld.get('fieldType',{}).get('type',"") == 'http://knowledgelinks.io/ns/data-resources/SelectField':
                 options = querySelectOptions(fld)

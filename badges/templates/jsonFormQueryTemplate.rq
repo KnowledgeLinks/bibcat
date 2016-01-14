@@ -21,16 +21,26 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                 SELECT  ?klForms ?p ?o ?bn ?property ?fieldOrder (CONCAT('{"className":"',REPLACE(STR(?propClass),"^(.*[#/])", ""),'","classUri":"',STR(?propClass),'",',GROUP_CONCAT(?o1j; SEPARATOR=','),'}') AS ?propJ)
                 {
                   {
-                    SELECT ?klForms ?p ?o ?bn ?property ?propClass ?fieldOrder (CONCAT('"',REPLACE(STR(?p1),"^(.*[#/])", ""),'":{',GROUP_CONCAT(?o2jfao; SEPARATOR=","),'}') AS ?o1j)
-                    {
+                  	# Get the property attributes
+                  	SELECT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass  (GROUP_CONCAT(?L1; SEPARATOR=',') AS ?o1j)
+  			{
+              {
+  				SELECT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1  (GROUP_CONCAT(?o1v; SEPARATOR=',') AS ?o1a)
+  				{
+                  {
+  					SELECT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1   (GROUP_CONCAT(?L2; SEPARATOR=',') AS ?L2j)
+  					{
                       {
-                        SELECT ?klForms ?p ?o ?bn ?property ?propClass ?fieldOrder ?p1 ?o1 ?bn2 ?p2 (GROUP_CONCAT(?o2j; SEPARATOR=",") AS ?o2jf)
-                        {
+  						SELECT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2_ ?p2_  (GROUP_CONCAT(?o2v; SEPARATOR=',') AS ?o2a)
+  						{
                           {
-                            SELECT ?klForms ?p ?o ?bn ?property ?propClass ?fieldOrder ?p1 ?o1 ?bn2 ?p2 ?o2 (GROUP_CONCAT(?p4; SEPARATOR=",") AS ?o3jf)
-                                {
+							SELECT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2_ ?p2_ ?o2_ (GROUP_CONCAT(?L3; SEPARATOR=',') AS ?L3j)
+  							{
+                              {
+  								SELECT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2_ ?p2_ ?o2_ ?bn3_ ?p3_ (GROUP_CONCAT(?o3_; SEPARATOR=',') AS ?o3a)
+  								{
                                   {
-                                    SELECT DISTINCT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2 ?p2 ?o2 ?bn3 ?p3 ?o3j1 
+                                    SELECT DISTINCT ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2_ ?p2_ ?o2_ ?bn3_ ?p3_ ?o3_ 
                                     {
                                       {
                                         {
@@ -38,7 +48,7 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                                             ?klForms a kds:FormClass .
                                             ?klForms ?p ?o .
                                             BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
-                                            ?bn kds:propName ?property . 
+                                            ?bn kds:propUri ?property . 
                                             ?bn kds:formFieldOrder ?fieldOrder .
                                             OPTIONAL {?bn kds:classUri ?classUri } .
                                             ?property rdfs:domain ?domain .
@@ -57,37 +67,49 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                                                 BIND(?bn2 AS ?found) .
                                               } .
                                               ?bn2 ?p2 ?o2 .
+                                              BIND(IF(isBlank(?o2),?o2,"") AS ?bn3).
+                                              OPTIONAL {
+                                                ?bn3 ?p3 ?o3
+                                              }                                                
                                               FILTER(!(bound(?found)))
                                             }
                                           } .
-                                        } 
-                                        FILTER(!(bound(?bn)&&(!(bound(?p2)))))
-                                      }
-                                      BIND(IF(ISBLANK(?o2),?o2,"") AS ?bn3 ).
-                                      OPTIONAL {
-                                        ?bn3 ?p3 ?o3
-                                      }
-                                      BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(STR(?o3),"\n",""),"\t",""),"  "," "),'"') AS ?o3j1) .
-
-                                    }
-
-                                  }
-                                  BIND(IF(!(bound(?o3j1)),"",?o3j1) AS ?o3j) .
-                                  BIND(IF(?o3j="","",?bn3) AS ?bn4) .
-                                  BIND(IF(?o3j="","",CONCAT('"',REPLACE(STR(?p3),  "^(.*[#/])", ""),'":',?o3j)) AS ?p4)
-
-                                }
-                                GROUP BY ?klForms ?p ?o ?bn ?property ?propClass ?fieldOrder ?p1 ?o1 ?bn2 ?p2 ?o2 
-                          }
-                          BIND(IF(isBlank(?o2),CONCAT("{",?o3jf,"}"),CONCAT('"',STR(?o2),'"')) AS ?o2j)
-                        }
-                        GROUP BY ?klForms ?p ?o ?bn ?property ?propClass ?fieldOrder ?p1 ?o1 ?bn2 ?p2
-                      }
-                      BIND(IF((STRSTARTS(?o2jf,"{")&&CONTAINS(?o2jf,"},{"))||(!(STRSTARTS(?o2jf,"{"))&&CONTAINS(?o2jf,'","')),true,false) AS ?array) .
-                      BIND(CONCAT(IF(?array,"[",""),?o2jf,IF(?array,"]","")) AS ?o2jfa) .
-                      BIND(CONCAT('"',REPLACE(STR(?p2),  "^(.*[#/])", ""),'":',?o2jfa)  AS ?o2jfao)
-                    }
-                    GROUP BY ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 
+                                        }
+                                        BIND(IF(bound(?bn2),?bn2,"") AS ?bn2_) .
+                                        BIND(IF(bound(?p2),?p2,"") AS ?p2_) .
+                                        BIND(IF(bound(?o2),?o2,"") AS ?o2_) .
+                                        BIND(IF(bound(?bn3),?bn3,"") AS ?bn3_) .
+                                        BIND(IF(bound(?p3),?p3,"") AS ?p3_) .
+                                        BIND(IF(bound(?o3),CONCAT('"',REPLACE(REPLACE(REPLACE(STR(?o3),"\n"," "),"\t"," "),"[ ]+"," "),'"'),"") AS ?o3_) . 
+										FILTER(!(isBlank(?o1)&&?p2_=""))
+                                       }
+                                     }
+                                   }                                   
+                                 }
+                                 GROUP BY ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2_ ?p2_ ?o2_ ?bn3_ ?p3_ 
+                               }
+                               BIND(IF(CONTAINS(?o3a,'","'),true,false) AS ?bracket).
+                               BIND(IF(isBlank(?bn3_),CONCAT('"',REPLACE(STR(?p3_),"^(.*[#/])", ""),'":',IF(?bracket,"[",""),?o3a,IF(?bracket,"]","")),"") AS ?L3)
+                             }
+                             GROUP BY ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2_ ?p2_ ?o2_  
+                           }
+                           BIND(IF(isBlank(?o2_),CONCAT("{",?L3j,"}"),IF(isBlank(?bn2_),CONCAT('"',STR(?o2_),'"'),"")) AS ?o2v)
+                         }
+                         GROUP BY ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1 ?bn2_ ?p2_
+                       }
+                       BIND(IF((STRSTARTS(?o2a,'"')&&CONTAINS(?o2a,'","'))||(STRSTARTS(?o2a,'{')&&CONTAINS(?o2a,'},{')),true,false) AS ?bracket).
+                       BIND(IF(isBlank(?bn2_),CONCAT('"',REPLACE(STR(?p2_),"^(.*[#/])", ""),'":',IF(?bracket,"[",""),?o2a,IF(?bracket,"]","")),"") AS ?L2)
+                     }
+  					 GROUP BY ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1 ?o1
+                   }
+                   BIND(IF(isBlank(?o1),CONCAT("{",?L2j,"}"),CONCAT('"',STR(?o1),'"')) AS ?o1v)
+                 }
+  				 GROUP BY ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass ?p1
+               }
+      		   BIND(IF((STRSTARTS(?o1a,'"')&&CONTAINS(?o1a,'","'))||(STRSTARTS(?o1a,'{')&&CONTAINS(?o1a,'},{')&&(!(CONTAINS(?o1a,'[')))),true,false) AS ?bracket).
+               BIND(CONCAT('"',REPLACE(STR(?p1),"^(.*[#/])", ""),'":',IF(?bracket,"[",""),?o1a,IF(?bracket,"]","")) AS ?L1)
+      		}
+  			GROUP BY ?klForms ?p ?o ?bn ?property ?fieldOrder ?propClass
                   } UNION {
                     
                     SELECT * 
@@ -99,7 +121,7 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
 		                      ?klForms a kds:FormClass .
 		                      ?klForms ?p ?o .
 		                      BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
-		                      ?bn kds:propName ?property .
+		                      ?bn kds:propUri ?property .
 		                      ?bn kds:formFieldOrder ?fieldOrder .
 		                      OPTIONAL {?bn kds:classUri ?classUri } .
 		                      ?property rdfs:domain ?domain .
@@ -126,7 +148,7 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
 								                      ?klForms a kds:FormClass .
 								                      ?klForms ?p ?o .
 								                      BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
-								                      ?bn kds:propName ?property .
+								                      ?bn kds:propUri ?property .
 								                      ?bn kds:formFieldOrder ?fieldOrder .
 								                      OPTIONAL {?bn kds:classUri ?classUri } .
 								                      ?property rdfs:domain ?domain .
@@ -172,7 +194,7 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                                       ?klForms a kds:FormClass .
                                       ?klForms ?p ?o .
                                       BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
-                                      ?bn kds:propName ?property .
+                                      ?bn kds:propUri ?property .
                                       ?bn kds:formFieldOrder ?fieldOrder .
                                       OPTIONAL {?bn kds:classUri ?classUri } .
                                       ?property rdfs:domain ?domain .

@@ -586,7 +586,9 @@ schema:email a rdf:Property;
 	rdfs:comment "email address.";
 	kds:propertyProccessing kdr:EmailVerificationProccessor;                   
 	kds:requiredByDomain schema:Person;
-	kds:propertyValidation kdr:EmailValidator;
+	kds:propertyValidation [
+		a kdr:EmailValidator
+	];
 	kds:propertySecurity [
 		acl:agent kdr:Self-SG;
 		acl:mode acl:Read, acl:Write
@@ -609,7 +611,9 @@ kds:userName a rdf:Property;
 	rdfs:range rdfs:literal;	
 	rdfs:comment "Individual's username.";	           
 	kds:requiredByDomain kds:UserClass;
-	kds:propertyValidation kdr:UniqueValueValidator;
+	kds:propertyValidation [
+		a	kdr:UniqueValueValidator;
+	];
 	kds:propertyValidation [
 		a kdr:StringLengthValidator;
 		kds:parameters "max=25,min=10"
@@ -659,7 +663,9 @@ kds:password
 	#rdfs:domain	kds:PasswordClass;	Stated in Vocab
 	#rdfs:range	xsd:string;	stated in Vocab
 	kds:requiredByDomain kds:PasswordClass;	
-	kds:propertyValidation kdr:PasswordValidator; 
+	kds:propertyValidation [
+		a kdr:PasswordValidator 
+	];
 	kds:propertyProccessing  kdr:PasswordProccessor;
 	kds:jsonDefault [
 		kds:jsonObjName "password";
@@ -757,7 +763,7 @@ obi:UserForm a kds:FormClass;
 		]
 	];
 	kds:hasProperty [
-		kds:propName schema:email;
+		kds:propUri schema:email;
 		kds:classUri schema:Person;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1;
@@ -767,22 +773,22 @@ obi:UserForm a kds:FormClass;
 		]
 	];
 	kds:hasProperty [
-		kds:propName schema:familyName;
+		kds:propUri schema:familyName;
 		kds:formFieldOrder 3;
 		kds:formLayoutRow 2;
 	];
 	kds:hasProperty [
-		kds:propName schema:givenName;
+		kds:propUri schema:givenName;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
 	];
 	kds:hasProperty [
-		kds:propName kds:userName;
+		kds:propUri kds:userName;
 		kds:formFieldOrder 4;
 		kds:formLayoutRow 3
 	];
 	kds:hasProperty [
-		kds:propName kds:password;
+		kds:propUri kds:password;
 		kds:formFieldOrder 5;
 		kds:formLayoutRow 4;
 		kds:formInstance [
@@ -820,7 +826,7 @@ obi:BadgeForm a kds:FormClass;
 		]
 	];
 	kds:hasProperty [
-		kds:propName schema:name;
+		kds:propUri schema:name;
 		kds:classUri obi:BadgeClass;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1;
@@ -834,34 +840,34 @@ obi:BadgeForm a kds:FormClass;
 		]
 	];
 	kds:hasProperty [
-		kds:propName schema:description;
+		kds:propUri schema:description;
 		kds:formFieldOrder 3;
 		kds:formLayoutRow 2;
 	];
 	kds:hasProperty [
-		kds:propName obi:startDate;
+		kds:propUri obi:startDate;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 3;
 		kds:addOnCss "dp";
 	];
 	kds:hasProperty [
-		kds:propName obi:endDate;
+		kds:propUri obi:endDate;
 		kds:formFieldOrder 4;
 		kds:formLayoutRow 3;
 	];
 	kds:hasProperty [
-		kds:propName schema:image;
+		kds:propUri schema:image;
 		kds:classUri obi:BadgeClass;
 		kds:formFieldOrder 5;
 		kds:formLayoutRow 4;
 	];
 	kds:hasProperty [
-		kds:propName obi:tags;
+		kds:propUri obi:tags;
 		kds:formFieldOrder 6;
 		kds:formLayoutRow 5;
 	];
 	kds:hasProperty [
-		kds:propName obi:criteria;
+		kds:propUri obi:criteria;
 		kds:formFieldOrder 7;
 		kds:formLayoutRow 6;
 	].
@@ -895,7 +901,7 @@ obi:AssertionForm a kds:FormClass;
 		acl:mode acl:read
 	];
 	kds:hasProperty [
-		kds:propName obi:hasBadge;
+		kds:propUri obi:hasBadge;
 		kds:classUri obi:Assertion;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1;
@@ -905,18 +911,18 @@ obi:AssertionForm a kds:FormClass;
 		]
 	];
 	kds:hasProperty [
-		kds:propName obi:issuedOn;
+		kds:propUri obi:issuedOn;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
 		kds:requiredField true
 	];
 	kds:hasProperty [
-		kds:propName obi:recipient;
+		kds:propUri obi:recipient;
 		kds:formFieldOrder 3;
 		kds:formLayoutRow 3;
 	];
 	kds:hasProperty [
-		kds:propName kds:salt;
+		kds:propUri kds:salt;
 		kds:classUri obi:Assertion;
 		kds:formFieldOrder 4;
 		kds:formLayoutRow 4;
