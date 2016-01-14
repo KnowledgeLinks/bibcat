@@ -133,6 +133,16 @@ def add_badge_class():
         form=badge_class_form,
         badges=existing_badges)
 
+@open_badge.route("/user/", methods=["POST", "GET"])
+def add_user_class():
+    """Displays Form for adding a user Form"""
+    user_form = rdf_form_factory(
+        "NewUserForm", 
+        "obi:UserClass")
+    return render_template(
+        "user_class.html",
+        form=user_form()) 
+
 @open_badge.route("/BadgeClass/<badge_classname>")
 @open_badge.route("/BadgeClass/<badge_classname>.json")
 @produces('application/json', 'application/rdf+xml', 'text/html')

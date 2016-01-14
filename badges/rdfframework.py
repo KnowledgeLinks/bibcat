@@ -1,6 +1,8 @@
 from flask import current_app, json
 from .utilities import render_without_request
 import requests
+from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
+
 try:
     from flask_wtf import Form
     from flask_wtf.file import FileField
@@ -11,9 +13,14 @@ from wtforms.fields import StringField, TextAreaField, PasswordField, BooleanFie
 from wtforms.validators import Length, URL, Email, EqualTo, NumberRange, Required, Regexp, InputRequired 
 import wtforms.form
 from wtforms.widgets import TextInput
-#from rdflib import RDF, RDFS, OWL, XSD, FOAF, SKOS, DOAP, DC, DCTERMS, VOID
 
-class rdf_framework:
+DC = Namespace("http://purl.org/dc/elements/1.1/")
+DCTERMS = Namespace("http://purl.org/dc/terms/") 
+DOAP = Namespace("http://usefulinc.com/ns/doap#")
+FOAF = Namespace("http://xmlns.com/foaf/spec/")
+SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+
+class RDFFramework(object):
     '''base class for Knowledge Links' Graph database RDF vocabulary framework'''
     
     rdf_class_dict = {}        #stores the Triplestore defined class defintions
@@ -31,6 +38,8 @@ class rdf_framework:
     def saveForm(self,Form):
         '''*** to be written ***
          recieves RDF_formfactory form, validates and saves the data'''
+        pass
+         
     
     def __loadApp(self):
         if (self.app_initialized != True):
@@ -39,10 +48,10 @@ class rdf_framework:
             self.app_initialized = True      
     
     def __generateClasses(self):
-        if (self.class_initialized != True):
+        if (rdf_framework.class_initialized != True):
             classJson = self.__load_rdf_class_defintions()
             self.rdf_class_dict =  classJson
-            self.class_initialized = True 
+            rdf_framework.class_initialized = True 
             for c in self.rdf_class_dict:
                 setattr(self,c,rdf_class(classJson[c],c))  
     
@@ -75,7 +84,6 @@ class rdf_framework:
             current_app.config.get('TRIPLESTORE_URL'),
             data={"query": sparql,
                   "format": "json"})
-        print("***** Querying tipplestore ****")
         return json.loads(formList.json().get('results').get('bindings')[0]['appClasses']['value'])
         
     def __load_rdf_form_defintions(self):
@@ -94,20 +102,19 @@ class rdf_framework:
         return "searching for prop"
         
         
-class rdf_class:
-    '''RDF Class for a an RDF Class object. 
-       Uesed for manipulating and validating an RDF Class subject'''
+class RDFClass(object):
+    '''RDF Class for an RDF Class object. 
+       Used for manipulating and validating an RDF Class subject'''
        
-    def __init__(self,jsonObj,className):
+    def __init__(self, jsonObj, className):
         for p in jsonObj:
-            setattr(self,p,jsonObj[p])
-        setattr(self,"className",className)
-        #setattr(self,'reqProps',self.listRequired())
-        #setattr(self,'dependantProps',self.listDependant())
+            setattr(self, p, jsonObj[p])
+        setattr(self, "className", className)
     
     def save(self, data):
         '''validates and saves passed data for the class'''
-        print("save",self.className)
+        if not data:
+            raise ValueError("Save requires data dictionary")
         validRequiredProps = self.__validateRequiredProperties(data)
         validDependancies = self.__validateDependantProperties(data)
         print(json.dumps(validRequiredProps,indent=2))
@@ -122,13 +129,16 @@ class rdf_class:
         
     def validatePrimaryKey(self, dataValue):
         '''query to see if PrimaryKey is Valid'''
-        returnVal = False
+        returnVal = False #! This variable is never used
         try:
             pkey = self.primaryKey
             dataType = self.properties[self.findPropName(pkey)]['storageType']
             if dataType == 'literal':
                 dataType = self.properties[self.findPropName(pkey)].get('range',dataType)
-            return self.__makeTriple("?uri","a",iri(self.classUri)) + self.__makeTriple("?uri",iri(pkey),rdf_datatype(dataType).sparql(dataValue))
+            return self.__makeTriple(
+                    "?uri",
+                     "a",
+                     iri(self.classUri)) + self.__makeTriple("?uri", iri(pkey), rdf_datatype(dataType).sparql(dataValue))
         except:
             pass
         else:
@@ -165,50 +175,36 @@ class rdf_class:
         return depandantList
         
     def __makeTriple (self,s,p,o):
-        "takes a subject predicate and object and joins them with a space in between"
-        return s + " " + p + " " + o + " . "
-        
-    def findPropName (self,propUri):
-        "cycle through the class properties object to find the property name"
-        #print(self.properties)
-        for p in self.properties:
-            #print("p--",p," -- ",self.properties[p]['propUri'])
-            if self.properties[p]['propUri'] == propUri:
-               # print ('propName is ',p)
-                return p
-                
-    def formatDataType(self,dataValue,dataType):
-        "formats a dataValue and dataType for SPARQL query"
-        if dataType == "literal":
-            return '"' + dataValue + '"'
-        elif dataType == "object":
-            return self.iri(dataValue)
-        else:
-            return dataValue
-            
-    def __validateRequiredProperties (self,data):
+        "takes a subject predicate and object and joins them with a sp ace in between"
+        return "{s} {p} {o} .".format(s=s, p=p, o=0)
+
+    def validateRequiredProperties(self, data):
         '''Validates whether all required properties have been supplied and contain data '''
         returnError = []
         #create sets for evaluating requiredFields
-        req = self.listRequired()
+        required = self.listRequired()
         dataProps = set()
         for p in data:
             #remove empty data properties from consideration
             if IsNotNull(data[p]):
                 dataProps.add(p)
         #Test to see if all the required fields are supplied    
-        missingRequiredProperties = req - dataProps
+        missingRequiredProperties = required - dataProps
         if len(missingRequiredProperties)>0:
             missingUris = []
             for m in missingRequiredProperties:
                 missingUris.append(self.properties[m]['propUri'])
-            returnError.append({"errorType":"missingRequiredProperties","errorData":{"class":self.classUri,"properties":missingUris}})
+            returnError.append({
+                "errorType":"missingRequiredProperties",
+                "errorData":{
+                    "class":self.classUri,
+                    "properties":missingUris}})
         if len(returnError)>0:
             return returnError
         else:
             return ["valid"]
             
-    def __validateDependantProperties (self,data):
+    def validateDependantProperties(self, data):
         '''Validates that all supplied dependant properties have a uri as an object'''
         dep = self.listDependant()
         returnError = []
@@ -227,50 +223,81 @@ class rdf_class:
                     if i.get('storageType')=='literal':
                         literalOk = True
                 if not IsValidObject(dataValue) and not literalOk:
-                    returnError.append({"errorType":"missingDependantObject","errorData":{"class":self.classUri,"properties":propDetails.get('propUri')}})
+                    returnError.append({
+                        "errorType":"missingDependantObject",
+                        "errorData":{
+                            "class":self.classUri,
+                            "properties":propDetails.get('propUri')}})
         if len(returnError)>0:
             return returnError
         else:
             return ["valid"]       
-        
-    
-class rdf_datatype:
+
+
+    def findPropName (self,propUri):
+        "cycle through the class properties object to find the property name"
+        #print(self.properties)
+        for p in self.properties:
+            #print("p--",p," -- ",self.properties[p]['propUri'])
+            if self.properties[p]['propUri'] == propUri:
+                return p
+                
+    def formatDataType(self,dataValue,dataType):
+        "formats a dataValue and dataType for SPARQL query"
+        if dataType == "literal":
+            return '"{}"'.format(dataValue)
+        elif dataType == "object":
+            return self.iri(dataValue)
+        else:
+            return dataValue
+
+
+class RDFDataType(object):
     "This class will generate a rdf data type"
+
     def __init__(self, rdfDataType):
-        self.__dataTypes(rdfDataType)
+        self.lookup = rdfDataType
+        #! What happens if none of these replacements? 
+        val = self.lookup.replace(str(XSD),"").\
+                replace("xsd:","").\
+                replace("rdf:","").\
+                replace(str(RDF),"")
+        self.prefix = "xsd:{}".format(val)
+        self.iri = iri("{}{}".format(str(XSD), val))
+        self.name = val
+        if val.lower() == "literal" or val.lower() == "langstring":
+            self.prefix = "rdf:{}".format(val)
+            self.iri = iri(str(RDF) + val)
+        elif val.lower() == "object":
+            self.prefix = "objInject"
+            #! Why is uri a new property if an object?
+            self.uri = "objInject"
+
+
         
+
     def sparql(self,dataValue):
         "formats a value for a sparql triple"
         if self.name == "object":
             return iri(dataValue)
         elif self.name == "literal":
-            return '"' + dataValue + '"'
+            return '"{}"'.format(dataValue)
         elif self.name == "boolean":
-            return '"' + str(dataValue).lower() + '"^^' + self.prefix
+            return '"{}"^^{}'.format(str(dataValue).lower(),
+                                      self.prefix)
         else:
-            return '"' + dataValue + '"^^' + self.prefix
+            return '"{}"^^{}'.format(dataValue, self.prefix)
+    
+                
         
-    def __dataTypes(self,lookup):
-        "sets the class attributes"
-        val = lookup.replace("http://www.w3.org/2001/XMLSchema#","").replace("xsd:","").replace("rdf:","").replace("http://www.w3.org/1999/02/22-rdf-syntax-ns#","")
-        self.prefix = "xsd:" + val
-        self.iri = iri("http://www.w3.org/2001/XMLSchema#" + val)
-        self.name = val
-        if val.lower() == "literal" or val.lower() == "langstring":
-            self.prefix = "rdf:" + val
-            self.iri = iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#" + val)
-        elif val.lower() == "object":
-            self.prefix = "objInject"
-            self.uri = "objInject"
-        
-        
+#! Should we test to see if uriString is a valid IRI?
 def iri(uriString):
-        "converts a string to an IRI or returns an IRI if already formated"
-        if uriString[:1] != "<":
-            uriString = "<" + uriString.strip()
-        if uriString[len(uriString)-1:] != ">":
-            uriString = uriString.strip() + ">"
-        return uriString
+    "converts a string to an IRI or returns an IRI if already formated"
+    if uriString[:1] != "<":
+        uriString = "<" + uriString.strip()
+    if uriString[len(uriString)-1:] != ">":
+        uriString = uriString.strip() + ">"
+    return uriString
 
 def IsNotNull(value):
     return value is not None and len(value) > 0

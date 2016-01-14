@@ -25,7 +25,7 @@
 #                                              "urlSub"             -> will substitue a value as a url with 
 #                                                                           - klob:url             specifies the main url
 #																															      				-	klob:urlendfld       specifies with resource field to append to the url
-#																							 "lookupUrlSub"       -> functions as urlSub but will lookup a property of the specified URI 
+#		   "lookupUrlSub"       -> functions as urlSub but will lookup a property of the specified URI 
 #																							                              - klob:propertyField   must be specified
 #																							 "lookupProperties"   -> return a json object of the the defined properties.
 #																							                         add a klob:propertyField with a blank node for each desired property to return
