@@ -48,12 +48,12 @@ class RDFFramework(object):
             self.app_initialized = True      
     
     def __generateClasses(self):
-        if (rdf_framework.class_initialized != True):
+        if (RDFFramework.class_initialized != True):
             classJson = self.__load_rdf_class_defintions()
             self.rdf_class_dict =  classJson
-            rdf_framework.class_initialized = True 
+            RDFFramework.class_initialized = True 
             for c in self.rdf_class_dict:
-                setattr(self,c,rdf_class(classJson[c],c))  
+                setattr(self, c, RDFClass(classJson[c],c))  
     
     def __generateForms(self):
         if (self.forms_initialized != True):
@@ -642,12 +642,12 @@ def makeSet(value):
 def get_framework(reset=False):
     global rdf
     if reset:
-        rdf = rdf_framework()
+        rdf = RDFFramework()
     else:
         try:
             test = rdf
         except:
-            rdf = rdf_framework()
+            rdf = RDFFramework()
     return rdf
     
 def querySelectOptions(field):
