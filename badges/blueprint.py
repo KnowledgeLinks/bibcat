@@ -6,6 +6,8 @@ import re
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
+from flask.ext.login import login_required
+
 from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import *
@@ -15,6 +17,7 @@ from .rdfframework import *
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
 open_badge.config = {}
+
 @open_badge.record
 def record_params(setup_state):
     app = setup_state.app
@@ -59,6 +62,7 @@ def get_badge_classes():
 
 
 @open_badge.route("/Assertion/", methods=["POST", "GET"])
+#@login_required
 def add_badge_assertion():
     assertion_form = NewAssertion()
     assertion_form.badge.choices = get_badge_classes()
@@ -112,6 +116,7 @@ def badge_assertion(uuid):
 
 
 @open_badge.route("/BadgeClass/", methods=["POST", "GET"])
+#@login_required
 def add_badge_class():
     """Displays Form for adding a BadgeClass Form"""
     badge_class_form = NewBadgeClass()
