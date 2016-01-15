@@ -742,7 +742,30 @@ kds:hasPassword a rdf:Property;
 	kds:json [
 				kds:useFor obi:UserClass
 	].
-  
+ 
+obi:LoginForm a kds:FormClass;
+    rdfs:label "Login form";
+    rdfs:comment "Form used to display username and password fields for authenticating to app";
+    rdf:formInstructions [  
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:formTitle "Login to Application";
+		kds:formDescription "Login form to application";
+		kds:formInstance [
+            kds:formInstanceType kdr:NewForm;
+        ];
+    ];    
+	kds:hasProperty [
+		kds:propUri kds:userName;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1; 
+	];
+	kds:hasProperty [
+		kds:propUri kds:password;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 2;
+    ].
+
 
 obi:UserForm a kds:FormClass;
 	rdfs:label "User form";
