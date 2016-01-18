@@ -35,12 +35,76 @@ class RDFFramework(object):
         self.__generateClasses()
         self.__generateForms()
         
-    def saveForm(self,Form):
-        '''*** to be written ***
-         recieves RDF_formfactory form, validates and saves the data'''
-        pass
-         
     
+    def getClassName(self, classUri):
+        '''This method returns the rdf class name for the supplied Class URI'''
+        for rdfClass in self.rdf_class_dict:
+            currentClassUri = self.rdf_class_dict.get(rdfClass,{}).get("classUri")
+            if currentClassUri == classUri:
+                return rdfClass
+        return ''
+        
+    def getProperty(self,**kwargs):
+        '''Method returns a list of the property json objects where the property is used
+        
+        keyword Args:
+            className: *Optional the name of Class 
+            classUri: *Optional the Uri of the Class
+            propName: The Name of the property
+            propUri: The URI of the property
+            ** the PropName or URI is required'''
+        returnList = []    
+        className = kwargs.get("className")
+        classUri = kwargs.get("classUri")
+        propName = kwargs.get("propName")
+        propUri = kwargs.get("propUri")
+        if className or classUri:
+            if classUri:
+                className = self.getClassName(classUri)
+            if propUri:
+                returnList.append(getattr(self,className).getProperty(propUri=propUri))
+            else:
+                returnList.append(getattr(self,className).getProperty(propName=propName))
+        else:
+            for rdfClass in self.rdf_class_dict:
+                if propName:
+                    currentClassProp = getattr(self,rdfClass).getProperty(propName=propName)
+                else:
+                    currentClassProp = getattr(self,rdfClass).getProperty(propUri=propUri)
+                if currentClassProp:
+                    returnList.append(currentClassProp)
+        return returnList      
+        
+    def saveForm(self, rdfForm):
+        '''Recieves RDF_formfactory form, validates and saves the data
+         
+         *** Steps ***
+         - group fields by class
+         - validate the form data for class requirements
+         - determine the class save order. classes with no dependant properties saved first
+         - send data to classes for proccessing
+         - send data to classes for saving
+         '''
+        # group fields by class
+        formByClasses = self.__organizeFormByClasses(rdfForm)
+        
+        # validate the form data for class requirements (required properties, security, valid data types etc)
+        valadation = self.__validateFormByClassRequirements(formByClasses)
+        if valadation.get('errors') == True:
+            return validation 
+            
+        # determine class save order
+        classSaveOrder = self.__getSaveOrder(rdfForm)
+        '''for rdfClass in formByClasses:
+            currentClass = getattr(self,rdfClass).save(rd'''
+            
+        #print("form by classes: \n",json.dumps(formByClasses,indent=4))
+        demo = self.__getFormData(
+            rdfForm, 
+            classUri="https://w3id.org/openbadges#BadgeClass",
+            subjectUri="http://localhost:8080/fedora/rest/29/74/ff/1d/2974ff1d-fc5e-4042-89f2-abfbb1dd26a0")
+        return  {"classLinks":classSaveOrder, "demoQuery":demo}
+        
     def __loadApp(self):
         if (self.app_initialized != True):
             appJson = self.__load_application_defaults()
@@ -98,9 +162,153 @@ class RDFFramework(object):
         print("***** Querying tipplestore for Forms ****")
         return json.loads(classList.json().get('results').get('bindings')[0]['appForms']['value'])
         
-    def getProp(self,value):
-        return "searching for prop"
+    def __organizeFormByClasses(self, rdfForm):
+        '''Arrange the form objects and data by rdf class for validation and saveing'''
+        returnObj = {}
+        for row in rdfForm.rdfFieldList:
+            for field in row:
+                appendObj = {"fieldJson":field, "data":getattr(rdfForm,field.get("formFieldName")).data} #, "wtfield":getattr(rdfForm,field.get("formFieldName"))}
+                try:
+                    returnObj[field.get('className')].append(appendObj)
+                except:
+                    returnObj[field.get('className')] = []
+                    returnObj[field.get('className')].append(appendObj)
+        return returnObj  
+       
+    def __getFormClassLinks(self, rdfForm):
+        '''get linkages between the classes in the form'''
+        returnObj = {}
+        classSet = set()
+        for row in rdfForm.rdfFieldList:
+            for field in row:
+                classSet.add(field.get('className'))
+        dependantClasses = set()
+        independantClasses = set()
+        classDependancies = {}
+        for rdfClass in classSet:
+            currentClass = getattr(self,rdfClass)
+            classDependancies[rdfClass] = currentClass.listDependant()
+            if len(currentClass.listDependant())>0:
+                dependantClasses.add(currentClass.classUri)
+            else:
+                independantClasses.add(currentClass.classUri)
+        returnObj = {"depClasses": list(dependantClasses),
+                    "indepClasses": list(independantClasses),
+                    "dependancies": classDependancies} 
+        return returnObj          
         
+    def __validateFormByClassRequirements(self, formByClasses):
+        '''This method will cycle thhrought the form classes and 
+           call the classes validateFormData method and return the results'''
+           
+        validationResults = {}
+        validationError = False
+        for rdfClass in formByClasses:
+            currentClass = getattr(self,rdfClass)
+            validationResults[currentClass] = currentClass.validateFormData(formByClasses[rdfClass])
+            if validationResults[currentClass].get("errors",False):
+                validationError = True
+        if validationError:
+            return {"status": "fail", "errors": validationResults}
+        else:
+            return {"status": "success"}
+                
+    def __getFormData(self, rdfForm, **kwargs):
+        ''' returns the data for the current form paramters
+        
+        **keyword arguments
+        subjectUri: the URI for the subject
+        classUri: the rdf class of the subject
+        '''
+        classUri = kwargs.get("classUri")
+        className = self.getClassName(classUri)
+        subjectUri = kwargs.get("subjectUri")
+        sparqlArgs = None
+        classLinks = self.__getFormClassLinks(rdfForm)
+        sparqlConstructor = dict.copy(classLinks['dependancies'])
+        print(json.dumps(sparqlConstructor,indent=4))
+        baseSubjectFinder = None
+        linkedClass = None
+        sparqlElements = []
+        
+        # find the primary linkage between the supplied subjectId and other form classes
+        for rdfClass in sparqlConstructor:
+            for prop in sparqlConstructor[rdfClass]: 
+                try:
+                    if classUri == prop.get("classUri"):
+                        sparqlArgs = prop
+                        linkedClass = rdfClass
+                        sparqlConstructor[rdfClass].remove(prop)
+                except:
+                    x = 0
+        
+        # generate the triple pattern for linked class
+        if sparqlArgs:
+            baseSubjectFinder = makeTriple("?classID",iri(prop.get("propUri")),iri(subjectUri))
+        
+        # iterrate though the classes used in the form and generate the spaqrl triples to pull the data for that class
+        for rdfClass in sparqlConstructor:
+            if rdfClass == className:
+                sparqlElements.append("\tBIND("+ iri(subjectUri) + " AS ?s) . \n\t?s ?p ?o .")
+            for prop in sparqlConstructor[rdfClass]:
+                if rdfClass == className:
+                    sparqlElements.append("\t"+makeTriple(iri(subjectUri),iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")
+                elif rdfClass == linkedClass:
+                    sparqlElements.append(
+                        "\t" +baseSubjectFinder + "\n " +
+                        "\t"+ makeTriple("?classID",iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")
+                '''**** The case where an ID looking up a the triples for a non-linked related is not functiong
+                    i.e. password ClassID not looking up person org triples if the org class is not used in the form.
+                    This ma not be a problem ... the below comment out is a start to solving if it is a problem
+                    elif linkedClass != self.getClassName(prop.get("classUri")):
+                    sparqlElements.append(
+                        "\t" +baseSubjectFinder + "\n " +
+                        "\t"+ makeTriple("?classID",iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")'''
+        # merge the sparql elements for each class used into one combine sparql union statement
+        sparqlUnions = "{\n"+"\n} UNION {\n".join(sparqlElements) +"\n}"
+        
+        # render the statment in the jinja2 template
+        sparql = render_without_request(
+            "jsonItemTemplate.rq",
+            query = sparqlUnions) 
+        
+        # query the triplestore
+        formDataQuery =  requests.post( 
+            current_app.config.get('TRIPLESTORE_URL'),
+            data={"query": sparql,
+                  "format": "json"})
+
+        queryData = json.loads(formDataQuery.json().get('results').get('bindings')[0]['itemJson']['value']) 
+        
+        # compare the return results with the form fields and generate a formData object
+        formData = {}
+        for row in rdfForm.rdfFieldList:
+            for prop in row:
+                print(prop,"\n\n")
+                pUri = prop.get("propUri")
+                cUri = prop.get("classUri")
+                print(cUri," ",pUri,"\n\n")
+                dataValue = None
+                for subject in queryData:
+                    if cUri in queryData[subject].get("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
+                        dataValue = queryData[subject].get(prop.get("propUri"))
+                formData[prop.get("formFieldName")]=dataValue
+        return {"formData":formData,"queryData":queryData}
+            
+    def __getSaveOrder(self, rdfForm):
+        '''Cycle through the classes and determine in what order they need to be saved
+           1. Classes whoes properties don't rely on another class 
+           2. Classes that that depend on classes in step 1
+           3. Classes stored as blanknodes of Step 2 '''   
+        classLinks = self.__getFormClassLinks(rdfForm) 
+        return classLinks
+        
+        
+            
+                    
+                        
+    
+ 
         
 class RDFClass(object):
     '''RDF Class for an RDF Class object. 
@@ -127,6 +335,16 @@ class RDFClass(object):
           -- for blazegraph process will need to be created'''
         print("generating new URI")
         
+    def validateFormData(self, formData):
+        '''This method will validate whether the supplied form data 
+           meets the class requirements and returns the results''' 
+        validationSteps = {}   
+        validationSteps['validRequiredFields'] = self.__validateRequiredProperties(formData)
+        validationSteps['validPrimaryKey'] = self.validatePrimaryKey(formData)
+        validationSteps['validFieldData'] = self.__validatePropertyData(formData)
+        validationSteps['validSecurity'] =  self.__validateSecurity(formData)
+        return validationSteps
+        
     def validatePrimaryKey(self, dataValue):
         '''query to see if PrimaryKey is Valid'''
         returnVal = False #! This variable is never used
@@ -150,11 +368,14 @@ class RDFClass(object):
         for p in self.properties:
             if self.properties[p].get('requiredByDomain') == self.classUri:
                 requiredList.add(p)
-        if type(self.primaryKey) == "list":
-            for key in self.primaryKey:
-                requiredList.add(self.findPropName(key))
-        else:
-            requiredList.add(self.findPropName(self.primaryKey))
+        try:
+            if type(self.primaryKey) == "list":
+                for key in self.primaryKey:
+                    requiredList.add(self.findPropName(key))
+            else:
+                requiredList.add(self.findPropName(self.primaryKey))
+        except:
+            x = None
         return requiredList
                 
     def listProperties(self):
@@ -169,16 +390,65 @@ class RDFClass(object):
         depandantList = set()
         for p in self.properties:
             rangeList = self.properties[p].get('range')
+            #print(p,": ",rangeList)
             for r in rangeList: 
-                if r.get('storageType') == "object": # or self.properties[p].get('storageType') == "blanknode":
+                if r.get('storageType') == "object" or r.get('storageType') == "blanknode":
                     depandantList.add(p)
-        return depandantList
+        returnObj = []
+        for d in depandantList:
+            rangeList = self.properties[d].get('range')
+            print(d,": ",rangeList)
+            for r in rangeList: 
+                if r.get('storageType') == "object" or r.get('storageType') == "blanknode":
+                    returnObj.append({"propName":d, "propUri":self.properties[d].get("propUri"), "classUri":r.get("rangeClass")})
+            
+        return returnObj #list(depandantList)
         
     def __makeTriple (self,s,p,o):
         "takes a subject predicate and object and joins them with a sp ace in between"
         return "{s} {p} {o} .".format(s=s, p=p, o=0)
-
-    def validateRequiredProperties(self, data):
+        
+    def findPropName (self,propUri):
+        "cycle through the class properties object to find the property name"
+        #print(self.properties)
+        try:
+            for p in self.properties:
+                #print("p--",p," -- ",self.properties[p]['propUri'])
+                if self.properties[p]['propUri'] == propUri:
+                   # print ('propName is ',p)
+                    return p
+        except:
+            return None
+    
+    def getProperty (self,**kwargs):
+        '''Method returns the property json object
+        
+        keyword Args:
+            propName: The Name of the property
+            propUri: The URI of the property
+            ** the PropName or URI is required'''
+        
+        propName = kwargs.get("propName")
+        propUri = kwargs.get("propUri")    
+        #print(self.properties)
+        if propUri:
+            propName = self.findPropName(propUri)
+        #print(self.__dict__)
+        try:
+            return self.properties.get(propName)
+        except:
+            return None
+                
+    def formatDataType(self,dataValue,dataType):
+        "formats a dataValue and dataType for SPARQL query"
+        if dataType == "literal":
+            return '"' + dataValue + '"'
+        elif dataType == "object":
+            return self.iri(dataValue)
+        else:
+            return dataValue
+            
+    def __validateRequiredProperties (self,data):
         '''Validates whether all required properties have been supplied and contain data '''
         returnError = []
         #create sets for evaluating requiredFields
@@ -186,8 +456,8 @@ class RDFClass(object):
         dataProps = set()
         for p in data:
             #remove empty data properties from consideration
-            if IsNotNull(data[p]):
-                dataProps.add(p)
+            if IsNotNull(p['data']) or p['data'] != 'None':
+                dataProps.add(self.findPropName(p['fieldJson'].get("propUri")))
         #Test to see if all the required fields are supplied    
         missingRequiredProperties = required - dataProps
         if len(missingRequiredProperties)>0:
@@ -200,11 +470,12 @@ class RDFClass(object):
                     "class":self.classUri,
                     "properties":missingUris}})
         if len(returnError)>0:
-            return returnError
+            returnVal =  returnError
         else:
-            return ["valid"]
+            returnVal =  ["valid"]
+        return returnVal
             
-    def validateDependantProperties(self, data):
+    def __validateDependantProperties(self, data):
         '''Validates that all supplied dependant properties have a uri as an object'''
         dep = self.listDependant()
         returnError = []
@@ -228,10 +499,16 @@ class RDFClass(object):
                         "errorData":{
                             "class":self.classUri,
                             "properties":propDetails.get('propUri')}})
-        if len(returnError)>0:
+        if len(returnError) > 0:
             return returnError
         else:
             return ["valid"]       
+
+    def __validatePropertyData(self,formData):
+        return ["valid"]
+        
+    def __validateSecurity(self,formData):
+        return ["valid"]
 
 
     def findPropName (self,propUri):
@@ -273,9 +550,6 @@ class RDFDataType(object):
             #! Why is uri a new property if an object?
             self.uri = "objInject"
 
-
-        
-
     def sparql(self,dataValue):
         "formats a value for a sparql triple"
         if self.name == "object":
@@ -288,8 +562,6 @@ class RDFDataType(object):
         else:
             return '"{}"^^{}'.format(dataValue, self.prefix)
     
-                
-        
 #! Should we test to see if uriString is a valid IRI?
 def iri(uriString):
     "converts a string to an IRI or returns an IRI if already formated"
@@ -485,7 +757,7 @@ def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
     if css is None:
         css = rdfApp.get('formDefault',{}).get('fieldCss','')
         css = css.strip() + " " + instructions.get('propertyAddOnCss','')
-        css = css.strip() + " " + formInstanceInfo.get('addOnCss',field.get('addOnCss',''))
+        css = css.strip() + " " + formInstanceInfo.get('addOnCss',field.get('addOnCss',field.get('formDefault',{}).get('addOnCss','')))
         css = css.strip()
     nField['css'] = css
     
@@ -690,3 +962,7 @@ def loadFormSelectOptions(rdfForm):
                 fldName = fld.get('formFieldName',None)
                 getattr(rdfForm,fldName).choices = [(o['id'], o['value']) for o in options]
     return rdfForm
+    
+def makeTriple (s,p,o):
+    "takes a subject predicate and object and joins them with a space in between"
+    return s + " " + p + " " + o + " . "

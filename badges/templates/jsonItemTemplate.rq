@@ -1,0 +1,37 @@
+prefix acl: <http://www.w3.org/ns/auth/acl#> 
+prefix foaf: <http://xmlns.com/foaf/0.1/> 
+prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
+prefix kdr: <http://knowledgelinks.io/ns/data-resources/> 
+prefix obi: <https://w3id.org/openbadges#> 
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+prefix schema: <https://schema.org/> 
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT (CONCAT('{',GROUP_CONCAT(?sJ;SEPARATOR=','),'}') AS ?itemJson)
+{
+  SELECT  (CONCAT('"',STR(?s),'":{',GROUP_CONCAT(?pJ;SEPARATOR=','),'}') AS ?sJ)
+  {
+    {
+      SELECT ?s ?p (GROUP_CONCAT(?oV; SEPARATOR=',') AS ?oJ) (COUNT(?p) AS ?oC)
+      {
+        {{ query }}
+        BIND(IF(datatype(?o)=xsd:string||isiri(?o),true,false) AS ?quotes) .
+        BIND(CONCAT(IF(?quotes,'"',""),STR(?o),if(?quotes,'"',"")) AS ?oV) .
+        FILTER(!(
+                  STRSTARTS(STR(?p), "http://fedora.info/definitions/v4/")||
+                  STRSTARTS(STR(?o), "http://fedora.info/definitions/v4/")||
+                  STRSTARTS(STR(?o), "http://www.w3.org/ns/ldp")||
+                  STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")||
+                  STRSTARTS(STR(?p), "http://www.w3.org/ns/ldp")||
+                  STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")))
+      }    
+      GROUP BY ?s ?p
+    }
+    BIND(CONCAT('"',STR(?p),'":',
+                IF(?oC>1,"[",""),
+                STR(?oJ),
+                IF(?oC>1,"]","")) AS ?pJ)
+  }
+  GROUP BY ?s
+}

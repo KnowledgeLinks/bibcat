@@ -307,6 +307,7 @@ def user_rdf_class(form_instance):
     if request.method == "POST":
         form = form_class(request.form)
         val = form.validate()
+        get_framework().saveForm(form)
     else:
         form = form_class()
     return render_template(
@@ -329,9 +330,17 @@ def badge_rdf_class(form_instance):
     val = None
     if request.method == "POST":
         form = form_class(request.form)
+        request.form = None
+        form = loadFormSelectOptions(form)
         val = form.validate()
+        '''elif request.method == "GET":
+        if len(request.args) > 0:'''
+            #form = f(request.form,getFormData(f.fieldList,request.args))
+        formData = get_framework().saveForm(form)
+        return "<pre>" + json.dumps(formData,indent=4) + "</pre>"
     else:
         form = form_class()
+        form = loadFormSelectOptions(form)  
     return render_template(
         "app_form_template.html",
         actionUrl=url_for("badge_rdf_class", form_instance=form_instance),
@@ -367,14 +376,14 @@ def assertion_rdf_class(form_instance):
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
-    #form_class = rdf_framework_form_factory(
-    #    "AssertionForm",
-    #    'http://knowledgelinks.io/ns/data-resources/NewForm')
-    #framework=get_framework()
     return "<pre>" + json.dumps({"message": "test rdf class"}) + "</pre>"
 
-@open_badge.route("/formjson/", methods=["POST", "GET"])
+@open_badge.route("/rdfjson/", methods=["POST", "GET"]) 
 def form_rdf_class():
-    """View for displaying the form json"""
-    form_class = get_framework().rdf_form_dict
-    return "<pre>{}</pre>".format(json.dumps(form_class, indent=4))
+    f = get_framework().rdf_form_dict
+    c = get_framework().rdf_class_dict
+    return '''<table>
+                <tr><td><h1>RDF Class JSON</h1></td><td><h1>Form Json</h1></td></tr>
+                <tr><td style='vertical-align:top'><pre>''' + json.dumps(c,indent=2) + "</pre></td><td style='vertical-align:top'><pre>" + json.dumps(f,indent=2) +'''</pre></td></tr>
+              </table>'''
+    
