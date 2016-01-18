@@ -228,6 +228,7 @@ def user_rdf_class(formInstance):
     if request.method == "POST":
         form = f(request.form)
         val = form.validate()
+        get_framework().saveForm(form)
     else:
         form = f()     
     return render_template(
@@ -242,10 +243,18 @@ def badge_rdf_class(formInstance):
     f = rdf_framework_form_factory("BadgeForm",'http://knowledgelinks.io/ns/data-resources/'+formInstance)
     val = None
     if request.method == "POST":
+        request.form = None
         form = f(request.form)
+        form = loadFormSelectOptions(form)
         val = form.validate()
+        '''elif request.method == "GET":
+        if len(request.args) > 0:'''
+            #form = f(request.form,getFormData(f.fieldList,request.args))
+        formData = get_framework().saveForm(form)
+        return "<pre>" + json.dumps(formData,indent=4) + "</pre>"
     else:
-        form = f()     
+        form = f()   
+        form = loadFormSelectOptions(form)  
     return render_template(
         "app_form_template.html",
         actionUrl="http://localhost:20151/badges/badgeTestForm/"+formInstance+".html",
@@ -272,12 +281,17 @@ def assertion_rdf_class(formInstance):
         
 @open_badge.route("/test/", methods=["POST", "GET"]) 
 def test_rdf_class():
-    f = rdf_framework_form_factory("AssertionForm",'http://knowledgelinks.io/ns/data-resources/NewForm')
+    f = rdf_framework_form_factory("UserForm",'http://knowledgelinks.io/ns/data-resources/NewForm')
     framework=get_framework()
     x=y
     return "<pre>" + json.dumps(result,indent=4) + "</pre>"
     
-@open_badge.route("/formjson/", methods=["POST", "GET"]) 
+@open_badge.route("/rdfjson/", methods=["POST", "GET"]) 
 def form_rdf_class():
     f = get_framework().rdf_form_dict
-    return "<pre>" + json.dumps(f,indent=4) + "</pre>"
+    c = get_framework().rdf_class_dict
+    return '''<table>
+                <tr><td><h1>RDF Class JSON</h1></td><td><h1>Form Json</h1></td></tr>
+                <tr><td style='vertical-align:top'><pre>''' + json.dumps(c,indent=2) + "</pre></td><td style='vertical-align:top'><pre>" + json.dumps(f,indent=2) +'''</pre></td></tr>
+              </table>'''
+    

@@ -162,7 +162,7 @@ obi:startDate a rdf:Property;
 		kds:formFieldName "startDate";
 		kds:formLabelName "Start Date";
 		kds:formFieldHelp "Enter the date that the badge is available.";
-		kds:fieldType kdr:DateTimeField;
+		kds:fieldType kdr:DateField;
 		kds:addonCss "dp";
 	] .
 	
@@ -175,8 +175,8 @@ obi:endDate a rdf:Property;
 		kds:formFieldName "endDate";
 		kds:formLabelName "End Date";
 		kds:formFieldHelp "Enter the date that the badge is no longer available.";
-		kds:fieldType kdr:DateTimeField;
-		kds:addonCss "dp";
+		kds:fieldType kdr:DateField;
+		kds:addOnCss "dp";
 	] .
 
 obi:recipient a rdf:Property;
@@ -823,6 +823,19 @@ obi:BadgeForm a kds:FormClass;
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
 			kds:formDescription "Edit badge information."
+		]
+	];
+	kds:hasProperty [
+		kds:propUri obi:issuer;
+		kds:formFieldOrder 0.5;
+		kds:formLayoutRow 1;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:LookupAddNewWorkFlow; 
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:NotEditable 
 		]
 	];
 	kds:hasProperty [
