@@ -612,6 +612,8 @@ def getWtFormField(field):
     #print("______label:", fieldLabel)
     fieldName = field.get("formFieldName",'')
     fieldTypeObj = field.get("fieldType",{})
+    if isinstance(fieldTypeObj.get('type'),list):
+        fieldTypeObj = fieldTypeObj['type'][0]
     fieldValidators = getWtValidators(field)
     fieldType = "kdr:" + fieldTypeObj.get('type','').replace("http://knowledgelinks.io/ns/data-resources/","")
     #print("fieldType: ",fieldType)
@@ -624,19 +626,20 @@ def getWtFormField(field):
         form_field = TextAreaField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:PasswordField':
         print("!!!! Mode: ",fieldTypeObj.get('fieldMode'))
-        #print(field)
-        if fieldTypeObj.get('fieldMode') == "InitialPassword":   
+        fieldMode = fieldTypeObj.get('fieldMode','').replace("http://knowledgelinks.io/ns/data-resources/","")
+        if fieldMode == "InitialPassword":   
             form_field = [
                             {"fieldName":fieldName,"field":PasswordField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))},
                             {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter")}
                          ]
-        elif fieldTypeObj.get('fieldMode') == "ChangePassword":
+        elif fieldMode == "ChangePassword":
             form_field = [
                             {"fieldName":fieldName + "_old","field":PasswordField("Current")},
                             {"fieldName":fieldName + "_new","field":PasswordField("New")},
                             {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter")}
                          ]
-        elif fieldTypeObj.get('fieldMode') == "LoginPassword":
+        elif fieldMode == "LoginPassword":
+            print("entered login mode")
             form_field = PasswordField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:BooleanField':
         form_field = BooleanField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))

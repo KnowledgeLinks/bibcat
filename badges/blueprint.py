@@ -13,7 +13,7 @@ from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from .utilities import render_without_request
-from .rdfframework import rdf_framework_form_factory
+from .rdfframework import rdf_framework_form_factory, loadFormSelectOptions, get_framework
 from .user import User
 
 open_badge = Blueprint("open_badge", __name__,
@@ -273,9 +273,10 @@ def badge_image(badge=None, uid=None):
 @open_badge.route("/login", methods=["GET", "POST"])
 def login_user_view():
     """Login view for badges"""
+    val = None
     login_form = rdf_framework_form_factory(
         "LoginForm",
-        'http://knowledgelinks.io/ns/data-resources/new')
+        'http://knowledgelinks.io/ns/data-resources/login')
     if request.method.startswith("POST"):
         form = login_form(request.form)
         val = form.validate()
@@ -286,12 +287,12 @@ def login_user_view():
         form = login_form()
     return render_template(
         "app_form_template.html",
-        actionURL=url_for("login_user_view"),
+        actionURL=url_for("open_badge.login_user_view"),
         form=form,
         jsonFields=json.dumps(
             form.rdfFieldList,
-            indent=4,
-            validated=val))
+            indent=4),
+        validated=val)
 
 @open_badge.route("/user/<form_instance>.html", methods=["POST", "GET"])
 def user_rdf_class(form_instance):
@@ -312,7 +313,7 @@ def user_rdf_class(form_instance):
         form = form_class()
     return render_template(
         "app_form_template.html",
-        actionUrl=url_for("user_rdf_class", form_instance=form_instance),
+        actionUrl=url_for("open_badge.user_rdf_class", form_instance=form_instance),
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         validated=val)
@@ -343,7 +344,7 @@ def badge_rdf_class(form_instance):
         form = loadFormSelectOptions(form)  
     return render_template(
         "app_form_template.html",
-        actionUrl=url_for("badge_rdf_class", form_instance=form_instance),
+        actionUrl=url_for("open_badge.badge_rdf_class", form_instance=form_instance),
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         validated=val)
@@ -368,7 +369,7 @@ def assertion_rdf_class(form_instance):
     form = loadFormSelectOptions(form)
     return render_template(
         "app_form_template.html",
-        actionUrl=url_for("assertion_rdf_class", form_instance=form_instance),
+        actionUrl=url_for("open_badge.assertion_rdf_class", form_instance=form_instance),
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         validated=val)
