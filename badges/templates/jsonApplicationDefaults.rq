@@ -28,7 +28,7 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                                                         OPTIONAL {
                                                           ?bn ?p1 ?o1 .
                                                         }
-                                                        BIND(IF(bound(?o1),CONCAT('"',REPLACE(STR(?o1),"^(.*[#/])", ""),'"'),"") AS ?o1j)
+                                                        BIND(IF(bound(?o1),CONCAT('"',STR(?o1),'"'),"") AS ?o1j)
                                                         BIND(IF(BOUND(?p1),?p1,"") AS ?p1_) .
                                                         BIND(IF(BOUND(?bn),?bn,"") AS ?bn_).
                                                       }

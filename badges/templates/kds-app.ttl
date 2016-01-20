@@ -564,7 +564,7 @@ schema:givenName a rdf:Property;
 	
 schema:familyName a rdf:Property;	
 	rdfs:domain	schema:Person;	
-	rdfs:range	rdfs:string;	
+	rdfs:range	xsd:string;	
 	rdfs:comment "Last name or family name for an individual.";	
 	kds:requiredByDomain schema:Person;
 	kds:jsonDefault [
@@ -982,4 +982,40 @@ obi:BadgeApplication a kds:Application;
 		kds:fieldCss "form-control";
 		kds:rowCss "appFormRowCss";
 		kds:formCss "appFormFormCss"
+	];
+	kds:appNameSpace [
+		kds:prefix "rdf";
+		kds:nameSpaceUri "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	];
+	kds:appNameSpace [
+		kds:prefix "acl";
+		kds:nameSpaceUri "http://www.w3.org/ns/auth/acl#"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "xsd";
+		kds:nameSpaceUri "http://www.w3.org/2001/XMLSchema#"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "schema";
+		kds:nameSpaceUri "https://schema.org/"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "kds";
+		kds:nameSpaceUri "http://knowledgelinks.io/ns/data-structures/"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "kdr";
+		kds:nameSpaceUri "http://knowledgelinks.io/ns/data-resources/"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "foaf";
+		kds:nameSpaceUri "http://xmlns.com/foaf/0.1/"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "rdfs";
+		kds:nameSpaceUri "http://www.w3.org/2000/01/rdf-schema#"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "obi";
+		kds:nameSpaceUri "https://w3id.org/openbadges#"
 	] .

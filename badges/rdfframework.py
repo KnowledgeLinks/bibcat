@@ -30,17 +30,7 @@ class RDFFramework(object):
     forms_initialized = False  # used to state if the form definitions have been initialized
     rdf_app_dict = {}          # stors the the Triplestore definged application settings
     app_initialized = False    # states if the application has been initialized
-    rdfNameSpaces = {
-                        "acl": "http://www.w3.org/ns/auth/acl#", 
-                        "foaf": "http://xmlns.com/foaf/0.1/", 
-                        "kds": "http://knowledgelinks.io/ns/data-structures/", 
-                        "kdr": "http://knowledgelinks.io/ns/data-resources/", 
-                        "obi": "https://w3id.org/openbadges#", 
-                        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", 
-                        "rdfs": "http://www.w3.org/2000/01/rdf-schema#", 
-                        "schema": "https://schema.org/", 
-                        "xsd": "http://www.w3.org/2001/XMLSchema#"
-                    }
+
     def __init__(self):
         self.__loadApp()
         self.__generateClasses()
@@ -108,14 +98,29 @@ class RDFFramework(object):
             return validation   
         # determine class save order
         classSaveOrder = self.__getSaveOrder(rdfForm)
+        reverseDependancies = classSaveOrder.get("reverseDependancies",{})
+        classSaveOrder = classSaveOrder.get("saveOrder",{})
+        
+        # save class data
         for rdfClass in classSaveOrder:
+            status = {}
             className = self.getClassName(rdfClass)
             status = getattr(self,className).save(formByClasses.get(className,[]),oldFormData)
-            '''if status.get("newSubjectIri"):
-                print("X") ''' 
-            
-        #print("form by classes: \n",json.dumps(formByClasses,indent=4))
-
+            #x=y
+            if status.get("status")=="success":
+                updateClass = reverseDependancies.get(rdfClass,[])
+                for prop in updateClass:
+                    found = False
+                    i=0
+                    for field in formByClasses.get(prop.get('className','')):
+                        if field.get('fieldJson',{}).get('propUri') == prop.get('propUri',''):
+                            found=True
+                            formByClasses[prop.get('className','')][i]['data'] = status.get("lastSave",{}).get("objectValue")
+                        i += 1
+                    if not found:
+                        formByClasses[prop.get('className','')].append({
+                            'data': status.get("lastSave",{}).get("objectValue"),
+                            'fieldJson': self.getProperty(className=prop.get("className"),propName=prop.get("propName"))[0]})             
         return  {"classLinks":classSaveOrder, "oldFormData":oldFormData}
     
     def getPrefix(self, formatType="sparql"):
@@ -125,14 +130,14 @@ class RDFFramework(object):
         '''
         
         returnStr = ""
-        for prefix in self.rdfNameSpaces:
+        for ns in self.rdf_app_dict['application'].get("appNameSpace",[]):
             if formatType.lower() == "sparql":
-                returnStr += "PREFIX " + prefix + ": " + iri(self.rdfNameSpaces[prefix]) + "\n"
+                returnStr += "PREFIX " + ns.get('prefix') + ": " + iri(ns.get('nameSpaceUri')) + "\n"
             elif formatType.lower() == "turtle":
-                returnStr += "@prefix " + prefix + ": " + iri(self.rdfNameSpaces[prefix]) + " . \n"
+                returnStr += "@prefix " + ns.get('prefix') + ": " + iri(ns.get('nameSpaceUri')) + " . \n"
         return returnStr
         
-    def __loadApp(self):
+    def __loadApp(self): 
         if (self.app_initialized != True):
             appJson = self.__load_application_defaults()
             self.rdf_app_dict =  appJson
@@ -163,7 +168,7 @@ class RDFFramework(object):
             current_app.config.get('TRIPLESTORE_URL'),
             data={"query": sparql,
                   "format": "json"})
-        print("***** Querying tipplestore ****")
+        print("***** Querying triplestore - Application Defaults ****")
         return json.loads(formList.json().get('results').get('bindings')[0]['app']['value'])
         
     def __load_rdf_class_defintions(self):
@@ -175,6 +180,7 @@ class RDFFramework(object):
             current_app.config.get('TRIPLESTORE_URL'),
             data={"query": sparql,
                   "format": "json"})
+        print("***** Querying triplestore - Class Definitions ****")
         return json.loads(formList.json().get('results').get('bindings')[0]['appClasses']['value'])
         
     def __load_rdf_form_defintions(self):
@@ -186,7 +192,7 @@ class RDFFramework(object):
             current_app.config.get('TRIPLESTORE_URL'),
             data={"query": sparql,
                   "format": "json"})
-        print("***** Querying tipplestore for Forms ****")
+        print("***** Querying triplestore - Form Definitions ****")
         return json.loads(classList.json().get('results').get('bindings')[0]['appForms']['value'])
         
     def __organizeFormByClasses(self, rdfForm):
@@ -357,7 +363,8 @@ class RDFFramework(object):
                 saveOrder.append(rdfClass)
             else:
                 saveLast.append(rdfClass)       
-        return saveOrder + saveLast
+        return {"saveOrder":saveOrder + saveLast,
+                "reverseDependancies":classLinks.get("reverseDependancies",{})}
         
 class RDFClass(object):
     '''RDF Class for an RDF Class object. 
@@ -595,6 +602,12 @@ class RDFClass(object):
     def __generateSaveQuery(self,saveData,subjectUri=None):
         if not subjectUri:
             subjectUri="<>"
+        saveType = self.storageType
+        if subjectUri == "<>" and saveType.lower() == "blanknode":
+            saveType = "blanknode"
+        else:
+            saveType = "object"
+        bnInsertClause = []
         insertClause = ""
         deleteClause = ""
         whereClause = ""
@@ -604,8 +617,10 @@ class RDFClass(object):
             if isinstance(saveData[prop],list):
                 for item in saveData[prop]:
                     insertClause += makeTriple(subjectUri,propIri,item) + "\n"
+                    bnInsertClause.append("\t" + propIri + " " + item)
             else:
                 insertClause += makeTriple(subjectUri,propIri,saveData.get(prop,"")) + "\n"
+                bnInsertClause.append("\t" + propIri + " " + saveData.get(prop,""))
             propSet.add(prop)
         i = 1
         if subjectUri != '<>':
@@ -616,15 +631,26 @@ class RDFClass(object):
                 i += 1
         else:
             insertClause += makeTriple(subjectUri,"a",iri(self.classUri)) + "\n"
-        saveQuery = get_framework().getPrefix() +''' 
-        DELETE { ''' + deleteClause + ''' }
-        INSERT { ''' + insertClause + ''' }
-        WHERE { ''' + whereClause + ''' }'''
+            bnInsertClause.append("\t a " + iri(self.classUri))
+        if saveType == "blanknode":
+            saveQuery = "[\n" + ";\n".join(bnInsertClause) + "\n]"
+        else:
+            saveQuery = get_framework().getPrefix() +''' 
+            DELETE { \n''' + deleteClause + ''' }
+            INSERT { \n''' + insertClause + ''' }
+            WHERE { \n''' + whereClause + ''' }'''
         print(saveQuery)
         return saveQuery
         
     def __runSaveQuery(self,saveQuery):
-        return "savingClass"
+        if saveQuery[:1] == "[":
+            objectValue = saveQuery
+        else:
+            objectValue = "<http://test.com/13242req1345>"
+        return {"status": "success",
+                "lastSave": {
+                    "objectValue": objectValue}
+               }
     
     def findPropName (self,propUri):
         "cycle through the class properties object to find the property name"
@@ -678,6 +704,8 @@ class RDFDataType(object):
     
 def iri(uriString):
     "converts a string to an IRI or returns an IRI if already formated"
+    if uriString[:1] == "[":
+        return uriString
     if uriString[:1] != "<":
         uriString = "<" + uriString.strip()
     if uriString[len(uriString)-1:] != ">":
