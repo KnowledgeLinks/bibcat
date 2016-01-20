@@ -112,7 +112,7 @@ class RDFFramework(object):
             className = self.getClassName(rdfClass)
             status = getattr(self,className).save(formByClasses.get(className,[]),oldFormData)
             '''if status.get("newSubjectIri"):
-                print("X") '''
+                print("X") ''' 
             
         #print("form by classes: \n",json.dumps(formByClasses,indent=4))
 
