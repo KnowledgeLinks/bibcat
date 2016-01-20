@@ -275,8 +275,7 @@ def login_user_view():
     """Login view for badges"""
     val = None
     login_form = rdf_framework_form_factory(
-        "LoginForm",
-        'http://knowledgelinks.io/ns/data-resources/login')
+        "LoginForm")
     if request.method.startswith("POST"):
         form = login_form(request.form)
         val = form.validate()
@@ -308,7 +307,8 @@ def user_rdf_class(form_instance):
     if request.method == "POST":
         form = form_class(request.form)
         val = form.validate()
-        get_framework().saveForm(form)
+        formData = get_framework().saveForm(form)
+        return "<pre>" + json.dumps(formData,indent=4) + "</pre>"
     else:
         form = form_class()
     return render_template(
@@ -330,8 +330,8 @@ def badge_rdf_class(form_instance):
         'http://knowledgelinks.io/ns/data-resources/'+form_instance)
     val = None
     if request.method == "POST":
+        print("***** request.form ****\n", request.form)
         form = form_class(request.form)
-        request.form = None
         form = loadFormSelectOptions(form)
         val = form.validate()
         '''elif request.method == "GET":
@@ -377,6 +377,7 @@ def assertion_rdf_class(form_instance):
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
+    x=y
     return "<pre>" + json.dumps({"message": "test rdf class"}) + "</pre>"
 
 @open_badge.route("/rdfjson/", methods=["POST", "GET"]) 

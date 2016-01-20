@@ -33,7 +33,7 @@ obi:Assertion a rdf:Class;
 	
 obi:context a rdf:Property;
 	rdfs:domain obi:Resource;
-	rdfs:range rdfs:literal;
+	rdfs:range rdfs:string;
 	rdfs:comment "Name of the open badge instance.";
 	kds:jsonDefault [	
 		kds:useFor "default" ;
@@ -129,7 +129,7 @@ obi:issuedOn a rdf:Property;
 	
 obi:expires a rdf:Property;
 	rdfs:domain obi:Assertion;
-	rdfs:range rdfs:literal;
+	rdfs:range rdfs:datetime;
 	rdfs:comment "Timestamp when badge expires.";	
 	kds:defaultVal "now + 360";
 	kds:jsonDefault [
@@ -150,7 +150,7 @@ obi:expires a rdf:Property;
 	
 obi:startDate a rdf:Property;
 	rdfs:domain obi:BadgeClass;
-	rdfs:range rdfs:literal;
+	rdfs:range xsd:date;
 	rdfs:comment "Date the badge is available.";	
 	kds:defaultVal "now";
 	kds:jsonDefault [
@@ -168,7 +168,7 @@ obi:startDate a rdf:Property;
 	
 obi:endDate a rdf:Property;
 	rdfs:domain obi:BadgeClass;
-	rdfs:range rdfs:literal;
+	rdfs:range xsd:date;
 	rdfs:comment "Date the badge is no longer available.";	
 	kds:defaultVal "now";
 	kds:formDefault [
@@ -238,7 +238,7 @@ obi:recipient a rdf:Property;
 	
 obi:verify a rdf:Property;
 	rdfs:domain obi:Recipient;
-	rdfs:range rdfs:literal;
+	rdfs:range rdfs:string;
 	rdfs:comment "Instructions for third parties to verify this assertion.";	
 	kds:jsonDefault [
 		kds:useFor obi:Assertion;
@@ -546,7 +546,7 @@ schema:Person a kds:ControlledClass ;
 	
 schema:givenName a rdf:Property;	
 	rdfs:domain	schema:Person;	
-	rdfs:range	xsd:literal;	
+	rdfs:range	xsd:string;	
 	rdfs:comment "First name or given name for an individual.";	
 	kds:requiredByDomain schema:Person;
 	kds:jsonDefault [
@@ -564,7 +564,7 @@ schema:givenName a rdf:Property;
 	
 schema:familyName a rdf:Property;	
 	rdfs:domain	schema:Person;	
-	rdfs:range	rdfs:literal;	
+	rdfs:range	rdfs:string;	
 	rdfs:comment "Last name or family name for an individual.";	
 	kds:requiredByDomain schema:Person;
 	kds:jsonDefault [
@@ -608,7 +608,7 @@ schema:email a rdf:Property;
 
 kds:userName a rdf:Property;	
 	rdfs:domain	kds:UserClass;	
-	rdfs:range rdfs:literal;	
+	rdfs:range rdfs:string;	
 	rdfs:comment "Individual's username.";	           
 	kds:requiredByDomain kds:UserClass;
 	kds:propertyValidation [

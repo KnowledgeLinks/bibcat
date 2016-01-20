@@ -2,7 +2,8 @@ from flask import current_app, json
 from .utilities import render_without_request
 import requests
 from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
-
+import random
+from passlib.hash import sha256_crypt
 try:
     from flask_wtf import Form
     from flask_wtf.file import FileField
@@ -25,11 +26,21 @@ class RDFFramework(object):
     
     rdf_class_dict = {}        #stores the Triplestore defined class defintions
     class_initialized = False  #used to state if the the class was properly initialized with RDF definitions
-    rdf_form_dict = {}
-    forms_initialized = False
-    rdf_app_dict = {}
-    app_initialized = False
-    
+    rdf_form_dict = {}         # stores the Triplestore defined form definitions
+    forms_initialized = False  # used to state if the form definitions have been initialized
+    rdf_app_dict = {}          # stors the the Triplestore definged application settings
+    app_initialized = False    # states if the application has been initialized
+    rdfNameSpaces = {
+                        "acl": "http://www.w3.org/ns/auth/acl#", 
+                        "foaf": "http://xmlns.com/foaf/0.1/", 
+                        "kds": "http://knowledgelinks.io/ns/data-structures/", 
+                        "kdr": "http://knowledgelinks.io/ns/data-resources/", 
+                        "obi": "https://w3id.org/openbadges#", 
+                        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", 
+                        "rdfs": "http://www.w3.org/2000/01/rdf-schema#", 
+                        "schema": "https://schema.org/", 
+                        "xsd": "http://www.w3.org/2001/XMLSchema#"
+                    }
     def __init__(self):
         self.__loadApp()
         self.__generateClasses()
@@ -88,22 +99,38 @@ class RDFFramework(object):
         # group fields by class
         formByClasses = self.__organizeFormByClasses(rdfForm)
         
-        # validate the form data for class requirements (required properties, security, valid data types etc)
-        valadation = self.__validateFormByClassRequirements(formByClasses)
-        if valadation.get('errors') == True:
-            return validation 
+        # get data of edited objects
+        oldFormData = self.__getFormData(rdfForm)
             
+        # validate the form data for class requirements (required properties, security, valid data types etc)
+        valadation = self.__validateFormByClassRequirements(formByClasses, oldFormData)
+        if valadation.get('errors') == True:
+            return validation   
         # determine class save order
         classSaveOrder = self.__getSaveOrder(rdfForm)
-        '''for rdfClass in formByClasses:
-            currentClass = getattr(self,rdfClass).save(rd'''
+        for rdfClass in classSaveOrder:
+            className = self.getClassName(rdfClass)
+            status = getattr(self,className).save(formByClasses.get(className,[]),oldFormData)
+            '''if status.get("newSubjectIri"):
+                print("X") '''
             
         #print("form by classes: \n",json.dumps(formByClasses,indent=4))
-        demo = self.__getFormData(
-            rdfForm, 
-            classUri="https://w3id.org/openbadges#BadgeClass",
-            subjectUri="http://localhost:8080/fedora/rest/29/74/ff/1d/2974ff1d-fc5e-4042-89f2-abfbb1dd26a0")
-        return  {"classLinks":classSaveOrder, "demoQuery":demo}
+
+        return  {"classLinks":classSaveOrder, "oldFormData":oldFormData}
+    
+    def getPrefix(self, formatType="sparql"):
+        '''Generates a string of the rdf namespaces listed used in the framework
+        
+            formatType: "sparql" or "turtle"
+        '''
+        
+        returnStr = ""
+        for prefix in self.rdfNameSpaces:
+            if formatType.lower() == "sparql":
+                returnStr += "PREFIX " + prefix + ": " + iri(self.rdfNameSpaces[prefix]) + "\n"
+            elif formatType.lower() == "turtle":
+                returnStr += "@prefix " + prefix + ": " + iri(self.rdfNameSpaces[prefix]) + " . \n"
+        return returnStr
         
     def __loadApp(self):
         if (self.app_initialized != True):
@@ -185,19 +212,30 @@ class RDFFramework(object):
         dependantClasses = set()
         independantClasses = set()
         classDependancies = {}
+        reverseDependancies = {}
         for rdfClass in classSet:
             currentClass = getattr(self,rdfClass)
-            classDependancies[rdfClass] = currentClass.listDependant()
+            currentClassDependancies = currentClass.listDependant()
+            classDependancies[rdfClass] = currentClassDependancies
+            for reverseClass in currentClassDependancies:
+                if not isinstance(reverseDependancies.get(reverseClass.get("classUri","missing")),list):
+                    reverseDependancies[reverseClass.get("classUri","missing")] = []
+                reverseDependancies[reverseClass.get("classUri","missing")].append({
+                        "className":rdfClass,
+                        "propName":reverseClass.get("propName",""),
+                        "propUri":reverseClass.get("propUri","")
+                    })
             if len(currentClass.listDependant())>0:
                 dependantClasses.add(currentClass.classUri)
             else:
                 independantClasses.add(currentClass.classUri)
         returnObj = {"depClasses": list(dependantClasses),
                     "indepClasses": list(independantClasses),
-                    "dependancies": classDependancies} 
+                    "dependancies": classDependancies,
+                    "reverseDependancies": reverseDependancies} 
         return returnObj          
         
-    def __validateFormByClassRequirements(self, formByClasses):
+    def __validateFormByClassRequirements(self, formByClasses, oldFormData):
         '''This method will cycle thhrought the form classes and 
            call the classes validateFormData method and return the results'''
            
@@ -205,7 +243,7 @@ class RDFFramework(object):
         validationError = False
         for rdfClass in formByClasses:
             currentClass = getattr(self,rdfClass)
-            validationResults[currentClass] = currentClass.validateFormData(formByClasses[rdfClass])
+            validationResults[currentClass] = currentClass.validateFormData(formByClasses[rdfClass], oldFormData)
             if validationResults[currentClass].get("errors",False):
                 validationError = True
         if validationError:
@@ -220,13 +258,13 @@ class RDFFramework(object):
         subjectUri: the URI for the subject
         classUri: the rdf class of the subject
         '''
-        classUri = kwargs.get("classUri")
+        classUri = kwargs.get("classUri",rdfForm.dataClassUri)
         className = self.getClassName(classUri)
-        subjectUri = kwargs.get("subjectUri")
+        subjectUri = kwargs.get("subjectUri",rdfForm.dataSubjectUri)
         sparqlArgs = None
         classLinks = self.__getFormClassLinks(rdfForm)
         sparqlConstructor = dict.copy(classLinks['dependancies'])
-        print(json.dumps(sparqlConstructor,indent=4))
+        print(json.dumps(classLinks ,indent=4))
         baseSubjectFinder = None
         linkedClass = None
         sparqlElements = []
@@ -284,10 +322,10 @@ class RDFFramework(object):
         formData = {}
         for row in rdfForm.rdfFieldList:
             for prop in row:
-                print(prop,"\n\n")
+                #print(prop,"\n\n")
                 pUri = prop.get("propUri")
                 cUri = prop.get("classUri")
-                print(cUri," ",pUri,"\n\n")
+                #print(cUri," ",pUri,"\n\n")
                 dataValue = None
                 for subject in queryData:
                     if cUri in queryData[subject].get("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
@@ -297,18 +335,29 @@ class RDFFramework(object):
             
     def __getSaveOrder(self, rdfForm):
         '''Cycle through the classes and determine in what order they need to be saved
-           1. Classes whoes properties don't rely on another class 
+           1. Classes who's properties don't rely on another class 
            2. Classes that that depend on classes in step 1
            3. Classes stored as blanknodes of Step 2 '''   
         classLinks = self.__getFormClassLinks(rdfForm) 
-        return classLinks
-        
-        
-            
-                    
-                        
-    
- 
+        print(json.dumps(classLinks,indent=4))
+        saveOrder = []
+        saveLast = []
+        for rdfClass in classLinks.get("indepClasses",[]):
+            saveOrder.append(rdfClass)
+        for rdfClass in classLinks.get("depClasses",[]):
+            dependant = True
+            className = self.getClassName(rdfClass)
+            for depClass in classLinks.get("dependancies",{}):
+                if depClass != className:
+                    for prop in classLinks.get("dependancies",{}).get(depClass,[]):
+                        print(className," d:",depClass," r:",rdfClass," p:",prop.get('classUri'))
+                        if prop.get('classUri')==rdfClass:
+                            dependant = False
+            if not dependant:
+                saveOrder.append(rdfClass)
+            else:
+                saveLast.append(rdfClass)       
+        return saveOrder + saveLast
         
 class RDFClass(object):
     '''RDF Class for an RDF Class object. 
@@ -319,14 +368,18 @@ class RDFClass(object):
             setattr(self, p, jsonObj[p])
         setattr(self, "className", className)
     
-    def save(self, data):
-        '''validates and saves passed data for the class'''
+    def save(self,rdfForm,oldFormData):
+        '''validates and saves passed data for the class
         if not data:
-            raise ValueError("Save requires data dictionary")
-        validRequiredProps = self.__validateRequiredProperties(data)
-        validDependancies = self.__validateDependantProperties(data)
+            raise ValueError("Save requires data dictionary")'''
+        validRequiredProps = self.__validateRequiredProperties(rdfForm,oldFormData)
+        validDependancies = self.__validateDependantProperties(rdfForm,oldFormData)
+        saveData = self.__proccessClassData(rdfForm,oldFormData)
+        saveQuery = self.__generateSaveQuery(saveData)
+        return self.__runSaveQuery(saveQuery)
         print(json.dumps(validRequiredProps,indent=2))
         print(json.dumps(validDependancies,indent=2))
+
         
     def newUri(self):
         '''*** to be written ***
@@ -335,32 +388,41 @@ class RDFClass(object):
           -- for blazegraph process will need to be created'''
         print("generating new URI")
         
-    def validateFormData(self, formData):
+    def validateFormData(self, rdfForm, oldFormData):
         '''This method will validate whether the supplied form data 
            meets the class requirements and returns the results''' 
         validationSteps = {}   
-        validationSteps['validRequiredFields'] = self.__validateRequiredProperties(formData)
-        validationSteps['validPrimaryKey'] = self.validatePrimaryKey(formData)
-        validationSteps['validFieldData'] = self.__validatePropertyData(formData)
-        validationSteps['validSecurity'] =  self.__validateSecurity(formData)
+        validationSteps['validRequiredFields'] = self.__validateRequiredProperties(rdfForm,oldFormData)
+        validationSteps['validPrimaryKey'] = self.validatePrimaryKey(rdfForm,oldFormData)
+        validationSteps['validFieldData'] = self.__validatePropertyData(rdfForm,oldFormData)
+        validationSteps['validSecurity'] =  self.__validateSecurity(rdfForm,oldFormData)
         return validationSteps
         
-    def validatePrimaryKey(self, dataValue):
+    def validatePrimaryKey(self, rdfForm,oldFormData={}):
         '''query to see if PrimaryKey is Valid'''
+        
         returnVal = False #! This variable is never used
+        queryStr = ""
         try:
-            pkey = self.primaryKey
-            dataType = self.properties[self.findPropName(pkey)]['storageType']
-            if dataType == 'literal':
-                dataType = self.properties[self.findPropName(pkey)].get('range',dataType)
-            return self.__makeTriple(
-                    "?uri",
-                     "a",
-                     iri(self.classUri)) + self.__makeTriple("?uri", iri(pkey), rdf_datatype(dataType).sparql(dataValue))
+            pkey = makeList(self.primaryKey)
+            if len(pkey)<1:
+                return "valid"
+            else:
+                for key in pkey:
+                    dataType = self.properties[self.findPropName(key)]['storageType']
+                    if dataType == 'literal':
+                        dataType = self.properties[self.findPropName(key)].get('range',dataType)
+                        objectVal = RDFDataType(dataType).sparql(dataValue)
+                    else:
+                        objectVal = iri(dataValue)
+                    queryStr += makeTriple("?uri", iri(key), objectVal) +"\n"
+                queryStr = makeTriple("?uri","a",iri(self.classUri)) +"\n" + queryStr
+                print("----------- PrimaryKey query:\n",queryStr)
+                return "valid"
         except:
             pass
         else:
-            return "no primaryKey"
+            return "valid"
             
     def listRequired(self):
         '''Returns a dictionary of the required properties for the class'''
@@ -397,7 +459,7 @@ class RDFClass(object):
         returnObj = []
         for d in depandantList:
             rangeList = self.properties[d].get('range')
-            print(d,": ",rangeList)
+            #print(d,": ",rangeList)
             for r in rangeList: 
                 if r.get('storageType') == "object" or r.get('storageType') == "blanknode":
                     returnObj.append({"propName":d, "propUri":self.properties[d].get("propUri"), "classUri":r.get("rangeClass")})
@@ -448,13 +510,17 @@ class RDFClass(object):
         else:
             return dataValue
             
-    def __validateRequiredProperties (self,data):
+    def __validateRequiredProperties (self,rdfForm,oldData):
         '''Validates whether all required properties have been supplied and contain data '''
         returnError = []
         #create sets for evaluating requiredFields
         required = self.listRequired()
         dataProps = set()
-        for p in data:
+        for p in rdfForm:
+            #remove empty data properties from consideration
+            if IsNotNull(p['data']) or p['data'] != 'None':
+                dataProps.add(self.findPropName(p['fieldJson'].get("propUri")))
+        for p in oldData.get("queryData",{}):
             #remove empty data properties from consideration
             if IsNotNull(p['data']) or p['data'] != 'None':
                 dataProps.add(self.findPropName(p['fieldJson'].get("propUri")))
@@ -475,16 +541,16 @@ class RDFClass(object):
             returnVal =  ["valid"]
         return returnVal
             
-    def __validateDependantProperties(self, data):
+    def __validateDependantProperties(self, rdfForm,oldData):
         '''Validates that all supplied dependant properties have a uri as an object'''
         dep = self.listDependant()
         returnError = []
         dataProps = set()
-        for p in data:
+        for p in rdfForm:
             #remove empty data properties from consideration
-            if IsNotNull(data[p]):
-                dataProps.add(p)
-        for p in dep:
+            if IsNotNull(p['data']):
+                dataProps.add(self.findPropName(p['fieldJson'].get("propUri")))
+        '''for p in dep:
             dataValue = data.get(p)
             if (IsNotNull(dataValue)):
                 propDetails = self.properties[p]
@@ -501,16 +567,65 @@ class RDFClass(object):
                             "properties":propDetails.get('propUri')}})
         if len(returnError) > 0:
             return returnError
-        else:
-            return ["valid"]       
+        else:'''
+        return ["valid"]       
 
-    def __validatePropertyData(self,formData):
+    def __validatePropertyData(self,rdfForm,oldData):
         return ["valid"]
         
-    def __validateSecurity(self,formData):
+    def __validateSecurity(self,rdfForm,oldData):
         return ["valid"]
 
-
+    def __proccessClassData(self,rdfForm,oldData):
+        '''Reads through the processors in the defination and processes the data for saving'''
+        saveData={}
+        for prop in rdfForm:
+            classPropProccessors = makeList(self.getProperty(propUri=prop['fieldJson'].get("propUri")).get("propertyProccessors",[]))
+            propName = self.findPropName(prop.get('fieldJson',{}).get('propUri'))
+            dataType = self.properties[propName].get("range",[{}])[0].get('storageType')
+            if dataType == 'literal':
+                dataType = self.properties[propName].get("range",[{}])[0].get('rangeClass',dataType)
+                objectVal = RDFDataType(dataType).sparql(str(prop['data']))
+            else:
+                objectVal = iri(prop['data'])
+            saveData[propName] = objectVal
+        
+        return saveData
+        
+    def __generateSaveQuery(self,saveData,subjectUri=None):
+        if not subjectUri:
+            subjectUri="<>"
+        insertClause = ""
+        deleteClause = ""
+        whereClause = ""
+        propSet = set()
+        for prop in saveData:
+            propIri = iri(self.properties[prop].get("propUri"))
+            if isinstance(saveData[prop],list):
+                for item in saveData[prop]:
+                    insertClause += makeTriple(subjectUri,propIri,item) + "\n"
+            else:
+                insertClause += makeTriple(subjectUri,propIri,saveData.get(prop,"")) + "\n"
+            propSet.add(prop)
+        i = 1
+        if subjectUri != '<>':
+            for prop in propSet:
+                propIri = iri(self.properties[prop].get("propUri"))
+                deleteClause += makeTriple(subjectUri,propIri,"?"+str(i)) + "\n"
+                whereClause += makeTriple(subjectUri,propIri,"?"+str(i)) + "\n"
+                i += 1
+        else:
+            insertClause += makeTriple(subjectUri,"a",iri(self.classUri)) + "\n"
+        saveQuery = get_framework().getPrefix() +''' 
+        DELETE { ''' + deleteClause + ''' }
+        INSERT { ''' + insertClause + ''' }
+        WHERE { ''' + whereClause + ''' }'''
+        print(saveQuery)
+        return saveQuery
+        
+    def __runSaveQuery(self,saveQuery):
+        return "savingClass"
+    
     def findPropName (self,propUri):
         "cycle through the class properties object to find the property name"
         #print(self.properties)
@@ -527,7 +642,6 @@ class RDFClass(object):
             return self.iri(dataValue)
         else:
             return dataValue
-
 
 class RDFDataType(object):
     "This class will generate a rdf data type"
@@ -562,7 +676,6 @@ class RDFDataType(object):
         else:
             return '"{}"^^{}'.format(dataValue, self.prefix)
     
-#! Should we test to see if uriString is a valid IRI?
 def iri(uriString):
     "converts a string to an IRI or returns an IRI if already formated"
     if uriString[:1] != "<":
@@ -572,7 +685,7 @@ def iri(uriString):
     return uriString
 
 def IsNotNull(value):
-    return value is not None and len(value) > 0
+    return value is not None and len(str(value)) > 0
     
 def IsValidObject(uriString):
     '''Test to see if the string is a object store'''
@@ -594,13 +707,42 @@ def EmailVerificationProccessor():
     '''Application application initiates a proccess to verify the email address is a valid working address.'''
     return "not developed"
     
-def PasswordProccessor():
-    '''Application should proccess as a password for storage. i.e. salting and hashing'''
-    return "not developed"
+def PasswordProccessor(mode,rdfClassProps,classData,passwordField,password=None,saltField=None):
+    '''handles application password actions
+        mode options:
+            generate: Application should proccess as a password for storage. i.e. salting and hashing
+            verify: verifies the if the supplied password is correct
+            change: changes the current password
+    '''
+    if not saltField:
+        for prop in rdfClassProps:
+            if "http://knowledgelinks.io/ns/data-resources/SaltProccessor" in makeList(prop.get("propertyProccessing",[])):
+                saltField = prop.get("propUri")
+                break
+    if mode == "generate":
+        if IsNotNull(classData.get(saltField)) or classData.get(saltField)!='None':
+            salt = classData.get(saltField)
+        else:
+            salt = SaltProccessor()
+            classData[saltField] = salt
+        if IsNotNull(password) or password!='None':
+            hash = sha256_crypt.encrypt(classData.get(passwordField)+salt)
+        else:
+            return "no password supplied"
+        if sha256_crypt.verify((classData.get(passwordField)+salt), hash):
+            classData[passwordField] = hash
+    elif mode == "verify":
+        return sha256_crypt.verify(password+classData.get(saltField), classData.get(passwordField))
+    return classData
     
-def SaltProccessor():
-    '''Application should generate a random Salt value to store.'''
-    return "not developed"
+def SaltProccessor(length=16):
+    '''Generates a random string for salting'''
+    ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    chars=[]
+    for i in range(length):
+        chars.append(random.choice(ALPHABET))
+    
+    return "".join(chars)
     
 def CalculationProccessor(data):
     '''Application should proccess the property according to the rules listed int he kds:calulation property.'''
@@ -625,7 +767,7 @@ def getWtFormField(field):
     elif fieldType == 'kdr:TextAreaField':
         form_field = TextAreaField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:PasswordField':
-        print("!!!! Mode: ",fieldTypeObj.get('fieldMode'))
+        #print("!!!! Mode: ",fieldTypeObj.get('fieldMode'))
         fieldMode = fieldTypeObj.get('fieldMode','').replace("http://knowledgelinks.io/ns/data-resources/","")
         if fieldMode == "InitialPassword":   
             form_field = [
@@ -639,14 +781,13 @@ def getWtFormField(field):
                             {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter")}
                          ]
         elif fieldMode == "LoginPassword":
-            print("entered login mode")
             form_field = PasswordField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:BooleanField':
         form_field = BooleanField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:FileField':
         form_field = FileField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:DateField':
-        form_field = DateField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
+        form_field = DateField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''), format='%m/%d/%Y')
     elif fieldType == 'kdr:DateTimeField':
         form_field = DateTimeField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:SelectField':
@@ -680,7 +821,7 @@ def getWtValidators(field):
             fieldValidators.append(URL(message='Enter a valid URL/web address'))
         if vType ==  'kdr:UniqueValueValidator':
             #fieldValidators.append(UniqueDatabaseCheck(message='The Value enter is already exists'))
-            print("need to create uniqvalue validaotr")
+            print("need to create uniquevalue validator")
         if vType ==  'kdr:StringLengthValidator':
             p = v.get('parameters')
             p1 = p.split(',')
@@ -770,7 +911,7 @@ def getFormInstructionJson (instructions,instance):
     '''This function will read through the RDF defined info and proccess the json to retrun the correct values the instance of the form an instructions'''
     
     rdfApp = get_framework().rdf_app_dict['application']
-    print("inst------",instructions) 
+    #print("inst------",instructions) 
 # get form instance info 
     formInstanceInfo = {}
     formInstanceTypeList = makeList(instructions.get('formInstance',[]))
@@ -778,7 +919,7 @@ def getFormInstructionJson (instructions,instance):
         if f.get('formInstanceType') == instance:
             formInstanceInfo = f
     nInstr = {}
-    print("------",formInstanceInfo)    
+    #print("------",formInstanceInfo)    
 #Determine the form paramaters
     nInstr['formTitle'] = formInstanceInfo.get('formTitle',instructions.get("formTitle",""))
     nInstr['formDescription'] = formInstanceInfo.get('formDescription',instructions.get("formDescription",""))
@@ -848,7 +989,17 @@ def getFieldSecurityAccess(field,userInfo,itemPermissions=[]):
         return set()
         
                
-def rdf_framework_form_factory(name,instance):
+def rdf_framework_form_factory(name,instance='',**kwargs):
+    '''Generates a form class based on the form definitions in the kds-app.ttl file
+    
+    keyword Args:
+        classUri: the classUri used for a form with loaded data
+                   ***** has to be the class of the subjectUri for the form data lookup
+        subjectUri: the uri of the object that you want to lookup
+    '''
+    lookupClassUri = kwargs.get("classUri")
+    lookupSubjectUri = kwargs.get("subjectUri")
+    
     rdf_form = type(name, (Form, ), {})
     appForm = get_framework().rdf_form_dict.get(name,{})
     fields = appForm.get('properties')
@@ -894,7 +1045,9 @@ def rdf_framework_form_factory(name,instance):
     setattr(rdf_form, 'rdfFormInfo', appForm)
     setattr(rdf_form, "rdfInstructions", instructions)
     setattr(rdf_form, "rdfFieldList", list.copy(fieldList))
-    setattr(rdf_form, "rdfInstance", instance)    
+    setattr(rdf_form, "rdfInstance", instance)
+    setattr(rdf_form, "dataClassUri", lookupClassUri)
+    setattr(rdf_form, "dataSubjectUri", lookupSubjectUri)    
     return rdf_form
     #return rdf_form
     
@@ -961,7 +1114,7 @@ def loadFormSelectOptions(rdfForm):
         for fld in row:
             if fld.get('fieldType',{}).get('type',"") == 'http://knowledgelinks.io/ns/data-resources/SelectField':
                 options = querySelectOptions(fld)
-                print("oooooooo\n",options)
+                #print("oooooooo\n",options)
                 fldName = fld.get('formFieldName',None)
                 getattr(rdfForm,fldName).choices = [(o['id'], o['value']) for o in options]
     return rdfForm
