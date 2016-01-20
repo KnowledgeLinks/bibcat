@@ -833,8 +833,8 @@ def getWtValidators(field):
     return fieldValidators
       
 def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
-    '''This function will read through the RDF defined info and proccess the json to retrun the correct values for the instance, security and details'''
-    
+    '''This function will read through the RDF defined info and proccess the
+	json to retrun the correct values for the instance, security and details'''
     rdfApp = get_framework().rdf_app_dict['application']
     instance = instance.replace(".html","")
     # Determine Security Access

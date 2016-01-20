@@ -5,9 +5,9 @@ import json
 import requests
 import re
 from flask import abort, Blueprint, jsonify, render_template, Response, request
-from flask import redirect, url_for
+from flask import current_app, redirect, url_for
 from flask_negotiate import produces
-from flask.ext.login import login_required, login_user
+from flask.ext.login import login_required, login_user, current_user
 
 from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
@@ -144,7 +144,7 @@ BIND (URI(CONCAT("http://localhost:8080/fedora/rest/",SUBSTR(?uid, 1,2),"/",SUBS
 
 
 @open_badge.route("/BadgeClass/", methods=["POST", "GET"])
-#@login_required
+@login_required
 def add_badge_class():
     """Displays Form for adding a BadgeClass Form"""
     badge_class_form = NewBadgeClass()
@@ -279,9 +279,11 @@ def login_user_view():
     if request.method.startswith("POST"):
         form = login_form(request.form)
         val = form.validate()
-        #username = request.form.get("userName")
-        #pwd = request.form.get("password")
-        login_user(User())
+        username = request.form.get("username")
+        pwd = request.form.get("password")
+        user = User(username=username)
+        login_user(user, remember=True)
+        redirect("/")
     else:
         form = login_form()
     return render_template(
