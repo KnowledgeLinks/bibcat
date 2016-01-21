@@ -3,17 +3,17 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import json
 import requests
-import re
 from flask import abort, Blueprint, jsonify, render_template, Response, request
-from flask import current_app, redirect, url_for
+from flask import redirect, url_for
 from flask_negotiate import produces
-from flask.ext.login import login_required, login_user, current_user
+from flask.ext.login import login_required, login_user
 
 from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from .utilities import render_without_request
-from .rdfframework import rdf_framework_form_factory, loadFormSelectOptions, get_framework
+from .rdfframework import rdf_framework_form_factory, loadFormSelectOptions
+from .rdfframework import get_framework
 from .user import User
 
 open_badge = Blueprint("open_badge", __name__,
@@ -126,8 +126,8 @@ def badge_assertion(uuid):
         uri_sparql_select="""
 BIND ("{}" AS ?uid) .
 BIND (URI(CONCAT("http://localhost:8080/fedora/rest/",SUBSTR(?uid, 1,2),"/",SUBSTR(?uid, 3,2),
-"/",SUBSTR(?uid, 5,2),"/",SUBSTR(?uid, 7,2),"/",?uid)) AS ?uri) .""".format(
-                uuid),
+"/",SUBSTR(?uid, 5,2),"/",SUBSTR(?uid, 7,2),"/",?uid)) AS ?uri) ."""\
+        .format(uuid),
         object_type="Assertion")
     assertion_response = requests.post(
         open_badge.config.get('TRIPLESTORE_URL'),
@@ -246,6 +246,12 @@ def badge_issuer_organization():
 @open_badge.route("/BadgeImage/<badge>.png")
 @open_badge.route("/AssertionImage/<uid>.png")
 def badge_image(badge=None, uid=None):
+    """View displays either a Badge class image or an individual assertion
+
+    args:
+	    badge -- Badge name, defaults to None
+        uid -- Unique ID of assertion badge image, defaults to None
+    """
     if uid is not None:
         assertion_url = "http://localhost:8080/fedora/rest/{0}/{1}/{2}/{3}/{4}"\
                        .format(
@@ -281,7 +287,7 @@ def login_user_view():
         val = form.validate()
         username = request.form.get("username")
         pwd = request.form.get("password")
-        user = User(username=username)
+        user = User(username=username, password=pwd)
         login_user(user, remember=True)
         redirect("/")
     else:
@@ -309,18 +315,22 @@ def user_rdf_class(form_instance):
     if request.method == "POST":
         form = form_class(request.form)
         val = form.validate()
-        formData = get_framework().saveForm(form)
-        return "<pre>" + json.dumps(formData,indent=4) + "</pre>"
+        form_data = get_framework().saveForm(form)
+        return "<pre>{}</pre>".format(json.dumps(form_data, indent=4))
     else:
         form = form_class()
     return render_template(
         "app_form_template.html",
-        actionUrl=url_for("open_badge.user_rdf_class", form_instance=form_instance),
+        actionUrl=url_for(
+            "open_badge.user_rdf_class",
+            form_instance=form_instance),
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         validated=val)
 
-@open_badge.route("/badgeTestForm/<form_instance>.html", methods=["POST", "GET"])
+@open_badge.route(
+    "/badgeTestForm/<form_instance>.html",
+    methods=["POST", "GET"])
 def badge_rdf_class(form_instance):
     """View for displaying a badge Test form
 
@@ -339,17 +349,16 @@ def badge_rdf_class(form_instance):
         #print("----- image data: ",form.imageOptions_image.data.read())
         
         val = form.validate()
-        '''elif request.method == "GET":
-        if len(request.args) > 0:'''
-            #form = f(request.form,getFormData(f.fieldList,request.args))
-        formData = get_framework().saveForm(form)
-        return "<pre>" + json.dumps(formData,indent=4) + "</pre>"
+        form_data = get_framework().saveForm(form)
+        return "<pre>{}</pre>".format(json.dumps(form_data, indent=4))
     else:
         #form = form_class()
         form = loadFormSelectOptions(form)  
     return render_template(
         "app_form_template.html",
-        actionUrl=url_for("open_badge.badge_rdf_class", form_instance=form_instance),
+        actionUrl=url_for(
+            "open_badge.badge_rdf_class",
+            form_instance=form_instance),
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         validated=val)
@@ -374,7 +383,9 @@ def assertion_rdf_class(form_instance):
     form = loadFormSelectOptions(form)
     return render_template(
         "app_form_template.html",
-        actionUrl=url_for("open_badge.assertion_rdf_class", form_instance=form_instance),
+        actionUrl=url_for(
+            "open_badge.assertion_rdf_class",
+            form_instance=form_instance),
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         validated=val)
@@ -382,15 +393,24 @@ def assertion_rdf_class(form_instance):
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
-    x=y
-    return "<pre>" + json.dumps({"message": "test rdf class"}) + "</pre>"
+    return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
-@open_badge.route("/rdfjson/", methods=["POST", "GET"]) 
+RDF_CLASS_JSON = '''<table>
+  <tr>
+    <td><h1>RDF Class JSON</h1></td>
+	<td><h1>Form Json</h1></td>
+  </tr>
+  <tr>
+    <td style='vertical-align:top'><pre>{0}</pre></td>
+	<td style='vertical-align:top'><pre>{1}<</pre></td>
+  </tr>
+</table>'''
+
+@open_badge.route("/rdfjson/", methods=["POST", "GET"])
 def form_rdf_class():
-    f = get_framework().rdf_form_dict
-    c = get_framework().rdf_class_dict
-    return '''<table>
-                <tr><td><h1>RDF Class JSON</h1></td><td><h1>Form Json</h1></td></tr>
-                <tr><td style='vertical-align:top'><pre>''' + json.dumps(c,indent=2) + "</pre></td><td style='vertical-align:top'><pre>" + json.dumps(f,indent=2) +'''</pre></td></tr>
-              </table>'''
-    
+    """View displays the RDF json"""
+    form_dict = get_framework().rdf_form_dict
+    class_dict = get_framework().rdf_class_dict
+    return RDF_CLASS_JSON.format(
+        json.dumps(class_dict, indent=2),
+        json.dumps(form_dict, indent=2))

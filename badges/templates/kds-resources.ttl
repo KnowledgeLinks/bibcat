@@ -66,11 +66,11 @@
 		
 	kdr:PasswordProcessor a kds:PropertyProcessor;
 		rdfs:label "Password Processor";
-		rdfs:comment "Application should proccess as a password for storage. i.e. salting and hashing".
+		rdfs:comment "Application should process as a password for storage. i.e. salting and hashing".
 
 	kdr:CalculationProcessor a kds:PropertyProcessor;
 		rdfs:label "Calculation Processor";
-		rdfs:comment "Application should proccess the property according to the rules listed int he kds:calulation property." .
+		rdfs:comment "Application should process the property according to the rules listed int he kds:calulation property." .
 
 	kdr:CSVstringToMultiPropertyProcessor a kds:PropertyProcessor;
 		rdfs:label "CSV to Properties";
@@ -82,7 +82,7 @@
 	
 	kdr:EmailVerificationProcessor a kds:PropertyProcessor;
 		rdfs:label "Email Verifier";
-		rdfs:comment "Application application initiates a proccess to verify the email address is a valid working address." .
+		rdfs:comment "Application application initiates a process to verify the email address is a valid working address." .
 
 # Validators ***********************************************	
 		
