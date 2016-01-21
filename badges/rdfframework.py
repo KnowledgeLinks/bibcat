@@ -9,7 +9,7 @@ from flask import current_app, json
 from jinja2 import Template
 from .utilities import render_without_request
 from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
-from werkzeug.datastructures import FileStorage #need this for testing if form data is an instance of
+from werkzeug.datastructures import FileStorage #need this for testing if form data is an instance of FileStorage
 from passlib.hash import sha256_crypt
 
 try:
@@ -147,7 +147,7 @@ class RDFFramework(object):
                                 ns.get('prefix'),
                                 iri(ns.get('nameSpaceUri')))
             elif formatType.lower() == "turtle":
-                returnStr += "@prefix {0}: {1}\n".format(
+                returnStr += "@prefix {0}: {1} .\n".format(
 			                   ns.get('prefix'),
                                iri(ns.get('nameSpaceUri'))) 
         return returnStr
@@ -326,7 +326,7 @@ class RDFFramework(object):
                         "\t"+ makeTriple("?classID",iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")'''
                         
         # merge the sparql elements for each class used into one combine sparql union statement
-        sparqlUnions = "{\n"+"\n} UNION {\n".join(sparqlElements) +"\n}"
+        sparqlUnions = "{{\n{}\n}}".format("\n} UNION {\n".join(sparqlElements))
         
         # render the statment in the jinja2 template
         sparql = render_without_request(
@@ -397,7 +397,7 @@ class RDFClass(object):
         """Method validates and saves passed data for the class
 
         Args:
-            rdf_form -- Current RDF Form
+            rdf_form -- Current RDF Form class fields
             old_form_data -- Preexisting form data
         """
         validRequiredProps = self.__validateRequiredProperties(
@@ -447,8 +447,8 @@ class RDFClass(object):
                         objectVal = RDFDataType(dataType).sparql(dataValue)
                     else:
                         objectVal = iri(dataValue)
-                    queryStr += makeTriple("?uri", iri(key), objectVal) +"\n"
-                queryStr = makeTriple("?uri","a",iri(self.classUri)) +"\n" + queryStr
+                    queryStr += "{}\n".format(makeTriple("?uri", iri(key), objectVal))
+                queryStr = "{}\n{}".format(makeTriple("?uri","a",iri(self.classUri)),queryStr)
                 print("----------- PrimaryKey query:\n",queryStr)
                 return "valid"
         except:
@@ -498,7 +498,7 @@ class RDFClass(object):
                     return_obj.append(
                        {"propName": dep, 
                         "propUri": self.properties[dep].get("propUri"), 
-                        "classUri": rpw.get("rangeClass")})
+                        "classUri": row.get("rangeClass")})
         return return_obj
         
     def __makeTriple (self, sub, pred, obj):
@@ -684,10 +684,10 @@ class RDFClass(object):
             if isinstance(saveData[prop],list):
                 for item in saveData[prop]:
                     insertClause += makeTriple(subjectUri,propIri,item) + "\n"
-                    bnInsertClause.append("\t" + propIri + " " + item)
+                    bnInsertClause.append("\t{} {}".format(propIri,item))
             else:
                 insertClause += makeTriple(subjectUri,propIri,saveData.get(prop,"")) + "\n"
-                bnInsertClause.append("\t" + propIri + " " + saveData.get(prop,""))
+                bnInsertClause.append("\t{} {}".format(propIri,saveData.get(prop,"")))
             propSet.add(prop)
         i = 1
         if subjectUri != '<>':
@@ -698,37 +698,41 @@ class RDFClass(object):
                 i += 1
         else:
             insertClause += makeTriple(subjectUri,"a",iri(self.classUri)) + "\n"
-            bnInsertClause.append("\t a " + iri(self.classUri))
+            bnInsertClause.append("\t a {}".format(iri(self.classUri)))
         if saveType == "blanknode":
-            saveQuery = "[\n" + ";\n".join(bnInsertClause) + "\n]"
+            saveQuery = "[\n{}\n]".format(";\n".join(bnInsertClause))
         else:
-            save_query_template = Template("""{{ prefix }}
-DELETE {
+            if subjectUri != '<>':
+                save_query_template = Template("""{{ prefix }}
+DELETE \n{
 {{ deleteClause }} }
-INSERT {
+INSERT \n{
 {{ insertClause }} }
-WHERE {
+WHERE \n{
 {{ whereClause }} }""")
-            saveQuery = save_query_template.render(
-                prefix=get_framework().getPrefix(), 
-                deleteClause=deleteClause,
-				insertClause=insertClause,
-				whereClause=whereClause)
+                saveQuery = save_query_template.render(
+                    prefix=get_framework().getPrefix(), 
+                    deleteClause=deleteClause,
+    				insertClause=insertClause,
+    				whereClause=whereClause)
+            else:
+                saveQuery = "{}\n\n{}".format(get_framework().getPrefix("turtle"),insertClause)
         print(saveQuery)
         return saveQuery
         
-    def __runSaveQuery(self, saveQuery):
+    def __runSaveQuery(self, saveQuery,subjectUri=None):
         if saveQuery[:1] == "[":
             object_value = saveQuery
         else:
             #! Should use PATCH if fedora object already exists, otherwise need 
             #! to use POST method. Should try to retrieve subject URI from 
             #! Fedora?
-            repository_result = request.post(
-                current_app.config.get("FEDORA_REST_URL"),
-                data=saveQuery,
-				headers={"Content-type": "text/turtle"})
-            object_value = repository_result.text
+            if not subjectUri:
+                repository_result = requests.post(
+                    current_app.config.get("REPOSITORY_URL"),
+                    data=saveQuery,
+    				headers={"Content-type": "text/turtle"})
+                object_value = repository_result.text
         return {"status": "success",
                 "lastSave": {
                     "objectValue": object_value}
@@ -761,6 +765,8 @@ class RDFDataType(object):
                 replace("xsd:","").\
                 replace("rdf:","").\
                 replace(str(RDF),"")
+        if "http" in val:
+            val = "string"
         self.prefix = "xsd:{}".format(val)
         self.iri = iri("{}{}".format(str(XSD), val))
         self.name = val
@@ -789,9 +795,9 @@ def iri(uriString):
     if uriString[:1] == "[":
         return uriString
     if uriString[:1] != "<":
-        uriString = "<" + uriString.strip()
+        uriString = "<{}".format(uriString.strip())
     if uriString[len(uriString)-1:] != ">":
-        uriString = uriString.strip() + ">"
+        uriString = "{}>".format(uriString.strip()) 
     return uriString
 
 def IsNotNull(value):
@@ -809,12 +815,13 @@ def AssertionImageBakingProcessor():
     '''Application sends badge image to the a badge baking service with the assertion.'''
     return "not developed"
     
-def CSVstringToMultiPropertyProcessor(data, propUri, subjectUri, g):
+def CSVstringToMultiPropertyProcessor(mode, data, propUri, subjectUri, g):
     '''Application takes a CSV string and adds each value as a seperate triple to the class instance.'''
-    vals = data.split(',')
-    returnTriple = IRI(subjectUri)
-    for v in vals:
-        returnTriple += "\n " + IRI(propUri) + ""
+    if mode == "to-rdf":
+        vals = list(makeSet(makeList(data.split(','))))
+        for i, v in enumerate(vals):
+            v[i] = '"{}"^^xsd:string'.format(v[i])
+        
     return ""
     
 def EmailVerificationProcessor():
@@ -1209,17 +1216,7 @@ def get_framework(reset=False):
     return rdf
     
 def querySelectOptions(field):
-    prefix = '''
-        prefix acl: <http://www.w3.org/ns/auth/acl#> 
-        prefix foaf: <http://xmlns.com/foaf/0.1/> 
-        prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
-        prefix kdr: <http://knowledgelinks.io/ns/data-resources/> 
-        prefix obi: <https://w3id.org/openbadges#> 
-        prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
-        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-        prefix schema: <https://schema.org/> 
-        prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-    '''
+    prefix = get_framework().getPrefix()
     selectQuery = field.get('fieldType',{}).get('selectQuery',None)
     selectList = {}
     options = []

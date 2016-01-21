@@ -414,3 +414,38 @@ def form_rdf_class():
     return RDF_CLASS_JSON.format(
         json.dumps(class_dict, indent=2),
         json.dumps(form_dict, indent=2))
+        
+@open_badge.route(
+    "/organization/<form_instance>.html",
+    methods=["POST", "GET"])
+def organization_rdf_class(form_instance):
+    """View for displaying a badge Test form
+
+    Args:
+        form_instance -- Type of form (new, edit)
+    """
+    form_class = rdf_framework_form_factory(
+        "OrganizationForm",
+        'http://knowledgelinks.io/ns/data-resources/'+form_instance)
+    val = None
+    form = form_class()
+    form = loadFormSelectOptions(form)
+    if request.method == "POST" and form.validate():
+        print("***** request.form ****\n", request.form)
+        
+        #print("----- image data: ",form.imageOptions_image.data.read())
+        
+        val = form.validate()
+        form_data = get_framework().saveForm(form)
+        return "<pre>{}</pre>".format(json.dumps(form_data, indent=4))
+    else:
+        #form = form_class()
+        form = loadFormSelectOptions(form)  
+    return render_template(
+        "app_form_template.html",
+        actionUrl=url_for(
+            "open_badge.organization_rdf_class",
+            form_instance=form_instance),
+        form=form,
+        jsonFields=json.dumps(form.rdfFieldList, indent=4),
+        debug=True)

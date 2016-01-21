@@ -510,6 +510,24 @@ schema:Organization a rdf:Class;
 		kds:lookupReturnField schema:name
 	] .
 	
+schema:url a rdf:Property;
+	rdfs:domain	schema:Organization;	
+	rdfs:range	schema:URL;	
+	rdfs:comment "url for the item";	
+	kds:requiredByDomain schema:Organization;
+	kds:jsonDefault [
+		kds:jsonObjName "url";
+		kds:jsonValFormat "objectValue"
+	];
+	kds:formDefault [
+		kds:formFieldName "website";
+		kds:formLabelName "Web Address";
+		kds:formFieldHelp "Enter the web address in 'http...' format.";
+		kds:fieldType [
+			a	kdr:UrlField; 
+		];
+	] .
+	
 schema:ImageObject a rdf:Class;
 	a kds:ControlledClass ;
 	kds:storageType "object".
@@ -765,6 +783,40 @@ obi:LoginForm a kds:FormClass;
 			a kdr:PasswordField;
 			kds:fieldMode kdr:LoginPassword
 		] 
+	].
+
+obi:OrganizationForm a kds:FormClass;
+	rdfs:label "Organization Form";
+	rdfs:comment "Form used for CRUD operations for an organization.";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:formTitle "Create/edit an organization";
+		kds:formDescription "Organization infomation";
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:formTitle "New Organization";
+			kds:formDescription "Create a new organization"
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formDescription "Edit organization information."
+		]
+	];
+	kds:hasProperty [
+		kds:propUri schema:name;
+		kds:classUri schema:Organization;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1;
+		kds:formFieldName "orgname";
+		kds:formLabelName "Organization Name";
+		kds:formFieldHelp "Enter the official name of the organization";
+	] ;
+	kds:hasProperty [
+		kds:propUri schema:url;
+		kds:classUri schema:Organization;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 2
 	].
 
 

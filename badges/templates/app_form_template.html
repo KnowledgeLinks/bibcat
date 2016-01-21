@@ -3,6 +3,7 @@
 {% block head_title %}{% if name %}{{ name }}{% endif %} User Classes{% endblock %}
 
 {% block main %}
+{% if not debug %}{% set debug = False %}{% endif %}
 <div class="container">
 	<div class="row">
 		<section class="col-md-12">
@@ -11,8 +12,9 @@
 					<h3 class="panel-title">{{ form.rdfInstructions['formTitle'] }}</h3>
 				</div>
 				<div class="panel-body">
-					<p class="lead">{{ form.rdfInstructions['formDescription'] }} VALIDATED: {{ validated }}</p>
+					<p class="lead">{{ form.rdfInstructions['formDescription'] }}</p>
 					<form class="{{ form.rdfInstructions['formCss'] }}" method="{{ form.rdfInstructions['form_Method'] }}" action="{{ actionUrl }}" enctype="multipart/form-data">
+						{{form.hidden_tag()}}
 						{% for row in form.rdfFieldList %}
 						<div class="row {{ form.rdfInstructions['rowCss'] }}">
 							{% for fld in row %}
@@ -29,7 +31,7 @@
 							    <ul class="help-block">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
 							    
 							    {% endif %}	
-							    <div>{{ field.__dict__ }}</div>							
+							    {% if debug %}<div>{{ field.__dict__ }}</div>	{% endif %}						
 								</div>
 							</section>
 							{% endfor %}
@@ -45,7 +47,7 @@
 			</div>
 		</section>
 	</div>
-	<pre>{{ jsonFields }}</pre>
+	{% if debug %}<pre>{{ jsonFields }}</pre>{% endif %}
 <div>
 
 {% endblock %}
