@@ -396,13 +396,13 @@ schema:image a rdf:Property;
 	rdfs:range	schema:URL;
 	kds:requiredByDomain obi:BadgeClass;
 	kds:requiredByDomain obi:Assertion;
-	kds:propertyProccessing [
+	kds:propertyProcessing [
 		kds:appliesTo obi:BadgeClass;
-		kds:propertyProccessing kdr:BadgeImageBakingProccessor
+		kds:propertyProcessing kdr:BadgeImageBakingProcessor
 	];
-	kds:propertyProccessing [
+	kds:propertyProcessing [
 		kds:appliesTo obi:Assertion;
-		kds:propertyProccessing kdr:AssertionImageBakingProccessor
+		kds:propertyProcessing kdr:AssertionImageBakingProcessor
 	];
 	rdfs:comment "Image of the item.";	
 	kds:json [ 
@@ -458,7 +458,7 @@ schema:alternativeName a rdf:Property;
 	rdfs:domain	obi:BadgeClass;
 	rdfs:range	xsd:string;
 	kds:requiredByDomain obi:BadgeClass;
-	kds:propertyProccessing kds:CalculationProccessor;
+	kds:propertyProcessing kds:CalculationProcessor;
 	kds:calculation "slugify(schema:name)" .
 	
 	
@@ -478,7 +478,7 @@ obi:tags a rdf:Property;
 	rdfs:domain	obi:BadgeClass;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "Tags for the badges.";
-	kds:propertyProccessing kdr:CSVstringToMultiPropertyProccessor;
+	kds:propertyProcessing kdr:CSVstringToMultiPropertyProcessor;
 	kds:jsonDefault [
 		kds:jsonObjName "tags";
 		kds:jsonValFormat "multiValArray"
@@ -584,7 +584,7 @@ schema:email a rdf:Property;
 	rdfs:domain	schema:Person;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "email address.";
-	kds:propertyProccessing kdr:EmailVerificationProccessor;                   
+	kds:propertyProcessing kdr:EmailVerificationProcessor;                   
 	kds:requiredByDomain schema:Person;
 	kds:propertyValidation [
 		a kdr:EmailValidator
@@ -608,7 +608,7 @@ schema:email a rdf:Property;
 
 kds:userName a rdf:Property;	
 	rdfs:domain	kds:UserClass;	
-	rdfs:range rdfs:string;	
+	rdfs:range xsd:string;	
 	rdfs:comment "Individual's username.";	           
 	kds:requiredByDomain kds:UserClass;
 	kds:propertyValidation [
@@ -637,7 +637,7 @@ kds:salt a rdf:Property;
 	# rdfs:range	xsd:string;	stated in vocab
 	kds:requiredByDomain kds:PasswordClass;
 	kds:requiredByDomain obi:Assertion;
-	kds:propertyProccessing kdr:SaltProccessor;
+	kds:propertyProcessing kdr:SaltProcessor;
 	kds:propertySecurity [
 		kds:appliesTo kds:PasswordClass;
 		acl:agent kdr:Self-SG;
@@ -655,7 +655,7 @@ kds:salt a rdf:Property;
 	];
 	kds:formDefault [
 		kds:fieldType kdr:ServerField;
-		kds:fieldProccessing "salt"
+		kds:fieldProcessing "salt"
 	];
 	kds:formFieldName "salt".
 	
@@ -666,7 +666,7 @@ kds:password
 	kds:propertyValidation [
 		a kdr:PasswordValidator 
 	];
-	kds:propertyProccessing  kdr:PasswordProccessor;
+	kds:propertyProcessing  kdr:PasswordProcessor;
 	kds:jsonDefault [
 		kds:jsonObjName "password";
 		kds:jsonValFormat "objectValue"

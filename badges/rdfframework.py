@@ -2,6 +2,7 @@ from flask import current_app, json
 from .utilities import render_without_request
 import requests
 from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
+from werkzeug.datastructures import FileStorage #need this for testing if form data is an instance of
 import random
 from passlib.hash import sha256_crypt
 try:
@@ -83,7 +84,7 @@ class RDFFramework(object):
          - group fields by class
          - validate the form data for class requirements
          - determine the class save order. classes with no dependant properties saved first
-         - send data to classes for proccessing
+         - send data to classes for processing
          - send data to classes for saving
          '''
         # group fields by class
@@ -301,21 +302,24 @@ class RDFFramework(object):
                     sparqlElements.append(
                         "\t" +baseSubjectFinder + "\n " +
                         "\t"+ makeTriple("?classID",iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")
-                '''**** The case where an ID looking up a the triples for a non-linked related is not functiong
+                '''**** The case where an ID looking up a the triples for a non-linked related is not functioning
                     i.e. password ClassID not looking up person org triples if the org class is not used in the form.
-                    This ma not be a problem ... the below comment out is a start to solving if it is a problem
+                    This may not be a problem ... the below comment out is a start to solving if it is a problem
+                    
                     elif linkedClass != self.getClassName(prop.get("classUri")):
                     sparqlElements.append(
                         "\t" +baseSubjectFinder + "\n " +
                         "\t"+ makeTriple("?classID",iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")'''
+                        
         # merge the sparql elements for each class used into one combine sparql union statement
         sparqlUnions = "{\n"+"\n} UNION {\n".join(sparqlElements) +"\n}"
         
         # render the statment in the jinja2 template
         sparql = render_without_request(
             "jsonItemTemplate.rq",
+            prefix = self.getPrefix(),
             query = sparqlUnions) 
-        
+        print (sparql)
         # query the triplestore
         formDataQuery =  requests.post( 
             current_app.config.get('TRIPLESTORE_URL'),
@@ -585,20 +589,50 @@ class RDFClass(object):
 
     def __proccessClassData(self,rdfForm,oldData):
         '''Reads through the processors in the defination and processes the data for saving'''
+        preSaveData={}
         saveData={}
         for prop in rdfForm:
-            classPropProccessors = makeList(self.getProperty(propUri=prop['fieldJson'].get("propUri")).get("propertyProccessors",[]))
+            print("propType---",type(prop['data']))
+            if IsNotNull(preSaveData.get(prop.get('fieldJson',{}).get('propUri'))):
+                if IsNotNull(prop['data']) and not isinstance(preSaveData.get(prop.get('fieldJson',{}).get('propUri')),FileStorage):
+                    preSaveData[prop.get('fieldJson',{}).get('propUri')] = prop['data']
+            else:
+                preSaveData[prop.get('fieldJson',{}).get('propUri')] = prop['data']        
+        print("pre save data *********\n",preSaveData)
+        for prop in rdfForm:
+            doNotSave = prop['fieldJson'].get("doNotSave",False)
+            if not doNotSave:
+                classProp = self.getProperty(propUri=prop['fieldJson'].get("propUri"))
+                classPropProcessors = set(self.__cleanProcessors(makeList(classProp.get("propertyProcessing"))))
+                formPropProcessors = set(self.__cleanProcessors(makeList(prop['fieldJson'].get("processors"))))
+                processors = classPropProcessors.union(formPropProcessors)
+                for processor in processors:
+                    x=1
+                    #saveData = run_processor(processor,propUri,rdfForm,oldData,saveData)
+            if len(processors)>0:
+                print("---",prop['fieldJson'].get("propUri"),": ",processors)
+        for prop in rdfForm:
             propName = self.findPropName(prop.get('fieldJson',{}).get('propUri'))
             dataType = self.properties[propName].get("range",[{}])[0].get('storageType')
             if dataType == 'literal':
                 dataType = self.properties[propName].get("range",[{}])[0].get('rangeClass',dataType)
                 objectVal = RDFDataType(dataType).sparql(str(prop['data']))
             else:
-                objectVal = iri(prop['data'])
+                if not isinstance(prop['data'],FileStorage):
+                    objectVal = iri(prop['data'])
             saveData[propName] = objectVal
         
         return saveData
-        
+    def __cleanProcessors(self,processorList):
+        ''' some of the processors are stored as objects and need to retrun them as a list of string names'''
+        returnList = []
+        for item in processorList:
+            if isinstance(item,dict):
+                returnList.append(item.get("propertyProcessing"))
+            else:
+                returnList.append(item)
+        return returnList
+            
     def __generateSaveQuery(self,saveData,subjectUri=None):
         if not subjectUri:
             subjectUri="<>"
@@ -718,12 +752,16 @@ def IsNotNull(value):
 def IsValidObject(uriString):
     '''Test to see if the string is a object store'''
     return True
-    
-def AssertionImageBakingProccessor():
+def run_processor(processor,prop,rdfForm,oldData,saveData):
+    '''runs the passed in processor and returns the saveData'''
+    if processor=="http://knowledgelinks.io/ns/data-resources/PasswordProcessor":
+        saveData = PasswordProcessor(mode,rdfClassProps,classData,passwordField,password=None,saltField=None)
+         
+def AssertionImageBakingProcessor():
     '''Application sends badge image to the a badge baking service with the assertion.'''
     return "not developed"
     
-def CSVstringToMultiPropertyProccessor(data, propUri, subjectUri, g):
+def CSVstringToMultiPropertyProcessor(data, propUri, subjectUri, g):
     '''Application takes a CSV string and adds each value as a seperate triple to the class instance.'''
     vals = data.split(',')
     returnTriple = IRI(subjectUri)
@@ -731,11 +769,11 @@ def CSVstringToMultiPropertyProccessor(data, propUri, subjectUri, g):
         returnTriple += "\n " + IRI(propUri) + ""
     return ""
     
-def EmailVerificationProccessor():
+def EmailVerificationProcessor():
     '''Application application initiates a proccess to verify the email address is a valid working address.'''
     return "not developed"
     
-def PasswordProccessor(mode,rdfClassProps,classData,passwordField,password=None,saltField=None):
+def PasswordProcessor(mode,rdfClassProps,classData,passwordField,password=None,saltField=None):
     '''handles application password actions
         mode options:
             generate: Application should proccess as a password for storage. i.e. salting and hashing
@@ -744,14 +782,14 @@ def PasswordProccessor(mode,rdfClassProps,classData,passwordField,password=None,
     '''
     if not saltField:
         for prop in rdfClassProps:
-            if "http://knowledgelinks.io/ns/data-resources/SaltProccessor" in makeList(prop.get("propertyProccessing",[])):
+            if "http://knowledgelinks.io/ns/data-resources/SaltProcessor" in makeList(prop.get("propertyProcessing",[])):
                 saltField = prop.get("propUri")
                 break
     if mode == "generate":
         if IsNotNull(classData.get(saltField)) or classData.get(saltField)!='None':
             salt = classData.get(saltField)
         else:
-            salt = SaltProccessor()
+            salt = SaltProcessor()
             classData[saltField] = salt
         if IsNotNull(password) or password!='None':
             hash = sha256_crypt.encrypt(classData.get(passwordField)+salt)
@@ -763,7 +801,7 @@ def PasswordProccessor(mode,rdfClassProps,classData,passwordField,password=None,
         return sha256_crypt.verify(password+classData.get(saltField), classData.get(passwordField))
     return classData
     
-def SaltProccessor(length=16):
+def SaltProcessor(length=16):
     '''Generates a random string for salting'''
     ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     chars=[]
@@ -772,7 +810,7 @@ def SaltProccessor(length=16):
     
     return "".join(chars)
     
-def CalculationProccessor(data):
+def CalculationProcessor(data):
     '''Application should proccess the property according to the rules listed int he kds:calulation property.'''
     return "not developed"
     
@@ -800,13 +838,13 @@ def getWtFormField(field):
         if fieldMode == "InitialPassword":   
             form_field = [
                             {"fieldName":fieldName,"field":PasswordField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))},
-                            {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter")}
+                            {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter"),"doNotSave":True}
                          ]
         elif fieldMode == "ChangePassword":
             form_field = [
-                            {"fieldName":fieldName + "_old","field":PasswordField("Current")},
-                            {"fieldName":fieldName + "_new","field":PasswordField("New")},
-                            {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter")}
+                            {"fieldName":fieldName + "_old","field":PasswordField("Current"),"doNotSave":True},
+                            {"fieldName":fieldName,"field":PasswordField("New")},
+                            {"fieldName":fieldName + "_confirm", "field":PasswordField("Re-enter"),"doNotSave":True}
                          ]
         elif fieldMode == "LoginPassword":
             form_field = PasswordField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
@@ -905,10 +943,10 @@ def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
     nField['validators'] += makeList(field.get('formValidation',[]))
     nField['validators'] += makeList(field.get('propertyValidation',[]))    
     
-    # get proccessing list
-    nField['proccessors'] = makeList(formInstanceInfo.get('formProccessing',[]))
-    nField['proccessors'] += makeList(field.get('formProccessing',[]))
-    nField['proccessors'] += makeList(field.get('propertyProccessing',[]))
+    # get processing list
+    nField['processors'] = makeList(formInstanceInfo.get('formProcessing',[]))
+    nField['processors'] += makeList(field.get('formProcessing',[]))
+    nField['processors'] += makeList(field.get('propertyProcessing',[]))
         
     # get required state
     required = False
@@ -1056,11 +1094,12 @@ def rdf_framework_form_factory(name,instance='',**kwargs):
                 for fld in form_field:
                     #print(fld)
                     if fld.get('field'):
-                        nField = field
+                        nField = dict.copy(field)
                         nField['formFieldName'] = fld['fieldName']
                         nField['formFieldOrder'] = nField['formFieldOrder'] + i
-                        
-                        fieldList[formRow].append(dict.copy(nField))
+                        if fld.get("doNotSave"):
+                            nField['doNotSave'] = True
+                        fieldList[formRow].append(nField)
                         #print("--Nfield: ",nField)
                         setattr(rdf_form, fld['fieldName'], fld['field'])
                         i += .1

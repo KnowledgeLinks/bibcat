@@ -12,7 +12,7 @@
 				</div>
 				<div class="panel-body">
 					<p class="lead">{{ form.rdfInstructions['formDescription'] }} VALIDATED: {{ validated }}</p>
-					<form class="{{ form.rdfInstructions['formCss'] }}" method="{{ form.rdfInstructions['form_Method'] }}" action="{{ actionUrl }}" >
+					<form class="{{ form.rdfInstructions['formCss'] }}" method="{{ form.rdfInstructions['form_Method'] }}" action="{{ actionUrl }}" enctype="multipart/form-data">
 						{% for row in form.rdfFieldList %}
 						<div class="row {{ form.rdfInstructions['rowCss'] }}">
 							{% for fld in row %}

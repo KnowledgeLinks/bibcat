@@ -58,29 +58,29 @@
 		rdfs:label "Password Hash";
 		rdfs:comment "A data type that requries a hashed and salted password".
 
-# PropertyProccessors ***********************************************	
+# PropertyProcessors ***********************************************	
 		
-	kdr:SaltProccessor a kds:PropertyProccessor;
-		rdfs:label "Salt Proccessor";
+	kdr:SaltProcessor a kds:PropertyProcessor;
+		rdfs:label "Salt Processor";
 		rdfs:comment "Application should generate a random Salt value to store.".
 		
-	kdr:PasswordProccessor a kds:PropertyProccessor;
-		rdfs:label "Password Proccessor";
+	kdr:PasswordProcessor a kds:PropertyProcessor;
+		rdfs:label "Password Processor";
 		rdfs:comment "Application should proccess as a password for storage. i.e. salting and hashing".
 
-	kdr:CalculationProccessor a kds:PropertyProccessor;
-		rdfs:label "Calculation Proccessor";
+	kdr:CalculationProcessor a kds:PropertyProcessor;
+		rdfs:label "Calculation Processor";
 		rdfs:comment "Application should proccess the property according to the rules listed int he kds:calulation property." .
 
-	kdr:CSVstringToMultiPropertyProccessor a kds:PropertyProccessor;
+	kdr:CSVstringToMultiPropertyProcessor a kds:PropertyProcessor;
 		rdfs:label "CSV to Properties";
 		rdfs:comment "Application takes a CSV string and adds each value as a seperate triple to the class instance." .
 	
-	kdr:AssertionImageBakingProccessor a kds:PropertyProccessor;
+	kdr:AssertionImageBakingProcessor a kds:PropertyProcessor;
 		rdfs:label "Assertion Baker";
 		rdfs:comment "Application sends badge image to the a badge baking service with the assertion." .
 	
-	kdr:EmailVerificationProccessor a kds:PropertyProccessor;
+	kdr:EmailVerificationProcessor a kds:PropertyProcessor;
 		rdfs:label "Email Verifier";
 		rdfs:comment "Application application initiates a proccess to verify the email address is a valid working address." .
 

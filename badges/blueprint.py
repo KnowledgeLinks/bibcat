@@ -331,10 +331,13 @@ def badge_rdf_class(form_instance):
         "BadgeForm",
         'http://knowledgelinks.io/ns/data-resources/'+form_instance)
     val = None
-    if request.method == "POST":
+    form = form_class()
+    form = loadFormSelectOptions(form)
+    if request.method == "POST" and form.validate():
         print("***** request.form ****\n", request.form)
-        form = form_class(request.form)
-        form = loadFormSelectOptions(form)
+        
+        #print("----- image data: ",form.imageOptions_image.data.read())
+        
         val = form.validate()
         '''elif request.method == "GET":
         if len(request.args) > 0:'''
@@ -342,7 +345,7 @@ def badge_rdf_class(form_instance):
         formData = get_framework().saveForm(form)
         return "<pre>" + json.dumps(formData,indent=4) + "</pre>"
     else:
-        form = form_class()
+        #form = form_class()
         form = loadFormSelectOptions(form)  
     return render_template(
         "app_form_template.html",

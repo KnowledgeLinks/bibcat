@@ -65,15 +65,15 @@ kds:SecurityClass a rdf:Class;
 	rdfs:label "Security class";
 	rdfs:comment "Class for grouping security features".
 	
-kds:propertyProccessing	 a 	kds:Property;		
+kds:propertyProcessing	 a 	kds:Property;		
 	rdfs:domain rdf:Property;
-	rdfs:range kds:PropertyProccessor;
-	rdfs:label "Property proccessing";
+	rdfs:range kds:PropertyProcessor;
+	rdfs:label "Property processing";
 	rdfs:comment "States a method that property should be proccessed with".
 
-kds:PropertyProccessor a rdf:Class; 
+kds:PropertyProcessor a rdf:Class; 
 	rdfs:subClassOf kds:InternalClass;
-	rdfs:label "Property Proccessor";
+	rdfs:label "Property Processor";
 	rdfs:comment "Object instructions on how to proccess a property before saving to the triplestore.".
 		
 kds:propertySecurity a rdf:Property;
