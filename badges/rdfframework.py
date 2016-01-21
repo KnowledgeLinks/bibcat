@@ -1,9 +1,16 @@
-from flask import current_app, json
-from .utilities import render_without_request
+"""Module for RDF forms managment""" 
+__author__ ="Mike Stabile, Jeremy Nelson"
+
+
+import os
 import requests
-from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
 import random
+from flask import current_app, json
+from jinja2 import Template
+from .utilities import render_without_request
+from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
 from passlib.hash import sha256_crypt
+
 try:
     from flask_wtf import Form
     from flask_wtf.file import FileField
@@ -45,7 +52,7 @@ class RDFFramework(object):
                 return rdfClass
         return ''
         
-    def getProperty(self,**kwargs):
+    def getProperty(self, **kwargs):
         '''Method returns a list of the property json objects where the property is used
         
         keyword Args:
@@ -111,16 +118,20 @@ class RDFFramework(object):
                 updateClass = reverseDependancies.get(rdfClass,[])
                 for prop in updateClass:
                     found = False
-                    i=0
-                    for field in formByClasses.get(prop.get('className','')):
-                        if field.get('fieldJson',{}).get('propUri') == prop.get('propUri',''):
+                    for i, field in enumerate(
+                        formByClasses.get(prop.get('className',''))):
+                        if field.get('fieldJson', {}).get('propUri') ==\
+                           prop.get('propUri',''):
                             found=True
-                            formByClasses[prop.get('className','')][i]['data'] = status.get("lastSave",{}).get("objectValue")
-                        i += 1
+                            class_name = prop.get('className','')
+                            formByClasses[class_name][i]['data'] = \
+                                status.get("lastSave",{}).get("objectValue")
                     if not found:
                         formByClasses[prop.get('className','')].append({
                             'data': status.get("lastSave",{}).get("objectValue"),
-                            'fieldJson': self.getProperty(className=prop.get("className"),propName=prop.get("propName"))[0]})             
+                            'fieldJson': self.getProperty(
+                                className=prop.get("className"),
+                                propName=prop.get("propName"))[0]})
         return  {"classLinks":classSaveOrder, "oldFormData":oldFormData}
     
     def getPrefix(self, formatType="sparql"):
@@ -128,13 +139,16 @@ class RDFFramework(object):
         
             formatType: "sparql" or "turtle"
         '''
-        
         returnStr = ""
         for ns in self.rdf_app_dict['application'].get("appNameSpace",[]):
             if formatType.lower() == "sparql":
-                returnStr += "PREFIX " + ns.get('prefix') + ": " + iri(ns.get('nameSpaceUri')) + "\n"
+                returnStr += "PREFIX {0}: {1}\n".format(
+                                ns.get('prefix'),
+                                iri(ns.get('nameSpaceUri')))
             elif formatType.lower() == "turtle":
-                returnStr += "@prefix " + ns.get('prefix') + ": " + iri(ns.get('nameSpaceUri')) + " . \n"
+                returnStr += "@prefix {0}: {1}\n".format(
+			                   ns.get('prefix'),
+                               iri(ns.get('nameSpaceUri'))) 
         return returnStr
         
     def __loadApp(self): 
@@ -375,17 +389,24 @@ class RDFClass(object):
             setattr(self, p, jsonObj[p])
         setattr(self, "className", className)
     
-    def save(self,rdfForm,oldFormData):
-        '''validates and saves passed data for the class
-        if not data:
-            raise ValueError("Save requires data dictionary")'''
-        validRequiredProps = self.__validateRequiredProperties(rdfForm,oldFormData)
-        validDependancies = self.__validateDependantProperties(rdfForm,oldFormData)
-        saveData = self.__proccessClassData(rdfForm,oldFormData)
-        saveQuery = self.__generateSaveQuery(saveData)
-        return self.__runSaveQuery(saveQuery)
-        print(json.dumps(validRequiredProps,indent=2))
-        print(json.dumps(validDependancies,indent=2))
+    def save(self, rdf_form, old_form_data):
+        """Method validates and saves passed data for the class
+
+        Args:
+            rdf_form -- Current RDF Form
+            old_form_data -- Preexisting form data
+        """
+        validRequiredProps = self.__validateRequiredProperties(
+            rdf_form,
+            old_form_data)
+        validDependancies = self.__validateDependantProperties(
+            rdf_form,
+            old_form_data)
+        save_data = self.__proccessClassData(
+            rdf_form,
+            old_form_data)
+        save_query = self.__generateSaveQuery(save_data)
+        return self.__runSaveQuery(save_query)
 
         
     def newUri(self):
@@ -449,33 +470,45 @@ class RDFClass(object):
                 
     def listProperties(self):
         '''Returns a dictionary of the properties used for the class'''
-        propertyList = set()
+        property_list = set()
         for p in self.properties:
-            propertyList.add(p)
-        return propertyList 
+            property_list.add(p)
+        return property_list 
             
     def listDependant(self):
-        '''Returns a dictionary of properties that are depandant upon the creation of another object'''
-        depandantList = set()
-        for p in self.properties:
-            rangeList = self.properties[p].get('range')
-            #print(p,": ",rangeList)
-            for r in rangeList: 
-                if r.get('storageType') == "object" or r.get('storageType') == "blanknode":
-                    depandantList.add(p)
-        returnObj = []
-        for d in depandantList:
-            rangeList = self.properties[d].get('range')
-            #print(d,": ",rangeList)
-            for r in rangeList: 
-                if r.get('storageType') == "object" or r.get('storageType') == "blanknode":
-                    returnObj.append({"propName":d, "propUri":self.properties[d].get("propUri"), "classUri":r.get("rangeClass")})
-            
-        return returnObj #list(depandantList)
+        '''Returns a dictionary of properties that are dependent upon the 
+        creation of another object'''
+        dependent_list = set()
+        for prop in self.properties:
+            range_list = self.properties[prop].get('range')
+            for row in range_list: 
+                if row.get('storageType') == "object" or \
+                   row.get('storageType') == "blanknode":
+                    dependent_list.add(prop)
+        return_obj = []
+        for dep in dependent_list:
+            range_list = self.properties[dep].get('range')
+            for row in range_list: 
+                if row.get('storageType') == "object" or \
+                   row.get('storageType') == "blanknode":
+                    return_obj.append(
+                       {"propName": dep, 
+                        "propUri": self.properties[dep].get("propUri"), 
+                        "classUri": rpw.get("rangeClass")})
+        return return_obj
         
-    def __makeTriple (self,s,p,o):
-        "takes a subject predicate and object and joins them with a sp ace in between"
-        return "{s} {p} {o} .".format(s=s, p=p, o=0)
+    def __makeTriple (self, sub, pred, obj):
+        """Takes a subject predicate and object and joins them with a space 
+		in between
+
+        Args:
+            sub -- Subject
+            pred -- Predicate
+            obj  -- Object
+        Returns
+            str
+		"""
+        return "{s} {p} {o} .".format(s=sub, p=pred, o=obj)
         
     def findPropName (self,propUri):
         "cycle through the class properties object to find the property name"
@@ -635,21 +668,36 @@ class RDFClass(object):
         if saveType == "blanknode":
             saveQuery = "[\n" + ";\n".join(bnInsertClause) + "\n]"
         else:
-            saveQuery = get_framework().getPrefix() +''' 
-            DELETE { \n''' + deleteClause + ''' }
-            INSERT { \n''' + insertClause + ''' }
-            WHERE { \n''' + whereClause + ''' }'''
+            save_query_template = Template("""{{ prefix }}
+DELETE {
+{{ deleteClause }} }
+INSERT {
+{{ insertClause }} }
+WHERE {
+{{ whereClause }} }""")
+            saveQuery = save_query_template.render(
+                prefix=get_framework().getPrefix(), 
+                deleteClause=deleteClause,
+				insertClause=insertClause,
+				whereClause=whereClause)
         print(saveQuery)
         return saveQuery
         
-    def __runSaveQuery(self,saveQuery):
+    def __runSaveQuery(self, saveQuery):
         if saveQuery[:1] == "[":
-            objectValue = saveQuery
+            object_value = saveQuery
         else:
-            objectValue = "<http://test.com/13242req1345>"
+            #! Should use PATCH if fedora object already exists, otherwise need 
+            #! to use POST method. Should try to retrieve subject URI from 
+            #! Fedora?
+            repository_result = request.post(
+                current_app.config.get("FEDORA_REST_URL"),
+                data=saveQuery,
+				headers={"Content-type": "text/turtle"})
+            object_value = repository_result.text
         return {"status": "success",
                 "lastSave": {
-                    "objectValue": objectValue}
+                    "objectValue": object_value}
                }
     
     def findPropName (self,propUri):
@@ -735,24 +783,42 @@ def EmailVerificationProccessor():
     '''Application application initiates a proccess to verify the email address is a valid working address.'''
     return "not developed"
     
-def PasswordProccessor(mode,rdfClassProps,classData,passwordField,password=None,saltField=None):
-    '''handles application password actions
-        mode options:
-            generate: Application should proccess as a password for storage. i.e. salting and hashing
-            verify: verifies the if the supplied password is correct
-            change: changes the current password
-    '''
-    if not saltField:
-        for prop in rdfClassProps:
-            if "http://knowledgelinks.io/ns/data-resources/SaltProccessor" in makeList(prop.get("propertyProccessing",[])):
-                saltField = prop.get("propUri")
+def PasswordProccessor(
+    mode,
+    rdf_class_props,
+    class_data,
+    password_field,
+    password=None,
+    salt_field=None):
+    """Function handles application password actions
+
+     Args:
+	    mode -- generate: Application should process as a password for storage. 
+			          i.e. salting and hashing
+                verify: verifies the if the supplied password is correct
+                change: changes the current password
+        rdf_class_props -- List of RDF class properties
+        class_data -- Class data
+        password_field -- Password field 
+        password -- String value of password, defaults to None
+        salt_field -- Salt field, default is None
+
+    Returns:
+        dict of class data
+    """
+    salt_url = "http://knowledgelinks.io/ns/data-resources/SaltProcessor"
+    if not salt_field:
+        for prop in rdf_class_props:
+            if salt_url in makeList(prop.get("propertyProccessing",[])):
+                salt_field = prop.get("propUri")
                 break
     if mode == "generate":
-        if IsNotNull(classData.get(saltField)) or classData.get(saltField)!='None':
-            salt = classData.get(saltField)
+        if IsNotNull(classData.get(salt_field)) or \
+						classData.get(salt_field)!='None':
+            salt = classData.get(salt_field)
         else:
-            salt = SaltProccessor()
-            classData[saltField] = salt
+            salt = salt_processor()
+            classData[salt_field] = salt
         if IsNotNull(password) or password!='None':
             hash = sha256_crypt.encrypt(classData.get(passwordField)+salt)
         else:
@@ -760,17 +826,14 @@ def PasswordProccessor(mode,rdfClassProps,classData,passwordField,password=None,
         if sha256_crypt.verify((classData.get(passwordField)+salt), hash):
             classData[passwordField] = hash
     elif mode == "verify":
-        return sha256_crypt.verify(password+classData.get(saltField), classData.get(passwordField))
+        return sha256_crypt.verify(
+            password+classData.get(salt_field), 
+            classData.get(password_field))
     return classData
     
-def SaltProccessor(length=16):
+def salt_processor(length=16):
     '''Generates a random string for salting'''
-    ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    chars=[]
-    for i in range(length):
-        chars.append(random.choice(ALPHABET))
-    
-    return "".join(chars)
+    return str(os.urandom(length))
     
 def CalculationProccessor(data):
     '''Application should proccess the property according to the rules listed int he kds:calulation property.'''

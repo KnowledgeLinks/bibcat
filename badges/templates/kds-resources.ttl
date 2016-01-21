@@ -60,7 +60,7 @@
 
 # PropertyProccessors ***********************************************	
 		
-	kdr:SaltProccessor a kds:PropertyProccessor;
+	kdr:SaltProcessor a kds:PropertyProccessor;
 		rdfs:label "Salt Proccessor";
 		rdfs:comment "Application should generate a random Salt value to store.".
 		

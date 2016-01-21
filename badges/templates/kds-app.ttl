@@ -637,7 +637,7 @@ kds:salt a rdf:Property;
 	# rdfs:range	xsd:string;	stated in vocab
 	kds:requiredByDomain kds:PasswordClass;
 	kds:requiredByDomain obi:Assertion;
-	kds:propertyProccessing kdr:SaltProccessor;
+	kds:propertyProccessing kdr:SaltProcessor;
 	kds:propertySecurity [
 		kds:appliesTo kds:PasswordClass;
 		acl:agent kdr:Self-SG;
