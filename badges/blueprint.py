@@ -349,9 +349,15 @@ def rdf_class_forms(form_name,form_instance):
         form = loadFormSelectOptions(form)
         # validate the form
         if form.validate():
-            # if validated save the form    
-            form_data = get_framework().saveForm(form)
-            return "<pre>{}</pre>".format(json.dumps(form_data, indent=4)) 
+            # if validated save the form 
+            if request.args.get("id") and form_instance == "EditForm":
+                form.dataSubjectUri = request.args.get("id") 
+            formSaveResults = get_framework().saveForm(form)
+            if formSaveResults.get("success"):
+                return "<pre>{}</pre>".format(json.dumps(formSaveResults, indent=4)) 
+            else:
+                print("################## Invalid Form")
+                form = formSaveResults.get("form")
     # if not POST, check the args and form instance
     else:
         # if params are present for any forms not in the below form remove the params
@@ -383,4 +389,4 @@ def rdf_class_forms(form_name,form_instance):
         actionUrl=request.url,
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        debug=False)
+        debug=True)

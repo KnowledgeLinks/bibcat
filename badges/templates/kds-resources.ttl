@@ -62,7 +62,8 @@
 		
 	kdr:SaltProcessor a kds:PropertyProcessor;
 		rdfs:label "Salt Processor";
-		rdfs:comment "Application should generate a random Salt value to store.".
+		rdfs:comment "Application should generate a random Salt value to store.";
+		kds:resultType "propertyValue".
 		
 	kdr:PasswordProcessor a kds:PropertyProcessor;
 		rdfs:label "Password Processor";
@@ -70,7 +71,8 @@
 
 	kdr:CalculationProcessor a kds:PropertyProcessor;
 		rdfs:label "Calculation Processor";
-		rdfs:comment "Application should process the property according to the rules listed int he kds:calulation property." .
+		rdfs:comment "Application should process the property according to the rules listed int he kds:calulation property." ;
+		kds:resultType "propertyValue".
 
 	kdr:CSVstringToMultiPropertyProcessor a kds:PropertyProcessor;
 		rdfs:label "CSV to Properties";
