@@ -371,7 +371,11 @@ obi:type a rdf:Property;
 	rdfs:range	xsd:string;	
 	rdfs:comment "Type of item"; 
 	kds:requiredByDomain obi:BadgeClass;
-	kds:requiredByDomain obi:Assertion	;
+	kds:requiredByDomain obi:Assertion;
+	kds:defaultVal "item_class";
+	kds:propertyProcessing [
+		kds:appliesTo obi:BadgeClass;
+	];
 	kds:jsonDefault [
 		kds:jsonObjName "type";
 		kds:jsonValFormat "lookup";

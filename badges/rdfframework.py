@@ -103,8 +103,10 @@ class RDFFramework(object):
         # validate the form data for class requirements (required properties, security, valid data types etc)
         validation = self.__validateFormByClassRequirements(formByClasses, rdfForm, oldFormData)
         if not validation.get('success'):
+            print("%%%%%%% validation in saveForm",validation)
             return validation   
         # determine class save order
+        print("^^^^^^^^^^^^^^^ Passed VAlidation")
         classSaveOrder = self.__getSaveOrder(rdfForm)
         reverseDependancies = classSaveOrder.get("reverseDependancies",{})
         classSaveOrder = classSaveOrder.get("saveOrder",{})
@@ -133,7 +135,7 @@ class RDFFramework(object):
                             'fieldJson': self.getProperty(
                                 className=prop.get("className"),
                                 propName=prop.get("propName"))[0]})
-        return  {"classLinks":classSaveOrder, "oldFormData":oldFormData}
+        return  {"success":True, "classLinks":classSaveOrder, "oldFormData":oldFormData}
     
     def getPrefix(self, formatType="sparql"):
         '''Generates a string of the rdf namespaces listed used in the framework
@@ -278,8 +280,8 @@ class RDFFramework(object):
                         else:
                             setattr(formProp,"errors",[error.get("formErrorMessage")])
             
-                    
-            return {"success": False, "form":rdfForm}
+                   
+            return {"success": False, "form":rdfForm, "errors": validationErrors}
         else:
             return {"success": True}
                 
@@ -427,12 +429,12 @@ class RDFClass(object):
             rdf_form -- Current RDF Form class fields
             old_form_data -- Preexisting form data
         """
-        validRequiredProps = self.__validateRequiredProperties(
+        '''validRequiredProps = self.__validateRequiredProperties(
             rdf_form,
             old_form_data)
         validDependancies = self.__validateDependantProperties(
             rdf_form,
-            old_form_data)
+            old_form_data)'''
         save_data = self.__proccessClassData(
             rdf_form,
             old_form_data)
