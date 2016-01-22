@@ -301,95 +301,6 @@ def login_user_view():
             indent=4),
         validated=val)
 
-@open_badge.route("/user/<form_instance>.html", methods=["POST", "GET"])
-def user_rdf_class(form_instance):
-    """View for user class
-
-    Args:
-        form_instance:   Type of form (new, edit)
-    """
-    form_class = rdf_framework_form_factory(
-        "UserForm",
-        'http://knowledgelinks.io/ns/data-resources/'+form_instance)
-    val = None
-    if request.method == "POST":
-        form = form_class(request.form)
-        val = form.validate()
-        form_data = get_framework().saveForm(form)
-        return "<pre>{}</pre>".format(json.dumps(form_data, indent=4))
-    else:
-        form = form_class()
-    return render_template(
-        "app_form_template.html",
-        actionUrl=url_for(
-            "open_badge.user_rdf_class",
-            form_instance=form_instance),
-        form=form,
-        jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        validated=val)
-
-@open_badge.route(
-    "/badgeTestForm/<form_instance>.html",
-    methods=["POST", "GET"])
-def badge_rdf_class(form_instance):
-    """View for displaying a badge Test form
-
-    Args:
-        form_instance -- Type of form (new, edit)
-    """
-    form_class = rdf_framework_form_factory(
-        "BadgeForm",
-        'http://knowledgelinks.io/ns/data-resources/'+form_instance)
-    val = None
-    form = form_class()
-    form = loadFormSelectOptions(form)
-    if request.method == "POST" and form.validate():
-        print("***** request.form ****\n", request.form)
-        
-        #print("----- image data: ",form.imageOptions_image.data.read())
-        
-        val = form.validate()
-        form_data = get_framework().saveForm(form)
-        return "<pre>{}</pre>".format(json.dumps(form_data, indent=4))
-    else:
-        #form = form_class()
-        form = loadFormSelectOptions(form)  
-    return render_template(
-        "app_form_template.html",
-        actionUrl=url_for(
-            "open_badge.badge_rdf_class",
-            form_instance=form_instance),
-        form=form,
-        jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        validated=val)
-
-@open_badge.route("/assertionTestForm/<form_instance>.html",
-                  methods=["POST", "GET"])
-def assertion_rdf_class(form_instance):
-    """View displays for Assertion test form
-
-    Args:
-        form_instance -- Type of form (new, edit)
-    """
-    form_class = rdf_framework_form_factory(
-        "AssertionForm",
-        'http://knowledgelinks.io/ns/data-resources/'+form_instance)
-    val = None
-    if request.method == "POST":
-        form = form_class(request.form)
-        val = form.validate()
-    else:
-        form = form_class()
-    form = loadFormSelectOptions(form)
-    return render_template(
-        "app_form_template.html",
-        actionUrl=url_for(
-            "open_badge.assertion_rdf_class",
-            form_instance=form_instance),
-        form=form,
-        jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        validated=val)
-
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
@@ -415,37 +326,61 @@ def form_rdf_class():
         json.dumps(class_dict, indent=2),
         json.dumps(form_dict, indent=2))
         
-@open_badge.route(
-    "/organization/<form_instance>.html",
+@open_badge.route("/<form_name>/<form_instance>.html",
     methods=["POST", "GET"])
-def organization_rdf_class(form_instance):
-    """View for displaying a badge Test form
+def rdf_class_forms(form_name,form_instance):
+    """View for displaying forms
 
     Args:
         form_instance -- Type of form (new, edit)
+        
+    params:
+        id -- the subject uri of the form data to lookup 
     """
+    # generate the form class
     form_class = rdf_framework_form_factory(
-        "OrganizationForm",
+        form_name,
         'http://knowledgelinks.io/ns/data-resources/'+form_instance)
-    val = None
-    form = form_class()
-    form = loadFormSelectOptions(form)
-    if request.method == "POST" and form.validate():
-        print("***** request.form ****\n", request.form)
-        
-        #print("----- image data: ",form.imageOptions_image.data.read())
-        
-        val = form.validate()
-        form_data = get_framework().saveForm(form)
-        return "<pre>{}</pre>".format(json.dumps(form_data, indent=4))
+    # if request method is post
+    if request.method == "POST":
+        # let form load with post data
+        form = form_class()
+        # select field options have to be loaded before form is validated
+        form = loadFormSelectOptions(form)
+        # validate the form
+        if form.validate():
+            # if validated save the form    
+            form_data = get_framework().saveForm(form)
+            return "<pre>{}</pre>".format(json.dumps(form_data, indent=4)) 
+    # if not POST, check the args and form instance
     else:
-        #form = form_class()
-        form = loadFormSelectOptions(form)  
+        # if params are present for any forms not in the below form remove the params
+        if form_instance not in ["EditForm","DisplayForm"] and request.args.get("id"):
+            redirect_url = url_for("open_badge.rdf_class_forms",
+                                    form_name=form_name,
+                                    form_instance=form_instance)
+            return redirect(redirect_url)
+        # if the there is no ID argument and on the editform instance -> redirect to NewForm
+        if form_instance == "EditForm" and not request.args.get("id"):
+            redirect_url = url_for("open_badge.rdf_class_forms",
+                                    form_name=form_name,
+                                    form_instance="NewForm")
+            return redirect(redirect_url)
+        # if the there is an ID argument and on the editform instance -> query for the save item
+        if request.args.get("id") and form_instance == "EditForm":
+            form = form_class()
+            formData = get_framework().getFormData(
+                form,
+                subjectUri=request.args.get("id"))
+            
+            form = form_class(formData.get("formdata"))
+        # if not on EditForm render form
+        else:
+            form = form_class()
+        form = loadFormSelectOptions(form)
     return render_template(
         "app_form_template.html",
-        actionUrl=url_for(
-            "open_badge.organization_rdf_class",
-            form_instance=form_instance),
+        actionUrl=request.url,
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        debug=True)
+        debug=False)

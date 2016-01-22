@@ -222,7 +222,7 @@ obi:recipient a rdf:Property;
 			a	kdr:SelectField;
 			kds:selectQuery "SELECT * {
 																?s a schema:Person . 
-																?s schema:familyName ?familyname .
+																?s schema:familyName ?familyName .
 																?s schema:givenName ?givenName .
 																BIND (CONCAT(?familyName,', ',?givenName) AS ?name) 
 																} 
@@ -332,7 +332,7 @@ obi:issuer a rdf:Property;
 		kds:fieldType [
 			a	kdr:SelectField;
 			kds:selectQuery "SELECT * {
-																?s a schema:Organizatioin . 
+																?s a schema:Organization . 
 																?s schema:name ?name . 
 																} 
 																ORDER BY ?name";
@@ -768,7 +768,9 @@ obi:LoginForm a kds:FormClass;
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "Login";
-		kds:formDescription "Enter login credentials"
+		kds:formDescription "Enter login credentials";
+		kds:lookupClassUri kds:UserClass;
+		kds:lookupPropertyUri kds:userName
 	];    
 	kds:hasProperty [
 		kds:propUri kds:userName;
@@ -791,7 +793,8 @@ obi:OrganizationForm a kds:FormClass;
 	kds:formInstructions [
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
-		kds:formTitle "Create/edit an organization";
+		kds:formTitle "Organization";
+		kds:lookupClassUri schema:Organization;
 		kds:formDescription "Organization infomation";
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
@@ -828,6 +831,7 @@ obi:UserForm a kds:FormClass;
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "User Information";
 		kds:formDescription "User infomation";
+		kds:lookupClassUri kds:UserClass;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New User";
@@ -891,6 +895,7 @@ obi:BadgeForm a kds:FormClass;
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "Open Badge";
 		kds:formDescription "Badge infomation";
+		kds:lookupClassUri obi:BadgeClass;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New Open Badge";
@@ -969,6 +974,7 @@ obi:AssertionForm a kds:FormClass;
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "Badge Assertion";
 		kds:formDescription "Awarded Badge information";
+		kds:lookupClassUri obi:Assertion;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New Badge Assertion";

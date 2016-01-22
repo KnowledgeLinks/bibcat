@@ -9,7 +9,7 @@ from flask import current_app, json
 from jinja2 import Template
 from .utilities import render_without_request
 from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
-from werkzeug.datastructures import FileStorage #need this for testing if form data is an instance of FileStorage
+from werkzeug.datastructures import FileStorage, MultiDict #need this for testing if form data is an instance of FileStorage
 from passlib.hash import sha256_crypt
 
 try:
@@ -98,7 +98,7 @@ class RDFFramework(object):
         formByClasses = self.__organizeFormByClasses(rdfForm)
         
         # get data of edited objects
-        oldFormData = self.__getFormData(rdfForm)
+        oldFormData = self.getFormData(rdfForm)
             
         # validate the form data for class requirements (required properties, security, valid data types etc)
         valadation = self.__validateFormByClassRequirements(formByClasses, oldFormData)
@@ -272,16 +272,21 @@ class RDFFramework(object):
         else:
             return {"status": "success"}
                 
-    def __getFormData(self, rdfForm, **kwargs):
+    def getFormData(self, rdfForm, **kwargs):
         ''' returns the data for the current form paramters
         
         **keyword arguments
         subjectUri: the URI for the subject
         classUri: the rdf class of the subject
         '''
+        print(kwargs)
         classUri = kwargs.get("classUri",rdfForm.dataClassUri)
+        print(rdfForm.__dict__)
+        print("classUri: ",classUri)
         className = self.getClassName(classUri)
+        print("className: ", className)
         subjectUri = kwargs.get("subjectUri",rdfForm.dataSubjectUri)
+        print("subjectUri: ",subjectUri)
         sparqlArgs = None
         classLinks = self.__getFormClassLinks(rdfForm)
         sparqlConstructor = dict.copy(classLinks['dependancies'])
@@ -355,7 +360,10 @@ class RDFFramework(object):
                     if cUri in queryData[subject].get("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
                         dataValue = queryData[subject].get(prop.get("propUri"))
                 formData[prop.get("formFieldName")]=dataValue
-        return {"formData":formData,"queryData":queryData}
+        formDataDict = MultiDict(formData)
+        print("data:\n",formData)
+        print("dataDict:\n",formDataDict)
+        return {"formdata":formDataDict,"queryData":queryData}
             
     def __getSaveOrder(self, rdfForm):
         '''Cycle through the classes and determine in what order they need to be saved
@@ -1062,9 +1070,10 @@ def getFormInstructionJson (instructions,instance):
     nInstr['form_Method'] = formInstanceInfo.get('form_Method',instructions.get("form_Method",""))
     nInstr['form_enctype'] = formInstanceInfo.get('form_enctype',instructions.get("form_enctype",""))
     nInstr['propertyAddOnCss'] = formInstanceInfo.get('propertyAddOnCss',instructions.get("propertyAddOnCss",""))
-        
+    nInstr['lookupClassUri'] = formInstanceInfo.get('lookupClassUri',instructions.get("lookupClassUri",""))  
+    nInstr['lookupPropertyUri'] = formInstanceInfo.get('lookupPropertyUri',instructions.get("lookupPropertyUri",""))
 # Determine css classes
-    #form row css
+    #form row css 
     css = formInstanceInfo.get('rowOverideCss',instructions.get('rowOverideCss',None))
     if css is None:
         css = rdfApp.get('formDefault',{}).get('rowCss','')
@@ -1133,13 +1142,15 @@ def rdf_framework_form_factory(name,instance='',**kwargs):
                    ***** has to be the class of the subjectUri for the form data lookup
         subjectUri: the uri of the object that you want to lookup
     '''
-    lookupClassUri = kwargs.get("classUri")
-    lookupSubjectUri = kwargs.get("subjectUri")
+    
     
     rdf_form = type(name, (Form, ), {})
     appForm = get_framework().rdf_form_dict.get(name,{})
     fields = appForm.get('properties')
     instructions = getFormInstructionJson(appForm.get('formInstructions'),instance)
+    lookupClassUri = kwargs.get("classUri",instructions.get("lookupClassUri"))
+    lookupSubjectUri = kwargs.get("subjectUri")
+    print("************* lookupClassUri:", lookupClassUri, " ************")
     #print('instructions: \n',json.dumps(instructions,indent=4))
     # get the number of rows in the form and define the fieldList as a mulit-demensional list
     fieldList = []
