@@ -267,7 +267,7 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                           	}
   													GROUP BY ?klForms ?p ?o ?bn_ ?p1_ ?o1_ 
           			  			  }
-         						  		BIND(REPLACE(IF(isBlank(?o1_)&&CONTAINS(?j2,","),CONCAT("{",?j2,"}"),IF(ISBLANK(?o1_),?j2,CONCAT('"',STR(?o1_),'"'))),'""','') AS ?j1o)
+         						  		BIND(REPLACE(IF(isBlank(?o1_),CONCAT("{",?j2,"}"),CONCAT('"',STR(?o1_),'"')),'""','') AS ?j1o)
          								}
   											GROUP BY ?klForms ?p ?o ?bn_ ?p1_
                       }

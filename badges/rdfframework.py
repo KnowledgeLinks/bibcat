@@ -83,7 +83,18 @@ class RDFFramework(object):
                 if currentClassProp:
                     returnList.append(currentClassProp)
         return returnList      
+    
+    def formExists(self,form_name,form_instance):
+        '''Tests to see if the form and instance is valid'''
         
+        if not form_name in self.rdf_form_dict:
+            return False
+        instances = makeList(self.rdf_form_dict[form_name]['formInstructions'].get('formInstance',[]))
+        for instance in instances:
+            if "http://knowledgelinks.io/ns/data-resources/{}".format(form_instance) == instance.get('formInstanceType'):
+                return True
+        return False
+    
     def saveForm(self, rdfForm):
         '''Recieves RDF_formfactory form, validates and saves the data
          

@@ -304,6 +304,7 @@ def login_user_view():
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
+    x=y
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
 RDF_CLASS_JSON = '''<table>
@@ -337,6 +338,10 @@ def rdf_class_forms(form_name,form_instance):
     params:
         id -- the subject uri of the form data to lookup 
     """
+    if not get_framework().formExists(form_name,form_instance):
+        return render_template(
+            "error_page_template.html",
+            error_message="The web address is invalid")
     # generate the form class
     form_class = rdf_framework_form_factory(
         form_name,
@@ -389,4 +394,4 @@ def rdf_class_forms(form_name,form_instance):
         actionUrl=request.url,
         form=form,
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        debug=True)
+        debug=False)
