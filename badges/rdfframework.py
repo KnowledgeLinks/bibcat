@@ -11,6 +11,8 @@ from .utilities import render_without_request
 from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
 from werkzeug.datastructures import FileStorage, MultiDict #need this for testing if form data is an instance of FileStorage
 from passlib.hash import sha256_crypt
+from dateutil.parser import *
+from datetime import *
 
 try:
     from flask_wtf import Form
@@ -123,11 +125,12 @@ class RDFFramework(object):
         classSaveOrder = classSaveOrder.get("saveOrder",{})
         
         # save class data
+        dataResults = []
         for rdfClass in classSaveOrder:
             status = {}
             className = self.getClassName(rdfClass)
             status = getattr(self,className).save(formByClasses.get(className,[]),oldFormData)
-            #x=y
+            dataResults.append({"rdfClass":rdfClass,"status":status})
             if status.get("status")=="success":
                 updateClass = reverseDependancies.get(rdfClass,[])
                 for prop in updateClass:
@@ -146,7 +149,7 @@ class RDFFramework(object):
                             'fieldJson': self.getProperty(
                                 className=prop.get("className"),
                                 propName=prop.get("propName"))[0]})
-        return  {"success":True, "classLinks":classSaveOrder, "oldFormData":oldFormData}
+        return  {"success":True, "classLinks":classSaveOrder, "oldFormData":oldFormData, "dataResults":dataResults}
     
     def getPrefix(self, formatType="sparql"):
         '''Generates a string of the rdf namespaces listed used in the framework
@@ -312,6 +315,7 @@ class RDFFramework(object):
         '''
         #print(kwargs)
         classUri = kwargs.get("classUri",rdfForm.dataClassUri)
+        lookupClassUri = classUri
         #print(rdfForm.__dict__)
         #print("classUri: ",classUri)
         className = self.getClassName(classUri)
@@ -321,9 +325,10 @@ class RDFFramework(object):
         sparqlArgs = None
         classLinks = self.__getFormClassLinks(rdfForm)
         sparqlConstructor = dict.copy(classLinks['dependancies'])
-        #print(json.dumps(classLinks ,indent=4))
+        
         baseSubjectFinder = None
         linkedClass = None
+        linkedProp = False
         sparqlElements = []
         if IsNotNull(subjectUri):
             # find the primary linkage between the supplied subjectId and other form classes
@@ -334,24 +339,46 @@ class RDFFramework(object):
                             sparqlArgs = prop
                             linkedClass = rdfClass
                             sparqlConstructor[rdfClass].remove(prop)
+                            if rdfClass != lookupClassUri:
+                                linkedProp = True
+                                
                     except:
                         x = 0
-            
+            print(json.dumps(sparqlConstructor ,indent=4))
             # generate the triple pattern for linked class
             if sparqlArgs:
-                baseSubjectFinder = makeTriple("?classID",iri(prop.get("propUri")),iri(subjectUri))
-            
+                baseSubjectFinder = "BIND({} AS ?baseSub) .\n\t{}\n\t{}".format(
+                    iri(subjectUri),                                        
+                    makeTriple("?baseSub","a",iri(lookupClassUri)),
+                    makeTriple("?classID",iri(sparqlArgs.get("propUri")),"?baseSub"))
+                print("base subject Finder:\n",baseSubjectFinder) 
+                if linkedProp:
+                    sparqlElements.append("BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(
+                                        iri(subjectUri),                                        
+                                        makeTriple("?baseSub","a",iri(lookupClassUri)),
+                                        makeTriple("?s",iri(sparqlArgs.get("propUri")),"?baseSub")))
             # iterrate though the classes used in the form and generate the spaqrl triples to pull the data for that class
             for rdfClass in sparqlConstructor:
                 if rdfClass == className:
-                    sparqlElements.append("\tBIND("+ iri(subjectUri) + " AS ?s) . \n\t?s ?p ?o .")
+                    sparqlElements.append("\tBIND({} AS ?s) .\n\t{}\n\t?s ?p ?o .".format(
+                                           iri(subjectUri),
+                                           makeTriple("?s","a",iri(lookupClassUri))))
                 for prop in sparqlConstructor[rdfClass]:
                     if rdfClass == className:
-                        sparqlElements.append("\t"+makeTriple(iri(str(subjectUri)),iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")
+                        #sparqlElements.append("\t"+makeTriple(iri(str(subjectUri)),iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")
+                        sparqlArg = "\tBIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(
+                                           iri(subjectUri),
+                                           makeTriple("?baseSub","a",iri(lookupClassUri)),
+                                           makeTriple("?baseSub",iri(prop.get("propUri")),"?s")) 
+                        print("!!!!! className=rdfClass: ",rdfClass, " -- element: \n",sparqlArg)
+                        sparqlElements.append(sparqlArg)
                     elif rdfClass == linkedClass:
                         sparqlElements.append(
-                            "\t" +baseSubjectFinder + "\n " +
-                            "\t"+ makeTriple("?classID",iri(prop.get("propUri")),"?s") + "\n\t?s ?p ?o .")
+                            "\t{}\n\t{}\n\t?s ?p ?o .".format(
+                                baseSubjectFinder,
+                                makeTriple("?classID",iri(prop.get("propUri")),"?s")))
+                    
+                    
                     '''**** The case where an ID looking up a the triples for a non-linked related is not functioning
                         i.e. password ClassID not looking up person org triples if the org class is not used in the form.
                         This may not be a problem ... the below comment out is a start to solving if it is a problem
@@ -366,17 +393,20 @@ class RDFFramework(object):
             
             # render the statment in the jinja2 template
             sparql = render_without_request(
-                "jsonItemTemplate.rq",
+                "sparqlItemTemplate.rq",
                 prefix = self.getPrefix(),
                 query = sparqlUnions) 
-            #print (sparql)
+            print (sparql)
             # query the triplestore
             formDataQuery =  requests.post( 
                 current_app.config.get('TRIPLESTORE_URL'),
                 data={"query": sparql,
                       "format": "json"})
-    
-            queryData = json.loads(formDataQuery.json().get('results').get('bindings')[0]['itemJson']['value']) 
+            queryData = convertSPOtoDict(formDataQuery.json().get('results').get('bindings'))
+            
+            print(json.dumps(queryData,indent=4))
+            #queryData = formDataQuery.json().get('results').get('bindings')
+            #queryData = json.loads(formDataQuery.json().get('results').get('bindings')[0]['itemJson']['value']) 
         else:
             queryData = {}
         # compare the return results with the form fields and generate a formData object
@@ -1057,7 +1087,8 @@ def getWtFormField(field):
     elif fieldType == 'kdr:FileField':
         form_field = FileField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:DateField':
-        form_field = DateField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''), format='%m/%d/%Y')
+        form_field = DateField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''), format= \
+            get_framework().rdf_app_dict['application'].get('dataFormats',{}).get('javascriptDateFormat',''))
     elif fieldType == 'kdr:DateTimeField':
         form_field = DateTimeField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:SelectField':
@@ -1395,3 +1426,181 @@ def makeTriple (sub,pred,obj):
         str
 	"""
     return "{s} {p} {o} .".format(s=sub, p=pred, o=obj)
+    
+def xsdToPython (value, dataType, rdfType="literal"):
+    '''This will take a value and xsd datatype and convert it to a python variable'''
+    if dataType:
+        dataType = dataType.replace(str(XSD),"xsd:")
+    if not value:
+        return value
+    elif rdfType == "uri":
+        return value
+    elif not IsNotNull(value):
+        return value
+    elif dataType == "xsd:anyURI":
+        ''' URI (Uniform Resource Identifier)'''
+        return value
+    elif dataType =="xsd:base64Binary":
+        ''' Binary content coded as "base64"'''
+        return value.decode()
+    elif dataType =="xsd:boolean":
+        ''' Boolean (true or false)'''
+        if IsNotNull(value):
+            if lower(value) in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']:
+                return True
+            elif lower(value) in ['false', '0', 'n', 'no']:
+                return False
+            else:
+                return None
+        else:
+            return None
+    elif dataType =="xsd:byte":
+        ''' Signed value of 8 bits'''
+        return value.decode()
+    elif dataType =="xsd:date":
+        ''' Gregorian calendar date'''
+        tempValue = parse(value)
+        dateFormat = get_framework().rdf_app_dict['application'].get('dataFormats',{}).get('pythonDateFormat','')
+        return tempValue.strftime(dateFormat)
+    elif dataType =="xsd:dateTime":
+        ''' Instant of time (Gregorian calendar)'''
+        return parse(value)
+    elif dataType =="xsd:decimal":
+        ''' Decimal numbers'''
+        return float(value)
+    elif dataType =="xsd:double":
+        ''' IEEE 64'''
+        return float(value)
+    elif dataType =="xsd:duration":
+        ''' Time durations'''
+        return timedelta(milleseconds=float(value))
+    elif dataType =="xsd:ENTITIES":
+        ''' Whitespace'''
+        return value
+    elif dataType =="xsd:ENTITY":
+        ''' Reference to an unparsed entity'''
+        return value
+    elif dataType =="xsd:float":
+        ''' IEEE 32'''
+        return float(value)
+    elif dataType =="xsd:gDay":
+        ''' Recurring period of time: monthly day'''
+        return value
+    elif dataType =="xsd:gMonth":
+        ''' Recurring period of time: yearly month'''
+        return value
+    elif dataType =="xsd:gMonthDay":
+        ''' Recurring period of time: yearly day'''
+        return value
+    elif dataType =="xsd:gYear":
+        ''' Period of one year'''
+        return value
+    elif dataType =="xsd:gYearMonth":
+        ''' Period of one month'''
+        return value
+    elif dataType =="xsd:hexBinary":
+        ''' Binary contents coded in hexadecimal'''
+        return value
+    elif dataType =="xsd:ID":
+        ''' Definition of unique identifiers'''
+        return value
+    elif dataType =="xsd:IDREF":
+        ''' Definition of references to unique identifiers'''
+        return value
+    elif dataType =="xsd:IDREFS":
+        ''' Definition of lists of references to unique identifiers'''
+        return value
+    elif dataType =="xsd:int":
+        '''32'''
+        return value
+    elif dataType =="xsd:integer":
+        ''' Signed integers of arbitrary length'''
+        return int(value)
+    elif dataType =="xsd:language":
+        ''' RFC 1766 language codes'''
+        return value
+    elif dataType =="xsd:long":
+        '''64'''
+        return int(value)
+    elif dataType =="xsd:Name":
+        ''' XML 1.O name'''
+        return value
+    elif dataType =="xsd:NCName":
+        ''' Unqualified names'''
+        return value
+    elif dataType =="xsd:negativeInteger":
+        ''' Strictly negative integers of arbitrary length'''
+        return abs(int(value))*-1
+    elif dataType =="xsd:NMTOKEN":
+        ''' XML 1.0 name token (NMTOKEN)'''
+        return value
+    elif dataType =="xsd:NMTOKENS":
+        ''' List of XML 1.0 name tokens (NMTOKEN)'''
+        return value
+    elif dataType =="xsd:nonNegativeInteger":
+        ''' Integers of arbitrary length positive or equal to zero'''
+        return abs(int(value))
+    elif dataType =="xsd:nonPositiveInteger":
+        ''' Integers of arbitrary length negative or equal to zero'''
+        return abs(int(value))*-1
+    elif dataType =="xsd:normalizedString":
+        ''' Whitespace'''
+        return value
+    elif dataType =="xsd:NOTATION":
+        ''' Emulation of the XML 1.0 feature'''
+        return value
+    elif dataType =="xsd:positiveInteger":
+        ''' Strictly positive integers of arbitrary length'''
+        return abs(int(value))
+    elif dataType =="xsd:QName":
+        ''' Namespaces in XML'''
+        return value
+    elif dataType =="xsd:short":
+        '''32'''
+        return value
+    elif dataType =="xsd:string":
+        ''' Any string'''
+        return value
+    elif dataType =="xsd:time":
+        ''' Point in time recurring each day'''
+        return parse(value)
+    elif dataType =="xsd:token":
+        ''' Whitespace'''
+        return value
+    elif dataType =="xsd:unsignedByte":
+        ''' Unsigned value of 8 bits'''
+        return value.decode()
+    elif dataType =="xsd:unsignedInt":
+        ''' Unsigned integer of 32 bits'''
+        return value.decode()
+    elif dataType =="xsd:unsignedLong":
+        ''' Unsigned integer of 64 bits'''
+        return int(value)
+    elif dataType =="xsd:unsignedShort":
+        ''' Unsigned integer of 16 bits'''
+        return int(value)
+    else:
+        return value
+        
+def convertSPOtoDict(data,mode="subject"):
+    '''Takes the SPAQRL query results and converts them to a python Dict
+    
+    mode: subject --> groups based on subject
+    '''
+    returnObj = {}
+    if mode == "subject":
+        for item in data:
+            if returnObj.get(item['s']['value']):
+                if returnObj[item['s']['value']].get(item['p']['value']):
+                    objList = makeList(returnObj[item['s']['value']][item['p']['value']])
+                    objList.append(xsdToPython (item['o']['value'], item['o'].get("datatype"), item['o']['type']))
+                    returnObj[item['s']['value']][item['p']['value']] = objList
+                else:
+                    returnObj[item['s']['value']][item['p']['value']] = \
+                        xsdToPython (item['o']['value'], item['o'].get("datatype"), item['o']['type'])
+            else:
+                returnObj[item['s']['value']] = {}
+                returnObj[item['s']['value']][item['p']['value']] = \
+                    xsdToPython (item['o']['value'], item['o'].get("datatype"), item['o']['type'])
+        return returnObj
+                

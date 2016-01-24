@@ -361,31 +361,42 @@ def rdf_class_forms(form_name,form_instance):
             if formSaveResults.get("success"):
                 return "<pre>{}</pre>".format(json.dumps(formSaveResults, indent=4)) 
             else:
-                print("################## Invalid Form")
+                #print("################## Invalid Form")
                 form = formSaveResults.get("form")
     # if not POST, check the args and form instance
     else:
         # if params are present for any forms not in the below form remove the params
-        if form_instance not in ["EditForm","DisplayForm"] and request.args.get("id"):
+        if form_instance not in ["EditForm","DisplayForm","Login"] and request.args.get("id"):
             redirect_url = url_for("open_badge.rdf_class_forms",
                                     form_name=form_name,
                                     form_instance=form_instance)
             return redirect(redirect_url)
         # if the there is no ID argument and on the editform instance -> redirect to NewForm
-        if form_instance == "EditForm" and not request.args.get("id"):
+        if form_instance in ["EditForm","DisplayForm"] and not request.args.get("id"):
             redirect_url = url_for("open_badge.rdf_class_forms",
                                     form_name=form_name,
                                     form_instance="NewForm")
             return redirect(redirect_url)
+        # if the display form does not have an ID return an error
+        if form_instance in ["DisplayForm"] and not request.args.get("id"):
+            return render_template(
+                    "error_page_template.html",
+                    error_message="The item does not exist") 
         # if the there is an ID argument and on the editform instance -> query for the save item
-        if request.args.get("id") and form_instance == "EditForm":
+        if request.args.get("id") and form_instance in ["EditForm","DisplayForm"]:
             form = form_class()
             formData = get_framework().getFormData(
                 form,
                 subjectUri=request.args.get("id"))
-            
-            form = form_class(formData.get("formdata"))
-        # if not on EditForm render form
+            print("^^^^^^^^^^^^^^^^ formData: ",formData)
+            if len(formData.get('queryData',{})) > 0:
+                form = form_class(formData.get("formdata"))
+            else:
+                return render_template(
+                    "error_page_template.html",
+                    error_message="The item does not exist")  
+                      
+        # if not on EditForm or DisplayForm render form
         else:
             form = form_class()
         form = loadFormSelectOptions(form)
@@ -393,5 +404,6 @@ def rdf_class_forms(form_name,form_instance):
         "app_form_template.html",
         actionUrl=request.url,
         form=form,
+        dateFormat = get_framework().rdf_app_dict['application'].get('dataFormats',{}).get('javascriptDateFormat',''),
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        debug=False)
+        debug=True)
