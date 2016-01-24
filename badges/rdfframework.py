@@ -1088,7 +1088,7 @@ def getWtFormField(field):
         form_field = FileField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:DateField':
         form_field = DateField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''), format= \
-            get_framework().rdf_app_dict['application'].get('dataFormats',{}).get('javascriptDateFormat',''))
+            get_framework().rdf_app_dict['application'].get('dataFormats',{}).get('pythonDateFormat',''))
     elif fieldType == 'kdr:DateTimeField':
         form_field = DateTimeField(fieldLabel, fieldValidators, description=field.get('formFieldHelp',''))
     elif fieldType == 'kdr:SelectField':
@@ -1399,7 +1399,7 @@ def querySelectOptions(field):
         for row in rawOptions:
             options.append(
                 {
-                    "id":row.get(boundVar,{}).get('value',''),
+                    "id":iri(row.get(boundVar,{}).get('value','')),
                     "value":row.get(displayVar,{}).get('value','')
                 })
     return options
@@ -1434,7 +1434,7 @@ def xsdToPython (value, dataType, rdfType="literal"):
     if not value:
         return value
     elif rdfType == "uri":
-        return value
+        return iri(value)
     elif not IsNotNull(value):
         return value
     elif dataType == "xsd:anyURI":
