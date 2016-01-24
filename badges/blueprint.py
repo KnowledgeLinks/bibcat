@@ -304,7 +304,6 @@ def login_user_view():
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
-    x=y
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
 RDF_CLASS_JSON = '''<table>
@@ -326,7 +325,9 @@ def form_rdf_class():
     return RDF_CLASS_JSON.format(
         json.dumps(class_dict, indent=2),
         json.dumps(form_dict, indent=2))
-        
+
+@open_badge.route("/<form_name>/<form_instance>",
+    methods=["POST", "GET"])
 @open_badge.route("/<form_name>/<form_instance>.html",
     methods=["POST", "GET"])
 def rdf_class_forms(form_name,form_instance):

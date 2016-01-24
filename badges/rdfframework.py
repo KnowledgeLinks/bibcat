@@ -1084,7 +1084,10 @@ def getWtValidators(field):
     for v in validatorList:
         vType = v['type'].replace("http://knowledgelinks.io/ns/data-resources/","kdr:")
         if vType == 'kdr:PasswordValidator':
-            fieldValidators.append(EqualTo(field.get("formFieldName",'') +'_confirm', message='Passwords must match'))
+            fieldValidators.append(
+                EqualTo(
+                    field.get("formFieldName", '') +'_confirm', 
+                    message='Passwords must match'))
         if vType == 'kdr:EmailValidator':
             fieldValidators.append(Email(message='Enter a valid email address'))
         if vType ==  'kdr:UrlValidator':
@@ -1099,7 +1102,15 @@ def getWtValidators(field):
             for param in p1:
                 nParam = param.split('=')
                 pObj[nParam[0]]=nParam[1]
-            fieldValidators.append(Length(min=int(pObj.get('min',0)),max=int(pObj.get('max',1028)),message="must be between"))
+            field_min = int(pObj.get('min', 0))
+            field_max = int(pObj.get('max',1028))
+            fieldValidators.append(Length(
+                min=field_min,
+                max=field_max,
+                message="{} size must be between {} and {} characters".format(
+                    field.get("formFieldName"),
+                    field_min, 
+                    field_max)))
     return fieldValidators
       
 def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
