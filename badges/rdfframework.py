@@ -402,6 +402,7 @@ class RDFFramework(object):
                 current_app.config.get('TRIPLESTORE_URL'),
                 data={"query": sparql,
                       "format": "json"})
+            print(json.dumps(formDataQuery.json().get('results').get('bindings'),indent=4))
             queryData = convertSPOtoDict(formDataQuery.json().get('results').get('bindings'))
             
             print(json.dumps(queryData,indent=4))
@@ -1572,7 +1573,7 @@ def xsdToPython (value, dataType, rdfType="literal"):
         return value.decode()
     elif dataType =="xsd:unsignedInt":
         ''' Unsigned integer of 32 bits'''
-        return value.decode()
+        return int(value)
     elif dataType =="xsd:unsignedLong":
         ''' Unsigned integer of 64 bits'''
         return int(value)
