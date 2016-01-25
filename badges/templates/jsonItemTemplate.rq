@@ -5,19 +5,25 @@ SELECT (CONCAT('{',GROUP_CONCAT(?sJ;SEPARATOR=','),'}') AS ?itemJson)
   SELECT  (CONCAT('"',STR(?s),'":{',GROUP_CONCAT(?pJ;SEPARATOR=','),'}') AS ?sJ)
   {
     {
-      SELECT ?s ?p (GROUP_CONCAT(?oV; SEPARATOR=',') AS ?oJ) (COUNT(?p) AS ?oC)
+      SELECT DISTINCT ?s ?p (GROUP_CONCAT(?oV; SEPARATOR=',') AS ?oJ) (COUNT(?p) AS ?oC)
       {
-        {{ query }}
-        BIND(IF(datatype(?o)=xsd:string||isiri(?o),true,false) AS ?quotes) .
-        BIND(CONCAT(IF(?quotes,'"',""),STR(?o),if(?quotes,'"',"")) AS ?oV) .
-        FILTER(!(
-                  STRSTARTS(STR(?p), "http://fedora.info/definitions/v4/")||
-                  STRSTARTS(STR(?o), "http://fedora.info/definitions/v4/")||
-                  STRSTARTS(STR(?o), "http://www.w3.org/ns/ldp")||
-                  STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")||
-                  STRSTARTS(STR(?p), "http://www.w3.org/ns/ldp")||
-                  STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")))
-      }    
+      	{
+      		SELECT DISTINCT ?s ?p ?o
+		      {
+		        {{ query }}
+		        
+		        FILTER(!(
+		                  STRSTARTS(STR(?p), "http://fedora.info/definitions/v4/")||
+		                  STRSTARTS(STR(?o), "http://fedora.info/definitions/v4/")||
+		                  STRSTARTS(STR(?o), "http://www.w3.org/ns/ldp")||
+		                  STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")||
+		                  STRSTARTS(STR(?p), "http://www.w3.org/ns/ldp")||
+		                  STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")))
+		      }
+		    }
+		    BIND(IF(datatype(?o)=xsd:string||isiri(?o),true,false) AS ?quotes) .
+		    BIND(CONCAT(IF(?quotes,'"',""),STR(?o),if(?quotes,'"',"")) AS ?oV) .
+		  }    
       GROUP BY ?s ?p
     }
     BIND(CONCAT('"',STR(?p),'":',
