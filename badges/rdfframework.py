@@ -1310,8 +1310,6 @@ def rdf_framework_form_factory(name,instance='',**kwargs):
                    ***** has to be the class of the subjectUri for the form data lookup
         subjectUri: the uri of the object that you want to lookup
     '''
-    
-    
     rdf_form = type(name, (Form, ), {})
     appForm = get_framework().rdf_form_dict.get(name,{})
     fields = appForm.get('properties')
@@ -1437,8 +1435,6 @@ def makeTriple (sub,pred,obj):
         str
 	"""
     return "{s} {p} {o} .".format(s=sub, p=pred, o=obj)
-<<<<<<< HEAD
-=======
     
 def xsdToPython (value, dataType, rdfType="literal"):
     '''This will take a value and xsd datatype and convert it to a python variable'''
@@ -1616,5 +1612,3 @@ def convertSPOtoDict(data,mode="subject"):
                 returnObj[item['s']['value']][item['p']['value']] = \
                     xsdToPython (item['o']['value'], item['o'].get("datatype"), item['o']['type'])
         return returnObj
-                
->>>>>>> b0bf8a26d1200bbc797da7e3e46a7c9966516acb
