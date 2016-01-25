@@ -81,7 +81,9 @@ def get_badge_classes():
     #, re.sub(r'^(.*[#/])','',r.get('subject')['value'])
     return [(r.get('altName')['value'],
              r.get('name')['value']) for r in bindings]
-
+@open_badge.route("/")
+def base_path():
+    return ""
 
 @open_badge.route("/login", methods=["GET", "POST"])
 def login_user_view():
@@ -151,6 +153,7 @@ def rdf_class_forms(form_name,form_instance):
     params:
         id -- the subject uri of the form data to lookup 
     """
+    _display_mode = False
     if not get_framework().formExists(form_name,form_instance):
         return render_template(
             "error_page_template.html",
@@ -165,7 +168,7 @@ def rdf_class_forms(form_name,form_instance):
         form = form_class()
         # select field options have to be loaded before form is validated
         form = loadFormSelectOptions(form)
-        # validate the form
+        # validate the form 
         if form.validate():
             # if validated save the form 
             if request.args.get("id") and form_instance == "EditForm":
@@ -204,6 +207,8 @@ def rdf_class_forms(form_name,form_instance):
         # query for the save item
         if request.args.get("id") and form_instance \
                 in ["EditForm","DisplayForm"]:
+            if form_instance == "DisplayForm":
+                _display_mode = True
             form = form_class()
             formData = get_framework().getFormData(
                 form,
@@ -219,12 +224,15 @@ def rdf_class_forms(form_name,form_instance):
         # if not on EditForm or DisplayForm render form
         else:
             form = form_class()
-        form = loadFormSelectOptions(form)
+        form = loadFormSelectOptions(\
+                form,
+                url_for("open_badge.base_path"))
     return render_template(
         "app_form_template.html",
         actionUrl=request.url,
         form=form,
+        display_mode = _display_mode,
         dateFormat = get_framework().rdf_app_dict['application'].get(\
                 'dataFormats',{}).get('javascriptDateFormat',''),
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        debug=True)
+        debug=False)

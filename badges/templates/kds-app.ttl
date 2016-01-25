@@ -337,7 +337,8 @@ obi:issuer a rdf:Property;
 																} 
 																ORDER BY ?name";
 			kds:selectBoundValue "?s";
-			kds:selectDisplay "?name" 
+			kds:selectDisplay "?name";
+			kds:linkedForm obi:OrganizationForm 
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
@@ -918,6 +919,10 @@ kdr:Badge a kds:FormClass;
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
 			kds:formDescription "Edit badge information."
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+			kds:formDescription "Badge information."
 		]
 	];
 	kds:hasProperty [

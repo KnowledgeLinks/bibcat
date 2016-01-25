@@ -4,6 +4,7 @@
 
 {% block main %}
 {% if not debug %}{% set debug = False %}{% endif %}
+{% if not display_mode %}{% set display_mode = False %}{% endif %}
 <div class="container">
 	<div class="row">
 		<section class="col-md-12">
@@ -13,7 +14,11 @@
 				</div>
 				<div class="panel-body">
 					<p class="lead">{{ form.rdfInstructions['formDescription'] }}</p>
+					{% if display_mode %}
+					<section class="{{ form.rdfInstructions['formCss'] }}">
+					{% else %}
 					<form class="{{ form.rdfInstructions['formCss'] }}" method="{{ form.rdfInstructions['form_Method'] }}" action="{{ actionUrl }}" enctype="multipart/form-data">
+					{% endif %}
 						{{form.hidden_tag()}}
 						{% for row in form.rdfFieldList %}
 						<div class="row {{ form.rdfInstructions['rowCss'] }}">
@@ -23,14 +28,25 @@
 							{% if field.errors %}{% set errorCss = " has-error" %}{% endif %}
 							<section class="col-md-6">
 								<div class="form-group{{ errorCss }}">								
-									<label class="control-label">{{ field.label }}{% if field.flags.required %} *{% endif %}</label>
+									<label class="control-label">{{ field.label }}{% if field.flags.required and not display_mode %} *{% endif %}</label>
+									{% if display_mode %}
+									<div title="{{ field.description }}">
+										{% if field.selectDisplay %}
+											{% set data = field.selectDisplay %}
+										{% else %}
+											{% set data = field.data %} 
+										{% endif %}	
+										<div class="form-control-static">{{ data|safe }}</div>
+									</div>
+									{% else %}
 									<div title="{{ field.description }}" data-toggle="tooltip">
-										{{ field(class_=fld['css']) }}
+										{{ field(class_=fld['css'],readonly=not fld['editable']) }}
 									</div>
 									{% if field.errors %}
 							    <ul class="help-block">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
 							    
 							    {% endif %}	
+							    {% endif %}
 							    {% if debug %}<div>{{ field.__dict__ }}</div>	{% endif %}						
 								</div>
 							</section>
@@ -39,10 +55,17 @@
 						{% endfor %}
 						<div class="row">
 						<section class="col-md-6 col-md-offset-5">
+						{% if display_mode %}
+						{% else %}
 							<input type="submit" class="btn btn-success"></input>
+						{% endif %}
 						</section>
 						</div>
+					{% if display_mode %}
+					</section>
+					{% else %}
 					</form>
+					{% endif %}
 				</div>
 			</div>
 		</section>
@@ -53,6 +76,8 @@
 {% endblock %}
 {% block more_js %}
 <script>
+	{% if display_mode %}
+	{% else %}
 	$('.dp').datepicker({
 		todayBtn: "linked",
     clearBtn: true,
@@ -62,5 +87,6 @@
 	$(function () {
 	  $('[data-toggle="tooltip"]').tooltip()
 	});
+	{% endif %}
 </script>
 {% endblock %}

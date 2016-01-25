@@ -4,6 +4,7 @@ __author__ ="Mike Stabile, Jeremy Nelson"
 import os
 import requests
 import random
+import re
 from flask import current_app, json
 from jinja2 import Template
 from .utilities import render_without_request
@@ -26,6 +27,7 @@ from wtforms.fields import StringField, TextAreaField, PasswordField, \
 from wtforms.validators import Length, URL, Email, EqualTo, NumberRange, \
         Required, Regexp, InputRequired 
 import wtforms.form
+#from wtforms_components import TimeField, read_only
 from wtforms.widgets import TextInput
 
 DC = Namespace("http://purl.org/dc/elements/1.1/")
@@ -113,6 +115,14 @@ class RdfFramework(object):
                 return True
         return False
     
+    def getFormName(self,form_uri):
+        '''returns the form name for a form
+        
+        rightnow this is a simple regex but is in place if a more
+        complicated search method needs to be used in the future'''
+        
+        return re.sub(r"^(.*[#/])", "", form_uri)
+
     def saveForm(self, rdfForm):
         '''Recieves RDF_formfactory form, validates and saves the data
          
@@ -546,12 +556,13 @@ class RdfClass(object):
             setattr(self, p, jsonObj[p])
         setattr(self, "className", className)
     
-    def save(self, rdf_form, old_form_data):
+    def save(self, rdf_form, old_form_data,validationStatus=False):
         """Method validates and saves passed data for the class
 
         Args:
             rdf_form -- Current RDF Form class fields
             old_form_data -- Preexisting form data
+            validationS
         """
         '''validRequiredProps = self.__validateRequiredProperties(
             rdf_form,
@@ -1409,8 +1420,8 @@ def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
 
 def getFormInstructionJson (instructions,instance):
     ''' This function will read through the RDF defined info and proccess the 
-        json to retrun the correct values the instance of the form an 
-        instructions'''
+        json to retrun the correct instructions for the specified form
+        instance.'''
     
     rdfApp = get_framework().rdf_app_dict['application']
     #print("inst------",instructions) 
@@ -1505,13 +1516,13 @@ def getFieldSecurityAccess(field,userInfo,itemPermissions=[]):
         
                
 def rdf_framework_form_factory(name,instance='',**kwargs):
-    ''' Generates a form class based on the form definitions in the kds-app.ttl
-        file
+    ''' Generates a form class based on the form definitions in the 
+        kds-app.ttl file
     
     keyword Args:
         classUri: the classUri used for a form with loaded data
-                   ***** has to be the class of the subjectUri for the form 
-                         data lookup
+                   ***** has to be the class of the subjectUri for 
+                         the form data lookup
         subjectUri: the uri of the object that you want to lookup
     '''
     rdf_form = type(name, (Form, ), {})
@@ -1521,8 +1532,7 @@ def rdf_framework_form_factory(name,instance='',**kwargs):
             instance)
     lookupClassUri = kwargs.get("classUri",instructions.get("lookupClassUri"))
     lookupSubjectUri = kwargs.get("subjectUri")
-    #print("************* lookupClassUri:", lookupClassUri, " ************")
-    #print('instructions: \n',json.dumps(instructions,indent=4))
+    
     # get the number of rows in the form and define the fieldList as a 
     # mulit-demensional list
     fieldList = []
@@ -1622,7 +1632,7 @@ def querySelectOptions(field):
                 })
     return options
     
-def loadFormSelectOptions(rdfForm):
+def loadFormSelectOptions(rdfForm,basepath=""):
     for row in rdfForm.rdfFieldList:
         for fld in row:
             if fld.get('fieldType',{}).get('type',"") == \
@@ -1630,8 +1640,31 @@ def loadFormSelectOptions(rdfForm):
                 options = querySelectOptions(fld)
                 #print("oooooooo\n",options)
                 fldName = fld.get('formFieldName',None)
-                getattr(rdfForm,fldName).choices = [(o['id'], o['value']) \
+                _wt_field = getattr(rdfForm,fldName)
+                _wt_field.choices = [(o['id'], o['value']) \
                         for o in options]
+                # add an attribute for the displayform with the displayed
+                # element name
+                if IsNotNull(_wt_field.data):
+                    for o in options:
+                        if o['id'] == _wt_field.data:
+                            formName = get_framework().getFormName(\
+                                    fld.get("fieldType",{}).get("linkedForm"))
+                            if IsNotNull(formName):
+                                _data = "{}'{}{}/{}.{}{}'>{}</a>".format(
+                                        "<a href=",
+                                        basepath,
+                                        formName,
+                                        "DisplayForm",
+                                        "html?id=",
+                                        re.sub(r"[<>]","",o['id']),
+                                        o['value'])
+                            else:
+                                _data = o['value']
+                                        
+                            _wt_field.selectDisplay = _data
+                        break 
+                    
     return rdfForm
     
 def makeTriple (sub,pred,obj):
