@@ -1043,7 +1043,7 @@ obi:AssertionForm a kds:FormClass;
 		kds:formLayoutRow 4;
 	].
 	
-obi:BadgeApplication a kds:Application;
+obi:application a kds:Application;
 	kds:applicationSecurity [
 		acl:mode kds:SuperUser;
 		acl:agent kdr:SysAdmin-SG

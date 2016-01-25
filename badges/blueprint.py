@@ -43,7 +43,8 @@ def record_params(setup_state):
         url=triplestore_url,
         params={"update": stmt})
     # render the extensions with the base URL
-    # must use a ***NON FLASK*** routing since flask is not completely initiated
+    # must use a ***NON FLASK*** routing since flask is not completely
+    # initiated
     rdf_resource_templates = [
         "kds-app.ttl",
         "kds-vocab.ttl",
@@ -110,16 +111,19 @@ def login_user_view():
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
+    x=y #This is an intentional error to cause a break in the code
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
 RDF_CLASS_JSON = '''<table>
   <tr>
-    <td><h1>RDF Class JSON</h1></td>
+    <td><h1>Application JSON</h1></td>
+    <td><h1>Class JSON</h1></td>
 	<td><h1>Form Json</h1></td>
   </tr>
   <tr>
-    <td style='vertical-align:top'><pre>{0}</pre></td>
-	<td style='vertical-align:top'><pre>{1}<</pre></td>
+    <td style='vertical-align:top'><pre>{0}<</pre></td>
+    <td style='vertical-align:top'><pre>{1}</pre></td>
+	<td style='vertical-align:top'><pre>{2}<</pre></td>
   </tr>
 </table>'''
 
@@ -128,7 +132,9 @@ def form_rdf_class():
     """View displays the RDF json"""
     form_dict = get_framework().rdf_form_dict
     class_dict = get_framework().rdf_class_dict
+    app_dict = get_framework().rdf_app_dict
     return RDF_CLASS_JSON.format(
+        json.dumps(app_dict, indent=2), 
         json.dumps(class_dict, indent=2),
         json.dumps(form_dict, indent=2))
 
@@ -166,20 +172,25 @@ def rdf_class_forms(form_name,form_instance):
                 form.dataSubjectUri = request.args.get("id") 
             formSaveResults = get_framework().saveForm(form)
             if formSaveResults.get("success"):
-                return "<pre>{}</pre>".format(json.dumps(formSaveResults, indent=4)) 
+                return "<pre>{}</pre>".format(json.dumps(\
+                        formSaveResults, indent=4)) 
             else:
                 #print("################## Invalid Form")
                 form = formSaveResults.get("form")
     # if not POST, check the args and form instance
     else:
-        # if params are present for any forms not in the below form remove the params
-        if form_instance not in ["EditForm","DisplayForm","Login"] and request.args.get("id"):
+        # if params are present for any forms not in the below form remove 
+        # the params
+        if form_instance not in ["EditForm","DisplayForm","Login"] and \
+                request.args.get("id"):
             redirect_url = url_for("open_badge.rdf_class_forms",
                                     form_name=form_name,
                                     form_instance=form_instance)
             return redirect(redirect_url)
-        # if the there is no ID argument and on the editform instance -> redirect to NewForm
-        if form_instance in ["EditForm","DisplayForm"] and not request.args.get("id"):
+        # if the there is no ID argument and on the editform instance -> 
+        # redirect to NewForm
+        if form_instance in ["EditForm","DisplayForm"] and \
+                not request.args.get("id"):
             redirect_url = url_for("open_badge.rdf_class_forms",
                                     form_name=form_name,
                                     form_instance="NewForm")
@@ -189,8 +200,10 @@ def rdf_class_forms(form_name,form_instance):
             return render_template(
                     "error_page_template.html",
                     error_message="The item does not exist") 
-        # if the there is an ID argument and on the editform instance -> query for the save item
-        if request.args.get("id") and form_instance in ["EditForm","DisplayForm"]:
+        # if the there is an ID argument and on the editform instance -> 
+        # query for the save item
+        if request.args.get("id") and form_instance \
+                in ["EditForm","DisplayForm"]:
             form = form_class()
             formData = get_framework().getFormData(
                 form,
@@ -211,6 +224,7 @@ def rdf_class_forms(form_name,form_instance):
         "app_form_template.html",
         actionUrl=request.url,
         form=form,
-        dateFormat = get_framework().rdf_app_dict['application'].get('dataFormats',{}).get('javascriptDateFormat',''),
+        dateFormat = get_framework().rdf_app_dict['application'].get(\
+                'dataFormats',{}).get('javascriptDateFormat',''),
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         debug=True)

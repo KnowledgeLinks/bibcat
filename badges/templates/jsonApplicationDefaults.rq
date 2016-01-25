@@ -8,23 +8,37 @@ prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 prefix schema: <https://schema.org/> 
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 
-SELECT *
+SELECT (CONCAT("{",GROUP_CONCAT(?sections; SEPARATOR=","),"}") AS ?app)
 {
 GRAPH <http://knowledgelinks.io/ns/application-framework/>
 {
-  SELECT (CONCAT('{"application":{',GROUP_CONCAT(?oj; SEPARATOR=','),'}}') AS ?app)
+  SELECT ?sections
   {
     {
-      SELECT ?klapp ?p  (GROUP_CONCAT(?ojf; SEPARATOR=',') AS ?oja)
+  SELECT ?klapp (count(?p)>1 AS ?obj) (GROUP_CONCAT(?oj; SEPARATOR=',') AS ?section)
+  {
+    {
+  SELECT ?klapp ?p  (GROUP_CONCAT(?ojf; SEPARATOR=',') AS ?oja) 
                     {
-                      SELECT ?klapp ?p ?o (CONCAT(IF(isblank(?o),'{','"'),GROUP_CONCAT(?oj; SEPARATOR=','),IF(isblank(?o),'}','"')) AS ?ojf)
+SELECT ?klapp ?p ?o (CONCAT(IF(count(?o)>1,'{','"'),GROUP_CONCAT(?oj; SEPARATOR=','),IF(count(?o)>1,'}','"')) AS ?ojf)
                                     {
                                       {
+
                                         SELECT ?klapp ?p ?o ?bn_ ?p1_  (GROUP_CONCAT(?o1j; SEPARATOR=',') AS ?o1jf)
                                                       {
-                                                        ?klapp a kds:Application .
-                                                        ?klapp ?p ?o .
-                                                        BIND(IF(ISBLANK(?o),?o,"") AS ?bn ).
+                                                        {
+                                                          ?klapp rdfs:subClassOf kds:InternalClass .
+                                                          ?bns a ?klapp .
+                                                        } UNION {
+                                                          ?klapp rdfs:subClassOf kds:FormClass .
+                                                          ?bns a ?klapp .
+                                                        } UNION {
+	                                                        ?klapp a kds:Application .
+	                                                        ?klapp ?ps ?os .
+                                                        }
+                                                        BIND(IF(bound(?bns),?bns,?os) AS ?o).
+                                                        BIND(IF(bound(?bns),?bns,?ps) AS ?p).
+                                                        BIND(IF(bound(?bns),?bns,IF(ISBLANK(?o),?o,"")) AS ?bn ).
                                                         OPTIONAL {
                                                           ?bn ?p1 ?o1 .
                                                         }
@@ -33,20 +47,23 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                                                         BIND(IF(BOUND(?bn),?bn,"") AS ?bn_).
                                                       }
                                                       GROUP BY ?klapp ?p ?o ?bn_ ?p1_ 
-                                      }
+      }
                                       BIND(IF(CONTAINS(?o1jf,'","'),true,false) AS ?bracket)
-                                      BIND(IF(isblank(?o),CONCAT('"',REPLACE(STR(?p1_),"^(.*[#/])", ""),'":',IF(?bracket,'[',""),?o1jf,IF(?bracket,']',"")),?o) AS ?oj)
+                                      BIND(IF(isblank(?o)||?o=?p,CONCAT('"',REPLACE(STR(?p1_),"^(.*[#/])", ""),'":',IF(?bracket,'[',""),?o1jf,IF(?bracket,']',"")),?o) AS ?oj)
                                     }
                                     GROUP BY ?klapp ?p ?o 
-                    }
+              }
                     GROUP BY ?klapp ?p 
-    }
+
+ }
     BIND(IF(CONTAINS(?oja,'},{'),true,false) AS ?bracket)
     #BIND(CONCAT(IF(?bracket,'[',""),?oja,IF(?bracket,']',"")) AS ?oj)
     BIND(CONCAT('"',REPLACE(STR(?p),"^(.*[#/])", ""),'":',IF(?bracket,'[',""),?oja,IF(?bracket,']',"")) AS ?oj)
   }
-
-
+GROUP BY ?klapp
+}
+      BIND(CONCAT('"',REPLACE(STR(?klapp),"^(.*[#/])", ""),'":',IF(?obj,'{',""),?section,IF(?obj,'}',"")) AS ?sections)
+}
 								  			
 }
 }
