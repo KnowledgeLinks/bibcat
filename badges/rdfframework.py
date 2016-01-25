@@ -885,10 +885,12 @@ WHERE \n{
                 saveQuery = save_query_template.render(
                     prefix=get_framework().getPrefix(), 
                     deleteClause=deleteClause,
-    				insertClause=insertClause,
-    				whereClause=whereClause)
+                    insertClause=insertClause,
+                    whereClause=whereClause)
             else:
-                saveQuery = "{}\n\n{}".format(get_framework().getPrefix("turtle"),insertClause)
+                saveQuery = "{}\n\n{}".format(
+                    get_framework().getPrefix("turtle"),
+                    insertClause)
         #print(saveQuery)
         return saveQuery
         
@@ -970,6 +972,7 @@ def IsNotNull(value):
 def IsValidObject(uriString):
     '''Test to see if the string is a object store'''
     return True
+
 def run_processor(processor,prop,rdfForm,oldData,saveData):
     '''runs the passed in processor and returns the saveData'''
     if processor=="http://knowledgelinks.io/ns/data-resources/PasswordProcessor":
@@ -1004,8 +1007,8 @@ def PasswordProccessor(
      Args:
 	    mode -- generate: Application should process as a password for storage. 
 			          i.e. salting and hashing
-                verify: verifies the if the supplied password is correct
-                change: changes the current password
+        verify: verifies the if the supplied password is correct
+        change: changes the current password
         rdf_class_props -- List of RDF class properties
         class_data -- Class data
         password_field -- Password field 
