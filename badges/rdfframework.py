@@ -886,10 +886,12 @@ WHERE \n{
                 saveQuery = save_query_template.render(
                     prefix=get_framework().getPrefix(), 
                     deleteClause=deleteClause,
-    				insertClause=insertClause,
-    				whereClause=whereClause)
+                    insertClause=insertClause,
+                    whereClause=whereClause)
             else:
-                saveQuery = "{}\n\n{}".format(get_framework().getPrefix("turtle"),insertClause)
+                saveQuery = "{}\n\n{}".format(
+                    get_framework().getPrefix("turtle"),
+                    insertClause)
         #print(saveQuery)
         return saveQuery
         
@@ -971,6 +973,7 @@ def IsNotNull(value):
 def IsValidObject(uriString):
     '''Test to see if the string is a object store'''
     return True
+
 def run_processor(processor,prop,rdfForm,oldData,saveData):
     '''runs the passed in processor and returns the saveData'''
     if processor=="http://knowledgelinks.io/ns/data-resources/PasswordProcessor":
@@ -1005,8 +1008,8 @@ def PasswordProccessor(
      Args:
 	    mode -- generate: Application should process as a password for storage. 
 			          i.e. salting and hashing
-                verify: verifies the if the supplied password is correct
-                change: changes the current password
+        verify: verifies the if the supplied password is correct
+        change: changes the current password
         rdf_class_props -- List of RDF class properties
         class_data -- Class data
         password_field -- Password field 
@@ -1116,7 +1119,10 @@ def getWtValidators(field):
     for v in validatorList:
         vType = v['type'].replace("http://knowledgelinks.io/ns/data-resources/","kdr:")
         if vType == 'kdr:PasswordValidator':
-            fieldValidators.append(EqualTo(field.get("formFieldName",'') +'_confirm', message='Passwords must match'))
+            fieldValidators.append(
+                EqualTo(
+                    field.get("formFieldName", '') +'_confirm', 
+                    message='Passwords must match'))
         if vType == 'kdr:EmailValidator':
             fieldValidators.append(Email(message='Enter a valid email address'))
         if vType ==  'kdr:UrlValidator':
@@ -1131,7 +1137,15 @@ def getWtValidators(field):
             for param in p1:
                 nParam = param.split('=')
                 pObj[nParam[0]]=nParam[1]
-            fieldValidators.append(Length(min=int(pObj.get('min',0)),max=int(pObj.get('max',1028)),message="must be between"))
+            field_min = int(pObj.get('min', 0))
+            field_max = int(pObj.get('max',1028))
+            fieldValidators.append(Length(
+                min=field_min,
+                max=field_max,
+                message="{} size must be between {} and {} characters".format(
+                    field.get("formFieldName"),
+                    field_min, 
+                    field_max)))
     return fieldValidators
       
 def getFieldJson (field,instructions,instance,userInfo,itemPermissions=[]):
@@ -1300,8 +1314,6 @@ def rdf_framework_form_factory(name,instance='',**kwargs):
                    ***** has to be the class of the subjectUri for the form data lookup
         subjectUri: the uri of the object that you want to lookup
     '''
-    
-    
     rdf_form = type(name, (Form, ), {})
     appForm = get_framework().rdf_form_dict.get(name,{})
     fields = appForm.get('properties')
@@ -1604,4 +1616,3 @@ def convertSPOtoDict(data,mode="subject"):
                 returnObj[item['s']['value']][item['p']['value']] = \
                     xsdToPython (item['o']['value'], item['o'].get("datatype"), item['o']['type'])
         return returnObj
-                
