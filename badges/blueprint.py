@@ -3,6 +3,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import json
 import requests
+import time
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for
 from flask_negotiate import produces
@@ -12,8 +13,8 @@ from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from .utilities import render_without_request
-from .rdfframework import rdf_framework_form_factory, loadFormSelectOptions
-from .rdfframework import get_framework
+from .rdfframework import rdf_framework_form_factory, load_form_select_options
+from .rdfframework import get_framework, calculate_time_log, code_timer
 from .user import User
 
 open_badge = Blueprint("open_badge", __name__,
@@ -154,20 +155,26 @@ def rdf_class_forms(form_name,form_instance):
         id -- the subject uri of the form data to lookup 
     """
     _display_mode = False
+    code_timer().log("formTest",
+                    "form render start for: {}/{}".format(\
+                    form_name,form_instance))
     if not get_framework().formExists(form_name,form_instance):
         return render_template(
             "error_page_template.html",
             error_message="The web address is invalid")
+    code_timer().log("formTest","End test form path")
     # generate the form class
+    code_timer().log("formTest","initial form creation start")   
     form_class = rdf_framework_form_factory(
         form_name,
         'http://knowledgelinks.io/ns/data-resources/'+form_instance)
+    code_timer().log("formTest","initial form creation end")
     # if request method is post
     if request.method == "POST":
         # let form load with post data
         form = form_class()
         # select field options have to be loaded before form is validated
-        form = loadFormSelectOptions(form)
+        form = load_form_select_options(form)
         # validate the form 
         if form.validate():
             # if validated save the form 
@@ -184,6 +191,7 @@ def rdf_class_forms(form_name,form_instance):
     else:
         # if params are present for any forms not in the below form remove 
         # the params
+        code_timer().log("formTest","start non post testing")
         if form_instance not in ["EditForm","DisplayForm","Login"] and \
                 request.args.get("id"):
             redirect_url = url_for("open_badge.rdf_class_forms",
@@ -205,17 +213,25 @@ def rdf_class_forms(form_name,form_instance):
                     error_message="The item does not exist") 
         # if the there is an ID argument and on the editform instance -> 
         # query for the save item
+        code_timer().log("formTest","end non post testing")
         if request.args.get("id") and form_instance \
                 in ["EditForm","DisplayForm"]:
             if form_instance == "DisplayForm":
                 _display_mode = True
+            code_timer().log("formTest","load form data create form class")
             form = form_class()
+            code_timer().log("formTest",\
+                    "load form data end create class start data load")
             formData = get_framework().getFormData(
                 form,
                 subjectUri=request.args.get("id"))
+            code_timer().log("formTest",\
+                    "load form data data query completed")
             print("^^^^^^^^^^^^^^^^ formData: ",formData)
             if len(formData.get('queryData',{})) > 0:
                 form = form_class(formData.get("formdata"))
+                code_timer().log("formTest",\
+                        "form loaded with data")
             else:
                 return render_template(
                     "error_page_template.html",
@@ -224,10 +240,12 @@ def rdf_class_forms(form_name,form_instance):
         # if not on EditForm or DisplayForm render form
         else:
             form = form_class()
-        form = loadFormSelectOptions(\
+        code_timer().log("formTest","start query options load")
+        form = load_form_select_options(\
                 form,
                 url_for("open_badge.base_path"))
-    return render_template(
+        code_timer().log("formTest","end query options load")
+    template = render_template(
         "app_form_template.html",
         actionUrl=request.url,
         form=form,
@@ -235,4 +253,8 @@ def rdf_class_forms(form_name,form_instance):
         dateFormat = get_framework().rdf_app_dict['application'].get(\
                 'dataFormats',{}).get('javascriptDateFormat',''),
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
-        debug=False)
+        debug=request.args.get("debug",False))
+    code_timer().log("formTest","template rendered")
+    code_timer().printTimer("formTest")
+    code_timer().deleteTimer("formTest")
+    return template

@@ -5,6 +5,7 @@ import os
 import requests
 import random
 import re
+import time 
 from flask import current_app, json
 from jinja2 import Template
 from .utilities import render_without_request
@@ -14,7 +15,7 @@ from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
 from werkzeug.datastructures import FileStorage, MultiDict 
 from passlib.hash import sha256_crypt
 from dateutil.parser import *
-from datetime import *
+#from datetime import *
 
 try:
     from flask_wtf import Form
@@ -120,8 +121,10 @@ class RdfFramework(object):
         
         rightnow this is a simple regex but is in place if a more
         complicated search method needs to be used in the future'''
-        
-        return re.sub(r"^(.*[#/])", "", form_uri)
+        if form_uri:
+            return re.sub(r"^(.*[#/])", "", form_uri)
+        else:
+            return None
 
     def saveForm(self, rdfForm):
         '''Recieves RDF_formfactory form, validates and saves the data
@@ -139,7 +142,7 @@ class RdfFramework(object):
         
         # get data of edited objects
         oldFormData = self.getFormData(rdfForm)
-        print("~~~~~~~~~ oldFormData: ",oldFormData)    
+       #print("~~~~~~~~~ oldFormData: ",oldFormData)    
         # validate the form data for class requirements (required properties, 
         # security, valid data types etc)
         validation = self.__validateFormByClassRequirements(formByClasses, \
@@ -148,7 +151,7 @@ class RdfFramework(object):
             print("%%%%%%% validation in saveForm",validation)
             return validation   
         # determine class save order
-        print("^^^^^^^^^^^^^^^ Passed VAlidation")
+       #print("^^^^^^^^^^^^^^^ Passed VAlidation")
         classSaveOrder = self.__getSaveOrder(rdfForm)
         reverseDependancies = classSaveOrder.get("reverseDependancies",{})
         classSaveOrder = classSaveOrder.get("saveOrder",{})
@@ -244,7 +247,7 @@ class RdfFramework(object):
             current_app.config.get('TRIPLESTORE_URL'),
             data={"query": sparql,
                   "format": "json"})
-        print("***** Querying triplestore - Application Defaults ****")
+       #print("***** Querying triplestore - Application Defaults ****")
         return json.loads(formList.json().get('results').get('bindings'\
                 )[0]['app']['value'])
         
@@ -259,7 +262,7 @@ class RdfFramework(object):
             current_app.config.get('TRIPLESTORE_URL'),
             data={"query": sparql,
                   "format": "json"})
-        print("***** Querying triplestore - Class Definitions ****")
+       #print("***** Querying triplestore - Class Definitions ****")
         return json.loads(formList.json().get('results').get('bindings'\
                 )[0]['appClasses']['value'])
         
@@ -274,7 +277,7 @@ class RdfFramework(object):
             current_app.config.get('TRIPLESTORE_URL'),
             data={"query": sparql,
                   "format": "json"})
-        print("***** Querying triplestore - Form Definitions ****")
+       #print("***** Querying triplestore - Form Definitions ****")
         return json.loads(classList.json().get('results').get('bindings'\
                 )[0]['appForms']['value'])
         
@@ -398,19 +401,19 @@ class RdfFramework(object):
         if IsNotNull(subjectUri):
             # find the primary linkage between the supplied subjectId and 
             # other form classes
-            for RdfClass in sparqlConstructor:
-                for prop in sparqlConstructor[RdfClass]: 
+            for rdfClass in sparqlConstructor:
+                for prop in sparqlConstructor[rdfClass]: 
                     try:
                         if classUri == prop.get("classUri"):
                             sparqlArgs = prop
-                            linkedClass = RdfClass
-                            sparqlConstructor[RdfClass].remove(prop)
-                            if RdfClass != lookupClassUri:
+                            linkedClass = rdfClass
+                            sparqlConstructor[rdfClass].remove(prop)
+                            if rdfClass != lookupClassUri:
                                 linkedProp = True
                                 
                     except:
                         x = 0
-            print(json.dumps(sparqlConstructor ,indent=4))
+           #print(json.dumps(sparqlConstructor ,indent=4))
             # generate the triple pattern for linked class
             if sparqlArgs:
                 baseSubjectFinder = \
@@ -419,7 +422,7 @@ class RdfFramework(object):
                         makeTriple("?baseSub","a",iri(lookupClassUri)),
                         makeTriple("?classID",iri(sparqlArgs.get("propUri")),\
                         "?baseSub"))
-                print("base subject Finder:\n",baseSubjectFinder) 
+               #print("base subject Finder:\n",baseSubjectFinder) 
                 if linkedProp:
                     sparqlElements.append(\
                             '''BIND({} AS ?baseSub) .\n\t{}\n\t{}
@@ -429,14 +432,14 @@ class RdfFramework(object):
                             "?baseSub")))
             # iterrate though the classes used in the form and generate the 
             # spaqrl triples to pull the data for that class
-            for RdfClass in sparqlConstructor:
-                if RdfClass == className:
+            for rdfClass in sparqlConstructor:
+                if rdfClass == className:
                     sparqlElements.append(\
                             "\tBIND({} AS ?s) .\n\t{}\n\t?s ?p ?o .".format(
                            iri(subjectUri),
                            makeTriple("?s","a",iri(lookupClassUri))))
-                for prop in sparqlConstructor[RdfClass]:
-                    if RdfClass == className:
+                for prop in sparqlConstructor[rdfClass]:
+                    if rdfClass == className:
                         #sparqlElements.append("\t"+makeTriple(iri(str(\
                                 #subjectUri)),iri(prop.get("propUri")),"?s")+\
                                 # "\n\t?s ?p ?o .")
@@ -445,10 +448,10 @@ class RdfFramework(object):
                                 makeTriple("?baseSub","a",iri(lookupClassUri)),
                                 makeTriple("?baseSub",iri(prop.get(\
                                 "propUri")),"?s")) 
-                        #print("!!!!! className=RdfClass: ",RdfClass, \
+                        #print("!!!!! className=rdfClass: ",rdfClass, \
                         #" -- element: \n",sparqlArg)
                         sparqlElements.append(sparqlArg)
-                    elif RdfClass == linkedClass:
+                    elif rdfClass == linkedClass:
                         sparqlElements.append(
                             "\t{}\n\t{}\n\t?s ?p ?o .".format(
                                 baseSubjectFinder,
@@ -480,18 +483,20 @@ class RdfFramework(object):
                 "sparqlItemTemplate.rq",
                 prefix = self.getPrefix(),
                 query = sparqlUnions) 
-            print (sparql)
+           #print (sparql)
             # query the triplestore
+            code_timer().log("loadOldData","pre send query")
             formDataQuery =  requests.post( 
                 current_app.config.get('TRIPLESTORE_URL'),
                 data={"query": sparql,
                       "format": "json"})
-            print(json.dumps(formDataQuery.json().get('results').get(\
-                    'bindings'),indent=4))
+            code_timer().log("loadOldData","post send query")
+           #print(json.dumps(formDataQuery.json().get('results').get(\
+                    #'bindings'),indent=4))
             queryData = convertSPOtoDict(formDataQuery.json().get('results'\
                     ).get('bindings'))
-            
-            print(json.dumps(queryData,indent=4))
+            code_timer().log("loadOldData","post convert query")
+           #print(json.dumps(queryData,indent=4))
             #queryData = formDataQuery.json().get('results').get('bindings')
             #queryData = json.loads(formDataQuery.json().get('results').get(
             #'bindings')[0]['itemJson']['value']) 
@@ -513,8 +518,10 @@ class RdfFramework(object):
                         dataValue = queryData[subject].get(prop.get("propUri"))
                 formData[prop.get("formFieldName")]=dataValue
         formDataDict = MultiDict(formData)
+        code_timer().log("loadOldData","post load into MultiDict")
         #print("data:\n",formData)
         #print("dataDict:\n",formDataDict)
+        code_timer().printTimer("loadOldData",delete=True)
         return {"formdata":formDataDict,"queryData":queryData}
             
     def __getSaveOrder(self, rdfForm):
@@ -582,7 +589,7 @@ class RdfClass(object):
         generates a new URI 
           -- for fedora generates the container and returns the URI
           -- for blazegraph process will need to be created'''
-        print("generating new URI")
+       #print("generating new URI")
         
     def validateFormData(self, rdfForm, oldFormData):
         '''This method will validate whether the supplied form data 
@@ -770,7 +777,7 @@ class RdfClass(object):
             for p in self.properties:
                 #print("p--",p," -- ",self.properties[p]['propUri'])
                 if self.properties[p]['propUri'] == propUri:
-                   # print ('propName is ',p)
+                   ##print ('propName is ',p)
                     return p
         except:
             return None
@@ -814,12 +821,13 @@ class RdfClass(object):
         for prop in oldClassData:
             # remove empty data properties from consideration  
             if IsNotNull(oldClassData[prop]) or oldClassData[prop] != 'None':
-                # print(">>>>>> oldClassData: ", p)
+                ##print(">>>>>> oldClassData: ", p)
                 dataProps.add(prop)
         # remove the deletedProps from consideration and add calculated props
         #print("------- dataProps: ", dataProps)
         validProps = (dataProps - deletedProps).union( \
                 self.__getCalculatedProperties())
+        #print("---------calcprops: ",self.__getCalculatedProperties())
         #Test to see if all the required properties are supplied    
         missingRequiredProperties = required - validProps
         #print("@@@@@ missingRequiredProperties: ",missingRequiredProperties)
@@ -841,7 +849,9 @@ class RdfClass(object):
         '''lists the properties that will be calculated if no value is 
            supplied'''
         calcList = set()
-        valueProccessors = get_framework().valueProccessors
+        
+        valueProcessors = get_framework().valueProcessors
+        #print("valueProcessors: ",valueProcessors)
         for p in self.properties:
             # Any properties that have a default value will be generated at 
             # time of save
@@ -849,9 +859,11 @@ class RdfClass(object):
                 calcList.add(self.properties[p].get('propUri'))
             processors = makeList(self.properties[p].get('propertyProcessing',\
                     []))
-            # find the proccessors that will generate a value
+            # find the processors that will generate a value
             for processor in processors:
-                if processor in valueProccessors:
+                #print("processor: ",processor) 
+                if processor in valueProcessors:
+                    
                     calcList.add(self.properties[p].get('propUri'))
         #any dependant properties will be generated at time of save
         dependentList = self.listDependant()
@@ -897,7 +909,7 @@ class RdfClass(object):
         if oldData.get("queryData"):
             # find the cuurent class data from in the query
             for subjectUri in oldData.get("queryData"):
-                # print("\t\t subjectUri: ",subjectUri," subjectClass: ",\
+                ##print("\t\t subjectUri: ",subjectUri," subjectClass: ",\
                 #oldData['queryData'][subjectUri].get(\
                     #"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 #    "\n \t\t\tclassUri: ",self.classUri)
@@ -920,18 +932,45 @@ class RdfClass(object):
             data for saving'''
         preSaveData={}
         saveData={}
+        requiredProps = self.listRequired()
+        
         for prop in rdfForm:
-            #print("propType---",type(prop['data']))
-            if IsNotNull(preSaveData.get( \
-                        prop.get('fieldJson',{}).get('propUri'))):
-                if IsNotNull(prop['data']) and not isinstance( \
-                        preSaveData.get(prop.get('fieldJson', \
-                            {}).get('propUri')),FileStorage):
-                    preSaveData[prop.get('fieldJson',{}).get('propUri')] = \
-                        prop['data']
+            propUri = prop.get('fieldJson',{}).get('propUri')
+            if propUri in requiredProps:
+                requiredProps.remove(propUri)
+            if not preSaveData.get(propUri):
+                preSaveData[propUri] = {"new":prop.get('data'),
+                                        "old":oldData.get("propUri")}
             else:
-                preSaveData[prop.get('fieldJson',{}).get('propUri')] = \
-                        prop['data']        
+                print("#########################",propUri,"--",preSaveData[propUri])
+                tempList = makeList(preSaveData[propUri])
+                tempList.append({"new":prop.get('data'),
+                                    "old":oldData.get("propUri")})
+                preSaveData[propUri] = tempList
+        for propUri in requiredProps:
+            if not preSaveData.get(propUri):
+                preSaveData[propUri] = {"new":"$%^notInForm",
+                                        "old":oldData.get("propUri")}
+            else:
+                tempList = makeList(preSaveData[propUri])
+                preSaveData[propUri] = tempList.append({"new":"$%^notInForm",
+                                        "old":oldData.get("propUri")}) 
+        print(preSaveData)    
+        '''for prop in rdfForm:
+            #print("propType---",type(prop['data']))
+            # test to see if the property had data before formSave and
+            # save it in the preSaveData variable
+            propUri = prop.get('fieldJson',{}).get('propUri')
+            # if the requied propery is in the form remove it from the 
+            #required prop list
+            if propUri in requiredProps:
+                requiredProps.remove(propUri)
+            if IsNotNull(preSaveData.get(propUri)):
+                if IsNotNull(prop['data']) and not isinstance( \
+                        preSaveData.get(propUri),FileStorage):
+                    preSaveData[propUri] = prop['data']
+            else:
+                preSaveData[propUri] = prop['data'] '''       
         #print("pre save data *********\n",preSaveData)
         for prop in rdfForm:
             doNotSave = prop['fieldJson'].get("doNotSave",False)
@@ -943,12 +982,17 @@ class RdfClass(object):
                 formPropProcessors = set(self.__cleanProcessors(makeList(\
                         prop['fieldJson'].get("processors"))))
                 processors = classPropProcessors.union(formPropProcessors)
+                print(processors)
                 for processor in processors:
-                    x=1
+                    print("processor: ",processor)
                     #saveData = run_processor(processor,propUri,rdfForm,\
                             #oldData,saveData)
+        
             if len(processors)>0:
-                print("---",prop['fieldJson'].get("propUri"),": ",processors)
+                x=0
+               #print("---",prop['fieldJson'].get("propUri"),": ",processors)
+        print("requiredFields: ",self.listRequired())
+        print("post process: ",requiredProps)
         for prop in rdfForm:
             propName = self.findPropName(prop.get('fieldJson',{}).get(\
                     'propUri'))
@@ -1044,11 +1088,12 @@ WHERE \n{
             #! to use POST method. Should try to retrieve subject URI from 
             #! Fedora?
             if not subjectUri:
-                repository_result = requests.post(
+                '''repository_result = requests.post(
                     current_app.config.get("REPOSITORY_URL"),
                     data=saveQuery,
     				headers={"Content-type": "text/turtle"})
-                object_value = repository_result.text
+                object_value = repository_result.text'''
+            object_value = ""
         return {"status": "success",
                 "lastSave": {
                     "objectValue": object_value}
@@ -1142,7 +1187,7 @@ def EmailVerificationProcessor():
         address is a valid working address.'''
     return "not developed"
     
-def PasswordProccessor(
+def PasswordProcessor(
     mode,
     rdf_class_props,
     class_data,
@@ -1303,9 +1348,10 @@ def getWtValidators(field):
             fieldValidators.append(URL(message=\
                     'Enter a valid URL/web address'))
         if vType ==  'kdr:UniqueValueValidator':
+            x=0
             #fieldValidators.append(UniqueDatabaseCheck(message=\
                     #'The Value enter is already exists'))
-            print("need to create uniquevalue validator")
+           #print("need to create uniquevalue validator")
         if vType ==  'kdr:StringLengthValidator':
             p = v.get('parameters')
             p1 = p.split(',')
@@ -1609,7 +1655,7 @@ def get_framework(reset=False):
             rdf = RdfFramework()
     return rdf
     
-def querySelectOptions(field):
+def query_select_options(field):
     prefix = get_framework().getPrefix()
     selectQuery = field.get('fieldType',{}).get('selectQuery',None)
     selectList = {}
@@ -1632,12 +1678,18 @@ def querySelectOptions(field):
                 })
     return options
     
-def loadFormSelectOptions(rdfForm,basepath=""):
+def load_form_select_options(rdfForm,basepath=""):
+    ''' queries the triplestore for the select options
+    
+    !!!!!!!!!!!!!! based on performace this needs to be sent to the 
+    triplestore as one query. Each query to the triplestore is a minimum
+    1000+ ms !!!!!!!'''
+    
     for row in rdfForm.rdfFieldList:
         for fld in row:
             if fld.get('fieldType',{}).get('type',"") == \
                     'http://knowledgelinks.io/ns/data-resources/SelectField':
-                options = querySelectOptions(fld)
+                options = query_select_options(fld)
                 #print("oooooooo\n",options)
                 fldName = fld.get('formFieldName',None)
                 _wt_field = getattr(rdfForm,fldName)
@@ -1863,3 +1915,69 @@ def convertSPOtoDict(data,mode="subject"):
                         xsdToPython (item['o']['value'], item['o'].get(\
                         "datatype"), item['o']['type'])
         return returnObj
+
+class CodeTimer(object):
+    '''simple class for placing timers in the code for performance testing'''
+    
+    def addTimer(self,timer_name):
+        setattr(self,timer_name,[])
+    def log(self,timer_name,node):
+        timestamp = time.time()
+        if hasattr(self,timer_name):
+            getattr(self,timer_name).append({
+                    "node":node,
+                    "time":timestamp})
+        else:
+            setattr(self,timer_name,[{"node":node,"time":timestamp}])
+    def printTimer(self, timer_name, **kwargs):
+        delete_timer = kwargs.get("delete",False)
+        print("|-------- {} [Time Log Calculation]-----------------|".format(\
+                timer_name))
+        print("StartDiff\tLastNodeDiff\tNodeName")
+        time_log = getattr(self,timer_name)
+        start_time = time_log[0]['time']
+        previous_time = start_time
+        for entry in time_log:
+            time_diff = (entry['time'] - previous_time)  *1000
+            time_from_start = (entry['time'] - start_time) *1000
+            previous_time = entry['time']
+            print("{:.1f}\t\t{:.1f}\t\t{}".format(time_from_start,
+                                                  time_diff,
+                                                  entry['node']))
+        print("|------------------------------------------------------------|")
+        if delete_timer:
+            self.deleteTimer(timer_name)
+            
+    def deleteTimer(self, timer_name):
+        if hasattr(self,timer_name):
+            delattr(self,timer_name)
+        
+def code_timer(reset=False):
+    '''Sets a global variable for tracking the timer accross multiple
+    files '''
+    
+    global codeTimer
+    if reset:
+        codeTimer = CodeTimer()
+    else:
+        try:
+            test = codeTimer
+        except:
+            codeTimer = CodeTimer()
+    return codeTimer
+                
+    
+def calculate_time_log(time_log):
+    start_time = time_log[0]['time']
+    previous_time = start_time
+    print("|------------------Time Log Calculation--------------------------|")
+    print("StartDiff\tLastNodeDiff\tNodeName")
+    for entry in time_log:
+        time_diff = (entry['time'] - previous_time) *1000
+        time_from_start = (entry['time'] - start_time) *1000
+        previous_time = entry['time']
+        print("{:.1f}\t\t{:.1f}\t\t{}".format(time_from_start,
+                                              time_diff,
+                                              entry['node']))
+    print("|----------------------------------------------------------------|")
+        

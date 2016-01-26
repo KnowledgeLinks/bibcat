@@ -119,7 +119,7 @@ obi:issuedOn a rdf:Property;
 		kds:formFieldName "issuedOn";
 		kds:formLabelName "Issued On";
 		kds:formFieldHelp "Enter the date that the badge was awarded.";
-		kds:fieldType kdr:DateTimeField;
+		kds:fieldType kdr:DateField;
 		kds:addonCss "dp";
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
@@ -463,8 +463,8 @@ schema:alternativeName a rdf:Property;
 	rdfs:domain	obi:BadgeClass;
 	rdfs:range	xsd:string;
 	kds:requiredByDomain obi:BadgeClass;
-	kds:propertyProcessing kds:CalculationProcessor;
-	kds:calculation "slugify(schema:name)" .
+	kds:propertyProcessing kdr:CalculationProcessor;
+	kdr:Calculation "slugify(schema:name)" .
 	
 	
 obi:id a rdf:Property;		
