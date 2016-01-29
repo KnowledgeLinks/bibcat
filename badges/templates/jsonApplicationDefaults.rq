@@ -20,11 +20,11 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
     {
   SELECT ?klapp ?p  (GROUP_CONCAT(?ojf; SEPARATOR=',') AS ?oja) 
                     {
-SELECT ?klapp ?p ?o (CONCAT(IF(count(?o)>1,'{','"'),GROUP_CONCAT(?oj; SEPARATOR=','),IF(count(?o)>1,'}','"')) AS ?ojf)
+									SELECT ?klapp ?p ?o (CONCAT(IF(count(?o)>1,'{','"'),GROUP_CONCAT(?oj; SEPARATOR=','),IF(count(?o)>1,'}','"')) AS ?ojf)
                                     {
                                       {
 
-                                        SELECT ?klapp ?p ?o ?bn_ ?p1_  (GROUP_CONCAT(?o1j; SEPARATOR=',') AS ?o1jf)
+                                        SELECT  ?klapp ?p ?o ?bn_ ?p1_  (GROUP_CONCAT(?o1j; SEPARATOR=',') AS ?o1jf)
                                                       {
                                                         {
                                                           ?klapp rdfs:subClassOf kds:InternalClass .
@@ -38,21 +38,28 @@ SELECT ?klapp ?p ?o (CONCAT(IF(count(?o)>1,'{','"'),GROUP_CONCAT(?oj; SEPARATOR=
                                                         }
                                                         BIND(IF(bound(?bns),?bns,?os) AS ?o).
                                                         BIND(IF(bound(?bns),?bns,?ps) AS ?p).
-                                                        BIND(IF(bound(?bns),?bns,IF(ISBLANK(?o),?o,"")) AS ?bn ).
                                                         OPTIONAL {
-                                                          ?bn ?p1 ?o1 .
-                                                        }
+                                                          {?o ?p1 ?o1 .
+                                                          }
+                                                        } .
+                                                        OPTIONAL {
+                                                          {?o ?p1 ?o1 .
+                                                          FILTER(ISBLANK(?o))}
+                                                        } .
+                                                        
                                                         BIND(IF(bound(?o1),CONCAT('"',STR(?o1),'"'),"") AS ?o1j)
                                                         BIND(IF(BOUND(?p1),?p1,"") AS ?p1_) .
-                                                        BIND(IF(BOUND(?bn),?bn,"") AS ?bn_).
+                                                        BIND(IF(BOUND(?o),?o,"") AS ?bn_).
+                                                        
                                                       }
-                                                      GROUP BY ?klapp ?p ?o ?bn_ ?p1_ 
-      }
+                                                     GROUP BY ?klapp ?p ?o ?bn_ ?p1_ 
+													}
                                       BIND(IF(CONTAINS(?o1jf,'","'),true,false) AS ?bracket)
                                       BIND(IF(isblank(?o)||?o=?p,CONCAT('"',REPLACE(STR(?p1_),"^(.*[#/])", ""),'":',IF(?bracket,'[',""),?o1jf,IF(?bracket,']',"")),?o) AS ?oj)
                                     }
                                     GROUP BY ?klapp ?p ?o 
-              }
+								  			
+           }
                     GROUP BY ?klapp ?p 
 
  }
@@ -67,6 +74,4 @@ GROUP BY ?klapp
 								  			
 }
 }
-
-
 

@@ -316,7 +316,7 @@ obi:issuer a rdf:Property;
 	rdfs:label "Issuer";
 	rdfs:comment "Issuer of the open badge instance.";	
 	kds:requiredByDomain obi:BadgeClass;
-	kds:defaultVal	"{{ defaultOrgURI }}";
+	kds:defaultVal	"defaultOrgURI";
 	kds:jsonDefault [
 		kds:jsonObjName "issuer";
 		kds:jsonValFormat "lookup";
@@ -464,7 +464,7 @@ schema:alternativeName a rdf:Property;
 	rdfs:range	xsd:string;
 	kds:requiredByDomain obi:BadgeClass;
 	kds:propertyProcessing kdr:CalculationProcessor;
-	kdr:Calculation "slugify(schema:name)" .
+	kdr:calculation "slugify(schema:name)" .
 	
 	
 obi:id a rdf:Property;		
@@ -638,7 +638,7 @@ kds:userName a rdf:Property;
 		a	kdr:UniqueValueValidator;
 	];
 	kds:propertyValidation [
-		a kdr:StringLengthValidator;
+		a xsd:stringLengthValidator;
 		kds:parameters "max=25,min=10"
 	];
 	kds:jsonDefault [

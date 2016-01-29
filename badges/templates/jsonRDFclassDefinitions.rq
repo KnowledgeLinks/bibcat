@@ -22,8 +22,9 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
             ?klClasses a kds:ControlledClass .
             ?klClasses ?p ?o . 
             BIND (CONCAT('"',REPLACE(STR(?p),  "^(.*[#/])", ""),'"') AS  ?prop) .
-            BIND (IF(ISBLANK(?o),?o,"") AS ?bn) .
-            ?bn ?pp ?oo .
+
+            ?o ?pp ?oo .
+            FILTER(isblank(?o))
             BIND (CONCAT('"',REPLACE(STR(?pp),  "^(.*[#/])", ""),'"') AS  ?prop2) .
             BIND (IF(?pp=kds:keyCombo,CONCAT('"',STR(?oo),'"'),CONCAT(?prop2,':"',STR(?oo),'"')) AS ?rtn) .
             BIND (IF(?pp=kds:keyCombo,"array","obj") AS ?agType) .
@@ -50,21 +51,22 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
               {
                   {
                     SELECT ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra  (GROUP_CONCAT(?rangeItems; SEPARATOR=",") AS ?rangeVal) (GROUP_CONCAT(?stoType1; SEPARATOR=",") AS ?stoVal)
-                    { 
+                    {
                       ?klClasses a kds:ControlledClass .
                       ?properties rdfs:domain ?klClasses .
                       ?properties ?attrs ?attrObjs .
                       ?properties rdfs:range ?ra .
 
-                      BIND(IF(ISBLANK(?attrObjs),?attrObjs,"") AS ?bn).
+
                       OPTIONAL {
                         ?properties rdfs:range ?objLookup .
                         ?objLookup a kds:ControlledClass .
                         ?objLookup kds:storageType ?stoType 
                       } .
                       OPTIONAL {
-                        ?bn kds:appliesTo ?klClasses .
-                        ?bn ?attrs ?bnVal .
+                        ?attrObjs kds:appliesTo ?klClasses .
+                        ?attrObjs ?attrs ?bnVal .
+                        FILTER(ISBLANK(?attrObjs))
                       }.
 
                       BIND (CONCAT('"',IF(bound(?stoType),?stoType,"literal"),'"') AS ?stoType1) .
@@ -73,8 +75,20 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                       BIND (CONCAT('"',REPLACE(STR(?attrs),  "^(.*[#/])", ""),'"') AS  ?attrJson) .
                       BIND (IF(?attrs=rdfs:range,IF(?rangeItems!='','',CONCAT('"range":[{"rangeClass":"',STR(?attrObjs),'","storageType":',?stoType1,'}]')),(CONCAT(?attrJson,':"',STR(COALESCE(?bnVal,?attrObjs)),'"'))) AS ?jVal ).
                       FILTER ((?attrs!=kds:json && ?attrs!=kds:formDefault && ?attrs != kds:jsonDefault && !(?attrObjs != ?klClasses && ?attrs = kds:requiredByDomain) && ?attrs != rdfs:domain)) .
-                      FILTER (?jVal!="") .
-                     }
+                      #FILTER (str(?jVal)!="") .
+                      FILTER(    
+                        (     
+                          ( ! (?attrs=rdfs:range&&?rangeItems!='') )    
+                         							
+                          && 
+                         	  
+                          (   
+                            	(!( isblank(?attrObjs) )  )
+                           				||
+                          		( isblank(?attrObjs) &&	bound(?bnVal) )   
+                           )
+                        )        
+                      )}
                      GROUP BY ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra
                   }
                   BIND (CONCAT('"range":[',IF(?rangeVal='',CONCAT('{"rangeClass":"',STR(?ra),'","storageType":',?stoVal,'}'),?rangeVal),']') AS ?newRange)

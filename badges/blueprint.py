@@ -58,6 +58,7 @@ def record_params(setup_state):
                 base_url=base_url))
     # load the extensions in the triplestore
     context_uri = "http://knowledgelinks.io/ns/application-framework/"
+    print(triplestore_url) 
     for data in rdf_data:
         result = requests.post(
             url=triplestore_url,
@@ -114,7 +115,7 @@ def login_user_view():
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
-    x=y #This is an intentional error to cause a break in the code
+    x=get_framework() #This is an intentional error to cause a break in the code
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
 RDF_CLASS_JSON = '''<table>
@@ -179,7 +180,7 @@ def rdf_class_forms(form_name,form_instance):
         if form.validate():
             # if validated save the form 
             if request.args.get("id") and form_instance == "EditForm":
-                form.dataSubjectUri = request.args.get("id") 
+                form.dataSubjectUri = request.args.get("id")
             formSaveResults = get_framework().saveForm(form)
             if formSaveResults.get("success"):
                 return "<pre>{}</pre>".format(json.dumps(\
@@ -239,7 +240,9 @@ def rdf_class_forms(form_name,form_instance):
                       
         # if not on EditForm or DisplayForm render form
         else:
+            code_timer().log("formTest","create form class start")
             form = form_class()
+            code_timer().log("formTest","create form class end")
         code_timer().log("formTest","start query options load")
         form = load_form_select_options(\
                 form,
