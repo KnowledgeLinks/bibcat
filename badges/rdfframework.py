@@ -16,8 +16,10 @@ from rdflib import Namespace, RDF, RDFS, OWL, XSD #! Not sure what VOID is
 from werkzeug.datastructures import FileStorage, MultiDict 
 from passlib.hash import sha256_crypt
 from dateutil.parser import *
-#from datetime import *
+from base64 import b64encode
 
+#from datetime import *
+ 
 try:
     from flask_wtf import Form
     from flask_wtf.file import FileField
@@ -1441,7 +1443,8 @@ def salt_processor(obj, mode="save", **kwargs):
     # if called from the password processor the kwargs will have a 
     # salt_property and we can automatically generate a new one
     if kwargs.get('salt_property'):
-        obj['processedData'][kwargs['salt_property']] = str(os.urandom(length))
+        obj['processedData'][kwargs['salt_property']] = \
+                        b64encode(os.urandom(length)).decode('utf-8')
         return obj
     # if the salt already exisits in the processed data return the obj
     # the processor may have been called by the password processor
@@ -1464,7 +1467,8 @@ def salt_processor(obj, mode="save", **kwargs):
     if IsNotNull(password_property.get('new')) or \
                                 (obj['prop'].get('required') and \
                                         not isNotNull(obj['prop']['old'])):
-        obj['processedData'][obj['propUri']] = str(os.urandom(length))
+        obj['processedData'][obj['propUri']] = \
+                    b64encode(os.urandom(length)).decode('utf-8')
         
     obj['prop']['calcValue'] = True    
     return obj

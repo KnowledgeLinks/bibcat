@@ -115,7 +115,8 @@ def login_user_view():
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
-    x=get_framework() #This is an intentional error to cause a break in the code
+    f=get_framework() #This is an intentional error to cause a break in the code
+    y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
 RDF_CLASS_JSON = '''<table>
