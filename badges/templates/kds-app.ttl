@@ -560,7 +560,7 @@ kds:UserClass a kds:ControlledClass ;
 	kds:primaryKey kds:hasPerson.
 	
 kds:PasswordClass a kds:ControlledClass;
-	kds:storageType "blanknode" .
+	kds:storageType "object" .
 
 
 schema:Person a kds:ControlledClass ;

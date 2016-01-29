@@ -582,7 +582,7 @@ class RdfClass(object):
         validDependancies = self.__validateDependantProperties(
             rdf_form,
             old_form_data)'''
-        save_data = self.__proccessClassData(
+        save_data = self.__processClassData(
             rdf_form,
             old_form_data)
         save_query = self.__generateSaveQuery(save_data)
@@ -648,27 +648,27 @@ class RdfClass(object):
                                 "formLabelName",''))
                 #print("pkey newClassData: ",newClassData,"\n\n")
                 for key in pkey:
-                    #print ("********************** entered key loop")
-                    #print("old-new: ",oldClassData.get(key)," -- ",
-                    #newClassData.get(key),"\n")
+                    print ("********************** entered key loop")
+                    print("old-new: ",oldClassData.get(key)," -- ",
+                                                    newClassData.get(key),"\n")
                     objectVal = None
                     #get the dataValue to test against
                     dataValue = newClassData.get(key,oldClassData.get(key))
-                    #print("dataValue: ",dataValue)
+                    print("dataValue: ",dataValue)
                     if IsNotNull(dataValue):
-                        #print ("********************** entered dataValue if 
-                        #-- propName: ", self.findPropName(key))
+                        print ("********************** entered dataValue if",
+                                       "-- propName: ", self.findPropName(key))
                         
                         dataType = self.properties.get(self.findPropName(key)\
                                 ).get("range",[])[0].get('storageType')
-                        #print("dataType: ",dataType)
+                        print("dataType: ",dataType)
                         if dataType == 'literal':
                             dataType = self.properties.get(self.findPropName( \
                                     key)).get("range",[])[0].get('rangeClass')
                             objectVal = RdfDataType(dataType).sparql(dataValue)
                         else:
                             objectVal = iri(dataValue)
-                    #print("objectVal: ",objectVal)
+                    print("objectVal: ",objectVal)
                     # if the oldData is not equel to the newData re-evaluate 
                     # the primaryKey                        
                     if (oldClassData.get(key) != newClassData.get(key)) and \
@@ -683,9 +683,9 @@ class RdfClass(object):
                         if objectVal:
                             multiKeyQueryArgs.append(makeTriple("?uri", \
                                     iri(key), objectVal))
-                #print("\n////////////////// queryArgs:\n",queryArgs)
-                #print("               multiKeyQueryArgs:\n",multiKeyQueryArgs)
-                #print("               keyChanged: ",keyChanged)         
+                print("\n////////////////// queryArgs:\n",queryArgs)
+                print("               multiKeyQueryArgs:\n",multiKeyQueryArgs)
+                print("               keyChanged: ",keyChanged)         
                 if keyChanged:
                     #print("Enter keyChanged")
                     if len(pkey)>1:
@@ -909,7 +909,11 @@ class RdfClass(object):
     def __selectClassQueryData(self,oldData):
         '''Find the data in query data that pertains to this class instance
         
-        returns dictionary of data'''
+        returns dictionary of data with the subjectUri stored as 
+                !!!!subject'''
+                
+        #print("__________ class queryData:\n",\
+        #                        json.dumps(dumpable_obj(oldData),indent=4))
         oldClassData = {}
         if oldData.get("queryData"):
             # find the cuurent class data from in the query
@@ -921,9 +925,13 @@ class RdfClass(object):
                 classTypes = makeList(oldData['queryData'][subjectUri].get( \
                     "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",[]))
                 for rdfType in classTypes:
-                    if rdfType == self.classUri:
+                    classTest = iri(self.classUri)
+                    if rdfType == classTest:
                         oldClassData = oldData['queryData'][subjectUri]
+                        oldClassData["!!!!subjectUri"] = subjectUri
                     break
+        print("ttttttttttttt oldClassData:\n",\
+                               json.dumps(dumpable_obj(oldClassData),indent=4))
         return oldClassData
         
     def __validatePropertyData(self,rdfForm,oldData):
@@ -932,7 +940,7 @@ class RdfClass(object):
     def __validateSecurity(self,rdfForm,oldData):
         return ["valid"]
 
-    def __proccessClassData(self,rdfForm,oldData):
+    def __processClassData(self,rdfForm,oldDataObj):
         '''Reads through the processors in the defination and processes the 
             data for saving'''
         preSaveData={}
@@ -941,8 +949,11 @@ class RdfClass(object):
         obj={}
         requiredProps = self.listRequired()
         calculatedProps = self.__getCalculatedProperties()
+        oldData = self.__selectClassQueryData(oldDataObj)
+        subjectUri = oldData.get("!!!!subjectUri","<>")
         # cycle through the form class data and add old, new, doNotSave and
         # processors for each property
+        print("****** oldData:\n",json.dumps(dumpable_obj(oldData),indent=4))
         for prop in rdfForm:
             propUri = prop.get('fieldJson',{}).get('propUri')
             # gather all of the processors for the proerty
@@ -967,7 +978,7 @@ class RdfClass(object):
             # add the information to the preSaveData object
             if not preSaveData.get(propUri):
                 preSaveData[propUri] = {"new":prop.get('data'),
-                                "old":oldData.get("propUri"),
+                                "old":oldData.get(propUri),
                                 "className": self.className,
                                 "required": requiredProp,
                                 "editable": prop['fieldJson'].get(\
@@ -976,10 +987,11 @@ class RdfClass(object):
                                                 "doNotSave",False),
                                 "processors": processors}
             else:
-                #print("#########################",propUri,"--",preSaveData[propUri])
+                #print("#########################",propUri,"--",\
+                            #preSaveData[propUri])
                 tempList = makeList(preSaveData[propUri])
                 tempList.append({"new":prop.get('data'),
-                                "old":oldData.get("propUri"),
+                                "old":oldData.get(propUri),
                                 "className": self.className,
                                 "required": requiredProp,
                                 "editable": prop['fieldJson'].get(\
@@ -1002,7 +1014,7 @@ class RdfClass(object):
                 calculatedProps.remove(propUri)
             if not preSaveData.get(propUri):
                 preSaveData[propUri] = {"new":NotInFormClass(),
-                                        "old":oldData.get("propUri"),
+                                        "old":oldData.get(propUri),
                                         "doNotSave":False,
                                         "className": self.className,
                                         "required": True,
@@ -1016,7 +1028,7 @@ class RdfClass(object):
             else:
                 tempList = makeList(preSaveData[propUri])
                 preSaveData[propUri] = tempList.append({"new":NotInFormClass(),
-                                        "old":oldData.get("propUri"),
+                                        "old":oldData.get(propUri),
                                         "doNotSave": False,
                                         "className": self.className,
                                         "editable": True,
@@ -1036,7 +1048,7 @@ class RdfClass(object):
                                     classProp.get("propertyProcessing")))))
             if not preSaveData.get(propUri):
                 preSaveData[propUri] = {"new":NotInFormClass(),
-                                        "old":oldData.get("propUri"),
+                                        "old":oldData.get(propUri),
                                         "doNotSave":False,
                                         "processors":classPropProcessors,
                                         "defaultVal":classProp.get(\
@@ -1046,7 +1058,7 @@ class RdfClass(object):
             else:
                 tempList = makeList(preSaveData[propUri])
                 preSaveData[propUri] = tempList.append({"new":NotInFormClass(),
-                                        "old":oldData.get("propUri"),
+                                        "old":oldData.get(propUri),
                                         "doNotSave":False,
                                         "processors":classPropProcessors,
                                         "defaultVal":classProp.get(\
@@ -1076,15 +1088,17 @@ class RdfClass(object):
         for propUri, prop in preSaveData.items():    
             # send each property to be proccessed
             if prop:
-                obj = self.__proccessProp({"propUri":propUri,
+                obj = self.__processProp({"propUri":propUri,
                                             "prop": prop,
                                             "processedData": processedData,
                                             "preSaveData": preSaveData})
                 processedData = obj["processedData"]
                 preSaveData = obj["preSaveData"]
         
-        saveData = self.__format_data_for_save(processedData,preSaveData)
-
+        saveData = {
+                "data":self.__format_data_for_save(processedData,preSaveData),
+                "subjectUri":subjectUri}
+                    
         #print(json.dumps(dumpable_obj(preSaveData),indent=4))
          
         return saveData
@@ -1100,9 +1114,12 @@ class RdfClass(object):
                 returnList.append(item)
         return returnList
             
-    def __generateSaveQuery(self,saveData,subjectUri=None):
+    def __generateSaveQuery(self,saveDataObj,subjectUri=None):
+        saveData = saveDataObj.get("data")
+        # find the subjectUri positional argument or look in the saveDataObj
+        # or return <> as a new node 
         if not subjectUri:
-            subjectUri="<>"
+            subjectUri = iri(saveDataObj.get('subjectUri',"<>"))
         saveType = self.storageType
         if subjectUri == "<>" and saveType.lower() == "blanknode":
             saveType = "blanknode"
@@ -1114,65 +1131,89 @@ class RdfClass(object):
         whereClause = ""
         propSet = set()
         i = 1
-        for prop in saveData:
-            propSet.add(prop[0])
-            propIri = iri(prop[0])
-            if not isinstance(prop[1], DeleteProperty):
-                insertClause += makeTriple(subjectUri,propIri,prop[1]) + "\n"
-                bnInsertClause.append("\t{} {}".format(propIri,prop[1]))    
-        if subjectUri != '<>':
-            for prop in propSet:
-                propIri = iri(prop)
-                deleteClause += makeTriple(subjectUri,propIri,"?"+str(i)) + \
-                        "\n"
-                whereClause += makeTriple(subjectUri,propIri,"?"+str(i)) + \
-                        "\n"
-                i += 1
-        else:
-            insertClause += makeTriple(subjectUri,"a",iri(self.classUri)) + \
-                    "\n"
-            bnInsertClause.append("\t a {}".format(iri(self.classUri)))
-        if saveType == "blanknode":
-            saveQuery = "[\n{}\n]".format(";\n".join(bnInsertClause))
-        else:
+        print("save data in generateSaveQuery\n",json.dumps(\
+                                            dumpable_obj(saveData),indent=4),
+                                            "\n",saveData)
+        # test to see if there is data to save                                    
+        if len(saveData)>0:
+            for prop in saveData:
+                propSet.add(prop[0])
+                propIri = iri(prop[0])
+                if not isinstance(prop[1], DeleteProperty):
+                    insertClause += "{}\n".format(\
+                                        makeTriple(subjectUri,propIri,prop[1]))
+                    bnInsertClause.append("\t{} {}".format(propIri,prop[1]))    
             if subjectUri != '<>':
-                save_query_template = Template("""{{ prefix }}
-DELETE \n{
-{{ deleteClause }} }
-INSERT \n{
-{{ insertClause }} }
-WHERE \n{
-{{ whereClause }} }""")
-                saveQuery = save_query_template.render(
-                    prefix=get_framework().getPrefix(), 
-                    deleteClause=deleteClause,
-                    insertClause=insertClause,
-                    whereClause=whereClause)
+                for prop in propSet:
+                    propIri = iri(prop)
+                    deleteClause += "{}\n".format(\
+                                    makeTriple(subjectUri,propIri,"?"+str(i)))
+                    whereClause += "OPTIONAL {{ {} }} .\n".format(\
+                                    makeTriple(subjectUri,propIri,"?"+str(i)))
+                    i += 1
             else:
-                saveQuery = "{}\n\n{}".format(
-                    get_framework().getPrefix("turtle"),
-                    insertClause)
-        print(saveQuery)
-        return saveQuery
-        
-    def __runSaveQuery(self, saveQuery,subjectUri=None):
-        if saveQuery[:1] == "[":
-            object_value = saveQuery
+                insertClause += makeTriple(subjectUri,"a",iri(self.classUri)) + \
+                        "\n"
+                bnInsertClause.append("\t a {}".format(iri(self.classUri)))
+            if saveType == "blanknode":
+                saveQuery = "[\n{}\n]".format(";\n".join(bnInsertClause))
+            else:
+                if subjectUri != '<>':
+                    save_query_template = Template("""{{ prefix }}
+                                    DELETE \n{
+                                    {{ deleteClause }} }
+                                    INSERT \n{
+                                    {{ insertClause }} }
+                                    WHERE \n{
+                                    {{ whereClause }} }""")
+                    saveQuery = save_query_template.render(
+                        prefix=get_framework().getPrefix(), 
+                        deleteClause=deleteClause,
+                        insertClause=insertClause,
+                        whereClause=whereClause)
+                else:
+                    saveQuery = "{}\n\n{}".format(
+                        get_framework().getPrefix("turtle"),
+                        insertClause)
+            print(saveQuery)
+            return {"query":saveQuery,"subjectUri":subjectUri}
         else:
-            #! Should use PATCH if fedora object already exists, otherwise need 
-            #! to use POST method. Should try to retrieve subject URI from 
-            #! Fedora?
-            if not subjectUri:
-                repository_result = requests.post(
-                    current_app.config.get("REPOSITORY_URL"),
-                    data=saveQuery,
-    				headers={"Content-type": "text/turtle"})
-                object_value = repository_result.text
-            #object_value = "<testResult>"
-        return {"status": "success",
-                "lastSave": {
-                    "objectValue": object_value}
-               }
+            return {"subjectUri":subjectUri}
+        
+    def __runSaveQuery(self, saveQueryObj,subjectUri=None):
+        saveQuery = saveQueryObj.get("query")
+        if not subjectUri:
+            subjectUri = saveQueryObj.get("subjectUri")
+       
+        if saveQuery:
+            if saveQuery[:1] == "[":
+                object_value = saveQuery
+            else:
+                #! Should use PATCH if fedora object already exists, otherwise need 
+                #! to use POST method. Should try to retrieve subject URI from 
+                #! Fedora?
+                if subjectUri == "<>":
+                    repository_result = requests.post(
+                        current_app.config.get("REPOSITORY_URL"),
+                        data=saveQuery,
+        				headers={"Content-type": "text/turtle"})
+                    object_value = repository_result.text
+                else:
+                    repository_result = requests.patch(
+                        cleanIri(subjectUri),
+                        data=saveQuery,
+        				headers={"Content-type": "application/sparql-update"})
+                    object_value = iri(subjectUri)
+            return {"status": "success",
+                    "lastSave": {
+                        "objectValue": object_value}
+                   }
+        else:
+            return {"status": "success",
+                    "lastSave": {
+                        "objectValue": iri(subjectUri),
+                        "comment": "No data to Save"}
+                   }
     
     def findPropName (self,propUri):
         "cycle through the class properties object to find the property name"
@@ -1182,7 +1223,7 @@ WHERE \n{
             if self.properties[p]['propUri'] == propUri:
                 return p
     
-    def __proccessProp(self,obj):
+    def __processProp(self,obj):
         # obj = propUri, prop, processedData, preSaveData
         if len(makeList(obj['prop']))>1:
             obj = self.__merge_prop(obj)
@@ -1208,7 +1249,10 @@ WHERE \n{
         # if the property is editable process the data        
         elif obj['prop'].get("editable"):
             # if the old and new data are different
-            if obj['prop'].get("new") != obj['prop'].get("old"):
+            print (obj['prop'].get("new")," != ",obj['prop'].get("old"))
+            if cleanIri(obj['prop'].get("new")) != \
+                                    cleanIri(obj['prop'].get("old")):
+                print("true")
                 # if the new data is null and the property is not
                 # required mark property for deletion
                 if not IsNotNull(obj['prop'].get("new")) and not \
@@ -1261,6 +1305,7 @@ WHERE \n{
                     conflictingValues[name] = attribute'''
     def __format_data_for_save(self,processedData,preSaveData):
         saveData = []
+        print("format data***********\n",json.dumps(dumpable_obj(processedData),indent=4))
         for propUri, prop in processedData.items():
             if isinstance(prop,DeleteProperty):
                 saveData.append([propUri,prop])
@@ -1365,7 +1410,7 @@ def run_processor(processor, obj, mode="save"):
 def assertion_image_baking_processor(obj, mode="save"):
     ''' Application sends badge image to the a badge baking service with the 
         assertion.'''
-    return "not developed"
+    return obj
     
 def csv_string_to_multi_property_processor(obj, mode="save"):
     ''' Application takes a CSV string and adds each value as a seperate triple 
@@ -1375,12 +1420,12 @@ def csv_string_to_multi_property_processor(obj, mode="save"):
         if IsNotNull(valueString):
             vals = list(makeSet(makeList(valueString.split(','))))
             obj['processedData'][obj['propUri']] = vals
-        x=y
+        print("csvpro ",json.dumps(dumpable_obj(obj),indent=4)) 
+        obj['prop']['calcValue'] = True
         return obj
     if mode == "read":
-        x=y
-        
-    x=y
+        return ", ".join(obj)
+      
         
     return obj
     
@@ -1399,7 +1444,7 @@ def save_file_to_repository(data,repoItemAddress):
                     data=data.read(),
     				headers={"Content-type": "'image/png'"})
         object_value = repository_result.text
-    return object_value
+    return iri(object_value)
         
 def password_processor(obj, mode="save"):
     """Function handles application password actions
@@ -1466,7 +1511,7 @@ def salt_processor(obj, mode="save", **kwargs):
     # if the salt property is required and the old salt is empty
     if IsNotNull(password_property.get('new')) or \
                                 (obj['prop'].get('required') and \
-                                        not isNotNull(obj['prop']['old'])):
+                                        not IsNotNull(obj['prop']['old'])):
         obj['processedData'][obj['propUri']] = \
                     b64encode(os.urandom(length)).decode('utf-8')
         
@@ -1483,7 +1528,8 @@ def calculation_processor(obj, mode="save"):
                                                     calculation.find(")")]
             if not propUri.startswith("http"):
                 ns = propUri[:propUri.find(":")]
-                propUri = get_app_ns_uri(ns)
+                name = propUri[propUri.find(":")+1:]
+                propUri = get_app_ns_uri(ns) + name
             valueToSlug = obj['processedData'].get(propUri,\
                                     obj['preSaveData'].get(propUri,{}\
                                         ).get('new',None))
@@ -2269,10 +2315,12 @@ def dumpable_obj(obj):
                 returnList.append(list(item))
             elif isinstance(item,dict):
                 returnList.append(dumpable_obj(item))
-            elif inspect.isclass(item):
-                returnList.append(str(type(item)))
             else:
-                returnList.append(item)
+                try:
+                    x=json.dumps(item)
+                    returnList.append(item)
+                except:
+                    returnList.append(str(type(item)))
         return returnList
     elif isinstance(obj,set):
         return(list(obj))
@@ -2285,23 +2333,22 @@ def dumpable_obj(obj):
                 returnObj[key] = list(item)
             elif isinstance(item,dict):
                 returnObj[key] = dumpable_obj(item)
-            elif inspect.isclass(type(item)):
+            else: 
                 try:
                     x = json.dumps(item)
                     returnObj[key] = item
                 except:
                     returnObj[key] = str(type(item))
-            else:
-                returnObj[key] = item
         return returnObj
-    elif inspect.isclass(type(item)):
+    else:
         try:
             x = json.dumps(item)
+            print("test")
             return item
         except:
+            print ("except")
             return str(type(item))
-    else:
-        return obj    
+   
 def remove_null(obj):
     ''' reads through a list or set and strips any null values'''
     if isinstance(obj,set):
@@ -2346,3 +2393,11 @@ def get_app_ns_uri(value):
                                                        "appNameSpace",[]):
         if ns.get('prefix') == value:
             return ns.get('nameSpaceUri')
+            
+def cleanIri(uriString):
+    '''removes the <> signs from a string start and end'''
+    if isinstance(uriString, str):
+        if uriString[:1] == "<" and uriString[len(uriString)-1:] == ">" :
+            uriString = uriString[1:len(uriString)-1]
+    return uriString
+    
