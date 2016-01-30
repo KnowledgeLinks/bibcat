@@ -145,6 +145,7 @@ class RdfFramework(object):
         
         # get data of edited objects
         oldFormData = self.getFormData(rdfForm)
+        idClassUri = oldFormData.get("formClassUri")
        #print("~~~~~~~~~ oldFormData: ",oldFormData)    
         # validate the form data for class requirements (required properties, 
         # security, valid data types etc)
@@ -161,6 +162,7 @@ class RdfFramework(object):
         
         # save class data
         dataResults = []
+        idValue = None
         for rdfClass in classSaveOrder:
             status = {}
             className = self.getClassName(rdfClass)
@@ -169,6 +171,9 @@ class RdfFramework(object):
             dataResults.append({"rdfClass":rdfClass,"status":status})
             if status.get("status")=="success":
                 updateClass = reverseDependancies.get(rdfClass,[])
+                if rdfClass == idClassUri:
+                    idValue = cleanIri(\
+                            status.get("lastSave",{}).get("objectValue"))
                 for prop in updateClass:
                     found = False
                     for i, field in enumerate(
@@ -187,7 +192,7 @@ class RdfFramework(object):
                                 className=prop.get("className"),
                                 propName=prop.get("propName"))[0]})
         return  {"success":True, "classLinks":classSaveOrder, "oldFormData":\
-                    oldFormData, "dataResults":dataResults}
+                    oldFormData, "dataResults":dataResults, "idValue": idValue}
     
     def getPrefix(self, formatType="sparql"):
         ''' Generates a string of the rdf namespaces listed used in the 
@@ -501,7 +506,7 @@ class RdfFramework(object):
             queryData = convertSPOtoDict(formDataQuery.json().get('results'\
                     ).get('bindings'))
             code_timer().log("loadOldData","post convert query")
-           #print(json.dumps(queryData,indent=4))
+            print("form query data _____\n",json.dumps(queryData,indent=4))
             #queryData = formDataQuery.json().get('results').get('bindings')
             #queryData = json.loads(formDataQuery.json().get('results').get(
             #'bindings')[0]['itemJson']['value']) 
@@ -510,6 +515,7 @@ class RdfFramework(object):
         # compare the return results with the form fields and generate a 
         # formData object
         formData = {}
+
         for row in rdfForm.rdfFieldList:
             for prop in row:
                 #print(prop,"\n\n")
@@ -521,13 +527,29 @@ class RdfFramework(object):
                     if cUri in queryData[subject].get( \
                             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
                         dataValue = queryData[subject].get(prop.get("propUri"))
+                if dataValue:
+                    processors = clean_processors(
+                                    makeList(prop.get("processors")), cUri)
+                    print("processors - ", pUri, " - ",processors,\
+                            "\npre - ",makeList(prop.get("processors")))
+                    for processor in processors:
+                        dataValue = run_processor(processor,
+                                            {"propUri": pUri,
+                                            "classUri": cUri,
+                                            "prop": prop,
+                                            "queryData": queryData,
+                                            "dataValue": dataValue},
+                                            "load")
+                        
                 formData[prop.get("formFieldName")]=dataValue
         formDataDict = MultiDict(formData)
         code_timer().log("loadOldData","post load into MultiDict")
         #print("data:\n",formData)
         #print("dataDict:\n",formDataDict)
         code_timer().printTimer("loadOldData",delete=True)
-        return {"formdata":formDataDict,"queryData":queryData}
+        return {"formdata":formDataDict,
+                "queryData":queryData,
+                "formClassUri":lookupClassUri}
             
     def __getSaveOrder(self, rdfForm):
         '''Cycle through the classes and determine in what order they need 
@@ -959,9 +981,9 @@ class RdfClass(object):
             # gather all of the processors for the proerty
             classProp = self.getProperty(propUri=prop['fieldJson'].get( \
                         "propUri"))
-            classPropProcessors = set(self.__cleanProcessors(makeList(\
+            classPropProcessors = set(clean_processors(makeList(\
                     classProp.get("propertyProcessing"))))
-            formPropProcessors = set(self.__cleanProcessors(makeList(\
+            formPropProcessors = set(clean_processors(makeList(\
                     prop['fieldJson'].get("processors"))))
             processors = remove_null(\
                                 classPropProcessors.union(formPropProcessors))
@@ -1007,7 +1029,7 @@ class RdfClass(object):
             classProp = self.getProperty(propUri=propUri)
             print(classProp)
             classPropProcessors = remove_null(makeSet(\
-                            self.__cleanProcessors(makeList(\
+                            clean_processors(makeList(\
                                     classProp.get("propertyProcessing")))))
             # remove the prop from the remaining calculated props
             if propUri in calculatedProps:
@@ -1044,7 +1066,7 @@ class RdfClass(object):
             print("########### calculatedProps: ")
             classProp = self.getProperty(propUri=propUri)
             classPropProcessors = remove_null(makeSet(\
-                            self.__cleanProcessors(makeList(\
+                            clean_processors(makeList(\
                                     classProp.get("propertyProcessing")))))
             if not preSaveData.get(propUri):
                 preSaveData[propUri] = {"new":NotInFormClass(),
@@ -1102,18 +1124,7 @@ class RdfClass(object):
         #print(json.dumps(dumpable_obj(preSaveData),indent=4))
          
         return saveData
-        
-    def __cleanProcessors(self,processorList):
-        ''' some of the processors are stored as objects and need to retrun 
-            them as a list of string names'''
-        returnList = []
-        for item in processorList:
-            if isinstance(item,dict):
-                returnList.append(item.get("propertyProcessing"))
-            else:
-                returnList.append(item)
-        return returnList
-            
+                   
     def __generateSaveQuery(self,saveDataObj,subjectUri=None):
         saveData = saveDataObj.get("data")
         # find the subjectUri positional argument or look in the saveDataObj
@@ -1405,11 +1416,17 @@ def run_processor(processor, obj, mode="save"):
         return email_verification_processor(obj, mode)
     
     else:
+        if mode == "load":
+            return obj.get("dataValue")
+        elif mode == "save":
+            return obj
         return obj
          
 def assertion_image_baking_processor(obj, mode="save"):
     ''' Application sends badge image to the a badge baking service with the 
         assertion.'''
+    if mode == "load":
+        return obj.get("dataValue")
     return obj
     
 def csv_string_to_multi_property_processor(obj, mode="save"):
@@ -1423,15 +1440,15 @@ def csv_string_to_multi_property_processor(obj, mode="save"):
         print("csvpro ",json.dumps(dumpable_obj(obj),indent=4)) 
         obj['prop']['calcValue'] = True
         return obj
-    if mode == "read":
-        return ", ".join(obj)
-      
-        
+    elif mode == "load":
+        return ", ".join(obj.get("dataValue"))    
     return obj
     
 def email_verification_processor(obj, mode="save"):
     ''' Application application initiates a proccess to verify the email 
         address is a valid working address.'''
+    if mode == "load":
+        return obj.get("dataValue")
     return obj
 
 def save_file_to_repository(data,repoItemAddress):
@@ -1452,37 +1469,41 @@ def password_processor(obj, mode="save"):
     Returns:
         modified passed in obj
     """
-    # find the salt property
-    salt_url = "http://knowledgelinks.io/ns/data-resources/SaltProcessor"
-    className = obj['prop'].get("className")
-    classProperties = getattr(get_framework(),className).properties
-    salt_property = None
-    # find the property Uri that stores the salt value
-    for propName, classProp in classProperties.items():
-        if classProp.get("propertyProcessing") == salt_url:
-            salt_property = classProp.get("propUri")
-    # if in save mode create a hashed password 
-    if mode == "save":
-        # if the there is not a new password in the data return the obj
-        if IsNotNull(obj['prop']['new']) or obj['prop']['new']!='None':
-            # if a salt has not been created call the salt processor
-            if not obj['processedData'].get(salt_property):
-                obj = salt_processor(obj,mode,salt_property=salt_property)
-            # create the hash
-            salt = obj['processedData'].get(salt_property)
-            hash = sha256_crypt.encrypt(obj['prop']['new']+salt)
-            # assign the hashed password to the processedData
-            obj['processedData'][obj['propUri']] = hash
-            obj['prop']['calcValue'] = True
-        return obj
-    # if in verify mode - look up the hash and return true or false
-    elif mode == "verify":
-        
-        return sha256_crypt.verify(obj['password']+obj['salt'],obj['hash'])
+    if mode in ["save","verify"]:
+        # find the salt property
+        salt_url = "http://knowledgelinks.io/ns/data-resources/SaltProcessor"
+        className = obj['prop'].get("className")
+        classProperties = getattr(get_framework(),className).properties
+        salt_property = None
+        # find the property Uri that stores the salt value
+        for propName, classProp in classProperties.items():
+            if classProp.get("propertyProcessing") == salt_url:
+                salt_property = classProp.get("propUri")
+        # if in save mode create a hashed password 
+        if mode == "save":
+            # if the there is not a new password in the data return the obj
+            if IsNotNull(obj['prop']['new']) or obj['prop']['new']!='None':
+                # if a salt has not been created call the salt processor
+                if not obj['processedData'].get(salt_property):
+                    obj = salt_processor(obj,mode,salt_property=salt_property)
+                # create the hash
+                salt = obj['processedData'].get(salt_property)
+                hash = sha256_crypt.encrypt(obj['prop']['new']+salt)
+                # assign the hashed password to the processedData
+                obj['processedData'][obj['propUri']] = hash
+                obj['prop']['calcValue'] = True
+            return obj
+        # if in verify mode - look up the hash and return true or false
+        elif mode == "verify":
+            return sha256_crypt.verify(obj['password']+obj['salt'],obj['hash'])
+    if mode == "load":
+        return obj.get("dataValue")
     return obj
     
 def salt_processor(obj, mode="save", **kwargs):
     '''Generates a random string for salting'''
+    if mode == "load":
+        return obj.get("dataValue")
     length = 32
     obj['prop']['calcValue'] = True
     # if called from the password processor the kwargs will have a 
@@ -1521,24 +1542,27 @@ def salt_processor(obj, mode="save", **kwargs):
 def calculation_processor(obj, mode="save"):
     ''' Application should proccess the property according to the rules listed 
         in the kds:calulation property.'''
-    calculation = obj['prop'].get('calculation')
-    if calculation:
-        if calculation.startswith("slugify"):
-            propUri = calculation[calculation.find("(")+1:\
-                                                    calculation.find(")")]
-            if not propUri.startswith("http"):
-                ns = propUri[:propUri.find(":")]
-                name = propUri[propUri.find(":")+1:]
-                propUri = get_app_ns_uri(ns) + name
-            valueToSlug = obj['processedData'].get(propUri,\
-                                    obj['preSaveData'].get(propUri,{}\
-                                        ).get('new',None))
-            if IsNotNull(valueToSlug):
-                obj['processedData'][obj['propUri']] = slugify(valueToSlug)
-                obj['prop']['calcValue'] = True
-        else:
-            x=y
-                    
+        
+    if mode == "save":
+        calculation = obj['prop'].get('calculation')
+        if calculation:
+            if calculation.startswith("slugify"):
+                propUri = calculation[calculation.find("(")+1:\
+                                                        calculation.find(")")]
+                if not propUri.startswith("http"):
+                    ns = propUri[:propUri.find(":")]
+                    name = propUri[propUri.find(":")+1:]
+                    propUri = get_app_ns_uri(ns) + name
+                valueToSlug = obj['processedData'].get(propUri,\
+                                        obj['preSaveData'].get(propUri,{}\
+                                            ).get('new',None))
+                if IsNotNull(valueToSlug):
+                    obj['processedData'][obj['propUri']] = slugify(valueToSlug)
+                    obj['prop']['calcValue'] = True
+            else:
+                x=y
+    elif mode == "load":
+        return obj.get("dataValue")                
     
     return obj
     
@@ -1792,6 +1816,13 @@ def getFormInstructionJson (instructions,instance):
             instructions.get("lookupClassUri",""))  
     nInstr['lookupPropertyUri'] = formInstanceInfo.get('lookupPropertyUri',\
             instructions.get("lookupPropertyUri",""))
+    nInstr['submitSuccessRedirect'] = \
+            formInstanceInfo.get('submitSuccessRedirect',
+                    instructions.get("submitSuccessRedirect",""))
+    nInstr['submitFailRedirect'] = \
+            formInstanceInfo.get('submitFailRedirect',
+                    instructions.get("submitFailRedirect",""))
+
 # Determine css classes
     #form row css 
     css = formInstanceInfo.get('rowOverideCss',instructions.get(\
@@ -2401,3 +2432,41 @@ def cleanIri(uriString):
             uriString = uriString[1:len(uriString)-1]
     return uriString
     
+def clean_processors(processorList,classUri=None):
+        ''' some of the processors are stored as objects and need to retrun 
+            them as a list of string names'''
+        returnList = []
+        print("processorList __ ",processorList)
+        for item in processorList:
+            if isinstance(item,dict):
+                if classUri:
+                    if item.get("appliesTo") == classUri:
+                        returnList.append(item.get("propertyProcessing"))
+                else:
+                    returnList.append(item.get("propertyProcessing"))   
+            else:
+                returnList.append(item)
+        return returnList
+        
+def get_form_redirect_url(rdfForm,state,base_url,current_url,idValue=None):
+    if state == "success":
+        urlInstructions = rdfForm.rdfInstructions.get("submitSuccessRedirect")
+        if not urlInstructions:
+            return base_url
+    if state == "fail":
+        urlInstructions = rdfForm.rdfInstructions.get("submitFailRedirect")
+        if not urlInstructions:
+            return "!--currentpage"
+    if urlInstructions == "!--currentpage":
+        return current_url
+    elif urlInstructions == \
+            "http://knowledgelinks.io/ns/data-resources/DisplayForm":
+        formName = rdfForm.rdfFormInfo.get("formName")
+        return "{}{}/DisplayForm.html?id={}".format(base_url,
+                                                    formName,
+                                                    idValue)
+    elif urlInstructions == "!--homepage":
+        return base_url
+    else:
+        return base_url
+        

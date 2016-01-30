@@ -778,7 +778,9 @@ obi:LoginForm a kds:FormClass;
 		kds:lookupClassUri kds:UserClass;
 		kds:lookupPropertyUri kds:userName;
 		kds:formInstance [
-			kds:formInstanceType kdr:Login
+			kds:formInstanceType kdr:Login;
+			kds:submitSuccessRedirect "!--homepage";
+			kds:submitFailRedirect "!--currentpage"
 		]
 	];    
 	kds:hasProperty [
@@ -808,11 +810,15 @@ obi:OrganizationForm a kds:FormClass;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New Organization";
-			kds:formDescription "Create a new organization"
+			kds:formDescription "Create a new organization";
+			kds:submitSuccessRedirect kdr:DisplayForm;
+			kds:submitFailRedirect "!--currentpage"
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
-			kds:formDescription "Edit organization information."
+			kds:formDescription "Edit organization information.";
+			kds:submitSuccessRedirect kdr:DisplayForm;
+			kds:submitFailRedirect "!--currentpage"
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:DisplayForm

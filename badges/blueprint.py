@@ -14,7 +14,7 @@ from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from .utilities import render_without_request
 from .rdfframework import rdf_framework_form_factory, load_form_select_options
-from .rdfframework import get_framework, calculate_time_log, code_timer
+from .rdfframework import get_framework, code_timer, get_form_redirect_url
 from .user import User
 
 open_badge = Blueprint("open_badge", __name__,
@@ -168,8 +168,8 @@ def rdf_class_forms(form_name,form_instance):
     # generate the form class
     code_timer().log("formTest","initial form creation start")   
     form_class = rdf_framework_form_factory(
-        form_name,
-        'http://knowledgelinks.io/ns/data-resources/'+form_instance)
+            form_name,
+            'http://knowledgelinks.io/ns/data-resources/'+form_instance)
     code_timer().log("formTest","initial form creation end")
     # if request method is post
     if request.method == "POST":
@@ -184,8 +184,14 @@ def rdf_class_forms(form_name,form_instance):
                 form.dataSubjectUri = request.args.get("id")
             formSaveResults = get_framework().saveForm(form)
             if formSaveResults.get("success"):
-                return "<pre>{}</pre>".format(json.dumps(\
-                        formSaveResults, indent=4)) 
+                redirectUrl = get_form_redirect_url(form,
+                                            "success",
+                                            url_for("open_badge.base_path"),
+                                            request.url,
+                                            formSaveResults.get("idValue"))
+                return redirect(redirectUrl)
+                #"<pre>{}</pre>".format(json.dumps(\
+                        #formSaveResults, indent=4)) 
             else:
                 #print("################## Invalid Form")
                 form = formSaveResults.get("form")
