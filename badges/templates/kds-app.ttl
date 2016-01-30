@@ -850,6 +850,8 @@ obi:UserForm a kds:FormClass;
 		kds:formTitle "User Information";
 		kds:formDescription "User infomation";
 		kds:lookupClassUri schema:Person;
+		kds:submitSuccessRedirect kdr:DisplayForm;
+		kds:submitFailRedirect "!--currentpage";
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New User";
@@ -917,6 +919,8 @@ kdr:Badge a kds:FormClass;
 		kds:formTitle "Open Badge";
 		kds:formDescription "Badge infomation";
 		kds:lookupClassUri obi:BadgeClass;
+		kds:submitSuccessRedirect kdr:DisplayForm;
+		kds:submitFailRedirect "!--currentpage";
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New Open Badge";
@@ -1003,6 +1007,8 @@ obi:AssertionForm a kds:FormClass;
 		kds:formTitle "Badge Assertion";
 		kds:formDescription "Awarded Badge information";
 		kds:lookupClassUri obi:Assertion;
+		kds:submitSuccessRedirect kdr:DisplayForm;
+		kds:submitFailRedirect "!--currentpage";
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New Badge Assertion";
