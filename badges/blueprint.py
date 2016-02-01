@@ -16,7 +16,8 @@ from .utilities import render_without_request
 from .rdfframework import rdf_framework_form_factory, load_form_select_options
 from .rdfframework import get_framework, code_timer, get_form_redirect_url
 from .user import User
-
+from .codetimer import code_timer
+from .debugutilities import dumpable_obj
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
 open_badge.config = {}
@@ -156,11 +157,12 @@ def rdf_class_forms(form_name,form_instance):
     params:
         id -- the subject uri of the form data to lookup 
     """
+    code_timer().delete_timer("formTest")
     _display_mode = False
     code_timer().log("formTest",
                     "form render start for: {}/{}".format(\
                     form_name,form_instance))
-    if not get_framework().formExists(form_name,form_instance):
+    if not get_framework().form_exists(form_name,form_instance):
         return render_template(
             "error_page_template.html",
             error_message="The web address is invalid")
@@ -182,7 +184,7 @@ def rdf_class_forms(form_name,form_instance):
             # if validated save the form 
             if request.args.get("id") and form_instance == "EditForm":
                 form.dataSubjectUri = request.args.get("id")
-            formSaveResults = get_framework().saveForm(form)
+            formSaveResults = get_framework().save_form(form)
             if formSaveResults.get("success"):
                 redirectUrl = get_form_redirect_url(form,
                                             "success",
@@ -230,12 +232,13 @@ def rdf_class_forms(form_name,form_instance):
             form = form_class()
             code_timer().log("formTest",\
                     "load form data end create class start data load")
-            formData = get_framework().getFormData(
+            formData = get_framework().get_form_data(
                 form,
-                subjectUri=request.args.get("id"))
+                subject_uri=request.args.get("id"))
             code_timer().log("formTest",\
                     "load form data data query completed")
-            print("^^^^^^^^^^^^^^^^ formData: ",formData)
+            print("^^^^^^^^^^^^^^^^ formData: ",
+                  json.dumps(dumpable_obj(formData),indent=4))
             if len(formData.get('queryData',{})) > 0:
                 form = form_class(formData.get("formdata"))
                 code_timer().log("formTest",\
@@ -265,6 +268,6 @@ def rdf_class_forms(form_name,form_instance):
         jsonFields=json.dumps(form.rdfFieldList, indent=4),
         debug=request.args.get("debug",False))
     code_timer().log("formTest","template rendered")
-    code_timer().printTimer("formTest")
-    code_timer().deleteTimer("formTest")
+    code_timer().print_timer("formTest")
+    code_timer().delete_timer("formTest")
     return template

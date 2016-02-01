@@ -638,7 +638,7 @@ kds:userName a rdf:Property;
 		a	kdr:UniqueValueValidator;
 	];
 	kds:propertyValidation [
-		a xsd:stringLengthValidator;
+		a kdr:StringLengthValidator;
 		kds:parameters "max=25,min=10"
 	];
 	kds:jsonDefault [
