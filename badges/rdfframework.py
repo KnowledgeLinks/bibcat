@@ -1537,7 +1537,7 @@ def salt_processor(obj, mode="save", **kwargs):
         obj['processedData'][kwargs['salt_property']] = \
                         b64encode(os.urandom(length)).decode('utf-8')
         return obj
-    # if the salt already exisits in the processed data return the obj
+    # if the salt already exists in the processed data return the obj
     # the processor may have been called by the password processor
     if is_not_null(obj['processedData'].get(obj['propUri'])):
         return obj
