@@ -1,4 +1,4 @@
-""" utilities for debugging code """
+""" utilities for debuging code """
 import json
 __author__ = "Mike Stabile"
 
