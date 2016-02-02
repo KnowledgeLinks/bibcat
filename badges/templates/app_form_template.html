@@ -31,12 +31,20 @@
 									<label class="control-label">{{ field.label }}{% if field.flags.required and not display_mode %} *{% endif %}</label>
 									{% if display_mode %}
 									<div title="{{ field.description }}">
-										{% if field.selectDisplay %}
-											{% set data = field.selectDisplay %}
+										{% if fld['fieldType']['type'] == 'http://knowledgelinks.io/ns/data-resources/ImageFileOrURLField' %}
+											{% if field.data.startswith('<') and field.name.endswith('_image') %}
+												<div class="form-control-static"><img src="/badges/fedora_image?id={{ field.data.replace('<','').replace('>','') }}"></div>
+											{% elif not field.data.startswith('<') %}
+												<div class="form-control-static"><img src="{{ field.data }}"></div>
+											{% endif %}
 										{% else %}
-											{% set data = field.data %} 
-										{% endif %}	
-										<div class="form-control-static">{{ data|safe }}</div>
+											{% if field.selectDisplay %}
+												{% set data = field.selectDisplay %}
+											{% else %}
+												{% set data = field.data %} 
+											{% endif %}	
+											<div class="form-control-static">{{ data|safe }}</div>
+										{% endif %}
 									</div>
 									{% else %}
 									<div title="{{ field.description }}" data-toggle="tooltip">

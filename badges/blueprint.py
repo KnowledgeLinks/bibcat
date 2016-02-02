@@ -1,11 +1,15 @@
 """Flask Blueprint for Open Badges"""
 __author__ = "Jeremy Nelson, Mike Stabile"
 
+import time
+import urllib
+import base64
+import re
+import io
 import json
 import requests
-import time
 from flask import abort, Blueprint, jsonify, render_template, Response, request
-from flask import redirect, url_for
+from flask import redirect, url_for, send_file
 from flask_negotiate import produces
 from flask.ext.login import login_required, login_user
 
@@ -14,7 +18,7 @@ from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from .utilities import render_without_request
 from .rdfframework import rdf_framework_form_factory, load_form_select_options
-from .rdfframework import get_framework, code_timer, get_form_redirect_url
+from .rdfframework import get_framework, get_form_redirect_url
 from .user import User
 from .codetimer import code_timer
 from .debugutilities import dumpable_obj
@@ -88,6 +92,30 @@ def get_badge_classes():
 def base_path():
     return ""
 
+@open_badge.route("/image/<image_id>", methods=["GET"])
+def image_path(image_id):
+    ''' view passes the specified fedora image based on the uuid'''
+    _repo_image_uri = "{}/{}/{}/{}/{}/{}".format(\
+            open_badge.config.get('REPOSITORY_URL'),
+            image_id[:2],
+            image_id[2:4],
+            image_id[4:6],
+            image_id[6:8],
+            image_id)
+    repo_image_link = urllib.request.urlopen(_repo_image_uri)
+    image = repo_image_link.read()  
+    return send_file(io.BytesIO(image),
+                     attachment_filename='img.png',
+                     mimetype='image/png')
+
+@open_badge.route("/fedora_image", methods=["GET"])
+def fedora_image_path():
+    ''' view for finding an image based on the fedora uri'''
+    if request.args.get("id"):
+        uid = re.sub(r'^(.*[#/])','',request.args.get("id"))
+        return redirect(url_for("open_badge.image_path",
+                         image_id=uid))    
+      
 @open_badge.route("/login", methods=["GET", "POST"])
 def login_user_view():
     """Login view for badges"""
