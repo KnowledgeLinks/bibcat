@@ -179,11 +179,12 @@ def rdf_class_forms(form_name,form_instance):
         form = form_class()
         # select field options have to be loaded before form is validated
         form = load_form_select_options(form)
+        if request.args.get("id") and form_instance == "EditForm":
+                form.dataSubjectUri = request.args.get("id")
         # validate the form 
         if form.validate():
             # if validated save the form 
-            if request.args.get("id") and form_instance == "EditForm":
-                form.dataSubjectUri = request.args.get("id")
+            
             formSaveResults = get_framework().save_form(form)
             if formSaveResults.get("success"):
                 redirectUrl = get_form_redirect_url(form,
@@ -199,8 +200,8 @@ def rdf_class_forms(form_name,form_instance):
                 form = formSaveResults.get("form")
     # if not POST, check the args and form instance
     else:
-        # if params are present for any forms not in the below form remove 
-        # the params
+        # if params are present for any forms that are not in any of 
+        # the below forms remove the params
         code_timer().log("formTest","start non post testing")
         if form_instance not in ["EditForm","DisplayForm","Login"] and \
                 request.args.get("id"):

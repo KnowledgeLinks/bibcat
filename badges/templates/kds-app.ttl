@@ -962,7 +962,7 @@ kdr:Badge a kds:FormClass;
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
-			kds:applicationAction kdr:NotEditable 
+			#kds:applicationAction kdr:NotEditable 
 		]
 	];
 	kds:hasProperty [

@@ -21,6 +21,7 @@ from wtforms.fields import StringField, TextAreaField, PasswordField, \
 from wtforms.validators import Length, URL, Email, EqualTo, NumberRange, \
         Required, Regexp, InputRequired
 from wtforms.widgets import TextInput
+from wtforms import ValidationError
 from .utilities import render_without_request
 from .codetimer import code_timer
 from .debugutilities import dumpable_obj
@@ -150,7 +151,9 @@ class RdfFramework(object):
             return _validation
         # determine class save order
         #print("^^^^^^^^^^^^^^^ Passed VAlidation")
+        
         _class_save_order = self._get_save_order(rdf_form)
+        print("xxxxxxxxxxx class save order\n",json.dumps(_class_save_order,indent=4))
         _reverse_dependancies = _class_save_order.get("reverseDependancies", {})
         _class_save_order = _class_save_order.get("saveOrder", {})
 
@@ -163,6 +166,7 @@ class RdfFramework(object):
             _status = getattr(self, _class_name).save(_form_by_classes.get(\
                     _class_name, []), _old_form_data)
             _data_results.append({"rdfClass":_rdf_class, "status":_status})
+            print("status ----------\n",json.dumps(_status))
             if _status.get("status") == "success":
                 _update_class = _reverse_dependancies.get(_rdf_class, [])
                 if _rdf_class == _id_class_uri:
@@ -491,7 +495,7 @@ class RdfFramework(object):
             _sparql = render_without_request("sparqlItemTemplate.rq",
                                              prefix=self.get_prefix(),
                                              query=_sparql_unions)
-           #print (sparql)
+            print (_sparql)
             # query the triplestore
             code_timer().log("loadOldData", "pre send query")
             _form_data_query =\
@@ -569,8 +573,8 @@ class RdfFramework(object):
                     for _prop in _class_links.get("dependancies", {}\
                             ).get(_dep_class, []):
                         #print(_class_name, " d:", _dep_class, " r:", _rdf_class, " p:",
-                        #_prop.get('_class_uri'))
-                        if _prop.get('_class_uri') == _rdf_class:
+                              #_prop.get('classUri'))
+                        if _prop.get('classUri') == _rdf_class:
                             _dependant = False
             if not _dependant:
                 _save_order.append(_rdf_class)
@@ -1116,7 +1120,7 @@ class RdfClass(object):
                                                          _pre_save_data),
                       "subjectUri":subject_uri}
 
-        #print(json.dumps(dumpable_obj(_pre_save_data), indent=4))
+        print(json.dumps(dumpable_obj(_pre_save_data), indent=4))
 
         return _save_data
 
@@ -1341,8 +1345,13 @@ class RdfClass(object):
 class RdfDataType(object):
     "This class will generate a rdf data type"
 
-    def __init__(self, RdfDataType):
-        self.lookup = RdfDataType
+    def __init__(self, rdf_data_type=None, **kwargs):
+        if rdf_data_type is None:
+            _class_uri = kwargs.get("class_uri")
+            _prop_uri = kwargs.get("prop_uri")
+            if _prop_uri:
+                rdf_data_type = self._find_type(_class_uri, _prop_uri)
+        self.lookup = rdf_data_type
         #! What happens if none of these replacements?
         val = self.lookup.replace(str(XSD), "").\
                 replace("xsd:", "").\
@@ -1372,6 +1381,21 @@ class RdfDataType(object):
                                      self.prefix)
         else:
             return '"{}"^^{}'.format(data_value, self.prefix)
+            
+    def _find_type(self, class_uri, prop_uri):
+        '''find the data type based on class_uri and prop_uri'''
+        _rdf_class = getattr(get_framework(),
+                             get_framework().get_class_name(class_uri))
+        _range= _rdf_class.get_property(prop_uri=prop_uri).get("range")[0]
+        _range.get("storageType")
+        if _range.get("storageType") == "literal":
+            _range = _range.get("rangeClass")
+        else:
+            _range = _range.get("storageType")
+        return _range
+            
+            
+                
 
 def iri(uri_string):
     "converts a string to an IRI or returns an IRI if already formated"
@@ -1682,10 +1706,7 @@ def get_wtform_validators(field):
             _field_validators.append(URL(message=\
                     'Enter a valid URL/web address'))
         if _validator_type == 'kdr:UniqueValueValidator':
-            pass
-            #_field_validators.append(UniqueDatabaseCheck(message=\
-                    #'The Value enter is already exists'))
-           #print("need to create uniquevalue validator")
+            _field_validators.append(UniqueValue())
         if _validator_type == 'kdr:StringLengthValidator':
             print("enter StringLengthValidator")
             _string_params = _validator.get('parameters')
@@ -1732,12 +1753,8 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _new_field['formFieldName'] = _form_instance_info.get('formFieldName', field.get(\
             "formFieldName", field.get('formDefault', {}).get(\
             'formFieldName', "")))
-    #if _new_field['formFieldName'] == 'password':
-    #    x=y
     _new_field['fieldType'] = _form_instance_info.get('fieldType', field.get(\
             'fieldType', field.get('formDefault', {}).get('fieldType', "")))
-    #print("fieldType Type: ", _new_field['formFieldName'], " - ", \
-            #_new_field['fieldType'])
     if not isinstance(_new_field['fieldType'], dict):
         _new_field['fieldType'] = {"type":_new_field['fieldType']}
 
@@ -1756,7 +1773,8 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _new_field['propUri'] = field.get('propUri')
     _new_field['className'] = field.get('className')
     _new_field['classUri'] = field.get('classUri')
-
+    _new_field['range'] = field.get('range')
+    
     # get applicationActionList
     _new_field['actionList'] = make_set(_form_instance_info.get(\
             'applicationAction', set()))
@@ -2387,3 +2405,53 @@ def get_form_redirect_url(rdf_form, state, base_url, current_url, id_value=None)
         return base_url
     else:
         return base_url
+
+class UniqueValue(object):
+    ''' a custom validator for use with wtforms
+        * checks to see if the value already exists in the triplestore'''
+        
+    def __init__(self, message=None):
+        if not message:
+            message = u'The field must be a unique value'
+        self.message = message
+
+    def __call__(self, form, field):
+        _prop_uri = None
+        _class_uri = None
+        _sparql_args = []
+        _range = None
+        # test to see if the form is based on a triplestore entry
+        
+        for _row in form.rdfFieldList:
+            for _field in _row:
+                if _field.get('formFieldName') == field.name:
+                    _prop_uri = _field.get("propUri")
+                    _class_uri = _field.get("classUri")
+                    _range = _field.get("range")
+                    break
+        if _prop_uri:
+            _data_value = RdfDataType(None,
+                                      class_uri=_class_uri,
+                                      prop_uri=_prop_uri).sparql(field.data)
+            _sparql_args.append(make_triple("?uri","a",iri(_class_uri)))
+            _sparql_args.append(make_triple("?uri",iri(_prop_uri),_data_value))
+        if hasattr(form,"dataSubjectUri"):
+            _subject_uri = form.dataSubjectUri
+            if _subject_uri:
+                _sparql_args.append("FILTER(?uri={}) .".format(iri(_subject_uri)))
+        _sparql = '''{}\nSELECT (COUNT(?uri)>0 AS ?uniqueValueViolation)
+{{\n{}\n}}\nGROUP BY ?uri'''.format(get_framework().get_prefix(),
+                                    "\n".join(_sparql_args))
+        print(_sparql)
+        _unique_test_results = requests.post(\
+                current_app.config.get('TRIPLESTORE_URL'),
+                data={"query": _sparql, "format": "json"})
+        _unique_test = _unique_test_results.json().get('results').get( \
+                            'bindings', [])
+        if len(_unique_test) > 0:
+            _unique_test = _unique_test[0].get(\
+                    'uniqueValueViolation', {}).get('value', False)
+        else:
+            _unique_test = False
+        if _unique_test:
+            raise ValidationError(self.message)
