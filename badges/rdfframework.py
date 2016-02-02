@@ -297,7 +297,7 @@ class RdfFramework(object):
                     _return_obj[_field.get('className')].append(_append_obj)
         return _return_obj
 
-    def _get_form_class_links(self, rdf_form):
+    def get_form_class_links(self, rdf_form):
         '''get linkages between the classes in the form'''
         _return_obj = {}
         _class_set = set()
@@ -395,9 +395,9 @@ class RdfFramework(object):
         subject_uri = kwargs.get("subject_uri", rdf_form.dataSubjectUri)
         #print("%%%%%%%%%%% subject_uri: ",subject_uri)
         _sparql_args = None
-        _class_links = self._get_form_class_links(rdf_form)
+        _class_links = self.get_form_class_links(rdf_form)
         _sparql_constructor = dict.copy(_class_links['dependancies'])
-
+        print("+++++++++++++++++++++++ Dependancies:\n",json.dumps(_sparql_constructor,indent=4))
         _base_subject_finder = None
         _linked_class = None
         _linked_prop = False
@@ -418,6 +418,7 @@ class RdfFramework(object):
                     except:
                         pass
             # generate the triple pattern for linked class
+            print("+++++++++++++++++++++++ SPARQL Constructor:\n",json.dumps(_sparql_constructor,indent=4))
             if _sparql_args:
                 _base_subject_finder = \
                         "BIND({} AS ?baseSub) .\n\t{}\n\t{}".format(
@@ -559,7 +560,7 @@ class RdfFramework(object):
            1. Classes who's properties don't rely on another class
            2. Classes that that depend on classes in step 1
            3. Classes stored as blanknodes of Step 2 '''
-        _class_links = self._get_form_class_links(rdf_form)
+        _class_links = self.get_form_class_links(rdf_form)
         #print(json.dumps(_class_links, indent=4))
         _save_order = []
         _save_last = []
@@ -2416,38 +2417,17 @@ class UniqueValue(object):
         self.message = message
 
     def __call__(self, form, field):
-        _prop_uri = None
-        _class_uri = None
-        _sparql_args = []
-        _range = None
-        # test to see if the form is based on a triplestore entry
-        
-        for _row in form.rdfFieldList:
-            for _field in _row:
-                if _field.get('formFieldName') == field.name:
-                    _prop_uri = _field.get("propUri")
-                    _class_uri = _field.get("classUri")
-                    _range = _field.get("range")
-                    break
-        if _prop_uri:
-            _data_value = RdfDataType(None,
-                                      class_uri=_class_uri,
-                                      prop_uri=_prop_uri).sparql(field.data)
-            _sparql_args.append(make_triple("?uri","a",iri(_class_uri)))
-            _sparql_args.append(make_triple("?uri",iri(_prop_uri),_data_value))
-        if hasattr(form,"dataSubjectUri"):
-            _subject_uri = form.dataSubjectUri
-            if _subject_uri:
-                _sparql_args.append("FILTER(?uri={}) .".format(iri(_subject_uri)))
-        _sparql = '''{}\nSELECT (COUNT(?uri)>0 AS ?uniqueValueViolation)
-{{\n{}\n}}\nGROUP BY ?uri'''.format(get_framework().get_prefix(),
-                                    "\n".join(_sparql_args))
+        # get the test query 
+        _sparql = self._make_unique_value_qry(form, field)
         print(_sparql)
+        # run the test query
         _unique_test_results = requests.post(\
                 current_app.config.get('TRIPLESTORE_URL'),
                 data={"query": _sparql, "format": "json"})
         _unique_test = _unique_test_results.json().get('results').get( \
                             'bindings', [])
+        # evaluate the results; True result in the query denotes that the
+        # value already exists
         if len(_unique_test) > 0:
             _unique_test = _unique_test[0].get(\
                     'uniqueValueViolation', {}).get('value', False)
@@ -2455,3 +2435,78 @@ class UniqueValue(object):
             _unique_test = False
         if _unique_test:
             raise ValidationError(self.message)
+
+
+    def _make_unique_value_qry (self, form, field):
+        _sparql_args = []
+        # determine the property and class details of the field
+        for _row in form.rdfFieldList:
+                for _field in _row:
+                    if _field.get('formFieldName') == field.name:
+                        _prop_uri = _field.get("propUri")
+                        _class_uri = _field.get("classUri")
+                        _class_name = get_framework().get_class_name(_class_uri)
+                        _range = _field.get("range")
+                        break
+        # make the base triples for the query
+        if _prop_uri:
+            _data_value = RdfDataType(None,
+                                      class_uri=_class_uri,
+                                      prop_uri=_prop_uri).sparql(field.data)
+            _sparql_args.append(make_triple("?uri","a",iri(_class_uri)))
+            _sparql_args.append(make_triple("?uri",iri(_prop_uri),_data_value))
+        # see if the form is based on a set of triplestore data. if it is
+        # remove that triple from consideration in the query
+        if hasattr(form,"dataSubjectUri"):
+            _subject_uri = form.dataSubjectUri
+            _lookup_class_uri = form.dataClassUri
+            # if the subject class is the same as the field class
+            if _lookup_class_uri == _class_uri and _subject_uri:
+                _sparql_args.append("FILTER(?uri!={}) .".format(iri(_subject_uri)))    
+            # If not need to determine how the subject is related to the field 
+            # property    
+            elif _subject_uri:
+                _lookup_class_name = get_framework().get_class_name(\
+                        _lookup_class_uri)
+                # class links shows the relationship between the classes in a form
+                _class_links = get_framework().get_form_class_links(form).get(\
+                        "dependancies")
+                # cycle through the class links to find the subject linkage
+                for _rdf_class in _class_links:
+                    for _prop in _class_links[_rdf_class]:
+                        if _lookup_class_uri == _prop.get("classUri"):
+                            _linked_lookup_class_name = _rdf_class
+                            _linked_lookup_prop = _prop.get("propUri")
+                            break
+                # if there is a direct link between the subject class and
+                # field class add the sparql arguments
+                if _linked_lookup_class_name == _class_name:
+                    _sparql_args.append(\
+                            "OPTIONAL{{?uri {} ?linkedUri}} .".format(\
+                                    iri(_linked_lookup_prop)))
+                else:
+                    # find the indirect linkage i.e. 
+                    #    field in class A that links to class B with a lookup 
+                    #    subject in class C 
+                    for _rdf_class in _class_links:
+                        for _prop in _class_links[_rdf_class]:
+                            if _class_uri == _prop.get("classUri"):
+                                _linked_field_class_name = _rdf_class
+                                _linked_field_prop = _prop.get("propUri")
+                                break
+                    if _linked_lookup_class_name == _linked_field_class_name:
+                        _sparql_args.append("OPTIONAL {")
+                        _sparql_args.append("?pass {} ?uri .".format(\
+                                iri(_linked_field_prop)))
+                        _sparql_args.append("?pass {} ?linkedUri .".format(\
+                                iri(_linked_lookup_prop)))
+                        _sparql_args.append("} .")
+                _sparql_args.append(\
+                        "BIND(IF(bound(?linkedUri),?linkedUri,'') AS ?link)")
+                _sparql_args.append("FILTER(?link!={}).".format(\
+                        iri(_subject_uri)))
+        return '''{}\nSELECT (COUNT(?uri)>0 AS ?uniqueValueViolation)
+{{\n{}\n}}\nGROUP BY ?uri'''.format(get_framework().get_prefix(),
+                                    "\n\t".join(_sparql_args))                
+
+        
