@@ -21,7 +21,8 @@ from wtforms.fields import StringField, TextAreaField, PasswordField, \
         FormField, FieldList
 from wtforms.validators import Length, URL, Email, EqualTo, NumberRange, \
         Required, Regexp, InputRequired, Optional
-from wtforms.widgets import TextInput
+from wtforms.widgets import TextInput, html_params, HTMLString
+from wtforms.compat import text_type, iteritems
 from wtforms import ValidationError
 from .utilities import render_without_request
 from .codetimer import code_timer
@@ -127,11 +128,49 @@ class RdfFramework(object):
             return re.sub(r"^(.*[#/])", "", form_uri)
         else:
             return None
-
+    
+    def _remove_field_from_json(self, rdf_field_json, field_name):
+        ''' removes a field form the rdfFieldList form attribute '''
+        for _row in rdf_field_json:
+            for _field in _row:
+                if _field.get('formFieldName') == field_name:
+                    _row.remove(_field)
+        return rdf_field_json
+        
+    def save_form_with_subform(self, rdf_form):
+        ''' finds the subform field and appends the parent form attributes
+           to the subform entries and individually sends the augmented
+           subform to the main save_form property'''
+           
+        _parent_fields = []
+        _parent_field_list = {}
+        result = []
+        for _field in rdf_form:
+            if _field.type != 'FieldList':
+                _parent_fields.append(_field)
+            else:
+                _parent_field_list = self._remove_field_from_json(\
+                        rdf_form.rdfFieldList, _field.name)
+        for _field in rdf_form:
+            #print(_field.__dict__,"\n********************\n")
+            if _field.type == 'FieldList':
+                for _entry in _field.entries:
+                    print("__________\n",_entry.__dict__)
+                    if _entry.type == 'FormField':
+                        #print("---------\n",_entry.form.__dict__)
+                        for _parent_field in _parent_fields:
+                            setattr(_entry.form,_parent_field.name,_parent_field)
+                            _entry.form._fields.update({_parent_field.name:_parent_field})
+                        _entry.form.rdfFieldList = _entry.form.rdfFieldList + _parent_field_list
+                        result.append(self.save_form(_entry.form))
+                        #print("mmmmmmmmmm   \n",_entry.form.__dict__)
+        return {"success":True, "results":result}
+            
     def save_form(self, rdf_form):
         '''Recieves RDF_formfactory form, validates and saves the data
 
          *** Steps ***
+         - determine if subform is present
          - group fields by class
          - validate the form data for class requirements
          - determine the class save order. classes with no dependant properties
@@ -139,6 +178,9 @@ class RdfFramework(object):
          - send data to classes for processing
          - send data to classes for saving
          '''
+         
+        if rdf_form.subform:
+            return self.save_form_with_subform(rdf_form)
         # group fields by class
         _form_by_classes = self._organize_form_by_classes(rdf_form)
 
@@ -1561,12 +1603,12 @@ def salt_processor(obj, mode="save", **kwargs):
     # check if there is a new password in the preSaveData
     #                         or
     # if the salt property is required and the old salt is empty
-    if is_not_null(password_property.get('new')) or \
-                                (obj['prop'].get('required') and \
-                                        not is_not_null(obj['prop']['old'])):
-        obj['processedData'][obj['propUri']] = \
-                    b64encode(os.urandom(length)).decode('utf-8')
-
+    if password_property is not None:
+        if is_not_null(password_property.get('new')) or \
+                                    (obj['prop'].get('required') and \
+                                            not is_not_null(obj['prop']['old'])):
+            obj['processedData'][obj['propUri']] = \
+                        b64encode(os.urandom(length)).decode('utf-8')
     obj['prop']['calcValue'] = True
     return obj
 
@@ -1718,11 +1760,15 @@ def get_wtform_field(field):
     elif _field_type == 'kdr:SubForm':
         _form_name = get_framework().get_form_name(\
                 _field_type_obj.get('subFormUri'))
-        _sub_form = FormField(rdf_framework_form_factory(_form_name, 'NewForm'))
+        _sub_form = FormField(rdf_framework_form_factory(_form_name, 'NewForm'),
+                              widget=BsGridTableWidget(False))
         if "RepeatingSubForm" in _field_type_obj.get("subFormMode"):
-            _form_field = FieldList(_sub_form, min_entries=3)
+            _form_field = FieldList(_sub_form, _field_label, min_entries=3,
+                                    widget=RepeatingSubFormWidget())
+            setattr(_form_field,"frameworkField","RepeatingSubForm")
         else:
-            _form_field = _sub_form        
+            _form_field = _sub_form
+            setattr(_form_field,"frameworkField","subForm")        
         
     else:
         _form_field = StringField(_field_label,
@@ -2008,6 +2054,7 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
         'applicationSecurity':["Read", "Write"]
     }
     # *********************************************************************
+    _subform = False
     for fld in fields:
         field = get_field_json(fld, instructions, instance, user_info)
         if field:
@@ -2034,6 +2081,11 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
                     #print("set --- ", field)
                     _field_list[_form_row].append(field)
                     setattr(rdf_form, field['formFieldName'], form_field)
+                    if hasattr(form_field,"frameworkField"):
+                        
+                        if "subform" in form_field.frameworkField.lower():
+                            _subform = True
+    setattr(rdf_form, 'subform', _subform)                        
     setattr(rdf_form, 'rdfFormInfo', _app_form)
     setattr(rdf_form, "rdfInstructions", instructions)
     setattr(rdf_form, "rdfFieldList", list.copy(_field_list))
@@ -2369,14 +2421,6 @@ def convert_spo_to_dict(data, mode="subject"):
                         "datatype"), item['o']['type'])
         return _return_obj
 
-
-
-
-
-
-
-
-
 def remove_null(obj):
     ''' reads through a list or set and strips any null values'''
     if isinstance(obj, set):
@@ -2574,3 +2618,68 @@ class UniqueValue(object):
                                     "\n\t".join(_sparql_args))
 
 
+class BsGridTableWidget(object):
+    """
+    Renders a list of fields as a bootstrap formated table.
+
+    If `with_row_tag` is True, then an enclosing <row> is placed around the
+    rows.
+
+    Hidden fields will not be displayed with a row, instead the field will be
+    pushed into a subsequent table row to ensure XHTML validity. Hidden fields
+    at the end of the field list will appear outside the table.
+    """
+    def __init__(self, with_row_tag=True):
+        self.with_row_tag = with_row_tag
+
+    def __call__(self, field, **kwargs):
+        html = []
+        if self.with_row_tag:
+            kwargs.setdefault('id', field.id)
+            html.append('<row class="row" %s>' % html_params(**kwargs))
+        hidden = ''
+        _params = html_params(**kwargs)
+        for subfield in field:
+            if subfield.type == 'CSRFTokenField':
+                html.append('<div style="display:none" %s>%s</div>' % (_params,text_type(subfield(class_="form-control"))))
+            else:
+                html.append('<div class="col-md-4" %s>%s</div>' % (_params,text_type(subfield(class_="form-control"))))
+                hidden = ''
+        if self.with_row_tag:
+            html.append('</row>')
+        if hidden:
+            html.append(hidden)
+        return HTMLString(''.join(html))
+
+class RepeatingSubFormWidget(object):
+    """
+    Renders a list of fields as a `row` list.
+
+    This is used for fields which encapsulate many inner fields as subfields.
+    The widget will try to iterate the field to get access to the subfields and
+    call them to render them.
+
+    If `prefix_label` is set, the subfield's label is printed before the field,
+    otherwise afterwards. The latter is useful for iterating radios or
+    checkboxes.
+    """
+    def __init__(self, html_tag='row', prefix_label=True):
+        assert html_tag in ('ol', 'ul', 'row')
+        self.html_tag = html_tag
+        self.prefix_label = prefix_label
+
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('id', field.id)
+        _params = html_params(**kwargs)
+        html = []
+        html.append('<%s class="row">' % (self.html_tag))
+        for sub_subfield in field[0]:
+            if sub_subfield.type != 'CSRFTokenField':
+                html.append('<div class="col-md-4">%s</div>' % sub_subfield.label)
+        html.append('</%s>' % (self.html_tag))    
+        for subfield in field:
+            html.append('<%s class="row">%s</%s>' % (self.html_tag,
+                                           #_params,
+                                           subfield(),
+                                           self.html_tag))
+        return HTMLString(''.join(html))

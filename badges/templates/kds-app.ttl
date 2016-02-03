@@ -1084,6 +1084,7 @@ obi:AssertionForm a kds:FormClass;
 		kds:propUri obi:recipient;
 		kds:formFieldOrder 3;
 		kds:formLayoutRow 3;
+		kds:formLabelName "Add recipients:";
 		kds:fieldType [
 			a kdr:SubForm;
 			kds:subFormUri obi:AssertionPerson;
