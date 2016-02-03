@@ -775,7 +775,7 @@ class RdfClass(object):
         return _required_list
 
     def list_properties(self):
-        '''Returns a dictionary of the properties used for the class'''
+        '''Returns a set of the properties used for the class'''
         property_list = set()
         for p in self.properties:
             property_list.add(self.properties[p].get('propUri'))
@@ -1454,7 +1454,7 @@ def assert_img_baking_processor(obj, mode="save"):
     return obj
 
 def csv_to_multi_prop_processor(obj, mode="save"):
-    ''' Application takes a CSV string and adds each value as a seperate triple
+    ''' Application takes a CSV string and adds each value as a separate triple
         to the class instance.'''
     if mode == "save":
         _value_string = obj['prop']['new']
