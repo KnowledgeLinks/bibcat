@@ -16,7 +16,7 @@ from wtforms.widgets import TextInput
 import requests
 from flask import current_app
 from jinja2 import Environment, FileSystemLoader, PackageLoader
-from datetime import datetime as datetime
+from datetime import datetime as dt
 from .utilities import render_without_request
 from .rdfframework import *
 
@@ -55,7 +55,7 @@ class NewAssertion(Form):
     email = StringField("Recipient email")
     familyName = StringField("Recipient family Name")
     givenName = StringField("Recipient given Name")
-    issuedOn = DateTimeField("issuedOn", default=datetime.utcnow())
+    issuedOn = DateTimeField("issuedOn", default=dt.utcnow())
 
 
 def getFormField(field):

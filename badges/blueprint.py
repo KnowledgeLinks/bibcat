@@ -73,7 +73,7 @@ def record_params(setup_state):
         if result.status_code > 399:
             raise ValueError("Cannot load extensions in {}".format(
                 triplestore_url))
-    #get_framework()
+    get_framework(config=open_badge.config)
 
 def get_badge_classes():
     """Helper function retrieves all badge classes from the triplestore"""

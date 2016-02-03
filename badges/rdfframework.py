@@ -3,7 +3,7 @@
 import os
 import re
 from base64 import b64encode
-from datetime import timedelta
+import datetime
 import requests
 from flask import current_app, json
 from jinja2 import Template
@@ -17,9 +17,10 @@ try:
 except ImportError:
     from wtforms import Form
 from wtforms.fields import StringField, TextAreaField, PasswordField, \
-        BooleanField, FileField, DateField, DateTimeField, SelectField, Field
+        BooleanField, FileField, DateField, DateTimeField, SelectField, Field,\
+        FormField, FieldList
 from wtforms.validators import Length, URL, Email, EqualTo, NumberRange, \
-        Required, Regexp, InputRequired
+        Required, Regexp, InputRequired, Optional
 from wtforms.widgets import TextInput
 from wtforms import ValidationError
 from .utilities import render_without_request
@@ -34,6 +35,7 @@ DOAP = Namespace("http://usefulinc.com/ns/doap#")
 FOAF = Namespace("http://xmlns.com/foaf/spec/")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 RDF_GLOBAL = None
+FRAMEWORK_CONFIG = None
 
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
@@ -51,9 +53,11 @@ class RdfFramework(object):
     value_processors = []
 
     def __init__(self):
+        print("*** Loading Framework ***")
         self._load_app()
         self._generate_classes()
         self._generate_forms()
+        print("*** Framework Loaded ***")
 
 
     def get_class_name(self, class_uri):
@@ -150,10 +154,10 @@ class RdfFramework(object):
             #print("%%%%%%% validation in save_form", _validation)
             return _validation
         # determine class save order
-        #print("^^^^^^^^^^^^^^^ Passed VAlidation")
-        
+        #print("^^^^^^^^^^^^^^^ Passed Validation")
+
         _class_save_order = self._get_save_order(rdf_form)
-        print("xxxxxxxxxxx class save order\n",json.dumps(_class_save_order,indent=4))
+        print("xxxxxxxxxxx class save order\n", json.dumps(_class_save_order, indent=4))
         _reverse_dependancies = _class_save_order.get("reverseDependancies", {})
         _class_save_order = _class_save_order.get("saveOrder", {})
 
@@ -166,7 +170,7 @@ class RdfFramework(object):
             _status = getattr(self, _class_name).save(_form_by_classes.get(\
                     _class_name, []), _old_form_data)
             _data_results.append({"rdfClass":_rdf_class, "status":_status})
-            print("status ----------\n",json.dumps(_status))
+            print("status ----------\n", json.dumps(_status))
             if _status.get("status") == "success":
                 _update_class = _reverse_dependancies.get(_rdf_class, [])
                 if _rdf_class == _id_class_uri:
@@ -249,10 +253,11 @@ class RdfFramework(object):
     def _load_application_defaults(self):
         ''' Queries the triplestore for settings defined for the application in
             the kl_app.ttl file'''
+        print("\tLoading application defaults")
         _sparql = render_without_request(
             "jsonApplicationDefaults.rq",
-            graph=current_app.config.get('RDF_DEFINITION_GRAPH'))
-        _form_list = requests.post(current_app.config.get('TRIPLESTORE_URL'),
+            graph=FRAMEWORK_CONFIG.get('RDF_DEFINITION_GRAPH'))
+        _form_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
                                    data={"query": _sparql, "format": "json"})
         return json.loads(_form_list.json().get('results').get('bindings'\
                 )[0]['app']['value'])
@@ -260,10 +265,11 @@ class RdfFramework(object):
     def _load_rdf_class_defintions(self):
         ''' Queries the triplestore for list of classes used in the app as
             defined in the kl_app.ttl file'''
+        print("\tLoading rdf class definitions")
         _sparql = render_without_request("jsonRdfClassDefinitions.rq",
-                                         graph=current_app.config.get(\
+                                         graph=FRAMEWORK_CONFIG.get(\
                                                 'RDF_DEFINITION_GRAPH'))
-        _class_list = requests.post(current_app.config.get('TRIPLESTORE_URL'),
+        _class_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
                                     data={"query": _sparql, "format": "json"})
         return json.loads(_class_list.json().get('results').get('bindings'\
                 )[0]['appClasses']['value'])
@@ -271,10 +277,11 @@ class RdfFramework(object):
     def _load_rdf_form_defintions(self):
         ''' Queries the triplestore for list of forms used in the app as
             defined in the kl_app.ttl file'''
+        print("\tLoading form definitions")
         _sparql = render_without_request("jsonFormQueryTemplate.rq",
-                                         graph=current_app.config.get(\
+                                         graph=FRAMEWORK_CONFIG.get(\
                                                 'RDF_DEFINITION_GRAPH'))
-        _form_list = requests.post(current_app.config.get('TRIPLESTORE_URL'),
+        _form_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
                                    data={"query": _sparql, "format": "json"})
         _raw_json = _form_list.json().get('results').get('bindings'\
                 )[0]['appForms']['value']
@@ -397,7 +404,7 @@ class RdfFramework(object):
         _sparql_args = None
         _class_links = self.get_form_class_links(rdf_form)
         _sparql_constructor = dict.copy(_class_links['dependancies'])
-        print("+++++++++++++++++++++++ Dependancies:\n",json.dumps(_sparql_constructor,indent=4))
+        print("+++++++++++++++++++++++ Dependancies:\n", json.dumps(_sparql_constructor, indent=4))
         _base_subject_finder = None
         _linked_class = None
         _linked_prop = False
@@ -418,7 +425,7 @@ class RdfFramework(object):
                     except:
                         pass
             # generate the triple pattern for linked class
-            print("+++++++++++++++++++++++ SPARQL Constructor:\n",json.dumps(_sparql_constructor,indent=4))
+            print("+++++++++++++++++++++++ SPARQL Constructor:\n", json.dumps(_sparql_constructor, indent=4))
             if _sparql_args:
                 _base_subject_finder = \
                         "BIND({} AS ?baseSub) .\n\t{}\n\t{}".format(
@@ -496,11 +503,11 @@ class RdfFramework(object):
             _sparql = render_without_request("sparqlItemTemplate.rq",
                                              prefix=self.get_prefix(),
                                              query=_sparql_unions)
-            print (_sparql)
+            print(_sparql)
             # query the triplestore
             code_timer().log("loadOldData", "pre send query")
             _form_data_query =\
-                    requests.post(current_app.config.get('TRIPLESTORE_URL'),
+                    requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
                                   data={"query": _sparql, "format": "json"})
             code_timer().log("loadOldData", "post send query")
             #print(json.dumps(_form_data_query.json().get('results').get(\
@@ -728,7 +735,7 @@ class RdfClass(object):
 
                     _key_test_results =\
                             requests.post(\
-                                    current_app.config.get('TRIPLESTORE_URL'),
+                                    FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
                                     data={"query": sparql, "format": "json"})
                     #print("_key_test_results: ", _key_test_results.json())
                     _key_test = _key_test_results.json().get('results').get( \
@@ -1205,7 +1212,7 @@ class RdfClass(object):
                 # repository
                 if subject_uri == "<>":
                     repository_result = requests.post(
-                        current_app.config.get("REPOSITORY_URL"),
+                        FRAMEWORK_CONFIG.get("REPOSITORY_URL"),
                         data=_save_query,
         				headers={"Content-type": "text/turtle"})
                     object_value = repository_result.text
@@ -1214,9 +1221,8 @@ class RdfClass(object):
                 else:
                     _headers = {"Content-type":"application/sparql-update"}
                     _url = clean_iri(subject_uri)
-                    repository_result = requests.patch(_url,
-                                                       data=_save_query,
-        				                               headers=_headers)
+                    repository_result = requests.patch(_url, data=_save_query,
+        				                                     headers=_headers)
                     object_value = iri(subject_uri)
             return {"status": "success",
                     "lastSave": {
@@ -1382,21 +1388,21 @@ class RdfDataType(object):
                                      self.prefix)
         else:
             return '"{}"^^{}'.format(data_value, self.prefix)
-            
+
     def _find_type(self, class_uri, prop_uri):
         '''find the data type based on class_uri and prop_uri'''
         _rdf_class = getattr(get_framework(),
                              get_framework().get_class_name(class_uri))
-        _range= _rdf_class.get_property(prop_uri=prop_uri).get("range")[0]
+        _range = _rdf_class.get_property(prop_uri=prop_uri).get("range")[0]
         _range.get("storageType")
         if _range.get("storageType") == "literal":
             _range = _range.get("rangeClass")
         else:
             _range = _range.get("storageType")
         return _range
-            
-            
-                
+
+
+
 
 def iri(uri_string):
     "converts a string to an IRI or returns an IRI if already formated"
@@ -1409,6 +1415,7 @@ def iri(uri_string):
     return uri_string
 
 def is_not_null(value):
+    ''' test for None and empty string '''
     return value is not None and len(str(value)) > 0
 
 def is_valid_object(uri_string):
@@ -1461,7 +1468,6 @@ def csv_to_multi_prop_processor(obj, mode="save"):
         if is_not_null(_value_string):
             vals = list(make_set(make_list(_value_string.split(', '))))
             obj['processedData'][obj['propUri']] = vals
-        #print("csvpro ", json.dumps(dumpable_obj(obj), indent=4))
         obj['prop']['calcValue'] = True
         return obj
     elif mode == "load":
@@ -1482,7 +1488,7 @@ def save_file_to_repository(data, repo_item_address):
         print("~~~~~~~~ write code here")
     else:
         repository_result = requests.post(
-            current_app.config.get("REPOSITORY_URL"),
+            FRAMEWORK_CONFIG.get("REPOSITORY_URL"),
             data=data.read(),
 			         headers={"Content-type":"'image/png'"})
         object_value = repository_result.text
@@ -1591,6 +1597,28 @@ def calculation_processor(obj, mode="save"):
 
     return obj
 
+def calculate_default_value(field):
+    '''calculates the default value based on the field default input'''
+    _calculation_string = field.get("defaultVal")
+    _return_val = None
+    if _calculation_string:
+        _calc_params = _calculation_string.split('+')
+        _base = _calc_params[0].strip()
+        if len(_calc_params) > 1:
+            _add_value = float(_calc_params[1].strip())
+        else:
+            _add_value = 0
+        if _base == 'today':
+            _return_val = datetime.datetime.now().date() +\
+                    datetime.timedelta(days=_add_value)
+        elif _base == 'now':
+            _return_val = datetime.datetime.now() +\
+                    datetime.timedelta(days=_add_value)
+        elif _base == 'time':
+            _return_val = datetime.datetime.now().time() +\
+                    datetime.timedelta(days=_add_value)
+    return _return_val
+
 def get_wtform_field(field):
     ''' return a wtform field '''
     _form_field = None
@@ -1603,7 +1631,7 @@ def get_wtform_field(field):
     _field_validators = get_wtform_validators(field)
     _field_type = "kdr:" + _field_type_obj.get('type', '').replace( \
             "http://knowledgelinks.io/ns/data-resources/", "")
-    #print("fieldType: ", _field_type)
+    _default_val = calculate_default_value(field)
     if _field_type == 'kdr:TextField':
         _form_field = StringField(_field_label,
                                   _field_validators,
@@ -1656,9 +1684,19 @@ def get_wtform_field(field):
     elif _field_type == 'kdr:DateField':
         _date_format = get_framework().rdf_app_dict['application'].get(\
                 'dataFormats', {}).get('pythonDateFormat', '')
+        print("date validators:\n", _field_validators)
+        _add_optional = True
+        for _val in _field_validators:
+            if isinstance(_val, InputRequired):
+                _add_optional = False
+                break
+        if _add_optional:
+            _field_validators = [Optional()] + _field_validators
+
         _form_field = DateField(_field_label,
                                 _field_validators,
                                 description=field.get('formFieldHelp', ''),
+                                default=_default_val,
                                 format=_date_format)
     elif _field_type == 'kdr:DateTimeField':
         _form_field = DateTimeField(_field_label,
@@ -1677,6 +1715,15 @@ def get_wtform_field(field):
                         "field":FileField("Image File")},
                        {"fieldName":_field_name + "_url",
                         "field":StringField("Image Url", [URL])}]
+    elif _field_type == 'kdr:SubForm':
+        _form_name = get_framework().get_form_name(\
+                _field_type_obj.get('subFormUri'))
+        _sub_form = FormField(rdf_framework_form_factory(_form_name, 'NewForm'))
+        if "RepeatingSubForm" in _field_type_obj.get("subFormMode"):
+            _form_field = FieldList(_sub_form, min_entries=3)
+        else:
+            _form_field = _sub_form        
+        
     else:
         _form_field = StringField(_field_label,
                                   _field_validators,
@@ -1694,7 +1741,6 @@ def get_wtform_validators(field):
     for _validator in _validator_list:
         _validator_type = _validator['type'].replace(\
                 "http://knowledgelinks.io/ns/data-resources/", "kdr:")
-        print("validator  ",_validator,"   vType: ",_validator_type)
         if _validator_type == 'kdr:PasswordValidator':
             _field_validators.append(
                 EqualTo(
@@ -1713,7 +1759,6 @@ def get_wtform_validators(field):
             _string_params = _validator.get('parameters')
             _param_list = _string_params.split(',')
             _param_obj = {}
-            print(_string_params,"\n",_param_list)
             for _param in _param_list:
                 _new_param = _param.split('=')
                 _param_obj[_new_param[0]] = _new_param[1]
@@ -1775,7 +1820,9 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _new_field['className'] = field.get('className')
     _new_field['classUri'] = field.get('classUri')
     _new_field['range'] = field.get('range')
-    
+    _new_field['defaultVal'] = _form_instance_info.get('defaultVal',\
+            field.get('defaultVal'))
+
     # get applicationActionList
     _new_field['actionList'] = make_set(_form_instance_info.get(\
             'applicationAction', set()))
@@ -2031,11 +2078,25 @@ def make_set(value):
         _return_set.add(value)
     return _return_set
 
-def get_framework(reset=False):
+def get_framework(**kwargs):
     ''' sets an instance of the the framework as a global variable. This
         this method is then called to access that specific instance '''
     global RDF_GLOBAL
-    if reset:
+    global FRAMEWORK_CONFIG
+    _reset = kwargs.get("reset")
+    if FRAMEWORK_CONFIG is None:
+        if  kwargs.get("config"):
+            config = kwargs.get("config")
+        else:
+            try:
+                config = current_app.config
+            except:
+                config = None
+        if not config is None:
+            FRAMEWORK_CONFIG = config
+        else:
+            return "framework not initialized"
+    if _reset:
         RDF_GLOBAL = RdfFramework()
     if RDF_GLOBAL is None:
         RDF_GLOBAL = RdfFramework()
@@ -2052,7 +2113,7 @@ def query_select_options(field):
         code_timer().log("formTest", "----Sending query to triplestore")
         # send query to triplestore
         _select_list = requests.post(
-            current_app.config.get('TRIPLESTORE_URL'),
+            FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
             data={"query": _prefix + _select_query,
                   "format": "json"})
         code_timer().log("formTest", "----Recieved query from triplestore")
@@ -2410,19 +2471,19 @@ def get_form_redirect_url(rdf_form, state, base_url, current_url, id_value=None)
 class UniqueValue(object):
     ''' a custom validator for use with wtforms
         * checks to see if the value already exists in the triplestore'''
-        
+
     def __init__(self, message=None):
         if not message:
             message = u'The field must be a unique value'
         self.message = message
 
     def __call__(self, form, field):
-        # get the test query 
+        # get the test query
         _sparql = self._make_unique_value_qry(form, field)
         print(_sparql)
         # run the test query
         _unique_test_results = requests.post(\
-                current_app.config.get('TRIPLESTORE_URL'),
+                FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
                 data={"query": _sparql, "format": "json"})
         _unique_test = _unique_test_results.json().get('results').get( \
                             'bindings', [])
@@ -2437,34 +2498,37 @@ class UniqueValue(object):
             raise ValidationError(self.message)
 
 
-    def _make_unique_value_qry (self, form, field):
+    def _make_unique_value_qry(self, form, field):
         _sparql_args = []
         # determine the property and class details of the field
         for _row in form.rdfFieldList:
-                for _field in _row:
-                    if _field.get('formFieldName') == field.name:
-                        _prop_uri = _field.get("propUri")
-                        _class_uri = _field.get("classUri")
-                        _class_name = get_framework().get_class_name(_class_uri)
-                        _range = _field.get("range")
-                        break
+            for _field in _row:
+                if _field.get('formFieldName') == field.name:
+                    _prop_uri = _field.get("propUri")
+                    _class_uri = _field.get("classUri")
+                    _class_name = get_framework().get_class_name(_class_uri)
+                    _range = _field.get("range")
+                    break
         # make the base triples for the query
         if _prop_uri:
             _data_value = RdfDataType(None,
                                       class_uri=_class_uri,
                                       prop_uri=_prop_uri).sparql(field.data)
-            _sparql_args.append(make_triple("?uri","a",iri(_class_uri)))
-            _sparql_args.append(make_triple("?uri",iri(_prop_uri),_data_value))
+            _sparql_args.append(make_triple("?uri", "a", iri(_class_uri)))
+            _sparql_args.append(make_triple("?uri",
+                                            iri(_prop_uri),
+                                            _data_value))
         # see if the form is based on a set of triplestore data. if it is
         # remove that triple from consideration in the query
-        if hasattr(form,"dataSubjectUri"):
+        if hasattr(form, "dataSubjectUri"):
             _subject_uri = form.dataSubjectUri
             _lookup_class_uri = form.dataClassUri
             # if the subject class is the same as the field class
             if _lookup_class_uri == _class_uri and _subject_uri:
-                _sparql_args.append("FILTER(?uri!={}) .".format(iri(_subject_uri)))    
-            # If not need to determine how the subject is related to the field 
-            # property    
+                _sparql_args.append("FILTER(?uri!={}) .".format(\
+                        iri(_subject_uri)))
+            # If not need to determine how the subject is related to the field
+            # property
             elif _subject_uri:
                 _lookup_class_name = get_framework().get_class_name(\
                         _lookup_class_uri)
@@ -2485,9 +2549,9 @@ class UniqueValue(object):
                             "OPTIONAL{{?uri {} ?linkedUri}} .".format(\
                                     iri(_linked_lookup_prop)))
                 else:
-                    # find the indirect linkage i.e. 
-                    #    field in class A that links to class B with a lookup 
-                    #    subject in class C 
+                    # find the indirect linkage i.e.
+                    #    field in class A that links to class B with a lookup
+                    #    subject in class C
                     for _rdf_class in _class_links:
                         for _prop in _class_links[_rdf_class]:
                             if _class_uri == _prop.get("classUri"):
@@ -2507,6 +2571,6 @@ class UniqueValue(object):
                         iri(_subject_uri)))
         return '''{}\nSELECT (COUNT(?uri)>0 AS ?uniqueValueViolation)
 {{\n{}\n}}\nGROUP BY ?uri'''.format(get_framework().get_prefix(),
-                                    "\n\t".join(_sparql_args))                
+                                    "\n\t".join(_sparql_args))
 
-        
+
