@@ -152,7 +152,8 @@ obi:startDate a rdf:Property;
 	rdfs:domain obi:BadgeClass;
 	rdfs:range xsd:date;
 	rdfs:comment "Date the badge is available.";	
-	kds:defaultVal "now";
+	kds:defaultVal "today";
+	kds:requiredByDomain obi:BadgeClass;
 	kds:jsonDefault [
 		kds:jsonObjName "expires";
 		kds:jsonValFormat "objectValue" ;
@@ -170,7 +171,6 @@ obi:endDate a rdf:Property;
 	rdfs:domain obi:BadgeClass;
 	rdfs:range xsd:date;
 	rdfs:comment "Date the badge is no longer available.";	
-	kds:defaultVal "now";
 	kds:formDefault [
 		kds:formFieldName "endDate";
 		kds:formLabelName "End Date";
@@ -910,6 +910,38 @@ obi:UserForm a kds:FormClass;
 		]
 	].
 	
+obi:AssertionPerson a kds:FormClass;
+	rdfs:label "Sub-form to be used with the assertion form";
+	rdfs:comment "Sub-form to be used with the assertion form";
+	kds:formInstructions [
+		kds:formTitle "Awardees";
+		kds:formDescription "Award badges";
+		kds:lookupClassUri schema:Person;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+		];
+	];
+	kds:hasProperty [
+		kds:propUri schema:email;
+		kds:classUri schema:Person;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:LookupAddNewWorkFlow; 
+		]
+	];
+	kds:hasProperty [
+		kds:propUri schema:familyName;
+		kds:formFieldOrder 3;
+		kds:formLayoutRow 1;
+	];
+	kds:hasProperty [
+		kds:propUri schema:givenName;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 1;
+	].
+	
 kdr:Badge a kds:FormClass;
 	rdfs:label "Badge form";
 	rdfs:comment "Use this form for generating a new Badge.";
@@ -1052,6 +1084,12 @@ obi:AssertionForm a kds:FormClass;
 		kds:propUri obi:recipient;
 		kds:formFieldOrder 3;
 		kds:formLayoutRow 3;
+		kds:formLabelName "Add recipients:";
+		kds:fieldType [
+			a kdr:SubForm;
+			kds:subFormUri obi:AssertionPerson;
+			kds:subFormMode kdr:RepeatingSubForm
+		]
 	];
 	kds:hasProperty [
 		kds:propUri kds:salt;
@@ -1059,6 +1097,8 @@ obi:AssertionForm a kds:FormClass;
 		kds:formFieldOrder 4;
 		kds:formLayoutRow 4;
 	].
+	
+
 	
 obi:application a kds:Application;
 	kds:applicationSecurity [
