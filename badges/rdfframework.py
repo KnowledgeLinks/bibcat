@@ -37,6 +37,7 @@ FOAF = Namespace("http://xmlns.com/foaf/spec/")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 RDF_GLOBAL = None
 FRAMEWORK_CONFIG = None
+DEBUG = True
 
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
@@ -54,11 +55,13 @@ class RdfFramework(object):
     value_processors = []
 
     def __init__(self):
-        print("*** Loading Framework ***")
+        if DEBUG:
+            print("*** Loading Framework ***")
         self._load_app()
         self._generate_classes()
         self._generate_forms()
-        print("*** Framework Loaded ***")
+        if DEBUG:
+            print("*** Framework Loaded ***")
 
 
     def get_class_name(self, class_uri):
@@ -152,18 +155,16 @@ class RdfFramework(object):
                 _parent_field_list = self._remove_field_from_json(\
                         rdf_form.rdfFieldList, _field.name)
         for _field in rdf_form:
-            #print(_field.__dict__,"\n********************\n")
             if _field.type == 'FieldList':
                 for _entry in _field.entries:
-                    print("__________\n",_entry.__dict__)
+                    if DEBUG:
+                        print("__________\n",_entry.__dict__)
                     if _entry.type == 'FormField':
-                        #print("---------\n",_entry.form.__dict__)
                         for _parent_field in _parent_fields:
                             setattr(_entry.form,_parent_field.name,_parent_field)
                             _entry.form._fields.update({_parent_field.name:_parent_field})
                         _entry.form.rdfFieldList = _entry.form.rdfFieldList + _parent_field_list
                         result.append(self.save_form(_entry.form))
-                        #print("mmmmmmmmmm   \n",_entry.form.__dict__)
         return {"success":True, "results":result}
             
     def save_form(self, rdf_form):
@@ -199,7 +200,8 @@ class RdfFramework(object):
         #print("^^^^^^^^^^^^^^^ Passed Validation")
 
         _class_save_order = self._get_save_order(rdf_form)
-        print("xxxxxxxxxxx class save order\n", json.dumps(_class_save_order, indent=4))
+        if DEBUG:
+            print("xxxxxxxxxxx class save order\n", json.dumps(_class_save_order, indent=4))
         _reverse_dependancies = _class_save_order.get("reverseDependancies", {})
         _class_save_order = _class_save_order.get("saveOrder", {})
 
@@ -212,7 +214,8 @@ class RdfFramework(object):
             _status = getattr(self, _class_name).save(_form_by_classes.get(\
                     _class_name, []), _old_form_data)
             _data_results.append({"rdfClass":_rdf_class, "status":_status})
-            print("status ----------\n", json.dumps(_status))
+            if DEBUG:
+                print("status ----------\n", json.dumps(_status))
             if _status.get("status") == "success":
                 _update_class = _reverse_dependancies.get(_rdf_class, [])
                 if _rdf_class == _id_class_uri:
@@ -295,7 +298,8 @@ class RdfFramework(object):
     def _load_application_defaults(self):
         ''' Queries the triplestore for settings defined for the application in
             the kl_app.ttl file'''
-        print("\tLoading application defaults")
+        if DEBUG:
+            print("\tLoading application defaults")
         _sparql = render_without_request(
             "jsonApplicationDefaults.rq",
             graph=FRAMEWORK_CONFIG.get('RDF_DEFINITION_GRAPH'))
@@ -307,7 +311,8 @@ class RdfFramework(object):
     def _load_rdf_class_defintions(self):
         ''' Queries the triplestore for list of classes used in the app as
             defined in the kl_app.ttl file'''
-        print("\tLoading rdf class definitions")
+        if DEBUG:
+            print("\tLoading rdf class definitions")
         _sparql = render_without_request("jsonRdfClassDefinitions.rq",
                                          graph=FRAMEWORK_CONFIG.get(\
                                                 'RDF_DEFINITION_GRAPH'))
@@ -319,7 +324,8 @@ class RdfFramework(object):
     def _load_rdf_form_defintions(self):
         ''' Queries the triplestore for list of forms used in the app as
             defined in the kl_app.ttl file'''
-        print("\tLoading form definitions")
+        if DEBUG:
+            print("\tLoading form definitions")
         _sparql = render_without_request("jsonFormQueryTemplate.rq",
                                          graph=FRAMEWORK_CONFIG.get(\
                                                 'RDF_DEFINITION_GRAPH'))
@@ -460,8 +466,8 @@ class RdfFramework(object):
                                                    subject_uri=subject_uri,
                                                    class_uri=_lookup_class_uri,
                                                    data_list=True)
-            
-        print("tttttt subform data\n",json.dumps(_subform_data, indent=4))
+        if DEBUG:      
+            print("tttttt subform data\n",json.dumps(_subform_data, indent=4))
 
         _class_name = self.get_class_name(_class_uri)
 
@@ -470,7 +476,8 @@ class RdfFramework(object):
         _sparql_args = None
         _class_links = self.get_form_class_links(rdf_form)
         _sparql_constructor = dict.copy(_class_links['dependancies'])
-        print("+++++++++++++++++++++++ Dependancies:\n", json.dumps(_sparql_constructor, indent=4))
+        if DEBUG:
+            print("+++++++++++++++++++++++ Dependancies:\n", json.dumps(_sparql_constructor, indent=4))
         _base_subject_finder = None
         _linked_class = None
         _linked_prop = False
@@ -491,7 +498,8 @@ class RdfFramework(object):
                     except:
                         pass
             # generate the triple pattern for linked class
-            print("+++++++++++++++++++++++ SPARQL Constructor:\n", json.dumps(_sparql_constructor, indent=4))
+            if DEBUG:
+                print("+++++++++++++++++++++++ SPARQL Constructor:\n", json.dumps(_sparql_constructor, indent=4))
             if _sparql_args:
                 # create a binding for multi-item results
                 if _data_list:
@@ -594,7 +602,8 @@ class RdfFramework(object):
                                              prefix=self.get_prefix(),
                                              query=_sparql_unions,
                                              list_binding=_list_binding)
-            print(_sparql)
+            if DEBUG:
+                print(_sparql)
             # query the triplestore
             code_timer().log("loadOldData", "pre send query")
             _form_data_query =\
