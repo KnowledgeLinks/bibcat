@@ -8,8 +8,6 @@
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-
-
 obi:Assertion a rdf:Class;
 	a kds:ControlledClass;
 	rdfs:label "Open Badge Assertion";
@@ -940,6 +938,23 @@ obi:AssertionPerson a kds:FormClass;
 		kds:propUri schema:givenName;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 1;
+	];
+	kds:hasProperty [
+		kds:propUri obi:issuedOn;
+		kds:formFieldOrder 4;
+		kds:formLayoutRow 1;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+	];
+	kds:hasProperty [
+		kds:propUri obi:recipient;
+		kds:formFieldOrder 5;
+		kds:formLayoutRow 1;
+		kds:fieldType [
+			a kdr:TextField
+		]
 	].
 	
 kdr:Badge a kds:FormClass;
@@ -1038,7 +1053,8 @@ obi:AssertionForm a kds:FormClass;
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "Badge Assertion";
 		kds:formDescription "Awarded Badge information";
-		kds:lookupClassUri obi:Assertion;
+		kds:lookupClassUri obi:BadgeClass;
+		kds:lookupPropUri obi:hasBadge;
 		kds:submitSuccessRedirect kdr:DisplayForm;
 		kds:submitFailRedirect "!--currentpage";
 		kds:formInstance [
@@ -1078,12 +1094,17 @@ obi:AssertionForm a kds:FormClass;
 		kds:propUri obi:issuedOn;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
-		kds:requiredField true
+		kds:requiredField true ;
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
 	];
 	kds:hasProperty [
 		kds:propUri obi:recipient;
 		kds:formFieldOrder 3;
 		kds:formLayoutRow 3;
+		kds:formLabelName "Add recipients:";
 		kds:fieldType [
 			a kdr:SubForm;
 			kds:subFormUri obi:AssertionPerson;

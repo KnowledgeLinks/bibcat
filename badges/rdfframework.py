@@ -21,7 +21,8 @@ from wtforms.fields import StringField, TextAreaField, PasswordField, \
         FormField, FieldList
 from wtforms.validators import Length, URL, Email, EqualTo, NumberRange, \
         Required, Regexp, InputRequired, Optional
-from wtforms.widgets import TextInput
+from wtforms.widgets import TextInput, html_params, HTMLString
+from wtforms.compat import text_type, iteritems
 from wtforms import ValidationError
 from .utilities import render_without_request
 from .codetimer import code_timer
@@ -127,11 +128,49 @@ class RdfFramework(object):
             return re.sub(r"^(.*[#/])", "", form_uri)
         else:
             return None
-
+    
+    def _remove_field_from_json(self, rdf_field_json, field_name):
+        ''' removes a field form the rdfFieldList form attribute '''
+        for _row in rdf_field_json:
+            for _field in _row:
+                if _field.get('formFieldName') == field_name:
+                    _row.remove(_field)
+        return rdf_field_json
+        
+    def save_form_with_subform(self, rdf_form):
+        ''' finds the subform field and appends the parent form attributes
+           to the subform entries and individually sends the augmented
+           subform to the main save_form property'''
+           
+        _parent_fields = []
+        _parent_field_list = {}
+        result = []
+        for _field in rdf_form:
+            if _field.type != 'FieldList':
+                _parent_fields.append(_field)
+            else:
+                _parent_field_list = self._remove_field_from_json(\
+                        rdf_form.rdfFieldList, _field.name)
+        for _field in rdf_form:
+            #print(_field.__dict__,"\n********************\n")
+            if _field.type == 'FieldList':
+                for _entry in _field.entries:
+                    print("__________\n",_entry.__dict__)
+                    if _entry.type == 'FormField':
+                        #print("---------\n",_entry.form.__dict__)
+                        for _parent_field in _parent_fields:
+                            setattr(_entry.form,_parent_field.name,_parent_field)
+                            _entry.form._fields.update({_parent_field.name:_parent_field})
+                        _entry.form.rdfFieldList = _entry.form.rdfFieldList + _parent_field_list
+                        result.append(self.save_form(_entry.form))
+                        #print("mmmmmmmmmm   \n",_entry.form.__dict__)
+        return {"success":True, "results":result}
+            
     def save_form(self, rdf_form):
         '''Recieves RDF_formfactory form, validates and saves the data
 
          *** Steps ***
+         - determine if subform is present
          - group fields by class
          - validate the form data for class requirements
          - determine the class save order. classes with no dependant properties
@@ -139,6 +178,9 @@ class RdfFramework(object):
          - send data to classes for processing
          - send data to classes for saving
          '''
+         
+        if rdf_form.subform:
+            return self.save_form_with_subform(rdf_form)
         # group fields by class
         _form_by_classes = self._organize_form_by_classes(rdf_form)
 
@@ -393,9 +435,33 @@ class RdfFramework(object):
         subject_uri: the URI for the subject
         class_uri: the rdf class of the subject
         '''
-
         _class_uri = kwargs.get("class_uri", rdf_form.dataClassUri)
         _lookup_class_uri = _class_uri
+        subject_uri = kwargs.get("subject_uri", rdf_form.dataSubjectUri)
+        _subform_data = {}
+        _data_list = kwargs.get("data_list",False)
+        _parent_field = None
+        # test to see if a subform is in the form
+        if rdf_form.subform:
+            _sub_rdf_form = None
+            # find the subform field 
+            for _field in rdf_form:
+            #print(_field.__dict__,"\n********************\n")
+                if _field.type == 'FieldList':
+                    for _entry in _field.entries:
+                        print("__________\n",_entry.__dict__)
+                        if _entry.type == 'FormField':
+                            _sub_rdf_form = _entry.form
+                            _parent_field = _field.name
+            # if the subform exists recursively call this method to get the
+            # subform data
+            if _sub_rdf_form:
+                _subform_data = self.get_form_data(_sub_rdf_form,
+                                                   subject_uri=subject_uri,
+                                                   class_uri=_lookup_class_uri,
+                                                   data_list=True)
+            
+        print("tttttt subform data\n",json.dumps(_subform_data, indent=4))
 
         _class_name = self.get_class_name(_class_uri)
 
@@ -427,47 +493,68 @@ class RdfFramework(object):
             # generate the triple pattern for linked class
             print("+++++++++++++++++++++++ SPARQL Constructor:\n", json.dumps(_sparql_constructor, indent=4))
             if _sparql_args:
+                # create a binding for multi-item results
+                if _data_list:
+                    _list_binding = "BIND(?classID AS ?itemID) ."
+                else:
+                    _list_binding = ''
                 _base_subject_finder = \
-                        "BIND({} AS ?baseSub) .\n\t{}\n\t{}".format(
+                        "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}".format(
                             iri(subject_uri),
                             make_triple("?baseSub",
                                         "a",
                                         iri(_lookup_class_uri)),
                             make_triple("?classID",
                                         iri(_sparql_args.get("propUri")),
-                                        "?baseSub"))
+                                        "?baseSub"),
+                            _list_binding)
                #print("base subject Finder:\n", _base_subject_finder)
                 if _linked_prop:
+                    if _data_list:
+                        _list_binding = "BIND(?s AS ?itemID) ."
+                    else:
+                        _list_binding = ''
                     _sparql_elements.append(\
-                            "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
+                            "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
                                     iri(subject_uri),
                                     make_triple("?baseSub",
                                                 "a",
                                                 iri(_lookup_class_uri)),
                                     make_triple("?s",
                                                 iri(_sparql_args.get("propUri")),
-                                                "?baseSub")))
+                                                "?baseSub"),
+                                    _list_binding))
             # iterrate though the classes used in the form and generate the
             # spaqrl triples to pull the data for that class
             for _rdf_class in _sparql_constructor:
                 if _rdf_class == _class_name:
+                    if _data_list:
+                        _list_binding = "BIND(?s AS ?itemID) ."
+                    else:
+                        _list_binding = ''
                     _sparql_elements.append(\
-                            "\tBIND({} AS ?s) .\n\t{}\n\t?s ?p ?o .".format(
+                            "\tBIND({} AS ?s) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(
                                 iri(subject_uri),
-                                make_triple("?s", "a", iri(_lookup_class_uri))))
+                                make_triple("?s", "a", iri(_lookup_class_uri)),
+                                _list_binding))
                 for _prop in _sparql_constructor[_rdf_class]:
                     if _rdf_class == _class_name:
+                        if _data_list:
+                            _list_binding = "BIND(?s AS ?itemID) ."
+                        else:
+                            _list_binding = ''
                         #_sparql_elements.append("\t"+make_triple(iri(str(\
                                 #subject_uri)), iri(_prop.get("propUri")), "?s")+\
                                 # "\n\t?s ?p ?o .")
-                        _sparql_arg = "\tBIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
+                        _sparql_arg = "\tBIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
                                 iri(subject_uri),
                                 make_triple("?baseSub",
                                             "a",
                                             iri(_lookup_class_uri)),
                                 make_triple("?baseSub",
                                             iri(_prop.get("propUri")),
-                                            "?s"))
+                                            "?s"),
+                                _list_binding)
                         _sparql_elements.append(_sparql_arg)
                     elif _rdf_class == _linked_class:
                         _sparql_elements.append(
@@ -498,11 +585,15 @@ class RdfFramework(object):
             # sparql union statement
             _sparql_unions = "{{\n{}\n}}".format("\n} UNION {\n".join(\
                     _sparql_elements))
-
+            if _data_list:
+                _list_binding = "?itemID"
+            else:
+                _list_binding = ''
             # render the statment in the jinja2 template
             _sparql = render_without_request("sparqlItemTemplate.rq",
                                              prefix=self.get_prefix(),
-                                             query=_sparql_unions)
+                                             query=_sparql_unions,
+                                             list_binding=_list_binding)
             print(_sparql)
             # query the triplestore
             code_timer().log("loadOldData", "pre send query")
@@ -523,36 +614,49 @@ class RdfFramework(object):
             _query_data = {}
         # compare the return results with the form fields and generate a
         # formData object
-        _form_data = {}
-
-        for _row in rdf_form.rdfFieldList:
-            for _prop in _row:
-                #print(_prop, "\n\n")
-                _prop_uri = _prop.get("propUri")
-                _class_uri = _prop.get("classUri")
-                #print(_class_uri, " ", _prop_uri, "\n\n")
-                _data_value = None
-                for _subject in _query_data:
-                    if _class_uri in _query_data[_subject].get( \
-                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
-                        _data_value = _query_data[_subject].get(_prop.get("propUri"))
-                if _data_value:
-                    _processors = clean_processors(
-                                    make_list(_prop.get("processors")), _class_uri)
-                    #print("processors - ", _prop_uri, " - ", _processors,
-                          #"\npre - ", make_list(_prop.get("processors")))
-                    for _processor in _processors:
-                        _data_value = \
-                                run_processor(_processor,
-                                              {"propUri": _prop_uri,
-                                               "classUri": _class_uri,
-                                               "prop": _prop,
-                                               "queryData": _query_data,
-                                               "dataValue": _data_value},
-                                              "load")
-
-                _form_data[_prop.get("formFieldName")] = _data_value
-        _form_data_dict = MultiDict(_form_data)
+        
+        _form_data_list = []
+        for _item in make_list(_query_data):
+            _form_data = {}
+            for _row in rdf_form.rdfFieldList:
+                for _prop in _row:
+                    #print(_prop, "\n\n")
+                    _prop_uri = _prop.get("propUri")
+                    _class_uri = _prop.get("classUri")
+                    #print(_class_uri, " ", _prop_uri, "\n\n")
+                    _data_value = None
+                    if "subform" in _prop.get("fieldType",{}).get("type",'').lower():
+                        for i, _data in enumerate(_subform_data.get("formdata")):
+                            for _key, _value in _data.items():
+                                _form_data["%s-%s-%s" % (_prop.get("formFieldName"),i,_key)] = _value   
+                    else:
+                        for _subject in _item:
+                            if _class_uri in _item[_subject].get( \
+                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
+                                _data_value = _item[_subject].get(_prop.get("propUri"))
+                        if _data_value:
+                            _processors = clean_processors(
+                                            make_list(_prop.get("processors")), _class_uri)
+                            #print("processors - ", _prop_uri, " - ", _processors,
+                                  #"\npre - ", make_list(_prop.get("processors")))
+                            for _processor in _processors:
+                                _data_value = \
+                                        run_processor(_processor,
+                                                      {"propUri": _prop_uri,
+                                                       "classUri": _class_uri,
+                                                       "prop": _prop,
+                                                       "queryData": _item,
+                                                       "dataValue": _data_value},
+                                                      "load")
+                        if _data_value is not None:
+                            _form_data[_prop.get("formFieldName")] = _data_value
+            _form_data_list.append(MultiDict(_form_data))
+        if len(_form_data_list) == 1:
+            _form_data_dict = _form_data_list[0]
+        elif len(_form_data_list) > 1:
+            _form_data_dict = _form_data_list
+        else:
+            _form_data_dict = MultiDict()
         code_timer().log("loadOldData", "post load into MultiDict")
         #print("data:\n", _form_data)
         #print("dataDict:\n", _form_data_dict)
@@ -622,6 +726,7 @@ class RdfClass(object):
         save_data = self._process_class_data(
             rdf_form,
             old_form_data)
+        print("-------------- Save data:\n",json.dumps(dumpable_obj(save_data)))
         save_query = self._generate_save_query(save_data)
         return self._run_save_query(save_query)
 
@@ -1561,12 +1666,15 @@ def salt_processor(obj, mode="save", **kwargs):
     # check if there is a new password in the preSaveData
     #                         or
     # if the salt property is required and the old salt is empty
-    if is_not_null(password_property.get('new')) or \
-                                (obj['prop'].get('required') and \
-                                        not is_not_null(obj['prop']['old'])):
+    if password_property is not None:
+        if is_not_null(password_property.get('new')) or \
+                                    (obj['prop'].get('required') and \
+                                            not is_not_null(obj['prop']['old'])):
+            obj['processedData'][obj['propUri']] = \
+                        b64encode(os.urandom(length)).decode('utf-8')
+    elif not is_not_null(obj['prop']['old']):
         obj['processedData'][obj['propUri']] = \
-                    b64encode(os.urandom(length)).decode('utf-8')
-
+                        b64encode(os.urandom(length)).decode('utf-8')
     obj['prop']['calcValue'] = True
     return obj
 
@@ -1619,7 +1727,7 @@ def calculate_default_value(field):
                     datetime.timedelta(days=_add_value)
     return _return_val
 
-def get_wtform_field(field):
+def get_wtform_field(field, instance=''):
     ''' return a wtform field '''
     _form_field = None
     _field_label = field.get("formLabelName", '')
@@ -1718,11 +1826,16 @@ def get_wtform_field(field):
     elif _field_type == 'kdr:SubForm':
         _form_name = get_framework().get_form_name(\
                 _field_type_obj.get('subFormUri'))
-        _sub_form = FormField(rdf_framework_form_factory(_form_name, 'NewForm'))
+        _sub_form = FormField(rdf_framework_form_factory(_form_name,
+                                                         instance),
+                              widget=BsGridTableWidget())
         if "RepeatingSubForm" in _field_type_obj.get("subFormMode"):
-            _form_field = FieldList(_sub_form, min_entries=3)
+            _form_field = FieldList(_sub_form, _field_label, min_entries=1,
+                                    widget=RepeatingSubFormWidget())
+            setattr(_form_field,"frameworkField","RepeatingSubForm")
         else:
-            _form_field = _sub_form        
+            _form_field = _sub_form
+            setattr(_form_field,"frameworkField","subForm")        
         
     else:
         _form_field = StringField(_field_label,
@@ -1775,7 +1888,7 @@ def get_wtform_validators(field):
 
 def get_field_json(field, instructions, instance, user_info, item_permissions=None):
     '''This function will read through the RDF defined info and proccess the
-	json to retrun the correct values for the instance, security and details'''
+	json to return the correct values for the instance, security and details'''
     if item_permissions is None:
         item_permissions = []
     _rdf_app = get_framework().rdf_app_dict['application']
@@ -1791,10 +1904,12 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _form_instance_info = {}
     _form_field_instance_type_list = make_list(field.get('formInstance', field.get(\
             'formDefault', {}).get('formInstance', [])))
+    print("instance type list: ",_form_field_instance_type_list)
+    print("instance: ", instance)
     for _field_instance in _form_field_instance_type_list:
         if _field_instance.get('formInstanceType') == instance:
             _form_instance_info = _field_instance
-
+    print("instance info\n",_form_instance_info)
     # Determine the field paramaters
     _new_field['formFieldName'] = _form_instance_info.get('formFieldName', field.get(\
             "formFieldName", field.get('formDefault', {}).get(\
@@ -1828,6 +1943,10 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
             'applicationAction', set()))
     _new_field['actionList'].union(make_set(field.get('applicationAction', set())))
     _new_field['actionList'] = list(_new_field['actionList'])
+    print("action List:_______________", _new_field['actionList'])
+    if "http://knowledgelinks.io/ns/data-resources/RemoveFromForm" in\
+            _new_field['actionList']:
+        return None
     # get valiator list
     _new_field['validators'] = make_list(_form_instance_info.get('formValidation', []))
     _new_field['validators'] += make_list(field.get('formValidation', []))
@@ -1992,6 +2111,7 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
     instructions = get_form_instructions_json(_app_form.get('formInstructions'), \
             instance)
     _lookup_class_uri = kwargs.get("classUri", instructions.get("lookupClassUri"))
+    _lookup_prop_uri = kwargs.get("propUri", instructions.get("lookupPropUri"))
     _lookup_subject_uri = kwargs.get("subject_uri")
 
     # get the number of rows in the form and define the fieldList as a
@@ -2008,11 +2128,12 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
         'applicationSecurity':["Read", "Write"]
     }
     # *********************************************************************
+    _subform = False
     for fld in fields:
         field = get_field_json(fld, instructions, instance, user_info)
         if field:
             _form_row = int(field.get('formLayoutRow', 1))-1
-            form_field = get_wtform_field(field)
+            form_field = get_wtform_field(field, instance)
             if isinstance(form_field, list):
                 i = 0
                 #print("____----")
@@ -2034,12 +2155,18 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
                     #print("set --- ", field)
                     _field_list[_form_row].append(field)
                     setattr(rdf_form, field['formFieldName'], form_field)
+                    if hasattr(form_field,"frameworkField"):
+                        
+                        if "subform" in form_field.frameworkField.lower():
+                            _subform = True
+    setattr(rdf_form, 'subform', _subform)                        
     setattr(rdf_form, 'rdfFormInfo', _app_form)
     setattr(rdf_form, "rdfInstructions", instructions)
     setattr(rdf_form, "rdfFieldList", list.copy(_field_list))
     setattr(rdf_form, "rdfInstance", instance)
     setattr(rdf_form, "dataClassUri", _lookup_class_uri)
     setattr(rdf_form, "dataSubjectUri", _lookup_subject_uri)
+    setattr(rdf_form, "dataPropUri", _lookup_prop_uri)
     #print(json.dumps(dumpable_obj(rdf_form.__dict__),indent=4))
     return rdf_form
     #return rdf_form
@@ -2349,33 +2476,65 @@ def convert_spo_to_dict(data, mode="subject"):
     mode: subject --> groups based on subject
     '''
     _return_obj = {}
+    _list_obj = False
     if mode == "subject":
         for item in data:
-            if _return_obj.get(item['s']['value']):
-                if _return_obj[item['s']['value']].get(item['p']['value']):
-                    _obj_list = make_list(\
-                            _return_obj[item['s']['value']][item['p']['value']])
-                    _obj_list.append(xsd_to_python(item['o']['value'], \
-                            item['o'].get("datatype"), item['o']['type']))
-                    _return_obj[item['s']['value']][item['p']['value']] = _obj_list
-                else:
-                    _return_obj[item['s']['value']][item['p']['value']] = \
-                        xsd_to_python(item['o']['value'], item['o'].get(\
+            # determine data is list of objects
+            _sv = item['s']['value']
+            _pv = item['p']['value']
+
+            if item.get('itemID'):
+                _list_obj = True
+                _iv = item['itemID']['value']
+                if _return_obj.get(_iv):
+                    if _return_obj[_iv].get(_sv):
+                        if _return_obj[_iv][_sv].get(_pv):
+                            _obj_list = make_list(\
+                                    _return_obj[_iv][_sv][_pv])
+                            _obj_list.append(xsd_to_python(item['o']['value'], \
+                                    item['o'].get("datatype"), item['o']['type']))
+                            _return_obj[_iv][_sv][_pv] = _obj_list
+                        else:
+                            _return_obj[_iv][_sv][_pv] = \
+                                xsd_to_python(item['o']['value'], item['o'].get(\
+                                        "datatype"), item['o']['type'])
+                    else:
+                        _return_obj[_iv][_sv] = {}
+                        _return_obj[_iv][_sv][_pv] = \
+                                xsd_to_python(item['o']['value'], item['o'].get(\
                                 "datatype"), item['o']['type'])
+                else:
+                    _return_obj[_iv] = {}
+                    _return_obj[_iv][_sv] = {}
+                    _return_obj[_iv][_sv][_pv] = \
+                            xsd_to_python(item['o']['value'], item['o'].get(\
+                            "datatype"), item['o']['type'])
+                    
+            # if not a list of objects
             else:
-                _return_obj[item['s']['value']] = {}
-                _return_obj[item['s']['value']][item['p']['value']] = \
-                        xsd_to_python(item['o']['value'], item['o'].get(\
-                        "datatype"), item['o']['type'])
-        return _return_obj
-
-
-
-
-
-
-
-
+                if _return_obj.get(_sv):
+                    if _return_obj[_sv].get(_pv):
+                        _obj_list = make_list(\
+                                _return_obj[_sv][_pv])
+                        _obj_list.append(xsd_to_python(item['o']['value'], \
+                                item['o'].get("datatype"), item['o']['type']))
+                        _return_obj[_sv][_pv] = _obj_list
+                    else:
+                        _return_obj[_sv][_pv] = \
+                            xsd_to_python(item['o']['value'], item['o'].get(\
+                                    "datatype"), item['o']['type'])
+                else:
+                    _return_obj[_sv] = {}
+                    _return_obj[_sv][_pv] = \
+                            xsd_to_python(item['o']['value'], item['o'].get(\
+                            "datatype"), item['o']['type'])
+        if _list_obj:
+            _return_list = []
+            for _key, _value in _return_obj.items():
+                _return_list.append(_value)
+            return _return_list
+        else:
+            return _return_obj
 
 def remove_null(obj):
     ''' reads through a list or set and strips any null values'''
@@ -2574,3 +2733,68 @@ class UniqueValue(object):
                                     "\n\t".join(_sparql_args))
 
 
+class BsGridTableWidget(object):
+    """
+    Renders a list of fields as a bootstrap formated table.
+
+    If `with_row_tag` is True, then an enclosing <row> is placed around the
+    rows.
+
+    Hidden fields will not be displayed with a row, instead the field will be
+    pushed into a subsequent table row to ensure XHTML validity. Hidden fields
+    at the end of the field list will appear outside the table.
+    """
+    def __init__(self, with_section_tag=False):
+        self.with_section_tag = with_section_tag
+
+    def __call__(self, field, **kwargs):
+        html = []
+        if self.with_section_tag:
+            kwargs.setdefault('id', field.id)
+            html.append('<section class="col-md-6" %s>' % html_params(**kwargs))
+        hidden = ''
+        _params = html_params(**kwargs)
+        for subfield in field:
+            if subfield.type == 'CSRFTokenField':
+                html.append('<div style="display:none" %s>%s</div>' % (_params,text_type(subfield(class_="form-control"))))
+            else:
+                html.append('<div class="col-md-2" %s>%s</div>' % (_params,text_type(subfield(class_="form-control"))))
+                hidden = ''
+        if self.with_section_tag:
+            html.append('</section>')
+        if hidden:
+            html.append(hidden)
+        return HTMLString(''.join(html))
+
+class RepeatingSubFormWidget(object):
+    """
+    Renders a list of fields as a `row` list.
+
+    This is used for fields which encapsulate many inner fields as subfields.
+    The widget will try to iterate the field to get access to the subfields and
+    call them to render them.
+
+    If `prefix_label` is set, the subfield's label is printed before the field,
+    otherwise afterwards. The latter is useful for iterating radios or
+    checkboxes.
+    """
+    def __init__(self, html_tag='div', prefix_label=True):
+        assert html_tag in ('ol', 'ul', 'div')
+        self.html_tag = html_tag
+        self.prefix_label = prefix_label
+
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('id', field.id)
+        _params = html_params(**kwargs)
+        html = []
+        html.append('<%s class="row">' % (self.html_tag))
+        for sub_subfield in field[0]:
+            if sub_subfield.type != 'CSRFTokenField':
+                html.append('<div class="col-md-2">%s</div>' % sub_subfield.label)
+        html.append('</%s>' % (self.html_tag))    
+        for subfield in field:
+            html.append('<%s class="row">%s</%s>' % (self.html_tag,
+                                           #_params,
+                                           subfield(),
+                                           self.html_tag))
+        return HTMLString(''.join(html))

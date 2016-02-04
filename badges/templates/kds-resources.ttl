@@ -141,6 +141,10 @@
 		rdfs:label "Lookup and Add New workflow" ;
 		rdfs:comment "Form should present a field to lookup a resource and if resource does not exist add the resource." .
 		
+	kdr:RemoveFromForm a kds:ApplicationActionClass;
+		rdfs:label "Remove property from form" ;
+		rdfs:comment "Property should be removed from form. This is usually associated with a form instance." .
+		
 # FormInstanceTypeClasses ***********************************************	
 
 	kdr:NewForm a kds:FormInstanceTypeClass;
