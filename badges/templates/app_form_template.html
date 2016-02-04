@@ -20,47 +20,68 @@
 					<form class="{{ form.rdfInstructions['formCss'] }}" method="{{ form.rdfInstructions['form_Method'] }}" action="{{ actionUrl }}" enctype="multipart/form-data">
 					{% endif %}
 						{{form.hidden_tag()}}
-						{% for row in form.rdfFieldList %}
+{% for row in form.rdfFieldList %}
+	{% if row|length > 0 %}
+		{% if not 'subform' in row[0]['fieldType']['type'].lower() %}
 						<div class="row {{ form.rdfInstructions['rowCss'] }}">
-							{% for fld in row %}
-							{% set field = form|attr(fld['formFieldName']) %}
-							{% set errorCss = '' %}
-							{% if field.errors %}{% set errorCss = " has-error" %}{% endif %}
+		{% endif %}
+	{% endif %}
+	{% for fld in row %}
+		{% set field = form|attr(fld['formFieldName']) %}
+		{% set errorCss = '' %}
+		{% if field.errors %}{% set errorCss = " has-error" %}{% endif %}
+		{% if not 'subform' in fld['fieldType']['type'].lower() %}
 							<section class="col-md-6">
 								<div class="form-group{{ errorCss }}">								
 									<label class="control-label">{{ field.label }}{% if field.flags.required and not display_mode %} *{% endif %}</label>
-									{% if display_mode %}
+			{% if display_mode %}
 									<div title="{{ field.description }}">
-										{% if fld['fieldType']['type'] == 'http://knowledgelinks.io/ns/data-resources/ImageFileOrURLField' %}
-											{% if field.data.startswith('<') and field.name.endswith('_image') %}
+				{% if fld['fieldType']['type'] == 'http://knowledgelinks.io/ns/data-resources/ImageFileOrURLField' %}
+					{% if field.data.startswith('<') and field.name.endswith('_image') %}
 												<div class="form-control-static"><img src="/badges/fedora_image?id={{ field.data.replace('<','').replace('>','') }}"></div>
-											{% elif not field.data.startswith('<') %}
+					{% elif not field.data.startswith('<') %}
 												<div class="form-control-static"><img src="{{ field.data }}"></div>
-											{% endif %}
-										{% else %}
-											{% if field.selectDisplay %}
+					{% endif %}
+				{% else %}
+					{% if field.selectDisplay %}
 												{% set data = field.selectDisplay %}
-											{% else %}
+					{% else %}
 												{% set data = field.data %} 
-											{% endif %}	
+					{% endif %}	
 											<div class="form-control-static">{{ data|safe }}</div>
-										{% endif %}
+				{% endif %}
 									</div>
-									{% else %}
+			{% else %}
 									<div title="{{ field.description }}" data-toggle="tooltip">
 										{{ field(class_=fld['css'],readonly=not fld['editable']) }}
+				{% if fld['fieldType']['type'] == 'http://knowledgelinks.io/ns/data-resources/ImageFileOrURLField' %}
+					{% if field.data.startswith('<') and field.name.endswith('_image') %}
+												<div class="form-control-static"><img src="/badges/fedora_image?id={{ field.data.replace('<','').replace('>','') }}"></div>
+					{% elif not field.data.startswith('<') %}
+												<div class="form-control-static"><img src="{{ field.data }}"></div>
+					{% endif %}
+				{% endif %}			
 									</div>
-									{% if field.errors %}
+				{% if field.errors %}
 							    <ul class="help-block">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-							    
-							    {% endif %}	
-							    {% endif %}
-							    {% if debug %}<div>{{ field.__dict__ }}</div>	{% endif %}						
+				{% endif %}	
+			{% endif %}
+			{% if debug %}
+							    <div>{{ field.__dict__ }}</div>
+			{% endif %}						
 								</div>
 							</section>
-							{% endfor %}
+		{% else %}
+
+									{{ field(class_=fld['css'],readonly=not fld['editable']) }}
+		{% endif %}
+	{% endfor %}
+	{% if row|length > 0 %}
+		{% if not 'subform' in row[0]['fieldType']['type'].lower() %}
 						</div>
-						{% endfor %}
+		{% endif %}
+	{% endif %}
+{% endfor %}
 						<div class="row">
 						<section class="col-md-6 col-md-offset-5">
 						{% if display_mode %}
