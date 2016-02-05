@@ -1,6 +1,6 @@
 {{ prefix }}
 
-SELECT DISTINCT ?s ?p ?o
+SELECT DISTINCT {{ list_binding }} ?s ?p ?o
 {
   {{ query }}
   

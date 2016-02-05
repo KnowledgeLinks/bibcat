@@ -37,6 +37,7 @@ FOAF = Namespace("http://xmlns.com/foaf/spec/")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 RDF_GLOBAL = None
 FRAMEWORK_CONFIG = None
+DEBUG = True
 
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
@@ -54,11 +55,13 @@ class RdfFramework(object):
     value_processors = []
 
     def __init__(self):
-        print("*** Loading Framework ***")
+        if DEBUG:
+            print("*** Loading Framework ***")
         self._load_app()
         self._generate_classes()
         self._generate_forms()
-        print("*** Framework Loaded ***")
+        if DEBUG:
+            print("*** Framework Loaded ***")
 
 
     def get_class_name(self, class_uri):
@@ -152,18 +155,16 @@ class RdfFramework(object):
                 _parent_field_list = self._remove_field_from_json(\
                         rdf_form.rdfFieldList, _field.name)
         for _field in rdf_form:
-            #print(_field.__dict__,"\n********************\n")
             if _field.type == 'FieldList':
                 for _entry in _field.entries:
-                    print("__________\n",_entry.__dict__)
+                    if DEBUG:
+                        print("__________\n",_entry.__dict__)
                     if _entry.type == 'FormField':
-                        #print("---------\n",_entry.form.__dict__)
                         for _parent_field in _parent_fields:
                             setattr(_entry.form,_parent_field.name,_parent_field)
                             _entry.form._fields.update({_parent_field.name:_parent_field})
                         _entry.form.rdfFieldList = _entry.form.rdfFieldList + _parent_field_list
                         result.append(self.save_form(_entry.form))
-                        #print("mmmmmmmmmm   \n",_entry.form.__dict__)
         return {"success":True, "results":result}
             
     def save_form(self, rdf_form):
@@ -199,7 +200,8 @@ class RdfFramework(object):
         #print("^^^^^^^^^^^^^^^ Passed Validation")
 
         _class_save_order = self._get_save_order(rdf_form)
-        print("xxxxxxxxxxx class save order\n", json.dumps(_class_save_order, indent=4))
+        if DEBUG:
+            print("xxxxxxxxxxx class save order\n", json.dumps(_class_save_order, indent=4))
         _reverse_dependancies = _class_save_order.get("reverseDependancies", {})
         _class_save_order = _class_save_order.get("saveOrder", {})
 
@@ -212,7 +214,8 @@ class RdfFramework(object):
             _status = getattr(self, _class_name).save(_form_by_classes.get(\
                     _class_name, []), _old_form_data)
             _data_results.append({"rdfClass":_rdf_class, "status":_status})
-            print("status ----------\n", json.dumps(_status))
+            if DEBUG:
+                print("status ----------\n", json.dumps(_status))
             if _status.get("status") == "success":
                 _update_class = _reverse_dependancies.get(_rdf_class, [])
                 if _rdf_class == _id_class_uri:
@@ -295,11 +298,12 @@ class RdfFramework(object):
     def _load_application_defaults(self):
         ''' Queries the triplestore for settings defined for the application in
             the kl_app.ttl file'''
-        print("\tLoading application defaults")
+        if DEBUG:
+            print("\tLoading application defaults")
         _sparql = render_without_request(
             "jsonApplicationDefaults.rq",
-            graph=FRAMEWORK_CONFIG.get('RDF_DEFINITION_GRAPH'))
-        _form_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+            graph=fw_config().get('RDF_DEFINITION_GRAPH'))
+        _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                    data={"query": _sparql, "format": "json"})
         return json.loads(_form_list.json().get('results').get('bindings'\
                 )[0]['app']['value'])
@@ -307,11 +311,12 @@ class RdfFramework(object):
     def _load_rdf_class_defintions(self):
         ''' Queries the triplestore for list of classes used in the app as
             defined in the kl_app.ttl file'''
-        print("\tLoading rdf class definitions")
+        if DEBUG:
+            print("\tLoading rdf class definitions")
         _sparql = render_without_request("jsonRdfClassDefinitions.rq",
-                                         graph=FRAMEWORK_CONFIG.get(\
+                                         graph=fw_config().get(\
                                                 'RDF_DEFINITION_GRAPH'))
-        _class_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+        _class_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                     data={"query": _sparql, "format": "json"})
         return json.loads(_class_list.json().get('results').get('bindings'\
                 )[0]['appClasses']['value'])
@@ -319,11 +324,12 @@ class RdfFramework(object):
     def _load_rdf_form_defintions(self):
         ''' Queries the triplestore for list of forms used in the app as
             defined in the kl_app.ttl file'''
-        print("\tLoading form definitions")
+        if DEBUG:
+            print("\tLoading form definitions")
         _sparql = render_without_request("jsonFormQueryTemplate.rq",
-                                         graph=FRAMEWORK_CONFIG.get(\
+                                         graph=fw_config().get(\
                                                 'RDF_DEFINITION_GRAPH'))
-        _form_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+        _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                    data={"query": _sparql, "format": "json"})
         _raw_json = _form_list.json().get('results').get('bindings'\
                 )[0]['appForms']['value']
@@ -435,9 +441,33 @@ class RdfFramework(object):
         subject_uri: the URI for the subject
         class_uri: the rdf class of the subject
         '''
-
         _class_uri = kwargs.get("class_uri", rdf_form.dataClassUri)
         _lookup_class_uri = _class_uri
+        subject_uri = kwargs.get("subject_uri", rdf_form.dataSubjectUri)
+        _subform_data = {}
+        _data_list = kwargs.get("data_list",False)
+        _parent_field = None
+        # test to see if a subform is in the form
+        if rdf_form.subform:
+            _sub_rdf_form = None
+            # find the subform field 
+            for _field in rdf_form:
+            #print(_field.__dict__,"\n********************\n")
+                if _field.type == 'FieldList':
+                    for _entry in _field.entries:
+                        print("__________\n",_entry.__dict__)
+                        if _entry.type == 'FormField':
+                            _sub_rdf_form = _entry.form
+                            _parent_field = _field.name
+            # if the subform exists recursively call this method to get the
+            # subform data
+            if _sub_rdf_form:
+                _subform_data = self.get_form_data(_sub_rdf_form,
+                                                   subject_uri=subject_uri,
+                                                   class_uri=_lookup_class_uri,
+                                                   data_list=True)
+        if DEBUG:      
+            print("tttttt subform data\n",json.dumps(_subform_data, indent=4))
 
         _class_name = self.get_class_name(_class_uri)
 
@@ -446,7 +476,8 @@ class RdfFramework(object):
         _sparql_args = None
         _class_links = self.get_form_class_links(rdf_form)
         _sparql_constructor = dict.copy(_class_links['dependancies'])
-        print("+++++++++++++++++++++++ Dependancies:\n", json.dumps(_sparql_constructor, indent=4))
+        if DEBUG:
+            print("+++++++++++++++++++++++ Dependancies:\n", json.dumps(_sparql_constructor, indent=4))
         _base_subject_finder = None
         _linked_class = None
         _linked_prop = False
@@ -467,49 +498,71 @@ class RdfFramework(object):
                     except:
                         pass
             # generate the triple pattern for linked class
-            print("+++++++++++++++++++++++ SPARQL Constructor:\n", json.dumps(_sparql_constructor, indent=4))
+            if DEBUG:
+                print("+++++++++++++++++++++++ SPARQL Constructor:\n", json.dumps(_sparql_constructor, indent=4))
             if _sparql_args:
+                # create a binding for multi-item results
+                if _data_list:
+                    _list_binding = "BIND(?classID AS ?itemID) ."
+                else:
+                    _list_binding = ''
                 _base_subject_finder = \
-                        "BIND({} AS ?baseSub) .\n\t{}\n\t{}".format(
+                        "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}".format(
                             iri(subject_uri),
                             make_triple("?baseSub",
                                         "a",
                                         iri(_lookup_class_uri)),
                             make_triple("?classID",
                                         iri(_sparql_args.get("propUri")),
-                                        "?baseSub"))
+                                        "?baseSub"),
+                            _list_binding)
                #print("base subject Finder:\n", _base_subject_finder)
                 if _linked_prop:
+                    if _data_list:
+                        _list_binding = "BIND(?s AS ?itemID) ."
+                    else:
+                        _list_binding = ''
                     _sparql_elements.append(\
-                            "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
+                            "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
                                     iri(subject_uri),
                                     make_triple("?baseSub",
                                                 "a",
                                                 iri(_lookup_class_uri)),
                                     make_triple("?s",
                                                 iri(_sparql_args.get("propUri")),
-                                                "?baseSub")))
+                                                "?baseSub"),
+                                    _list_binding))
             # iterrate though the classes used in the form and generate the
             # spaqrl triples to pull the data for that class
             for _rdf_class in _sparql_constructor:
                 if _rdf_class == _class_name:
+                    if _data_list:
+                        _list_binding = "BIND(?s AS ?itemID) ."
+                    else:
+                        _list_binding = ''
                     _sparql_elements.append(\
-                            "\tBIND({} AS ?s) .\n\t{}\n\t?s ?p ?o .".format(
+                            "\tBIND({} AS ?s) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(
                                 iri(subject_uri),
-                                make_triple("?s", "a", iri(_lookup_class_uri))))
+                                make_triple("?s", "a", iri(_lookup_class_uri)),
+                                _list_binding))
                 for _prop in _sparql_constructor[_rdf_class]:
                     if _rdf_class == _class_name:
+                        if _data_list:
+                            _list_binding = "BIND(?s AS ?itemID) ."
+                        else:
+                            _list_binding = ''
                         #_sparql_elements.append("\t"+make_triple(iri(str(\
                                 #subject_uri)), iri(_prop.get("propUri")), "?s")+\
                                 # "\n\t?s ?p ?o .")
-                        _sparql_arg = "\tBIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
+                        _sparql_arg = "\tBIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
                                 iri(subject_uri),
                                 make_triple("?baseSub",
                                             "a",
                                             iri(_lookup_class_uri)),
                                 make_triple("?baseSub",
                                             iri(_prop.get("propUri")),
-                                            "?s"))
+                                            "?s"),
+                                _list_binding)
                         _sparql_elements.append(_sparql_arg)
                     elif _rdf_class == _linked_class:
                         _sparql_elements.append(
@@ -540,16 +593,21 @@ class RdfFramework(object):
             # sparql union statement
             _sparql_unions = "{{\n{}\n}}".format("\n} UNION {\n".join(\
                     _sparql_elements))
-
+            if _data_list:
+                _list_binding = "?itemID"
+            else:
+                _list_binding = ''
             # render the statment in the jinja2 template
             _sparql = render_without_request("sparqlItemTemplate.rq",
                                              prefix=self.get_prefix(),
-                                             query=_sparql_unions)
-            print(_sparql)
+                                             query=_sparql_unions,
+                                             list_binding=_list_binding)
+            if DEBUG:
+                print(_sparql)
             # query the triplestore
             code_timer().log("loadOldData", "pre send query")
             _form_data_query =\
-                    requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+                    requests.post(fw_config().get('TRIPLESTORE_URL'),
                                   data={"query": _sparql, "format": "json"})
             code_timer().log("loadOldData", "post send query")
             #print(json.dumps(_form_data_query.json().get('results').get(\
@@ -565,36 +623,49 @@ class RdfFramework(object):
             _query_data = {}
         # compare the return results with the form fields and generate a
         # formData object
-        _form_data = {}
-
-        for _row in rdf_form.rdfFieldList:
-            for _prop in _row:
-                #print(_prop, "\n\n")
-                _prop_uri = _prop.get("propUri")
-                _class_uri = _prop.get("classUri")
-                #print(_class_uri, " ", _prop_uri, "\n\n")
-                _data_value = None
-                for _subject in _query_data:
-                    if _class_uri in _query_data[_subject].get( \
-                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
-                        _data_value = _query_data[_subject].get(_prop.get("propUri"))
-                if _data_value:
-                    _processors = clean_processors(
-                                    make_list(_prop.get("processors")), _class_uri)
-                    #print("processors - ", _prop_uri, " - ", _processors,
-                          #"\npre - ", make_list(_prop.get("processors")))
-                    for _processor in _processors:
-                        _data_value = \
-                                run_processor(_processor,
-                                              {"propUri": _prop_uri,
-                                               "classUri": _class_uri,
-                                               "prop": _prop,
-                                               "queryData": _query_data,
-                                               "dataValue": _data_value},
-                                              "load")
-
-                _form_data[_prop.get("formFieldName")] = _data_value
-        _form_data_dict = MultiDict(_form_data)
+        
+        _form_data_list = []
+        for _item in make_list(_query_data):
+            _form_data = {}
+            for _row in rdf_form.rdfFieldList:
+                for _prop in _row:
+                    #print(_prop, "\n\n")
+                    _prop_uri = _prop.get("propUri")
+                    _class_uri = _prop.get("classUri")
+                    #print(_class_uri, " ", _prop_uri, "\n\n")
+                    _data_value = None
+                    if "subform" in _prop.get("fieldType",{}).get("type",'').lower():
+                        for i, _data in enumerate(_subform_data.get("formdata")):
+                            for _key, _value in _data.items():
+                                _form_data["%s-%s-%s" % (_prop.get("formFieldName"),i,_key)] = _value   
+                    else:
+                        for _subject in _item:
+                            if _class_uri in _item[_subject].get( \
+                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
+                                _data_value = _item[_subject].get(_prop.get("propUri"))
+                        if _data_value:
+                            _processors = clean_processors(
+                                            make_list(_prop.get("processors")), _class_uri)
+                            #print("processors - ", _prop_uri, " - ", _processors,
+                                  #"\npre - ", make_list(_prop.get("processors")))
+                            for _processor in _processors:
+                                _data_value = \
+                                        run_processor(_processor,
+                                                      {"propUri": _prop_uri,
+                                                       "classUri": _class_uri,
+                                                       "prop": _prop,
+                                                       "queryData": _item,
+                                                       "dataValue": _data_value},
+                                                      "load")
+                        if _data_value is not None:
+                            _form_data[_prop.get("formFieldName")] = _data_value
+            _form_data_list.append(MultiDict(_form_data))
+        if len(_form_data_list) == 1:
+            _form_data_dict = _form_data_list[0]
+        elif len(_form_data_list) > 1:
+            _form_data_dict = _form_data_list
+        else:
+            _form_data_dict = MultiDict()
         code_timer().log("loadOldData", "post load into MultiDict")
         #print("data:\n", _form_data)
         #print("dataDict:\n", _form_data_dict)
@@ -664,6 +735,7 @@ class RdfClass(object):
         save_data = self._process_class_data(
             rdf_form,
             old_form_data)
+        print("-------------- Save data:\n",json.dumps(dumpable_obj(save_data)))
         save_query = self._generate_save_query(save_data)
         return self._run_save_query(save_query)
 
@@ -777,7 +849,7 @@ class RdfClass(object):
 
                     _key_test_results =\
                             requests.post(\
-                                    FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+                                    fw_config().get('TRIPLESTORE_URL'),
                                     data={"query": sparql, "format": "json"})
                     #print("_key_test_results: ", _key_test_results.json())
                     _key_test = _key_test_results.json().get('results').get( \
@@ -1254,7 +1326,7 @@ class RdfClass(object):
                 # repository
                 if subject_uri == "<>":
                     repository_result = requests.post(
-                        FRAMEWORK_CONFIG.get("REPOSITORY_URL"),
+                        fw_config().get("REPOSITORY_URL"),
                         data=_save_query,
         				headers={"Content-type": "text/turtle"})
                     object_value = repository_result.text
@@ -1530,7 +1602,7 @@ def save_file_to_repository(data, repo_item_address):
         print("~~~~~~~~ write code here")
     else:
         repository_result = requests.post(
-            FRAMEWORK_CONFIG.get("REPOSITORY_URL"),
+            fw_config().get("REPOSITORY_URL"),
             data=data.read(),
 			         headers={"Content-type":"'image/png'"})
         object_value = repository_result.text
@@ -1609,6 +1681,9 @@ def salt_processor(obj, mode="save", **kwargs):
                                             not is_not_null(obj['prop']['old'])):
             obj['processedData'][obj['propUri']] = \
                         b64encode(os.urandom(length)).decode('utf-8')
+    elif not is_not_null(obj['prop']['old']):
+        obj['processedData'][obj['propUri']] = \
+                        b64encode(os.urandom(length)).decode('utf-8')
     obj['prop']['calcValue'] = True
     return obj
 
@@ -1661,7 +1736,7 @@ def calculate_default_value(field):
                     datetime.timedelta(days=_add_value)
     return _return_val
 
-def get_wtform_field(field):
+def get_wtform_field(field, instance=''):
     ''' return a wtform field '''
     _form_field = None
     _field_label = field.get("formLabelName", '')
@@ -1760,10 +1835,11 @@ def get_wtform_field(field):
     elif _field_type == 'kdr:SubForm':
         _form_name = get_framework().get_form_name(\
                 _field_type_obj.get('subFormUri'))
-        _sub_form = FormField(rdf_framework_form_factory(_form_name, 'NewForm'),
-                              widget=BsGridTableWidget(False))
+        _sub_form = FormField(rdf_framework_form_factory(_form_name,
+                                                         instance),
+                              widget=BsGridTableWidget())
         if "RepeatingSubForm" in _field_type_obj.get("subFormMode"):
-            _form_field = FieldList(_sub_form, _field_label, min_entries=3,
+            _form_field = FieldList(_sub_form, _field_label, min_entries=1,
                                     widget=RepeatingSubFormWidget())
             setattr(_form_field,"frameworkField","RepeatingSubForm")
         else:
@@ -1821,7 +1897,7 @@ def get_wtform_validators(field):
 
 def get_field_json(field, instructions, instance, user_info, item_permissions=None):
     '''This function will read through the RDF defined info and proccess the
-	json to retrun the correct values for the instance, security and details'''
+	json to return the correct values for the instance, security and details'''
     if item_permissions is None:
         item_permissions = []
     _rdf_app = get_framework().rdf_app_dict['application']
@@ -1837,10 +1913,12 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _form_instance_info = {}
     _form_field_instance_type_list = make_list(field.get('formInstance', field.get(\
             'formDefault', {}).get('formInstance', [])))
+    print("instance type list: ",_form_field_instance_type_list)
+    print("instance: ", instance)
     for _field_instance in _form_field_instance_type_list:
         if _field_instance.get('formInstanceType') == instance:
             _form_instance_info = _field_instance
-
+    print("instance info\n",_form_instance_info)
     # Determine the field paramaters
     _new_field['formFieldName'] = _form_instance_info.get('formFieldName', field.get(\
             "formFieldName", field.get('formDefault', {}).get(\
@@ -1874,6 +1952,10 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
             'applicationAction', set()))
     _new_field['actionList'].union(make_set(field.get('applicationAction', set())))
     _new_field['actionList'] = list(_new_field['actionList'])
+    print("action List:_______________", _new_field['actionList'])
+    if "http://knowledgelinks.io/ns/data-resources/RemoveFromForm" in\
+            _new_field['actionList']:
+        return None
     # get valiator list
     _new_field['validators'] = make_list(_form_instance_info.get('formValidation', []))
     _new_field['validators'] += make_list(field.get('formValidation', []))
@@ -2038,6 +2120,7 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
     instructions = get_form_instructions_json(_app_form.get('formInstructions'), \
             instance)
     _lookup_class_uri = kwargs.get("classUri", instructions.get("lookupClassUri"))
+    _lookup_prop_uri = kwargs.get("propUri", instructions.get("lookupPropUri"))
     _lookup_subject_uri = kwargs.get("subject_uri")
 
     # get the number of rows in the form and define the fieldList as a
@@ -2059,7 +2142,7 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
         field = get_field_json(fld, instructions, instance, user_info)
         if field:
             _form_row = int(field.get('formLayoutRow', 1))-1
-            form_field = get_wtform_field(field)
+            form_field = get_wtform_field(field, instance)
             if isinstance(form_field, list):
                 i = 0
                 #print("____----")
@@ -2092,6 +2175,7 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
     setattr(rdf_form, "rdfInstance", instance)
     setattr(rdf_form, "dataClassUri", _lookup_class_uri)
     setattr(rdf_form, "dataSubjectUri", _lookup_subject_uri)
+    setattr(rdf_form, "dataPropUri", _lookup_prop_uri)
     #print(json.dumps(dumpable_obj(rdf_form.__dict__),indent=4))
     return rdf_form
     #return rdf_form
@@ -2134,8 +2218,18 @@ def get_framework(**kwargs):
     ''' sets an instance of the the framework as a global variable. This
         this method is then called to access that specific instance '''
     global RDF_GLOBAL
-    global FRAMEWORK_CONFIG
+    fw_config(config=kwargs.get("config"))
     _reset = kwargs.get("reset")
+    if _reset:
+        RDF_GLOBAL = RdfFramework()
+    if RDF_GLOBAL is None:
+        RDF_GLOBAL = RdfFramework()
+    return RDF_GLOBAL
+    
+def fw_config(**kwargs):
+    
+    global FRAMEWORK_CONFIG
+    
     if FRAMEWORK_CONFIG is None:
         if  kwargs.get("config"):
             config = kwargs.get("config")
@@ -2148,12 +2242,8 @@ def get_framework(**kwargs):
             FRAMEWORK_CONFIG = config
         else:
             return "framework not initialized"
-    if _reset:
-        RDF_GLOBAL = RdfFramework()
-    if RDF_GLOBAL is None:
-        RDF_GLOBAL = RdfFramework()
-    return RDF_GLOBAL
-
+    return FRAMEWORK_CONFIG
+    
 def query_select_options(field):
     ''' returns a list of key value pairs for a select field '''
     _prefix = get_framework().get_prefix()
@@ -2165,7 +2255,7 @@ def query_select_options(field):
         code_timer().log("formTest", "----Sending query to triplestore")
         # send query to triplestore
         _select_list = requests.post(
-            FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+            fw_config().get('TRIPLESTORE_URL'),
             data={"query": _prefix + _select_query,
                   "format": "json"})
         code_timer().log("formTest", "----Recieved query from triplestore")
@@ -2401,25 +2491,65 @@ def convert_spo_to_dict(data, mode="subject"):
     mode: subject --> groups based on subject
     '''
     _return_obj = {}
+    _list_obj = False
     if mode == "subject":
         for item in data:
-            if _return_obj.get(item['s']['value']):
-                if _return_obj[item['s']['value']].get(item['p']['value']):
-                    _obj_list = make_list(\
-                            _return_obj[item['s']['value']][item['p']['value']])
-                    _obj_list.append(xsd_to_python(item['o']['value'], \
-                            item['o'].get("datatype"), item['o']['type']))
-                    _return_obj[item['s']['value']][item['p']['value']] = _obj_list
-                else:
-                    _return_obj[item['s']['value']][item['p']['value']] = \
-                        xsd_to_python(item['o']['value'], item['o'].get(\
+            # determine data is list of objects
+            _sv = item['s']['value']
+            _pv = item['p']['value']
+
+            if item.get('itemID'):
+                _list_obj = True
+                _iv = item['itemID']['value']
+                if _return_obj.get(_iv):
+                    if _return_obj[_iv].get(_sv):
+                        if _return_obj[_iv][_sv].get(_pv):
+                            _obj_list = make_list(\
+                                    _return_obj[_iv][_sv][_pv])
+                            _obj_list.append(xsd_to_python(item['o']['value'], \
+                                    item['o'].get("datatype"), item['o']['type']))
+                            _return_obj[_iv][_sv][_pv] = _obj_list
+                        else:
+                            _return_obj[_iv][_sv][_pv] = \
+                                xsd_to_python(item['o']['value'], item['o'].get(\
+                                        "datatype"), item['o']['type'])
+                    else:
+                        _return_obj[_iv][_sv] = {}
+                        _return_obj[_iv][_sv][_pv] = \
+                                xsd_to_python(item['o']['value'], item['o'].get(\
                                 "datatype"), item['o']['type'])
+                else:
+                    _return_obj[_iv] = {}
+                    _return_obj[_iv][_sv] = {}
+                    _return_obj[_iv][_sv][_pv] = \
+                            xsd_to_python(item['o']['value'], item['o'].get(\
+                            "datatype"), item['o']['type'])
+                    
+            # if not a list of objects
             else:
-                _return_obj[item['s']['value']] = {}
-                _return_obj[item['s']['value']][item['p']['value']] = \
-                        xsd_to_python(item['o']['value'], item['o'].get(\
-                        "datatype"), item['o']['type'])
-        return _return_obj
+                if _return_obj.get(_sv):
+                    if _return_obj[_sv].get(_pv):
+                        _obj_list = make_list(\
+                                _return_obj[_sv][_pv])
+                        _obj_list.append(xsd_to_python(item['o']['value'], \
+                                item['o'].get("datatype"), item['o']['type']))
+                        _return_obj[_sv][_pv] = _obj_list
+                    else:
+                        _return_obj[_sv][_pv] = \
+                            xsd_to_python(item['o']['value'], item['o'].get(\
+                                    "datatype"), item['o']['type'])
+                else:
+                    _return_obj[_sv] = {}
+                    _return_obj[_sv][_pv] = \
+                            xsd_to_python(item['o']['value'], item['o'].get(\
+                            "datatype"), item['o']['type'])
+        if _list_obj:
+            _return_list = []
+            for _key, _value in _return_obj.items():
+                _return_list.append(_value)
+            return _return_list
+        else:
+            return _return_obj
 
 def remove_null(obj):
     ''' reads through a list or set and strips any null values'''
@@ -2527,7 +2657,7 @@ class UniqueValue(object):
         print(_sparql)
         # run the test query
         _unique_test_results = requests.post(\
-                FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+                fw_config().get('TRIPLESTORE_URL'),
                 data={"query": _sparql, "format": "json"})
         _unique_test = _unique_test_results.json().get('results').get( \
                             'bindings', [])
@@ -2629,24 +2759,24 @@ class BsGridTableWidget(object):
     pushed into a subsequent table row to ensure XHTML validity. Hidden fields
     at the end of the field list will appear outside the table.
     """
-    def __init__(self, with_row_tag=True):
-        self.with_row_tag = with_row_tag
+    def __init__(self, with_section_tag=False):
+        self.with_section_tag = with_section_tag
 
     def __call__(self, field, **kwargs):
         html = []
-        if self.with_row_tag:
+        if self.with_section_tag:
             kwargs.setdefault('id', field.id)
-            html.append('<row class="row" %s>' % html_params(**kwargs))
+            html.append('<section class="col-md-6" %s>' % html_params(**kwargs))
         hidden = ''
         _params = html_params(**kwargs)
         for subfield in field:
             if subfield.type == 'CSRFTokenField':
                 html.append('<div style="display:none" %s>%s</div>' % (_params,text_type(subfield(class_="form-control"))))
             else:
-                html.append('<div class="col-md-4" %s>%s</div>' % (_params,text_type(subfield(class_="form-control"))))
+                html.append('<div class="col-md-2" %s>%s</div>' % (_params,text_type(subfield(class_="form-control"))))
                 hidden = ''
-        if self.with_row_tag:
-            html.append('</row>')
+        if self.with_section_tag:
+            html.append('</section>')
         if hidden:
             html.append(hidden)
         return HTMLString(''.join(html))
@@ -2663,8 +2793,8 @@ class RepeatingSubFormWidget(object):
     otherwise afterwards. The latter is useful for iterating radios or
     checkboxes.
     """
-    def __init__(self, html_tag='row', prefix_label=True):
-        assert html_tag in ('ol', 'ul', 'row')
+    def __init__(self, html_tag='div', prefix_label=True):
+        assert html_tag in ('ol', 'ul', 'div')
         self.html_tag = html_tag
         self.prefix_label = prefix_label
 
@@ -2675,7 +2805,7 @@ class RepeatingSubFormWidget(object):
         html.append('<%s class="row">' % (self.html_tag))
         for sub_subfield in field[0]:
             if sub_subfield.type != 'CSRFTokenField':
-                html.append('<div class="col-md-4">%s</div>' % sub_subfield.label)
+                html.append('<div class="col-md-2">%s</div>' % sub_subfield.label)
         html.append('</%s>' % (self.html_tag))    
         for subfield in field:
             html.append('<%s class="row">%s</%s>' % (self.html_tag,

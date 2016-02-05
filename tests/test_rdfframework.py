@@ -12,9 +12,11 @@ app = Flask(__name__)
 app.config = {"ORGANIZATION": { "url": "http://knowledgelinks.io"},
               "TESTING": True,
               "DEBUG": True,
-              "BASE_URL": "http://192.168.99.100:8081",
-              "TRIPLESTORE_URL": "http://192.168.99.100:8081/bigdata/sparql",
-              "REST_URL":  "http://192.168.99.100:8081/fedora/rest"} 
+              "BASE_URL": "http://localhost:8080"}
+app.config["TRIPLESTORE_URL"] = "{}/bigdata/sparql".format(
+    app.config["BASE_URL"])
+app.config["REST_URL"] = "{}/fedora/rest".format(
+    app.config["BASE_URL"])
 
 PROJECT_DIR = os.path.abspath(os.curdir)
 sys.path.append(PROJECT_DIR)
@@ -412,6 +414,18 @@ class TestRdfFramework(unittest.TestCase):
     def setUp(self):
         framework.current_app = app
         self.rdf_framework = framework.RdfFramework()
+        self.expires = {
+            "defaultVal": "now + 360",
+            "type": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+	        "propUri": "https://w3id.org/openbadges#expires",
+            "range": [
+                {
+                    "storageType": "literal",
+                    "rangeClass": "http://www.w3.org/2000/01/rdf-schema#datetime"
+                }
+	        ],
+	       "comment": "Timestamp when badge expires."
+	    }
         self.user_name = {
             "type": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
 	    "propUri": "http://knowledgelinks.io/ns/data-structures/userName",
@@ -467,23 +481,26 @@ class TestRdfFramework(unittest.TestCase):
 
 
     def test_get_property_class_uri_prop_name(self):
-        expires = {
-            "defaultVal": "now + 360",
-            "type": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
-	    "propUri": "https://w3id.org/openbadges#expires",
-            "range": [
-                {
-                    "storageType": "literal",
-                    "rangeClass": "http://www.w3.org/2000/01/rdf-schema#datetime"
-                }
-	    ],
-	   "comment": "Timestamp when badge expires."
-	}
         self.assertEqual(
             self.rdf_framework.get_property(
                 class_uri="https://w3id.org/openbadges#Assertion",
-		prop_name="expires"),
-            [expires,])
+		        prop_name="expires"),
+            [self.expires,])
+
+    def test_get_property_class_uri_prop_uri(self):
+        self.assertEqual(
+            self.rdf_framework.get_property(
+                class_uri="https://w3id.org/openbadges#Assertion",
+				prop_uri="https://w3id.org/openbadges#expires"),
+            [self.expires,])
+
+    def test_get_save_order(self):
+        rdf_form = {}
+        self.assertEqual(
+            self.rdf_framework._get_save_order(
+                rdf_form),
+			{"saveOrder": [],
+             "reverseDependancies":[]})
 
     def test_loadApp(self):
         pass
