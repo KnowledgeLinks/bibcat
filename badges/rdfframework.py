@@ -302,8 +302,8 @@ class RdfFramework(object):
             print("\tLoading application defaults")
         _sparql = render_without_request(
             "jsonApplicationDefaults.rq",
-            graph=FRAMEWORK_CONFIG.get('RDF_DEFINITION_GRAPH'))
-        _form_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+            graph=fw_config().get('RDF_DEFINITION_GRAPH'))
+        _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                    data={"query": _sparql, "format": "json"})
         return json.loads(_form_list.json().get('results').get('bindings'\
                 )[0]['app']['value'])
@@ -314,9 +314,9 @@ class RdfFramework(object):
         if DEBUG:
             print("\tLoading rdf class definitions")
         _sparql = render_without_request("jsonRdfClassDefinitions.rq",
-                                         graph=FRAMEWORK_CONFIG.get(\
+                                         graph=fw_config().get(\
                                                 'RDF_DEFINITION_GRAPH'))
-        _class_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+        _class_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                     data={"query": _sparql, "format": "json"})
         return json.loads(_class_list.json().get('results').get('bindings'\
                 )[0]['appClasses']['value'])
@@ -327,9 +327,9 @@ class RdfFramework(object):
         if DEBUG:
             print("\tLoading form definitions")
         _sparql = render_without_request("jsonFormQueryTemplate.rq",
-                                         graph=FRAMEWORK_CONFIG.get(\
+                                         graph=fw_config().get(\
                                                 'RDF_DEFINITION_GRAPH'))
-        _form_list = requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+        _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                    data={"query": _sparql, "format": "json"})
         _raw_json = _form_list.json().get('results').get('bindings'\
                 )[0]['appForms']['value']
@@ -607,7 +607,7 @@ class RdfFramework(object):
             # query the triplestore
             code_timer().log("loadOldData", "pre send query")
             _form_data_query =\
-                    requests.post(FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+                    requests.post(fw_config().get('TRIPLESTORE_URL'),
                                   data={"query": _sparql, "format": "json"})
             code_timer().log("loadOldData", "post send query")
             #print(json.dumps(_form_data_query.json().get('results').get(\
@@ -849,7 +849,7 @@ class RdfClass(object):
 
                     _key_test_results =\
                             requests.post(\
-                                    FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+                                    fw_config().get('TRIPLESTORE_URL'),
                                     data={"query": sparql, "format": "json"})
                     #print("_key_test_results: ", _key_test_results.json())
                     _key_test = _key_test_results.json().get('results').get( \
@@ -1326,7 +1326,7 @@ class RdfClass(object):
                 # repository
                 if subject_uri == "<>":
                     repository_result = requests.post(
-                        FRAMEWORK_CONFIG.get("REPOSITORY_URL"),
+                        fw_config().get("REPOSITORY_URL"),
                         data=_save_query,
         				headers={"Content-type": "text/turtle"})
                     object_value = repository_result.text
@@ -1602,7 +1602,7 @@ def save_file_to_repository(data, repo_item_address):
         print("~~~~~~~~ write code here")
     else:
         repository_result = requests.post(
-            FRAMEWORK_CONFIG.get("REPOSITORY_URL"),
+            fw_config().get("REPOSITORY_URL"),
             data=data.read(),
 			         headers={"Content-type":"'image/png'"})
         object_value = repository_result.text
@@ -2218,8 +2218,18 @@ def get_framework(**kwargs):
     ''' sets an instance of the the framework as a global variable. This
         this method is then called to access that specific instance '''
     global RDF_GLOBAL
-    global FRAMEWORK_CONFIG
+    fw_config(config=kwargs.get("config"))
     _reset = kwargs.get("reset")
+    if _reset:
+        RDF_GLOBAL = RdfFramework()
+    if RDF_GLOBAL is None:
+        RDF_GLOBAL = RdfFramework()
+    return RDF_GLOBAL
+    
+def fw_config(**kwargs):
+    
+    global FRAMEWORK_CONFIG
+    
     if FRAMEWORK_CONFIG is None:
         if  kwargs.get("config"):
             config = kwargs.get("config")
@@ -2232,12 +2242,8 @@ def get_framework(**kwargs):
             FRAMEWORK_CONFIG = config
         else:
             return "framework not initialized"
-    if _reset:
-        RDF_GLOBAL = RdfFramework()
-    if RDF_GLOBAL is None:
-        RDF_GLOBAL = RdfFramework()
-    return RDF_GLOBAL
-
+    return FRAMEWORK_CONFIG
+    
 def query_select_options(field):
     ''' returns a list of key value pairs for a select field '''
     _prefix = get_framework().get_prefix()
@@ -2249,7 +2255,7 @@ def query_select_options(field):
         code_timer().log("formTest", "----Sending query to triplestore")
         # send query to triplestore
         _select_list = requests.post(
-            FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+            fw_config().get('TRIPLESTORE_URL'),
             data={"query": _prefix + _select_query,
                   "format": "json"})
         code_timer().log("formTest", "----Recieved query from triplestore")
@@ -2651,7 +2657,7 @@ class UniqueValue(object):
         print(_sparql)
         # run the test query
         _unique_test_results = requests.post(\
-                FRAMEWORK_CONFIG.get('TRIPLESTORE_URL'),
+                fw_config().get('TRIPLESTORE_URL'),
                 data={"query": _sparql, "format": "json"})
         _unique_test = _unique_test_results.json().get('results').get( \
                             'bindings', [])

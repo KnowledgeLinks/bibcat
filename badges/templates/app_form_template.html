@@ -55,10 +55,12 @@
 									<div title="{{ field.description }}" data-toggle="tooltip">
 										{{ field(class_=fld['css'],readonly=not fld['editable']) }}
 				{% if fld['fieldType']['type'] == 'http://knowledgelinks.io/ns/data-resources/ImageFileOrURLField' %}
+					{% if field.data is not none %}
 					{% if field.data.startswith('<') and field.name.endswith('_image') %}
 												<div class="form-control-static"><img src="/badges/fedora_image?id={{ field.data.replace('<','').replace('>','') }}"></div>
 					{% elif not field.data.startswith('<') %}
 												<div class="form-control-static"><img src="{{ field.data }}"></div>
+					{% endif %}
 					{% endif %}
 				{% endif %}			
 									</div>
