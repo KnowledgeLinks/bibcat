@@ -197,7 +197,7 @@ class Test_salt_processor(unittest.TestCase):
         form = {"processedData": {},
                 "propUri": "https://schema.org/salt",
                 "prop": {"calcValue": None, "className": "Organization"}}
-        self.assertRaises(AttributeError, salt_processor, obj=form, mode=None)
+        self.assertRaises(KeyError, salt_processor, obj=form, mode=None)
 
 
 
