@@ -2,7 +2,12 @@ __author__ = "Mike Stabile"
 
 import os
 from jinja2 import Environment, FileSystemLoader
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+FRAMEWORK_BASE = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+
+ENV = Environment(loader=FileSystemLoader(
+    [os.path.join(FRAMEWORK_BASE, "sparql"),
+     os.path.join(FRAMEWORK_BASE, "turtle")]))
+
 
 def render_without_request(template_name, **template_vars):
     """
@@ -10,7 +15,6 @@ def render_without_request(template_name, **template_vars):
 
     render_without_request('my_template.html', var1='foo', var2='bar')
     """
-    env = Environment(loader=FileSystemLoader(os.path.join(PROJECT_ROOT, "templates")))
-    template = env.get_template(template_name)
+    template = ENV.get_template(template_name)
     return template.render(**template_vars)
     
