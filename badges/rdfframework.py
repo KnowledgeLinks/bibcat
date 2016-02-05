@@ -162,10 +162,20 @@ class RdfFramework(object):
                     if _entry.type == 'FormField':
                         for _parent_field in _parent_fields:
                             setattr(_entry.form,_parent_field.name,_parent_field)
-                            _entry.form._fields.update({_parent_field.name:_parent_field})
-                        _entry.form.rdfFieldList = _entry.form.rdfFieldList + _parent_field_list
+                            _entry.form._fields.update(\
+                                    {_parent_field.name:_parent_field})
+                        _entry.form.rdfFieldList = _entry.form.rdfFieldList + \
+                                 _parent_field_list
+                        if hasattr(_entry.form,"subjectUri"):
+                            _entry.form.dataSubjectUri = \
+                                    _entry.form.subjectUri.data
+                            del _entry.form.subjectUri
+                            for _row in _entry.form.rdfFieldList:
+                                for _fld in _row:
+                                    if _fld['propUri'] == 'subjectUri':
+                                        _row.remove(_fld)
                         result.append(self.save_form(_entry.form))
-        return {"success":True, "results":result}
+        return {"success":True, "results":result} 
             
     def save_form(self, rdf_form):
         '''Recieves RDF_formfactory form, validates and saves the data
@@ -180,7 +190,7 @@ class RdfFramework(object):
          - send data to classes for saving
          '''
          
-        if rdf_form.subform:
+        if rdf_form.has_subform:
             return self.save_form_with_subform(rdf_form)
         # group fields by class
         _form_by_classes = self._organize_form_by_classes(rdf_form)
@@ -364,6 +374,7 @@ class RdfFramework(object):
         _independant_classes = set()
         _class_dependancies = {}
         _reverse_dependancies = {}
+        _class_set = remove_null(_class_set)
         # cycle through all of the rdf classes
         for _rdf_class in _class_set:
             # get the instance of the RdfClass
@@ -443,12 +454,15 @@ class RdfFramework(object):
         '''
         _class_uri = kwargs.get("class_uri", rdf_form.dataClassUri)
         _lookup_class_uri = _class_uri
+        #if hasattr(rdf_form,"subjectUri"):
+        #    subject_uri = rdf_form.subjectUri.data
+        #else:
         subject_uri = kwargs.get("subject_uri", rdf_form.dataSubjectUri)
         _subform_data = {}
         _data_list = kwargs.get("data_list",False)
         _parent_field = None
         # test to see if a subform is in the form
-        if rdf_form.subform:
+        if rdf_form.has_subform:
             _sub_rdf_form = None
             # find the subform field 
             for _field in rdf_form:
@@ -648,6 +662,7 @@ class RdfFramework(object):
                                             make_list(_prop.get("processors")), _class_uri)
                             #print("processors - ", _prop_uri, " - ", _processors,
                                   #"\npre - ", make_list(_prop.get("processors")))
+                            _processors = remove_null(_processors)
                             for _processor in _processors:
                                 _data_value = \
                                         run_processor(_processor,
@@ -1836,7 +1851,8 @@ def get_wtform_field(field, instance=''):
         _form_name = get_framework().get_form_name(\
                 _field_type_obj.get('subFormUri'))
         _sub_form = FormField(rdf_framework_form_factory(_form_name,
-                                                         instance),
+                                                         instance,
+                                                         is_subform=True),
                               widget=BsGridTableWidget())
         if "RepeatingSubForm" in _field_type_obj.get("subFormMode"):
             _form_field = FieldList(_sub_form, _field_label, min_entries=1,
@@ -1968,11 +1984,14 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
 
     # get required state
     _required = False
+    _field_req_var = cbool(field.get('requiredField'))
     if (field.get('propUri') in make_list(field.get('classInfo', {}).get(\
-            'primaryKey', []))) or (field.get('requiredField', False)):
+            'primaryKey', []))) or _field_req_var:
         _required = True
     if field.get('classUri') in make_list(field.get('requiredByDomain', {})):
         _required = True
+    if _field_req_var == False:
+        _required = False
     _new_field['required'] = _required
 
     # Determine EditState
@@ -2113,6 +2132,8 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
                    ***** has to be the class of the subject_uri for
                          the form data lookup
         subject_uri: the uri of the object that you want to lookup
+        is_subform: True or False. States whether the form is a subform
+                 of another form
     '''
     rdf_form = type(name, (Form, ), {})
     _app_form = get_framework().rdf_form_dict.get(name, {})
@@ -2137,7 +2158,7 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
         'applicationSecurity':["Read", "Write"]
     }
     # *********************************************************************
-    _subform = False
+    _has_subform = False
     for fld in fields:
         field = get_field_json(fld, instructions, instance, user_info)
         if field:
@@ -2167,11 +2188,21 @@ def rdf_framework_form_factory(name, instance='', **kwargs):
                     if hasattr(form_field,"frameworkField"):
                         
                         if "subform" in form_field.frameworkField.lower():
-                            _subform = True
-    setattr(rdf_form, 'subform', _subform)                        
+                            _has_subform = True
+    _rdf_field_list = list.copy(_field_list)
+    if kwargs.get("is_subform"):
+        _rdf_field_list.append([{'formFieldName':'subjectUri',
+                                 'formFieldType':'ReferenceField',
+                                 'formLabelName':'dataSubjectUri',
+                                 'classUri':_lookup_class_uri,
+                                 'className':get_framework().get_class_name(\
+                                            _lookup_class_uri),
+                                 'propUri':'subjectUri'}])
+        setattr(rdf_form, 'subjectUri', StringField('dataSubjectUri'))
+    setattr(rdf_form, 'has_subform', _has_subform)                        
     setattr(rdf_form, 'rdfFormInfo', _app_form)
     setattr(rdf_form, "rdfInstructions", instructions)
-    setattr(rdf_form, "rdfFieldList", list.copy(_field_list))
+    setattr(rdf_form, "rdfFieldList", _rdf_field_list)
     setattr(rdf_form, "rdfInstance", instance)
     setattr(rdf_form, "dataClassUri", _lookup_class_uri)
     setattr(rdf_form, "dataSubjectUri", _lookup_subject_uri)
@@ -2346,16 +2377,7 @@ def xsd_to_python(value, data_type, rdf_type="literal"):
         return value.decode()
     elif data_type == "xsd:boolean":
         # Boolean (true or false)
-        if is_not_null(value):
-            if lower(value) in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', \
-                    'certainly', 'uh-huh']:
-                return True
-            elif lower(value) in ['false', '0', 'n', 'no']:
-                return False
-            else:
-                return None
-        else:
-            return None
+        return cbool(value)
     elif data_type == "xsd:byte":
         # Signed value of 8 bits
         return value.decode()
@@ -2546,6 +2568,7 @@ def convert_spo_to_dict(data, mode="subject"):
         if _list_obj:
             _return_list = []
             for _key, _value in _return_obj.items():
+                _value[_key]["subjectUri"] = _key
                 _return_list.append(_value)
             return _return_list
         else:
@@ -2813,3 +2836,22 @@ class RepeatingSubFormWidget(object):
                                            subfield(),
                                            self.html_tag))
         return HTMLString(''.join(html))
+
+
+def cbool(value):
+    ''' converts a value to true or false. Python's default bool() function
+    does not handle 'true' of 'false' strings '''
+    
+    if is_not_null(value):
+        if isinstance(value, bool):
+            return value
+        elif isinstance(value, str):
+            if value.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', \
+                    'certainly', 'uh-huh']:
+                return True
+            elif value.lower() in ['false', '0', 'n', 'no']:
+                return False
+            else:
+                return None
+    else:
+        return None
