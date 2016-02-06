@@ -33,9 +33,7 @@ class Test_is_not_null(unittest.TestCase):
 
     def test_is_not_null_true(self):
         self.assertTrue(is_not_null("Test"))
-        self.assertTrue(is_not_null(1234))
-
-        
+        self.assertTrue(is_not_null(1234))      
 
 
 
