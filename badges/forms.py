@@ -17,7 +17,7 @@ import requests
 from flask import current_app
 from jinja2 import Environment, FileSystemLoader, PackageLoader
 from datetime import datetime as dt
-from .utilities import render_without_request
+from ..rdfframework.utilities import render_without_request
 from .rdfframework import *
 
 class CollectionListField(Field):

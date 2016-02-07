@@ -1,0 +1,117 @@
+prefix obi: <https://w3id.org/openbadges#> 
+prefix schema: <https://schema.org/> 
+prefix klob: <http://knowledgelinks.io/ns/openbadges/> 
+
+SELECT (CONCAT('{',GROUP_CONCAT(?json; SEPARATOR=","),'}') AS ?jsonString)
+{
+  {{ uri_sparql_select }}                    #enter the sqarql lines that will resolve the resource subject to "?uri" variable
+	BIND (obi:{{ object_type }} AS ?objType) . #Set the obi:??? to the return that which you want BadgeClass, Assertion, etc.
+	{
+	  ?prop klob:jsonValFormat "lookup" .            #lookup a field from another resource
+	  ?prop klob:useFor ?objType .                   #filter to the spedified resource Tyep
+	  ?prop klob:jsonObjName ?objName .              #get the json name to return
+	  ?prop klob:lookupReturnField ?returnValFld.    #get the predicate value to be used in the looked up resource
+	  ?uri ?prop ?lookupItem .                       #get the lookup URI that is stored in object position 
+	  ?lookupItem ?returnValFld ?lookupVal .         #get the value from the predicate value in the lookup item
+	  BIND (CONCAT('"',?objName,'":"',STR(?lookupVal),'"') AS ?json)
+	} UNION {
+		?prop klob:jsonValFormat "lookupUrlSub" .
+	  ?prop klob:useFor ?objType .
+	  ?prop klob:jsonObjName ?objName .
+	  ?prop klob:url ?url.
+	  ?prop klob:urlendfld ?fld .
+    ?uri ?prop ?lookupItem .
+	  ?lookupItem ?fld ?endFld .
+	  BIND (CONCAT('"',?objName,'":"',?url,?endFld,'"') AS ?json)
+	} UNION {
+	  ?prop klob:jsonValFormat "objectValue" .
+	  ?prop klob:useFor ?objType .
+	  ?prop klob:jsonObjName ?objName .
+	  OPTIONAL {?prop klob:defaultVal ?defaultVal }. # get default value from vocabulary if present
+	  OPTIONAL {?uri ?prop ?val }.
+    # return property value otherwise return default value
+    BIND (COALESCE(?val,?defaultVal) AS ?rtnVal) .
+    # add quotes for string data types and URIs
+    BIND (IF(dataType(?rtnVal)=xsd:string,REPLACE(REPLACE(?rtnVal,'"','&quot;'),"\\\\","&#92;"),?rtnVal) AS ?rtnVal2) .
+    BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal2),CONCAT('"',STR(?rtnVal2),'"'),?rtnVal2) AS ?jsonVal) .
+    BIND (CONCAT('"',?objName,'":',STR(?jsonVal)) AS ?json)
+	} UNION {
+   	{{ uri_sparql_select }}                    #enter the sqarql lines that will resolve the resource subject to "?uri" variable
+		BIND (obi:{{ object_type }} AS ?objType) . #Set the obi:??? to the return that which you want BadgeClass, Assertion, etc.
+	  ?prop klob:jsonValFormat "subjectCalc" .
+	  ?prop klob:parseType "afterLastSlash" .
+	  ?prop klob:useFor ?objType .
+	  OPTIONAL {?prop klob:unionUrl ?unionUrl .}
+	  ?prop klob:jsonObjName ?objName .
+    BIND (IF(!bound(?unionUrl),"",?unionUrl) AS ?prefix) .
+	  BIND (CONCAT(STR(?prefix),
+	  						REPLACE(STR(?uri),  "^(.*[/])", "")
+	  						) AS  ?rtnVal) .
+    BIND (CONCAT('"',?objName,'":','"',?rtnVal,'"') AS ?json)
+	}UNION {
+	  ?prop klob:jsonValFormat "urlSub" .
+	  ?prop klob:useFor ?objType .
+	  ?prop klob:jsonObjName ?objName .
+	  ?prop klob:url ?url.
+	  ?prop klob:urlendfld ?fld .
+	  ?uri ?prop ?test .
+	  ?uri ?fld ?endFld .
+	  BIND (CONCAT('"',?objName,'":"',?url,?endFld,'"') AS ?json)
+	} UNION {
+	    {
+			SELECT ?objName (GROUP_CONCAT(?arrayVal; SEPARATOR=",") AS ?vals)
+				{
+						{{ uri_sparql_select }}                    #enter the sqarql lines that will resolve the resource subject to "?uri" variable
+						BIND (obi:{{ object_type }} AS ?objType) . #Set the obi:??? to the return that which you want BadgeClass, Assertion, etc.
+						?prop klob:jsonValFormat "multiValArray" .
+				    ?prop klob:useFor ?objType .
+				    ?prop klob:jsonObjName ?objName .
+				    ?uri ?prop ?o .
+					BIND (CONCAT('"',?o,'"') AS ?arrayVal)
+				}
+				group by ?objName
+			}
+			BIND (CONCAT('"',?objName,'":[',?vals,']') AS ?json)
+	} UNION {
+			{
+		    SELECT ?objName (GROUP_CONCAT(?jsonList; SEPARATOR=",") AS ?obj)
+		    {
+					{{ uri_sparql_select }}                    #enter the sqarql lines that will resolve the resource subject to "?uri" variable
+					BIND (obi:{{ object_type }} AS ?objType) . #Set the obi:??? to the return that which you want BadgeClass, Assertion, etc.
+		      ?prop klob:jsonValFormat "lookupProperties" .
+		      ?prop klob:useFor ?objType .
+		      ?prop klob:jsonObjName ?objName .
+		      ?prop klob:lookupReturnField ?bn .
+		      OPTIONAL {?uri ?prop ?lookupUri }.
+		      # gather lookup Properties values     
+		      {
+			      ?bn klob:jsonValFormat "objectValue" .      # search vocabulary for "objectValue" 
+			      ?bn klob:jsonObjName ?subObjName .          # get the json object name
+			      OPTIONAL {?bn klob:defaultVal ?defaultVal }. # get default value from vocabulary if present
+			      OPTIONAL {?bn klob:propertyField ?propFld . # get property name from vocabulary if present
+			                ?lookupUri ?propFld ?val }.       # get object value from resource property
+			      # return property value otherwise return default value
+			      BIND (COALESCE(?val,?defaultVal) AS ?rtnVal) .
+			      # add quotes for string data types and URIs
+			      BIND (IF(dataType(?rtnVal)=xsd:string || isIRI(?rtnVal),CONCAT('"',STR(?rtnVal),'"'),?rtnVal) AS ?jsonVal) .
+			      BIND (CONCAT('"',?subObjName,'":',STR(?jsonVal)) AS ?jsonList)
+			    } UNION {
+			    	?bn klob:jsonValFormat "subjectCalc" .
+					  ?bn klob:parseType "afterLastSlash" .
+					  OPTIONAL {?bn klob:unionUrl ?unionUrl } .
+					  ?bn klob:jsonObjName ?subObjName .
+				    BIND (IF(!bound(?unionUrl),"",?unionUrl) AS ?prefix) .
+                    BIND (?uri AS ?uriTest) .
+					  BIND (CONCAT(STR(?prefix),
+					  						REPLACE(STR(?uriTest),  "^(.*[/])", "")
+					  						) AS  ?rtnVal) .
+				    BIND (CONCAT('"',?subObjName,'":','"',?rtnVal,'"') AS ?jsonList)
+				  }
+		    }
+		    GROUP BY ?objName
+		  }
+		  BIND (CONCAT('"',?objName,'":{',?obj,'}') AS ?json)
+	}
+  FILTER(bound(?json))
+}
+ORDER BY ?json 

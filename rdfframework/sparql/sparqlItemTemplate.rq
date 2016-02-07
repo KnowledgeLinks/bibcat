@@ -1,0 +1,16 @@
+{{ prefix }}
+
+SELECT DISTINCT {{ list_binding }} ?s ?p ?o
+{
+  {{ query }}
+  
+  FILTER(!(
+    STRSTARTS(STR(?p), "http://fedora.info/definitions/v4/")||
+    STRSTARTS(STR(?o), "http://fedora.info/definitions/v4/")||
+    STRSTARTS(STR(?o), "http://www.w3.org/ns/ldp#Container")||
+    STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")||
+    STRSTARTS(STR(?p), "http://www.w3.org/ns/ldp#Container")||
+    STRSTARTS(STR(?p), "http://www.w3.org/ns/ldp#RDFSource")||
+    STRSTARTS(STR(?o), "http://www.w3.org/ns/ldp#RDFSource")||
+    STRSTARTS(STR(?o), "http://www.jcp.org/jcr/")))
+}
