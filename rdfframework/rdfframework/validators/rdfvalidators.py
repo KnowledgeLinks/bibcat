@@ -1,3 +1,6 @@
+import requests
+from rdfframework import RdfDataType
+from rdfframework.utilities import make_triple, iri, clean_iri, fw_config
 __author__ = "Mike Stabile, Jeremy Nelson"
 
 class UniqueValue(object):

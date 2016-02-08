@@ -1,24 +1,13 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
-
+import re
 import json
 import requests
 from werkzeug.datastructures import MultiDict
-from .__init__ import fw_config, iri, is_not_null, make_list, remove_null, \
-    DEBUG, RDF_GLOBAL
-from .utilities import render_without_request
-from .utilities.codetimer import code_timer
+from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
+        remove_null, clean_iri, make_triple, convert_spo_to_dict, DEBUG, \
+        render_without_request, code_timer
+from rdfframework.processors import clean_processors, run_processor
 
-def get_framework(**kwargs):
-    ''' sets an instance of the the framework as a global variable. This
-        this method is then called to access that specific instance '''
-    global RDF_GLOBAL
-    fw_config(config=kwargs.get("config"))
-    _reset = kwargs.get("reset")
-    if _reset:
-        RDF_GLOBAL = RdfFramework()
-    if RDF_GLOBAL is None:
-        RDF_GLOBAL = RdfFramework()
-    return RDF_GLOBAL
 
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
@@ -701,5 +690,5 @@ class RdfFramework(object):
                 "reverseDependancies":_class_links.get("reverseDependancies", {})}
 
 # Theses imports are placed at the end of the module to avoid circular imports
-from .rdfclass import RdfClass
-from .rdfdatatype import RdfDataType
+from rdfframework import RdfClass
+from rdfframework import RdfDataType

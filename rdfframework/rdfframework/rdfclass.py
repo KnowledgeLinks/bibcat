@@ -5,13 +5,13 @@ import requests
 
 from werkzeug.datastructures import FileStorage
 
-from .__init__ import clean_iri, fw_config, iri, is_not_null, make_list,  \
+from rdfframework.utilities import clean_iri, fw_config, iri, is_not_null, make_list,  \
     make_set, make_triple, remove_null, DeleteProperty, NotInFormClass 
-from .processors import clean_processors
-from .framework import get_framework
-from .rdfdatatype import RdfDataType
-from .utilities.debug import dumpable_obj
 
+from .getframework import get_framework
+from rdfframework.rdfdatatype import RdfDataType
+from rdfframework.utilities.debug import dumpable_obj
+from rdfframework.processors import clean_processors, run_processor
 
 
 class RdfClass(object):

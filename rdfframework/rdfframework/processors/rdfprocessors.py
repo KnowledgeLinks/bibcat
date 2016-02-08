@@ -1,3 +1,10 @@
+import os
+from base64 import b64encode
+from passlib.hash import sha256_crypt
+from rdfframework.utilities import is_not_null
+from rdfframework import get_framework
+
+
 __author__ = "Mike Stabile, Jeremy Nelson"
 
 def run_processor(processor, obj, mode="save"):
@@ -192,3 +199,4 @@ def clean_processors(processor_list, _class_uri=None):
         else:
             _return_list.append(item)
     return _return_list
+

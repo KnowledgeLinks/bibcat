@@ -1,6 +1,7 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-from wtforms.widgets import HTMLString
+from wtforms.widgets import HTMLString, html_params
+from wtforms.compat import text_type
 
 class BsGridTableWidget(object):
     """

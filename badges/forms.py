@@ -17,8 +17,7 @@ import requests
 from flask import current_app
 from jinja2 import Environment, FileSystemLoader, PackageLoader
 from datetime import datetime as dt
-from ..rdfframework.utilities import render_without_request
-from .rdfframework import *
+from rdfframework.utilities import render_without_request
 
 class CollectionListField(Field):
     """Form represents a comma-separate list of items"""

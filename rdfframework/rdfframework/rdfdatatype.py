@@ -2,8 +2,8 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 from rdflib import RDF, RDFS, OWL, XSD
 
-from .__init__ import iri
-from .framework import get_framework
+from rdfframework.utilities import iri
+from .getframework import get_framework
 
 class RdfDataType(object):
     "This class will generate a rdf data type"

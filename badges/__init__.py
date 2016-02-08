@@ -28,6 +28,8 @@ import re
 import requests
 import time
 import urllib.parse
+import sys
+sys.path.append(os.path.realpath('./web/ebadges/rdfframework'))
 try:
     from flask_wtf import Form
 except ImportError:
@@ -37,6 +39,7 @@ from .graph import *
 from .forms import NewAssertion, NewBadgeClass
 from wsgiref import simple_server
 from wtforms.fields import *
+
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 CURRENT_DIR = os.path.dirname(PROJECT_ROOT)
