@@ -1,7 +1,9 @@
 """ utilities for debuging code """
 import json
+import pprint
 __author__ = "Mike Stabile"
 
+pp = pprint.PrettyPrinter(indent=2)
 
 def dumpable_obj(obj):
     ''' takes an object that fails with json.dumps and converts it to

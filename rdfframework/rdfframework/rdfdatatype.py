@@ -2,8 +2,8 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 from rdflib import RDF, RDFS, OWL, XSD
 
-from rdfframework.utilities import iri
-from .getframework import get_framework
+from rdfframework.utilities import iri, uri
+from .getframework import get_framework as rdfw
 
 class RdfDataType(object):
     "This class will generate a rdf data type"
@@ -14,7 +14,7 @@ class RdfDataType(object):
             _prop_uri = kwargs.get("prop_uri")
             if _prop_uri:
                 rdf_data_type = self._find_type(_class_uri, _prop_uri)
-        self.lookup = rdf_data_type
+        self.lookup = uri(rdf_data_type)
         #! What happens if none of these replacements?
         val = self.lookup.replace(str(XSD), "").\
                 replace("xsd:", "").\
@@ -47,9 +47,8 @@ class RdfDataType(object):
 
     def _find_type(self, class_uri, prop_uri):
         '''find the data type based on class_uri and prop_uri'''
-        _rdf_class = getattr(get_framework(),
-                             get_framework().get_class_name(class_uri))
-        _range = _rdf_class.get_property(prop_uri=prop_uri).get("range")[0]
+        _rdf_class = getattr(rdfw(), class_uri)
+        _range = _rdf_class.kds_properties.get(prop_uri).get("rdfs_range")[0]
         _range.get("storageType")
         if _range.get("storageType") == "literal":
             _range = _range.get("rangeClass")

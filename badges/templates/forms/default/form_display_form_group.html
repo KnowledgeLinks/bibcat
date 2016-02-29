@@ -1,0 +1,22 @@
+<div class="form-group {{ errorCss }}">	
+	<label class="control-label">{{ fld.label }}</label>
+	<div title="{{ fld.description }}" data-toggle="tooltip">
+		{% if fld.kds_fieldType['rdf_type'] == 'kdr_ImageFileOrURLField' %}
+			{% if fld.data.startswith('<') and fld.name.endswith('_image') %}
+				<div class="form-control-static"><img src="/badges/fedora_image?id={{ fld.data.replace('<','').replace('>','') }}"></div>
+			{% elif not fld.data.startswith('<') %}
+				<div class="form-control-static"><img src="{{ fld.data }}"></div>
+			{% endif %}
+		{% else %}
+			{% if fld.selectDisplay %}
+				{% set data = fld.selectDisplay %}
+			{% else %}
+				{% set data = fld.data %} 
+			{% endif %}	
+			<div class="form-control-static">{{ data|safe }}</div>
+		{% endif %}
+	</div>
+	{% if debug %}
+		<div><pre>{{fld.debug_data}}</pre></div>
+	{% endif %}
+</div>

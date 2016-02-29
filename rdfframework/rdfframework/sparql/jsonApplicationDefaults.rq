@@ -55,7 +55,7 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                                                      GROUP BY ?klapp ?p ?o ?bn_ ?p1_ 
 													}
                                       BIND(IF(CONTAINS(?o1jf,'","'),true,false) AS ?bracket)
-                                      BIND(IF(isblank(?o)||?o=?p,CONCAT('"',REPLACE(STR(?p1_),"^(.*[#/])", ""),'":',IF(?bracket,'[',""),?o1jf,IF(?bracket,']',"")),?o) AS ?oj)
+                                      BIND(IF(isblank(?o)||?o=?p,CONCAT('"',STR(?p1_),'":',IF(?bracket,'[',""),?o1jf,IF(?bracket,']',"")),?o) AS ?oj)
                                     }
                                     GROUP BY ?klapp ?p ?o 
 								  			
@@ -65,12 +65,13 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
  }
     BIND(IF(CONTAINS(?oja,'},{'),true,false) AS ?bracket)
     #BIND(CONCAT(IF(?bracket,'[',""),?oja,IF(?bracket,']',"")) AS ?oj)
-    BIND(CONCAT('"',REPLACE(STR(?p),"^(.*[#/])", ""),'":',IF(?bracket,'[',""),?oja,IF(?bracket,']',"")) AS ?oj)
+    BIND(CONCAT('"',STR(?p),'":',IF(?bracket,'[',""),?oja,IF(?bracket,']',"")) AS ?oj)
   }
 GROUP BY ?klapp
 }
-      BIND(CONCAT('"',REPLACE(STR(?klapp),"^(.*[#/])", ""),'":',IF(?obj,'{',""),?section,IF(?obj,'}',"")) AS ?sections)
+      BIND(CONCAT('"',STR(?klapp),'":',IF(?obj,'{',""),?section,IF(?obj,'}',"")) AS ?sections)
 }
 								  			
 }
 }
+

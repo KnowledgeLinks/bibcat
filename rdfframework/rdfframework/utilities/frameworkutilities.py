@@ -9,6 +9,7 @@ import requests
 from flask import current_app, json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import Namespace, XSD
+from dateutil.parser import parse
 
 DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
@@ -147,146 +148,147 @@ def xsd_to_python(value, data_type, rdf_type="literal"):
     ''' This will take a value and xsd data_type and convert it to a python
         variable'''
     if data_type:
-        data_type = data_type.replace(str(XSD), "xsd:")
+        data_type = data_type.replace(str(XSD), "")
     if not value:
         return value
     elif rdf_type == "uri":
         return iri(value)
     elif not is_not_null(value):
         return value
-    elif data_type == "xsd:anyURI":
+    elif data_type == "xsd_anyURI":
         # URI (Uniform Resource Identifier)
         return value
-    elif data_type == "xsd:base64Binary":
+    elif data_type == "xsd_base64Binary":
         # Binary content coded as "base64"
         return value.decode()
-    elif data_type == "xsd:boolean":
+    elif data_type == "xsd_boolean":
         # Boolean (true or false)
         return cbool(value)
-    elif data_type == "xsd:byte":
+    elif data_type == "xsd_byte":
         # Signed value of 8 bits
         return value.decode()
-    elif data_type == "xsd:date":
+    elif data_type == "xsd_date":
         ## Gregorian calendar date
         _temp_value = parse(value)
-        _date_format = get_framework().rdf_app_dict['application'].get(\
-                'dataFormats', {}).get('pythonDateFormat', '')
-        return _temp_value.strftime(_date_format)
-    elif data_type == "xsd:dateTime":
+        #_date_format = get_framework().rdf_app_dict['application'].get(\
+                #'dataFormats', {}).get('pythonDateFormat', '')
+        print(_temp_value)
+        return _temp_value #.strftime(_date_format)
+    elif data_type == "xsd_dateTime":
         ## Instant of time (Gregorian calendar)
         return parse(value)
-    elif data_type == "xsd:decimal":
+    elif data_type == "xsd_decimal":
         # Decimal numbers
         return float(value)
-    elif data_type == "xsd:double":
+    elif data_type == "xsd_double":
         # IEEE 64
         return float(value)
-    elif data_type == "xsd:duration":
+    elif data_type == "xsd_duration":
         # Time durations
         return timedelta(milleseconds=float(value))
-    elif data_type == "xsd:ENTITIES":
+    elif data_type == "xsd_ENTITIES":
         # Whitespace
         return value
-    elif data_type == "xsd:ENTITY":
+    elif data_type == "xsd_ENTITY":
         # Reference to an unparsed entity
         return value
-    elif data_type == "xsd:float":
+    elif data_type == "xsd_float":
         # IEEE 32
         return float(value)
-    elif data_type == "xsd:gDay":
+    elif data_type == "xsd_gDay":
         # Recurring period of time: monthly day
         return value
-    elif data_type == "xsd:gMonth":
+    elif data_type == "xsd_gMonth":
         # Recurring period of time: yearly month
         return value
-    elif data_type == "xsd:gMonthDay":
+    elif data_type == "xsd_gMonthDay":
         # Recurring period of time: yearly day
         return value
-    elif data_type == "xsd:gYear":
+    elif data_type == "xsd_gYear":
         # Period of one year
         return value
-    elif data_type == "xsd:gYearMonth":
+    elif data_type == "xsd_gYearMonth":
         # Period of one month
         return value
-    elif data_type == "xsd:hexBinary":
+    elif data_type == "xsd_hexBinary":
         # Binary contents coded in hexadecimal
         return value
-    elif data_type == "xsd:ID":
+    elif data_type == "xsd_ID":
         # Definition of unique identifiers
         return value
-    elif data_type == "xsd:IDREF":
+    elif data_type == "xsd_IDREF":
         # Definition of references to unique identifiers
         return value
-    elif data_type == "xsd:IDREFS":
+    elif data_type == "xsd_IDREFS":
         # Definition of lists of references to unique identifiers
         return value
-    elif data_type == "xsd:int":
+    elif data_type == "xsd_int":
         # 32
         return value
-    elif data_type == "xsd:integer":
+    elif data_type == "xsd_integer":
         # Signed integers of arbitrary length
         return int(value)
-    elif data_type == "xsd:language":
+    elif data_type == "xsd_language":
         # RFC 1766 language codes
         return value
-    elif data_type == "xsd:long":
+    elif data_type == "xsd_long":
         # 64
         return int(value)
-    elif data_type == "xsd:Name":
+    elif data_type == "xsd_Name":
         # XML 1.O name
         return value
-    elif data_type == "xsd:NCName":
+    elif data_type == "xsd_NCName":
         # Unqualified names
         return value
-    elif data_type == "xsd:negativeInteger":
+    elif data_type == "xsd_negativeInteger":
         # Strictly negative integers of arbitrary length
         return abs(int(value))*-1
-    elif data_type == "xsd:NMTOKEN":
+    elif data_type == "xsd_NMTOKEN":
         # XML 1.0 name token (NMTOKEN)
         return value
-    elif data_type == "xsd:NMTOKENS":
+    elif data_type == "xsd_NMTOKENS":
         # List of XML 1.0 name tokens (NMTOKEN)
         return value
-    elif data_type == "xsd:nonNegativeInteger":
+    elif data_type == "xsd_nonNegativeInteger":
         # Integers of arbitrary length positive or equal to zero
         return abs(int(value))
-    elif data_type == "xsd:nonPositiveInteger":
+    elif data_type == "xsd_nonPositiveInteger":
         # Integers of arbitrary length negative or equal to zero
         return abs(int(value))*-1
-    elif data_type == "xsd:normalizedString":
+    elif data_type == "xsd_normalizedString":
         # Whitespace
         return value
-    elif data_type == "xsd:NOTATION":
+    elif data_type == "xsd_NOTATION":
         # Emulation of the XML 1.0 feature
         return value
-    elif data_type == "xsd:positiveInteger":
+    elif data_type == "xsd_positiveInteger":
         # Strictly positive integers of arbitrary length
         return abs(int(value))
-    elif data_type == "xsd:QName":
+    elif data_type == "xsd_QName":
         # Namespaces in XML
         return value
-    elif data_type == "xsd:short":
+    elif data_type == "xsd_short":
         # 32
         return value
-    elif data_type == "xsd:string":
+    elif data_type == "xsd_string":
         # Any string
         return value
-    elif data_type == "xsd:time":
+    elif data_type == "xsd_time":
         # Point in time recurring each day
         return parse(value)
-    elif data_type == "xsd:token":
+    elif data_type == "xsd_token":
         # Whitespace
         return value
-    elif data_type == "xsd:unsignedByte":
+    elif data_type == "xsd_unsignedByte":
         # Unsigned value of 8 bits
         return value.decode()
-    elif data_type == "xsd:unsignedInt":
+    elif data_type == "xsd_unsignedInt":
         # Unsigned integer of 32 bits
         return int(value)
-    elif data_type == "xsd:unsignedLong":
+    elif data_type == "xsd_unsignedLong":
         # Unsigned integer of 64 bits
         return int(value)
-    elif data_type == "xsd:unsignedShort":
+    elif data_type == "xsd_unsignedShort":
         # Unsigned integer of 16 bits
         return int(value)
     else:

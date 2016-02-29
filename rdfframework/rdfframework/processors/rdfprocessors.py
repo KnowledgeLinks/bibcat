@@ -1,50 +1,52 @@
 import os
 from base64 import b64encode
 from passlib.hash import sha256_crypt
-from rdfframework.utilities import is_not_null
+from rdfframework.utilities import is_not_null, make_set, make_list
 from rdfframework import get_framework
 
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-def run_processor(processor, obj, mode="save"):
+def run_processor(processor, obj, prop=None, mode="save"):
     '''runs the passed in processor and returns the saveData'''
+    if isinstance(processor, dict):
+        processor = processor.get('kds_propertyProcessing')
     processor = processor.replace(\
-            "http://knowledgelinks.io/ns/data-resources/", "kdr:")
+            "http://knowledgelinks.io/ns/data-resources/", "kdr_")
 
-    if processor == "kdr:SaltProcessor":
-        return salt_processor(obj, mode)
+    if processor == "kdr_SaltProcessor":
+        return salt_processor(obj, prop, mode)
 
-    elif processor == "kdr:PasswordProcessor":
-        return password_processor(obj, mode)
+    elif processor == "kdr_PasswordProcessor":
+        return password_processor(obj, prop, mode)
 
-    elif processor == "kdr:CalculationProcessor":
-        return calculation_processor(obj, mode)
+    elif processor == "kdr_CalculationProcessor":
+        return calculation_processor(obj, prop, mode)
 
-    elif processor == "kdr:CSVstringToMultiPropertyProcessor":
-        return csv_to_multi_prop_processor(obj, mode)
+    elif processor == "kdr_CSVstringToMultiPropertyProcessor":
+        return csv_to_multi_prop_processor(obj, prop, mode)
 
-    elif processor == "kdr:AssertionImageBakingProcessor":
-        return assert_img_baking_processor(obj, mode)
+    elif processor == "kdr_AssertionImageBakingProcessor":
+        return assert_img_baking_processor(obj, prop, mode)
 
-    elif processor == "kdr:EmailVerificationProcessor":
-        return email_verification_processor(obj, mode)
+    elif processor == "kdr_EmailVerificationProcessor":
+        return email_verification_processor(obj, prop, mode)
 
     else:
         if mode == "load":
-            return obj.get("dataValue")
+            return prop.query_data
         elif mode == "save":
             return obj
         return obj
 
-def assert_img_baking_processor(obj, mode="save"):
+def assert_img_baking_processor(obj, prop, mode="save"):
     ''' Application sends badge image to the a badge baking service with the
         assertion.'''
     if mode == "load":
-        return obj.get("dataValue")
+        return obj
     return obj
 
-def csv_to_multi_prop_processor(obj, mode="save"):
+def csv_to_multi_prop_processor(obj, prop=None, mode="save"):
     ''' Application takes a CSV string and adds each value as a separate triple
         to the class instance.'''
     if mode == "save":
@@ -55,30 +57,21 @@ def csv_to_multi_prop_processor(obj, mode="save"):
         obj['prop']['calcValue'] = True
         return obj
     elif mode == "load":
-        return ", ".join(obj.get("dataValue"))
+        prop.processed_data = ", ".join(prop.query_data)
+        return ", ".join(prop.query_data)
     return obj
 
-def email_verification_processor(obj, mode="save"):
+def email_verification_processor(obj, prop, mode="save"):
     ''' Application application initiates a proccess to verify the email
         address is a valid working address.'''
     if mode == "load":
-        return obj.get("dataValue")
+        prop.data = prop.query_data
+        return prop.query_data
     return obj
 
-def save_file_to_repository(data, repo_item_address):
-    ''' saves a file from a form to a repository'''
-    object_value = ""
-    if repo_item_address:
-        print("~~~~~~~~ write code here")
-    else:
-        repository_result = requests.post(
-            fw_config().get("REPOSITORY_URL"),
-            data=data.read(),
-			         headers={"Content-type":"'image/png'"})
-        object_value = repository_result.text
-    return iri(object_value)
 
-def password_processor(obj, mode="save"):
+
+def password_processor(obj, prop, mode="save"):
     """Function handles application password actions
 
     Returns:
@@ -86,14 +79,14 @@ def password_processor(obj, mode="save"):
     """
     if mode in ["save", "verify"]:
         # find the salt property
-        salt_url = "http://knowledgelinks.io/ns/data-resources/SaltProcessor"
-        _class_name = obj['prop'].get("className")
-        _class_properties = getattr(get_framework(), _class_name).properties
+        salt_url = "kdr_SaltProcessor"
+        _class_uri = obj['prop'].get("classUri")
+        _class_properties = getattr(get_framework(), _class_uri).kds_properties
         salt_property = None
         # find the property Uri that stores the salt value
-        for _prop_name, _class_prop in _class_properties.items():
-            if _class_prop.get("propertyProcessing") == salt_url:
-                salt_property = _class_prop.get("propUri")
+        for _class_prop in _class_properties.values():
+            if _class_prop.get("kds_propertyProcessing") == salt_url:
+                salt_property = _class_prop.get("kds_propUri")
         # if in save mode create a hashed password
         if mode == "save":
             # if the there is not a new password in the data return the obj
@@ -112,10 +105,10 @@ def password_processor(obj, mode="save"):
         elif mode == "verify":
             return sha256_crypt.verify(obj['password']+obj['salt'], obj['hash'])
     if mode == "load":
-        return obj.get("dataValue")
+        return obj
     return obj
 
-def salt_processor(obj, mode="save", **kwargs):
+def salt_processor(obj, prop, mode="save", **kwargs):
     '''Generates a random string for salting'''
     if mode == "load":
         return obj.get("dataValue")
@@ -133,14 +126,13 @@ def salt_processor(obj, mode="save", **kwargs):
         return obj
 
     # find the password property
-    _class_name = obj['prop'].get("className")
-    _class_properties = getattr(get_framework(), _class_name).properties
+    _class_uri = obj['prop'].get("classUri")
+    _class_properties = getattr(get_framework(), _class_uri).kds_properties
     password_property = None
-    for _prop_name, _class_prop in _class_properties.items():
-        if _class_prop.get("propertyProcessing") == \
-                "http://knowledgelinks.io/ns/data-resources/PasswordProcessor":
+    for _class_prop in _class_properties.values():
+        if _class_prop.get("kds_propertyProcessing") == "kds_PasswordProcessor":
             password_property = obj['preSaveData'].get(\
-                                            _class_prop.get("propUri"))
+                                            _class_prop.get("kds_propUri"))
 
     # check if there is a new password in the preSaveData
     #                         or
@@ -157,7 +149,7 @@ def salt_processor(obj, mode="save", **kwargs):
     obj['prop']['calcValue'] = True
     return obj
 
-def calculation_processor(obj, mode="save"):
+def calculation_processor(obj, prop, mode="save"):
     ''' Application should proccess the property according to the rules listed
         in the kds:calulation property.'''
 
@@ -192,7 +184,7 @@ def clean_processors(processor_list, _class_uri=None):
     for item in processor_list:
         if isinstance(item, dict):
             if _class_uri:
-                if item.get("appliesTo") == _class_uri:
+                if item.get("kds_appliesTo") == _class_uri:
                     _return_list.append(item.get("propertyProcessing"))
             else:
                 _return_list.append(item.get("propertyProcessing"))

@@ -768,17 +768,19 @@ kds:hasPassword a rdf:Property;
 obi:LoginForm a kds:FormClass;
 	rdfs:label "Login form";
 	rdfs:comment "Form used to display username and password fields for authenticating to app";
-	rdf:formInstructions [  
+	kds:formInstructions [  
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "Login";
 		kds:formDescription "Enter login credentials";
 		kds:lookupClassUri kds:UserClass;
 		kds:lookupPropertyUri kds:userName;
+		kds:formUrl "login";
 		kds:formInstance [
 			kds:formInstanceType kdr:Login;
 			kds:submitSuccessRedirect "!--homepage";
-			kds:submitFailRedirect "!--currentpage"
+			kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "none";
 		]
 	];    
 	kds:hasProperty [
@@ -805,21 +807,25 @@ obi:OrganizationForm a kds:FormClass;
 		kds:formTitle "Organization";
 		kds:lookupClassUri schema:Organization;
 		kds:formDescription "Organization infomation";
+		kds:formUrl "organization";
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:formTitle "New Organization";
 			kds:formDescription "Create a new organization";
 			kds:submitSuccessRedirect kdr:DisplayForm;
-			kds:submitFailRedirect "!--currentpage"
+			kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "new";
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
 			kds:formDescription "Edit organization information.";
 			kds:submitSuccessRedirect kdr:DisplayForm;
-			kds:submitFailRedirect "!--currentpage"
+			kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "edit";
 		];
 		kds:formInstance [
-			kds:formInstanceType kdr:DisplayForm
+			kds:formInstanceType kdr:DisplayForm;
+			kds:instanceUrl "view";
 		]
 	];
 	kds:hasProperty [
@@ -1016,12 +1022,12 @@ kdr:Badge a kds:FormClass;
 	];
 	kds:hasProperty [
 		kds:propUri schema:description;
-		kds:formFieldOrder 3;
+		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
 	];
 	kds:hasProperty [
 		kds:propUri obi:startDate;
-		kds:formFieldOrder 2;
+		kds:formFieldOrder 3;
 		kds:formLayoutRow 3;
 		kds:addOnCss "dp";
 	];
@@ -1110,6 +1116,7 @@ obi:AssertionForm a kds:FormClass;
 		kds:fieldType [
 			a kdr:SubForm;
 			kds:subFormUri obi:AssertionPerson;
+			kds:subFormInstance kdr:NewForm;
 			kds:subFormMode kdr:RepeatingSubForm
 		]
 	];

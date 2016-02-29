@@ -163,7 +163,7 @@ SELECT *
 																	BIND(IF(?o3aTest>1,true,false)AS?o3aTestResult) .
 																	BIND(IF(?o3a!='""',true,false)AS?o3aShow) .
 																	BIND(isBlank(?o2_) AS ?level3Blank) .
-																	BIND(IF(?o3aShow&&?level3Blank,CONCAT('"',REPLACE(STR(?p3_),"^(.*[#/])", ""),'":',IF(?o3aTestResult,"[",""),?o3a,IF(?o3aTestResult,"]","")),"") as ?pV3)
+																	BIND(IF(?o3aShow&&?level3Blank,CONCAT('"',STR(?p3_),'":',IF(?o3aTestResult,"[",""),?o3a,IF(?o3aTestResult,"]","")),"") as ?pV3)
 																}
 																GROUP BY ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ ?p2_ ?o2_
 															}
@@ -180,7 +180,7 @@ SELECT *
 													BIND(IF(?o2aTest>1,true,false)AS?o2aTestResult) .
 													BIND(IF(?o2a!='',true,false)AS?o2aShow) .
 													BIND(isBlank(?o1_) AS ?level2Blank) .
-													BIND(IF(?o2aShow,CONCAT('"',REPLACE(STR(?p2_),"^(.*[#/])", ""),'":',IF(?o2aTestResult,"[",""),?o2am,IF(?o2aTestResult,"]","")),"") as ?pV2)
+													BIND(IF(?o2aShow,CONCAT('"',STR(?p2_),'":',IF(?o2aTestResult,"[",""),?o2am,IF(?o2aTestResult,"]","")),"") as ?pV2)
 												}
 												GROUP BY ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ 
 											}
@@ -200,7 +200,7 @@ SELECT *
 									BIND(IF(?o1aTest>1,true,false)AS?o1aTestResult) . 
 									BIND(IF(?o1a!='',true,false)AS?o1aShow) .
 									BIND((isBlank(?propClass)||?propClass="_____") AS ?level1Blank) .
-									BIND(IF(?o1aShow,CONCAT('"',REPLACE(STR(?p1_),"^(.*[#/])", ""),'":',IF(?o1aTestResult,"[",""),?o1a,IF(?o1aTestResult,"]","")),"") as ?pV1)
+									BIND(IF(?o1aShow,CONCAT('"',STR(?p1_),'":',IF(?o1aTestResult,"[",""),?o1a,IF(?o1aTestResult,"]","")),"") as ?pV1)
 								}
 								GROUP BY ?klForms ?p ?o ?fieldOrder ?1st  ?propClass
 								ORDER BY ?klForms ?fieldOrder
@@ -208,18 +208,18 @@ SELECT *
 							BIND(IF(?propClass="_____",true,false)AS?oShow) .
 							BIND(IF(?p1oTest>1,true,false)AS?p1oTestResult) .
 							BIND(IF(?propClass!="_____",
-										CONCAT('{"propName":"',REPLACE(STR(?1st),"^(.*[#/])", ""),'","classUri":"',STR(?propClass),'","className":"',REPLACE(STR(?propClass),"^(.*[#/])", ""),'",',?p1o,"}"),
+										CONCAT('{"http://knowledgelinks.io/ns/data-structures/classUri":"',STR(?propClass),'",',?p1o,"}"),
 										IF(?oShow,CONCAT(IF(?p1oTestResult,"{",""),?p1o,IF(?p1oTestResult,"}","")),"")) as ?oV)
 							BIND(IF(isBlank(?o),?oV,CONCAT('"',str(?o),'"')) AS ?oVf)
 						}
 						GROUP BY ?klForms ?p 
 					}																		
 					BIND(IF(?oaTest>1,true,false)AS?oaTestResult) . 
-					BIND(CONCAT('"',REPLACE(STR(?p),"^(.*[#/])", ""),'":',IF(?oaTestResult,"[",""),?oa,IF(?oaTestResult,"]","")) as ?pV)
+					BIND(CONCAT('"',STR(?p),'":',IF(?oaTestResult,"[",""),?oa,IF(?oaTestResult,"]","")) as ?pV)
 				}
 				GROUP BY ?klForms 
 			}
-			BIND(CONCAT('"',REPLACE(STR(?klForms),"^(.*[#/])", ""),'":{"formName":"',REPLACE(STR(?klForms),"^(.*[#/])", ""),'","formUri":"',STR(?klForms),'",',?po,"}") as ?form)
+			BIND(CONCAT('"',STR(?klForms),'":{"http://knowledgelinks.io/ns/data-structures/formUri":"',STR(?klForms),'",',?po,"}") as ?form)
 		}
 	}
 }

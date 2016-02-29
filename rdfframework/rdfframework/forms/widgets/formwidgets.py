@@ -49,6 +49,39 @@ class RepeatingSubFormWidget(object):
     checkboxes.
     """
     def __init__(self, html_tag='div', prefix_label=True):
+        assert html_tag in ('ol', 'ul', 'div', 'section')
+        self.html_tag = html_tag
+        self.prefix_label = prefix_label
+
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('id', field.id)
+        _params = html_params(**kwargs)
+        html = []
+        html.append('<%s class="row"><section class="col-md-12">' % (self.html_tag))
+        for sub_subfield in field[0]:
+            if sub_subfield.type != 'CSRFTokenField':
+                html.append('<div class="col-md-2">%s</div>' % sub_subfield.label)
+        html.append('</section></%s>' % (self.html_tag))    
+        for subfield in field:
+            html.append('<%s class="row"><section class="col-md-12">%s</section></%s>' % (self.html_tag,
+                                           #_params,
+                                           subfield(),
+                                           self.html_tag))
+        return HTMLString(''.join(html))
+
+class RepeatingSubFormTableJinga2Widget(object):
+    """
+    Renders a list of fields as a `row` list.
+
+    This is used for fields which encapsulate many inner fields as subfields.
+    The widget will try to iterate the field to get access to the subfields and
+    call them to render them.
+
+    If `prefix_label` is set, the subfield's label is printed before the field,
+    otherwise afterwards. The latter is useful for iterating radios or
+    checkboxes.
+    """
+    def __init__(self, html_tag='div', prefix_label=True):
         assert html_tag in ('ol', 'ul', 'div')
         self.html_tag = html_tag
         self.prefix_label = prefix_label
@@ -68,4 +101,3 @@ class RepeatingSubFormWidget(object):
                                            subfield(),
                                            self.html_tag))
         return HTMLString(''.join(html))
-

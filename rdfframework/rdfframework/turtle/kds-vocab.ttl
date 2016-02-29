@@ -196,31 +196,7 @@ kds:jsonValFormat	 a 	rdf:Property;
 	rdfs:domain kds:JsonClass;
 	rdfs:range xsd:string;
 	rdfs:label "json lookup";
-	rdfs:comment '-The type of lookup to be used. Options are:
-	"objectValue"	-> This will return the value of the specified property or a default value
-	"lookup"			-> Will use the resources object to lookup the value that is specified 
-							in the kds:lookupReturnField
-	"subjectCalc"		-> will calculate a return value based on the resource URI
-							only available parseType is "afterLastSlash" 
-							need to use kds:parseType and kds:unionUrl(optional) with this action
-	"urlSub"			-> will substitue a value as a url with 
-							- kds:baseUrl		specifies the main url
-							- kds:urlendfld		specifies with resource field to append to the url
-	"lookupUrlSub"		-> functions as urlSub but will lookup a property of the specified URI 
-							- kds:propertyField   must be specified
-	"lookupProperties"	-> return a json object of the the defined properties.
-							add a kds:propertyField with a blank node for each desired property to return
-							example: kds:lookupReturnField [
-										kds:jsonObjName "type";
-										kds:jsonValFormat "objectValue" ;
-										kds:defaultVal "hosted"
-                          		     ] ;
-	"multiValArray"     -> will return an array of all values list with with property field specified in
-								kds:propertyField   Example: kds:propertyField obi:tags
-									resource Data = <> obi:tags "home"
-													<> obi:tags "house"
-													<> obi:tags "farm"
-									returns -> ["home","house","farm"]'.
+	rdfs:comment "-The type of lookup to be used.".
 	
 kds:primaryKey a rdf:Property; 
 	rdfs:subPropertyOf kds:classProperty;			
@@ -342,14 +318,14 @@ kds:formFieldOrder	 a 	rdf:Property;
 	rdfs:label "Form Field Order";
 	rdfs:comment "The order the in which the field should appear in the specified form".
 
-kds:kds:selectQuery	 a 	rdf:Property; 
+kds:selectQuery	 a 	rdf:Property; 
 	rdfs:subPropertyOf kds:formProperty;		
 	rdfs:domain kdr:SelectField;
 	rdfs:range xsd:string;
 	rdfs:label "Select Options Query";
 	rdfs:comment "Query String or query file(format as file://) to retrieve the options".
 	
-kds:kds:selectBoundValue a 	rdf:Property; 
+kds:selectBoundValue a 	rdf:Property; 
 	rdfs:subPropertyOf kds:formProperty;		
 	rdfs:domain kdr:SelectField;
 	rdfs:range xsd:string;

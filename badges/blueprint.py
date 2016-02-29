@@ -17,10 +17,9 @@ from . import new_badge_class, issue_badge
 from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from rdfframework.utilities import render_without_request, code_timer, \
-        dumpable_obj
-from rdfframework import get_framework
-from rdfframework.forms import rdf_framework_form_factory, \
-        load_form_select_options, get_form_redirect_url  
+        dumpable_obj, pp
+from rdfframework import get_framework as rdfw
+from rdfframework.forms import rdf_framework_form_factory 
 from .user import User
 
 open_badge = Blueprint("open_badge", __name__,
@@ -74,7 +73,7 @@ def record_params(setup_state):
         if result.status_code > 399:
             raise ValueError("Cannot load extensions in {}".format(
                 triplestore_url))
-    get_framework(config=open_badge.config)
+    rdfw(config=open_badge.config)
 
 def get_badge_classes():
     """Helper function retrieves all badge classes from the triplestore"""
@@ -122,7 +121,7 @@ def login_user_view():
     """Login view for badges"""
     val = None
     login_form = rdf_framework_form_factory(
-        "LoginForm")
+        "login/")
     if request.method.startswith("POST"):
         form = login_form(request.form)
         val = form.validate()
@@ -145,31 +144,35 @@ def login_user_view():
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
-    f=get_framework() #This is an intentional error to cause a break in the code
+    f=rdfw() #This is an intentional error to cause a break in the code
     y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
-RDF_CLASS_JSON = '''<table>
-  <tr>
-    <td><h1>Application JSON</h1></td>
-    <td><h1>Class JSON</h1></td>
-	<td><h1>Form Json</h1></td>
-  </tr>
-  <tr>
-    <td style='vertical-align:top'><pre>{0}<</pre></td>
-    <td style='vertical-align:top'><pre>{1}</pre></td>
-	<td style='vertical-align:top'><pre>{2}<</pre></td>
-  </tr>
-</table>'''
 
 @open_badge.route("/rdfjson/", methods=["POST", "GET"])
 def form_rdf_class():
     """View displays the RDF json"""
-    form_dict = get_framework().rdf_form_dict
-    class_dict = get_framework().rdf_class_dict
-    app_dict = get_framework().rdf_app_dict
-    return RDF_CLASS_JSON.format(
-        json.dumps(app_dict, indent=2), 
+    form_dict = rdfw().rdf_form_dict
+    class_dict = rdfw().rdf_class_dict
+    app_dict = rdfw().rdf_app_dict
+    table_template = '''
+    <table>
+      <tr>
+        <td><h1>Application JSON</h1></td>
+        <td><h1>Class JSON</h1></td>
+        <td><h1>Form Paths</h1></td>
+    	<td><h1>Form Json</h1></td>    	
+      </tr>
+      <tr>
+        <td style='vertical-align:top'><pre>{0}</pre></td>
+        <td style='vertical-align:top'><pre>{2}</pre></td>
+        <td style='vertical-align:top'><pre>{1}</pre></td>
+    	<td style='vertical-align:top'><pre>{3}</pre></td>
+      </tr>
+    </table>'''
+    return table_template.format(
+        json.dumps(app_dict, indent=2),
+        json.dumps(rdfw().form_list, indent=2), 
         json.dumps(class_dict, indent=2),
         json.dumps(form_dict, indent=2))
 
@@ -177,7 +180,7 @@ def form_rdf_class():
     methods=["POST", "GET"])
 @open_badge.route("/<form_name>/<form_instance>.html",
     methods=["POST", "GET"])
-def rdf_class_forms(form_name,form_instance):
+def rdf_class_forms(form_name, form_instance):
     """View for displaying forms
 
     Args:
@@ -186,118 +189,76 @@ def rdf_class_forms(form_name,form_instance):
     params:
         id -- the subject uri of the form data to lookup 
     """
-    code_timer().delete_timer("formTest")
     _display_mode = False
-    code_timer().log("formTest",
-                    "form render start for: {}/{}".format(\
-                    form_name,form_instance))
-    if not get_framework().form_exists(form_name,form_instance):
+    _form_path = "{}/{}".format(form_name, form_instance)
+    _form_exists = rdfw().form_exists(_form_path)
+    if _form_exists is False:
         return render_template(
             "error_page_template.html",
             error_message="The web address is invalid")
-    code_timer().log("formTest","End test form path")
-    # generate the form class
-    code_timer().log("formTest","initial form creation start")   
-    form_class = rdf_framework_form_factory(
-            form_name,
-            'http://knowledgelinks.io/ns/data-resources/'+form_instance)
-    code_timer().log("formTest","initial form creation end")
+    instance_uri = _form_exists.get("instance_uri")
+    form_uri = _form_exists.get("form_uri")
+    # generate the form class 
+    form_class = rdf_framework_form_factory(_form_path, \
+            base_url=url_for("open_badge.base_path"), 
+            current_url=request.url)
+            
     # if request method is post
     if request.method == "POST":
         # let form load with post data
-        form = form_class()
-        # select field options have to be loaded before form is validated
-        form = load_form_select_options(form)
-        if request.args.get("id") and form_instance == "EditForm":
-                form.dataSubjectUri = request.args.get("id")
+        form = form_class(subject_uri=request.args.get("id"))
         # validate the form 
         if form.validate():
             # if validated save the form 
-            
-            formSaveResults = get_framework().save_form(form)
-            if formSaveResults.get("success"):
-                redirectUrl = get_form_redirect_url(form,
-                                            "success",
-                                            url_for("open_badge.base_path"),
-                                            request.url,
-                                            formSaveResults.get("idValue"))
-                return redirect(redirectUrl)
-                #"<pre>{}</pre>".format(json.dumps(\
-                        #formSaveResults, indent=4)) 
-            else:
-                #print("################## Invalid Form")
-                form = formSaveResults.get("form")
+            form.save()
+            if form.save_state == "success":
+                return redirect(form.redirect_url())
     # if not POST, check the args and form instance
     else:
         # if params are present for any forms that are not in any of 
         # the below forms remove the params
-        code_timer().log("formTest","start non post testing")
-        if form_instance not in ["EditForm","DisplayForm","Login"] and \
-                request.args.get("id"):
+        if instance_uri not in ["kdr_EditForm", "kdr_DisplayForm", "kdr_Login"]\
+                 and request.args.get("id"):
             redirect_url = url_for("open_badge.rdf_class_forms",
                                     form_name=form_name,
                                     form_instance=form_instance)
             return redirect(redirect_url)
         # if the there is no ID argument and on the editform instance -> 
         # redirect to NewForm
-        if form_instance in ["EditForm","DisplayForm"] and \
+        if instance_uri in ["kdr_EditForm","kdr_DisplayForm"] and \
                 not request.args.get("id"):
-            redirect_url = url_for("open_badge.rdf_class_forms",
-                                    form_name=form_name,
-                                    form_instance="NewForm")
+            redirect_url = rdfw().get_form_path(form_uri, "kdr_NewForm")
             return redirect(redirect_url)
         # if the display form does not have an ID return an error
-        if form_instance in ["DisplayForm"] and not request.args.get("id"):
+        if instance_uri in ["kdr_DisplayForm"] and not request.args.get("id"):
             return render_template(
                     "error_page_template.html",
                     error_message="The item does not exist") 
         # if the there is an ID argument and on the editform instance -> 
         # query for the save item
-        code_timer().log("formTest","end non post testing")
-        if request.args.get("id") and form_instance \
-                in ["EditForm","DisplayForm"]:
-            if form_instance == "DisplayForm":
+        if request.args.get("id") and instance_uri \
+                in ["kdr_EditForm","kdr_DisplayForm"]:
+            if instance_uri == "kdr_DisplayForm":
                 _display_mode = True
-            code_timer().log("formTest","load form data create form class")
-            form = form_class()
-            code_timer().log("formTest",\
-                    "load form data end create class start data load")
-            formData = get_framework().get_form_data(
-                form,
-                subject_uri=request.args.get("id"))
-            code_timer().log("formTest",\
-                    "load form data data query completed")
-            print("^^^^^^^^^^^^^^^^ formData: ",
-                  json.dumps(dumpable_obj(formData),indent=4))
-            if len(formData.get('queryData',{})) > 0:
-                form = form_class(formData.get("formdata"))
-                code_timer().log("formTest",\
-                        "form loaded with data")
-            else:
+            form_data = rdfw().get_obj_data(form_class(),\
+                                            subject_uri=request.args.get("id"))
+            pp.pprint(form_data['form_data'])
+            form = form_class(form_data['form_data'])
+            if not (len(form_data['query_data']) > 0):
                 return render_template(
                     "error_page_template.html",
                     error_message="The item does not exist")  
                       
         # if not on EditForm or DisplayForm render form
         else:
-            code_timer().log("formTest","create form class start")
             form = form_class()
-            code_timer().log("formTest","create form class end")
-        code_timer().log("formTest","start query options load")
-        form = load_form_select_options(\
-                form,
-                url_for("open_badge.base_path"))
-        code_timer().log("formTest","end query options load")
+    
     template = render_template(
-        "app_form_template.html",
+        "/forms/default/app_form_template.html",
         actionUrl=request.url,
         form=form,
         display_mode = _display_mode,
-        dateFormat = get_framework().rdf_app_dict['application'].get(\
-                'dataFormats',{}).get('javascriptDateFormat',''),
-        jsonFields=json.dumps(form.rdfFieldList, indent=4),
+        dateFormat = rdfw().app.get(\
+                'kds_dataFormats',{}).get('kds_javascriptDateFormat',''),
         debug=request.args.get("debug",False))
-    code_timer().log("formTest","template rendered")
-    code_timer().print_timer("formTest")
-    code_timer().delete_timer("formTest")
     return template
