@@ -1,7 +1,8 @@
 import os
 from base64 import b64encode
 from passlib.hash import sha256_crypt
-from rdfframework.utilities import is_not_null, make_set, make_list
+from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
+        slugify
 from rdfframework import get_framework
 
 
@@ -42,7 +43,10 @@ def run_processor(processor, obj, prop=None, mode="save"):
 def assert_img_baking_processor(obj, prop, mode="save"):
     ''' Application sends badge image to the a badge baking service with the
         assertion.'''
-    if mode == "load":
+    if mode == "save":
+        obj['prop']['calcValue'] = True
+        obj['processedData'][obj['propUri']] = "obi_testing_image_uri"
+    elif mode == "load":
         return obj
     return obj
 
@@ -57,16 +61,18 @@ def csv_to_multi_prop_processor(obj, prop=None, mode="save"):
         obj['prop']['calcValue'] = True
         return obj
     elif mode == "load":
-        prop.processed_data = ", ".join(prop.query_data)
-        return ", ".join(prop.query_data)
+        if prop.query_data is not None:
+            prop.processed_data = ", ".join(prop.query_data)
+            return ", ".join(prop.query_data)
+        else:
+            return ""
     return obj
 
 def email_verification_processor(obj, prop, mode="save"):
     ''' Application application initiates a proccess to verify the email
         address is a valid working address.'''
     if mode == "load":
-        prop.data = prop.query_data
-        return prop.query_data
+        return obj
     return obj
 
 
@@ -155,19 +161,18 @@ def calculation_processor(obj, prop, mode="save"):
 
     if mode == "save":
         calculation = obj['prop'].get('calculation')
+        
         if calculation:
             if calculation.startswith("slugify"):
                 _prop_uri = calculation[calculation.find("(")+1:\
                                                         calculation.find(")")]
-                if not _prop_uri.startswith("http"):
-                    _ns = _prop_uri[:_prop_uri.find(":")]
-                    name = _prop_uri[_prop_uri.find(":")+1:]
-                    _prop_uri = get_app_ns_uri(_ns) + name
+                _prop_uri = pyuri(_prop_uri)
                 _value_to_slug = obj['processedData'].get(_prop_uri, \
                                         obj['preSaveData'].get(_prop_uri, {}\
                                             ).get('new', None))
                 if is_not_null(_value_to_slug):
-                    obj['processedData'][obj['propUri']] = slugify(_value_to_slug)
+                    obj['processedData'][obj['propUri']] = \
+                            slugify(_value_to_slug)
                     obj['prop']['calcValue'] = True
             else:
                 pass

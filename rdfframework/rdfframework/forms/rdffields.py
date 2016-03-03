@@ -7,7 +7,8 @@ from wtforms.validators import InputRequired, Optional, URL
 from rdfframework import get_framework as rdfw
 from rdfframework.processors import clean_processors
 from rdfframework.validators import get_wtform_validators
-from rdfframework.utilities import make_list, make_set, cbool #, code_timer, \
+from rdfframework.utilities import make_list, make_set, cbool, \
+        calculate_default_value #, code_timer, \
 #        fw_config, iri, is_not_null
 from rdfframework.forms.widgets import BsGridTableWidget, RepeatingSubFormWidget
 
@@ -45,7 +46,7 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     if not isinstance(_new_field['kds_fieldType'], dict):
         _new_field['kds_fieldType'] = {"rdf_type":_new_field['kds_fieldType']}
 
-    _new_field['kds_formLabelName'] = _form_instance_info.get('kds_formlabelName', \
+    _new_field['kds_formLabelName'] = _form_instance_info.get('kds_formLabelName', \
             field.get("kds_formLabelName", field.get('kds_formDefault', {}).get(\
             'kds_formLabelName', "")))
     _new_field['kds_formFieldHelp'] = _form_instance_info.get('kds_formFieldHelp', \
@@ -193,6 +194,7 @@ def get_wtform_field(field, instance='', **kwargs):
                                 description=field.get('kds_formFieldHelp', ''),
                                 default=_default_val,
                                 format=_date_format)
+        field['kds_css'] += " dp"
     elif _field_type == 'kdr_DateTimeField':
         _form_field = DateTimeField(_field_label,
                                     _field_validators,
@@ -212,13 +214,16 @@ def get_wtform_field(field, instance='', **kwargs):
                         "kds_field":StringField("Image Url", [URL])}]
     elif _field_type == 'kdr_SubForm':
         from .rdfforms import rdf_framework_form_factory
+        _sub_form_instance = _field_type_obj.get('kds_subFormInstance',\
+                                                 'kdr_LinkWithParent')
+        if _sub_form_instance == 'kdr_LinkWithParent':
+            _sub_form_instance = instance    
         _form_path = rdfw().get_form_path(\
-                _field_type_obj.get('kds_subFormUri'),
-                _field_type_obj.get('kds_subFormInstance','kdr_NewForm'))
+                _field_type_obj.get('kds_subFormUri'), instance)
         kwargs['is_subobj'] = True
-        _sub_form = FormField(rdf_framework_form_factory(_form_path,
-                                                         **kwargs),
-                              widget=BsGridTableWidget())
+        _sub_form = FormField(\
+                rdf_framework_form_factory(_form_path, is_subobj=True),
+                widget=BsGridTableWidget())
         if "RepeatingSubForm" in _field_type_obj.get("kds_subFormMode"):
             _form_field = FieldList(_sub_form, _field_label, min_entries=1,
                                     widget=RepeatingSubFormWidget())
@@ -226,13 +231,19 @@ def get_wtform_field(field, instance='', **kwargs):
         else:
             _form_field = _sub_form
             setattr(_form_field,"frameworkField","subForm")        
-        
+    elif _field_type == 'kdr_FieldList':
+        _field_json = dict.copy(field)
+        _field_type_obj['rdf_type'] = _field_type_obj['kds_listFieldType']
+        _field_json['kds_fieldType'] = _field_type_obj
+        list_field = get_wtform_field(_field_json, instance, **kwargs)['fld']
+        _form_field = FieldList(list_field, _field_label, min_entries=1)
+            
     else:
         _form_field = StringField(_field_label,
                                   _field_validators,
                                   description=field.get('kds_formFieldHelp', ''))
     #print("--_form_field: ", _form_field)
-    return _form_field
+    return {"fld": _form_field, "fld_json": field, "form_js": None}
     
 def get_field_security_access(field, user_info, item_permissions=None):
     '''This function will return level security access allowed for the field'''
@@ -277,27 +288,7 @@ def get_field_security_access(field, user_info, item_permissions=None):
     else:
         return set()
         
-def calculate_default_value(field):
-    '''calculates the default value based on the field default input'''
-    _calculation_string = field.get("kds_defaultVal")
-    _return_val = None
-    if _calculation_string:
-        _calc_params = _calculation_string.split('+')
-        _base = _calc_params[0].strip()
-        if len(_calc_params) > 1:
-            _add_value = float(_calc_params[1].strip())
-        else:
-            _add_value = 0
-        if _base == 'today':
-            _return_val = datetime.datetime.now().date() +\
-                    datetime.timedelta(days=_add_value)
-        elif _base == 'now':
-            _return_val = datetime.datetime.now() +\
-                    datetime.timedelta(days=_add_value)
-        elif _base == 'time':
-            _return_val = datetime.datetime.now().time() +\
-                    datetime.timedelta(days=_add_value)
-    return _return_val
+
     
 def add_field_attributes(wt_field, attributes):
     for attribute, value in attributes.items():

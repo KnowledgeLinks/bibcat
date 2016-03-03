@@ -3,6 +3,7 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 import os
 import re
+import copy
 from base64 import b64encode
 import datetime
 import requests
@@ -10,6 +11,7 @@ from flask import current_app, json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import Namespace, XSD
 from dateutil.parser import parse
+
 
 DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
@@ -19,6 +21,7 @@ SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 DEBUG = True
 
 FRAMEWORK_BASE = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+JSON_LOCATION = os.path.join(FRAMEWORK_BASE, "json-definitions")
 
 ENV = Environment(loader=FileSystemLoader(
     [os.path.join(FRAMEWORK_BASE, "sparql"),
@@ -144,9 +147,10 @@ def make_triple(sub, pred, obj):
 	"""
     return "{s} {p} {o} .".format(s=sub, p=pred, o=obj)
 
-def xsd_to_python(value, data_type, rdf_type="literal"):
+def xsd_to_python(value, data_type, rdf_type="literal", output="python"):
     ''' This will take a value and xsd data_type and convert it to a python
         variable'''
+    from rdfframework import get_framework as rdfw
     if data_type:
         data_type = data_type.replace(str(XSD), "")
     if not value:
@@ -170,13 +174,21 @@ def xsd_to_python(value, data_type, rdf_type="literal"):
     elif data_type == "xsd_date":
         ## Gregorian calendar date
         _temp_value = parse(value)
-        #_date_format = get_framework().rdf_app_dict['application'].get(\
-                #'dataFormats', {}).get('pythonDateFormat', '')
-        print(_temp_value)
-        return _temp_value #.strftime(_date_format)
+        if output == "string":
+            _date_format = rdfw().app['kds_dataFormats'].get(\
+                    'kds_pythonDateFormat', '')
+            return _temp_value.strftime(_date_format)
+        elif output == "python":
+            return _temp_value
     elif data_type == "xsd_dateTime":
         ## Instant of time (Gregorian calendar)
-        return parse(value)
+        _temp_value = parse(value)
+        if output == "string":
+            _date_format = rdfw().app['kds_dataFormats'].get(\
+                    'kds_pythonDateTimeFormat', '')
+            return _temp_value.strftime(_date_format)
+        elif output == "python":
+            return _temp_value
     elif data_type == "xsd_decimal":
         # Decimal numbers
         return float(value)
@@ -294,11 +306,13 @@ def xsd_to_python(value, data_type, rdf_type="literal"):
     else:
         return value
 
-def convert_spo_to_dict(data, mode="subject"):
+def convert_spo_to_dict(data, mode="subject", option="string"):
     '''Takes the SPAQRL query results and converts them to a python Dict
 
     mode: subject --> groups based on subject
     '''
+    if data is None:
+        return None
     _return_obj = {}
     _list_obj = False
     if mode == "subject":
@@ -315,24 +329,27 @@ def convert_spo_to_dict(data, mode="subject"):
                         if _return_obj[_iv][_sv].get(_pv):
                             _obj_list = make_list(\
                                     _return_obj[_iv][_sv][_pv])
-                            _obj_list.append(xsd_to_python(item['o']['value'], \
-                                    item['o'].get("datatype"), item['o']['type']))
+                            _obj_list.append(\
+                                    xsd_to_python(item['o']['value'], \
+                                    item['o'].get("datatype"), \
+                                    item['o']['type'],
+                                    option))
                             _return_obj[_iv][_sv][_pv] = _obj_list
                         else:
                             _return_obj[_iv][_sv][_pv] = \
                                 xsd_to_python(item['o']['value'], item['o'].get(\
-                                        "datatype"), item['o']['type'])
+                                        "datatype"), item['o']['type'], option)
                     else:
                         _return_obj[_iv][_sv] = {}
                         _return_obj[_iv][_sv][_pv] = \
                                 xsd_to_python(item['o']['value'], item['o'].get(\
-                                "datatype"), item['o']['type'])
+                                "datatype"), item['o']['type'], option)
                 else:
                     _return_obj[_iv] = {}
                     _return_obj[_iv][_sv] = {}
                     _return_obj[_iv][_sv][_pv] = \
                             xsd_to_python(item['o']['value'], item['o'].get(\
-                            "datatype"), item['o']['type'])
+                            "datatype"), item['o']['type'], option)
                     
             # if not a list of objects
             else:
@@ -341,17 +358,17 @@ def convert_spo_to_dict(data, mode="subject"):
                         _obj_list = make_list(\
                                 _return_obj[_sv][_pv])
                         _obj_list.append(xsd_to_python(item['o']['value'], \
-                                item['o'].get("datatype"), item['o']['type']))
+                                item['o'].get("datatype"), item['o']['type'], option))
                         _return_obj[_sv][_pv] = _obj_list
                     else:
                         _return_obj[_sv][_pv] = \
                             xsd_to_python(item['o']['value'], item['o'].get(\
-                                    "datatype"), item['o']['type'])
+                                    "datatype"), item['o']['type'], option)
                 else:
                     _return_obj[_sv] = {}
                     _return_obj[_sv][_pv] = \
                             xsd_to_python(item['o']['value'], item['o'].get(\
-                            "datatype"), item['o']['type'])
+                            "datatype"), item['o']['type'], option)
         if _list_obj:
             _return_list = []
             for _key, _value in _return_obj.items():
@@ -412,3 +429,38 @@ def clean_iri(uri_string):
         if uri_string[:1] == "<" and uri_string[len(uri_string)-1:] == ">":
             uri_string = uri_string[1:len(uri_string)-1]
     return uri_string
+
+def copy_obj(obj):
+    ''' does a deepcopy of an object, but does not copy a class
+        i.e. 
+        x = {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
+        y = copy_obj(x)
+        y --> {"key":[<classInstance1>,<classInstance2>,<classInstance3>]} 
+        del y['key'][0]
+        y --> {"key":[<classInstance2>,<classInstance3>]} 
+        x --> {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
+        *** this is to overcome a dictionary object that lists with classes
+            as the list items. '''
+    
+    if isinstance(obj, dict):
+        return_obj = {}
+        for key, value in obj.items():
+            if isinstance(value, dict):
+                return_obj[key] = copy_obj(value)
+            elif isinstance(value, list):
+                return_obj[key] = copy_obj(value)
+            else:
+                return_obj[key] = value
+    elif isinstance(obj, list):
+        return_obj = []
+        for value in obj:
+            if isinstance(value, dict):
+                return_obj.append(copy_obj(value))
+            elif isinstance(value, list):
+                return_obj.append(copy_obj(value))
+            else:
+                return_obj.append(value)
+    else:
+        return_obj = copy.copy(obj)
+    return return_obj
+                

@@ -48,7 +48,7 @@ kds:PasswordClass a rdf:Class;
 	rdfs:label "Password Object";
 	rdfs:comment "An object that stores a hashed password and its salt".
 			
-kds:UserClass a 	rdf:Class; 
+kds:UserClass a rdf:Class; 
 	rdfs:subClassOf kds:SecurityClass;		
 	a 	kds:ControlledClass;		
 	rdfs:label "User Object";
@@ -410,7 +410,7 @@ kds:basePermissions	 a 	rdf:Property;
 	rdfs:label "Base Permissions";
 	rdfs:comment "Base level permissions".
 	
-kds:specifiedPermissions	 a 	rdf:Property; 
+kds:specifiedPermissions a rdf:Property; 
 	rdfs:subPropertyOf kds:securityProperty;		
 	rdfs:domain kds:UserGroup;
 	rdfs:range kds:PermissionsClass;
@@ -434,15 +434,14 @@ kds:hasPassword	 a 	rdf:Property;
 	rdfs:label "User's password";
 	rdfs:comment "User's account password object".
 	
-kds:hasPerson	 a 	rdf:Property; 
+kds:hasPerson a rdf:Property; 
 	rdfs:subPropertyOf kds:securityProperty;
 	rdfs:domain	kds:UserClass;
-	rdfs:domain	kds:UserGroup;
 	rdfs:range	schema:Person;
 	rdfs:label "Personal Info";
 	rdfs:comment "Reference to the user's personal information".
 	
-kds:password	 a 	rdf:Property; 
+kds:password a rdf:Property; 
 	rdfs:subPropertyOf kds:securityProperty;
 	rdfs:domain	kds:PasswordClass;
 	rdfs:range	xsd:string;

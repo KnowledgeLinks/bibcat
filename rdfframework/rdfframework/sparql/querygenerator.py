@@ -3,7 +3,7 @@ import copy
 from rdfframework import get_framework as rdfw
 from rdfframework.utilities import fw_config, make_triple, iri, uri,\
         is_not_null, render_without_request, pp
-DEBUG = True
+DEBUG = False
 
 def get_data(obj, **kwargs):
     ''' queries that datastore for the based on the supplied arguments '''

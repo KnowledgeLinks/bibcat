@@ -14,7 +14,6 @@ from flask_negotiate import produces
 from flask.ext.login import login_required, login_user
 
 from . import new_badge_class, issue_badge
-from .forms import NewBadgeClass, NewAssertion, rdf_form_factory
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from rdfframework.utilities import render_without_request, code_timer, \
         dumpable_obj, pp
@@ -198,7 +197,7 @@ def rdf_class_forms(form_name, form_instance):
             error_message="The web address is invalid")
     instance_uri = _form_exists.get("instance_uri")
     form_uri = _form_exists.get("form_uri")
-    # generate the form class 
+    # generate the form class
     form_class = rdf_framework_form_factory(_form_path, \
             base_url=url_for("open_badge.base_path"), 
             current_url=request.url)
@@ -213,6 +212,8 @@ def rdf_class_forms(form_name, form_instance):
             form.save()
             if form.save_state == "success":
                 return redirect(form.redirect_url())
+
+        #form = form_class(subject_uri=request.args.get("id"))
     # if not POST, check the args and form instance
     else:
         # if params are present for any forms that are not in any of 
@@ -227,7 +228,8 @@ def rdf_class_forms(form_name, form_instance):
         # redirect to NewForm
         if instance_uri in ["kdr_EditForm","kdr_DisplayForm"] and \
                 not request.args.get("id"):
-            redirect_url = rdfw().get_form_path(form_uri, "kdr_NewForm")
+            redirect_url = url_for("open_badge.base_path") + \
+                    rdfw().get_form_path(form_uri, "kdr_NewForm")
             return redirect(redirect_url)
         # if the display form does not have an ID return an error
         if instance_uri in ["kdr_DisplayForm"] and not request.args.get("id"):
@@ -240,10 +242,12 @@ def rdf_class_forms(form_name, form_instance):
                 in ["kdr_EditForm","kdr_DisplayForm"]:
             if instance_uri == "kdr_DisplayForm":
                 _display_mode = True
-            form_data = rdfw().get_obj_data(form_class(),\
-                                            subject_uri=request.args.get("id"))
-            pp.pprint(form_data['form_data'])
-            form = form_class(form_data['form_data'])
+            form_data = rdfw().get_obj_data(form_class(\
+                    no_query=True, subject_uri=request.args.get("id")))
+            #pp.pprint(form_data['form_data'])
+            form = form_class(form_data['form_data'],\
+                      query_data=form_data['query_data'],\
+                      subject_uri=request.args.get("id"))
             if not (len(form_data['query_data']) > 0):
                 return render_template(
                     "error_page_template.html",

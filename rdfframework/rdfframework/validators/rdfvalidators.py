@@ -53,7 +53,7 @@ def get_wtform_validators(field):
 class UniqueValue(object):
     ''' a custom validator for use with wtforms
         * checks to see if the value already exists in the triplestore'''
-
+    
     def __init__(self, message=None):
         if not message:
             message = u'The field must be a unique value'
@@ -61,8 +61,9 @@ class UniqueValue(object):
 
     def __call__(self, form, field):
         # get the test query
+        debug = False
         _sparql = self._make_unique_value_qry(form, field)
-        print(_sparql)
+        if debug: print(_sparql)
         # run the test query
         _unique_test_results = requests.post(\
                 fw_config().get('TRIPLESTORE_URL'),

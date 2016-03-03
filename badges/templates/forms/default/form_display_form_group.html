@@ -8,8 +8,8 @@
 				<div class="form-control-static"><img src="{{ fld.data }}"></div>
 			{% endif %}
 		{% else %}
-			{% if fld.selectDisplay %}
-				{% set data = fld.selectDisplay %}
+			{% if fld.selected_display %}
+				{% set data = fld.selected_display %}
 			{% else %}
 				{% set data = fld.data %} 
 			{% endif %}	

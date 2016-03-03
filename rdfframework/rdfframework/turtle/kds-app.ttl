@@ -261,11 +261,13 @@ obi:verify a rdf:Property;
 	
 schema:name a rdf:Property;	
 	rdfs:domain	obi:BadgeClass;
-	rdfs:domain schema:Organization;	
+	rdfs:domain schema:Organization;
+	rdfs:domain kds:UserGroup;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "Name of the open badge instance.";	
 	kds:requiredByDomain obi:BadgeClass;
 	kds:requiredByDomain schema:Organization;
+	kds:requiredByDomain kds:UserGroup;
 	kds:jsonDefault [
 		kds:jsonObjName "name";
 		kds:jsonValFormat "objectValue"
@@ -367,8 +369,8 @@ schema:affliation	a rdf:Property;
 obi:type a rdf:Property;	
 	rdfs:domain	obi:BadgeClass;
 	rdfs:domain obi:Assertion;
-	rdfs:range	xsd:string;	
-	rdfs:comment "Type of item"; 
+	rdfs:range	rdf:Class;	
+	rdfs:comment "Type of item";
 	kds:requiredByDomain obi:BadgeClass;
 	kds:requiredByDomain obi:Assertion;
 	kds:defaultVal "item_class";
@@ -462,7 +464,7 @@ schema:alternativeName a rdf:Property;
 	rdfs:range	xsd:string;
 	kds:requiredByDomain obi:BadgeClass;
 	kds:propertyProcessing kdr:CalculationProcessor;
-	kdr:calculation "slugify(schema:name)" .
+	kds:calculation "slugify(schema:name)" .
 	
 	
 obi:id a rdf:Property;		
@@ -501,8 +503,10 @@ obi:tags a rdf:Property;
 			kds:applicationAction kdr:NotEditable
 		]
 	] .
-
 	
+rdf:Class kds:storageType "object" ;
+	a kds:ControlledClass .
+
 schema:Organization a rdf:Class;
 	a kds:ControlledClass ;
 	kds:storageType "object";
@@ -554,8 +558,12 @@ obi:BadgeClass a rdf:Class;
 	] .
 	
 kds:UserClass a kds:ControlledClass ;
-	kds:storageType "object";
+	kds:storageType "object" ;
 	kds:primaryKey kds:hasPerson.
+	
+kds:UserGroup kds:primaryKey schema:name ;
+	kds:saveLocation "triplestore" ;
+	kds:subjectCalc "slugify(schema:name)" .
 	
 kds:PasswordClass a kds:ControlledClass;
 	kds:storageType "object" .
@@ -703,7 +711,6 @@ kds:password
 	] .	
 
 kds:hasPerson a rdf:Property;
-	rdfs:domain kds:UserClass;
 	rdfs:range schema:Person;
 	kds:requiredByDomain kds:UserClass;
 	kds:jsonDefault [
@@ -922,8 +929,14 @@ obi:AssertionPerson a kds:FormClass;
 		kds:formDescription "Award badges";
 		kds:lookupClassUri obi:Assertion;
 		kds:formInstance [
-			kds:formInstanceType kdr:NewForm;
+			kds:formInstanceType kdr:NewForm
 		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm
+		]
 	];
 	kds:hasProperty [
 		kds:propUri schema:email;
@@ -1096,7 +1109,15 @@ obi:AssertionForm a kds:FormClass;
 		kds:formValidation [
 			a kds:TestValidator;
 			kds:parameters "asdfdas"
-		]
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formLabelName "Badge Name"
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+			kds:formLabelName "Badge Name"
+		];
 	];
 	kds:hasProperty [
 		kds:propUri obi:issuedOn;
@@ -1105,6 +1126,10 @@ obi:AssertionForm a kds:FormClass;
 		kds:requiredField true ;
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
 			kds:applicationAction kdr:RemoveFromForm
 		];
 	];
@@ -1116,7 +1141,7 @@ obi:AssertionForm a kds:FormClass;
 		kds:fieldType [
 			a kdr:SubForm;
 			kds:subFormUri obi:AssertionPerson;
-			kds:subFormInstance kdr:NewForm;
+			kds:subFormInstance kdr:LinkWithParent;
 			kds:subFormMode kdr:RepeatingSubForm
 		]
 	];
@@ -1186,4 +1211,84 @@ obi:application a kds:Application;
 	kds:appNameSpace [
 		kds:prefix "obi";
 		kds:nameSpaceUri "https://w3id.org/openbadges#"
+	] .
+
+kdr:UserGroupForm a kds:FormClass;
+	rdfs:label "Usergroup form";
+	rdfs:comment "Use this form for managing usergroup members.";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:formTitle "User group managment";
+		kds:formDescription "Add and remove users from the group";
+		kds:lookupClassUri kds:UserGroup;
+		kds:lookupPropUri "class_subject";
+		kds:submitSuccessRedirect kdr:DisplayForm;
+		kds:submitFailRedirect "!--currentpage";
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:formTitle "New Badge Assertion";
+			kds:formDescription "Award a badge."
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formDescription "Edit assertion information."
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm
+		]
+	];
+	kds:formSecurity [
+		acl:accessTo kdr:NewForm, kdr:EditForm;
+		acl:agent kdr:Admin;
+		acl:mode acl:Read, acl:Append
+	];
+	kds:formSecurity [
+		acl:accessTo kdr:DisplayForm;
+		acl:agent kdr:User-SG;
+		acl:mode acl:read
+	];
+	kds:hasProperty [
+		kds:propUri schema:name;
+		kds:classUri kds:UserGroup;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1;
+		kds:formFieldName "usergroupname";
+		kds:formLabelName "User group";
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formLabelName "Badge Name";
+			kds:applicationAction kdr:NotEditable
+		];
+	];
+	kds:hasProperty [
+		kds:propUri kds:hasUser;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 2;
+		kds:requiredField true ;
+	].
+	
+kds:hasUser a rdf:Property;
+	rdfs:domain kds:UserGroup;
+	rdfs:range schema:Person;
+	kds:formDefault [
+		kds:formLabelName "User";        
+		kds:formFieldName "user";
+		kds:formFieldHelp "Select the user";
+		kds:fieldType [
+			a	kdr:FieldList;
+			kds:listFieldType kdr:SelectField;
+			kds:selectQuery "SELECT ?s ?name 
+							{
+								?user a kds:UserClass .
+								?user kds:hasPerson ?s .
+								?s schema:givenName ?givenName .
+								?s schema:familyName ?familyName . 
+								?s schema:email ?email .
+								BIND (CONCAT(?familyName,'-',?givenName,'-',?email) AS ?name) .
+							}
+							ORDER BY ?name";
+			kds:selectBoundValue "?user";
+			kds:selectDisplay "?name"
+		]	
 	] .

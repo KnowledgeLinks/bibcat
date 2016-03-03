@@ -11,6 +11,10 @@ def convert_to_ns(value, ns_obj=None):
         from rdfframework import get_framework
         ns_obj = get_framework().ns_obj
     for _prefix, _ns_uri in ns_obj.items():
+        if str(value).startswith(_prefix + ":") or \
+                str(value).startswith("<%s:" % _prefix):
+            return value.replace(_prefix + ":", _prefix + "_").replace(\
+                    "<","").replace(">","")
         if str(value).startswith(_ns_uri) or str(value).startswith("<"+_ns_uri):
             return value.replace(_ns_uri, _prefix + "_").replace(\
                     "<","").replace(">","")
@@ -87,6 +91,9 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None):
         return convert_to_ns(obj, ns_obj)
         
 def pyuri(value):
+    ''' converts an iri to the app defined rdf namespaces in the framework 
+        in a python accessable format. i.e. schema:name or 
+        http:schema.org/name  --> schema_name '''
     global NS_OBJ
     if NS_OBJ is None:
         from rdfframework import get_framework
@@ -94,11 +101,7 @@ def pyuri(value):
     if str(value).startswith("http"):
         return convert_to_ns(value, NS_OBJ)
     else:
-        _new_value = convert_to_ns(convert_to_uri(value, NS_OBJ), NS_OBJ)
-        if value == _new_value:
-            return value
-        else:
-            return None
+        return convert_to_ns(convert_to_uri(value, NS_OBJ), NS_OBJ)
     
 def nouri(value):
     global NS_OBJ

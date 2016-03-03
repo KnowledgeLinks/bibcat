@@ -1,6 +1,8 @@
 {% set current_row = form.rdf_field_list[0].kds_formLayoutRow|float %}
 		<div class="row {{ form.rdf_instructions['rowCss'] }}">
 {% for fld in form.rdf_field_list %}
+	{% set errorCss = '' %}
+	{% if fld.errors %}{% set errorCss = " has-error" %}{% endif %}
 	{% if fld.kds_formLayoutRow|float > current_row %}
 		{% set current_row = fld.kds_formLayoutRow|float %}
 		</div>
@@ -11,6 +13,7 @@
 	{% else %}
 	</div>
 			{{ fld(class_=fld.kds_css,readonly=not fld.editable) }}
+	<div class="row {{ form.rdf_instructions['rowCss'] }}">
 	{% endif %}
 {% endfor %}
 		</div>

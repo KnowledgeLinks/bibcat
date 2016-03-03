@@ -80,7 +80,8 @@
 	
 	kdr:AssertionImageBakingProcessor a kds:PropertyProcessor;
 		rdfs:label "Assertion Baker";
-		rdfs:comment "Application sends badge image to the a badge baking service with the assertion." .
+		rdfs:comment "Application sends badge image to the a badge baking service with the assertion." ;
+		kds:resultType "propertyValue".
 	
 	kdr:EmailVerificationProcessor a kds:PropertyProcessor;
 		rdfs:label "Email Verifier";
@@ -130,6 +131,15 @@
 		rdfs:label "User-SG";
 		rdfs:comment "The security class for any logged in User".
 		
+# Permissions rights ***********************************************
+	acl:Read a kds:PermissionsClass. 
+	acl:Write a kds:PermissionsClass.
+	acl:Append a kds:PermissionsClass.
+	
+	acl:mode a kds:SecurityProperty;
+		rdfs:range kds:PermissionsClass;
+		rdfs:domain kds:SecurityClass .
+	
 # ApplicationActionClasses ***********************************************	
 
 		
