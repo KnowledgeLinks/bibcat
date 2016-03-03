@@ -83,9 +83,13 @@ class Form(flask_wtf.Form):
 
     def save(self):
         ''' sends the form to the framework for saving '''
-        rdfw().save_obj(self)
+        save_action = self.rdf_instructions.get('kds_saveAction')
+        if save_action == "kdr_AuthenticateUser":
+            rdfw().user_authentication(self)
+        else:
+            rdfw().save_obj(self)
     
-    def redirect_url(self, id_value=None):
+    def redirect_url(self, id_value=None, **kwargs):
         ''' formats the redirect url for the form in its current state '''
         if id_value is None:
             id_value = self.save_subject_uri
@@ -101,6 +105,8 @@ class Form(flask_wtf.Form):
             return self.current_url
         elif _url_instructions == "!--homepage":
             return "/"
+        elif _url_instructions == "!--source":
+            return kwargs.get("params", {}).get("source","/")   
         elif _url_instructions is not None:
             _form_url = rdfw().get_form_path(self.form_uri, _url_instructions)
             if _form_url is not None:
@@ -322,6 +328,9 @@ def get_form_instructions_json(instructions, instance):
     _new_instr['kds_submitFailRedirect'] = \
             _form_instance_info.get('kds_submitFailRedirect',
                                     instructions.get("kds_submitFailRedirect", ""))
+    _new_instr['kds_saveAction'] = \
+            _form_instance_info.get('kds_saveAction',
+                                    instructions.get("kds_saveAction", ""))
 
 # Determine css classes
     #form row css

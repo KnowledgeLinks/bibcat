@@ -782,16 +782,20 @@ obi:LoginForm a kds:FormClass;
 		kds:formDescription "Enter login credentials";
 		kds:lookupClassUri kds:UserClass;
 		kds:lookupPropertyUri kds:userName;
+		kds:saveAction kdr:AuthenticateUser;
 		kds:formUrl "login";
 		kds:formInstance [
 			kds:formInstanceType kdr:Login;
-			kds:submitSuccessRedirect "!--homepage";
+			kds:submitSuccessRedirect "!--source";
 			kds:submitFailRedirect "!--currentpage";
 			kds:instanceUrl "none";
 		]
 	];    
 	kds:hasProperty [
 		kds:propUri kds:userName;
+		kds:overrideValidation [
+			a kdr:DoNotValidate
+		];
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1; 
 	];

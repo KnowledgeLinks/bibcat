@@ -60,7 +60,7 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
             'kds_formLayoutRow', "")))
     _new_field['kds_propUri'] = field.get('kds_propUri')
     _new_field['kds_classUri'] = field.get('kds_classUri')
-    _new_field['kds_range'] = field.get('kds_range')
+    _new_field['rdfs_range'] = field.get('rdfs_range')
     _new_field['kds_defaultVal'] = _form_instance_info.get('kds_defaultVal',\
             field.get('kds_defaultVal'))
 
@@ -74,10 +74,15 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
             _new_field['kds_actionList']:
         return None
     # get valiator list
-    _new_field['kds_validators'] = make_list(_form_instance_info.get('kds_formValidation', []))
-    _new_field['kds_validators'] += make_list(field.get('kds_formValidation', []))
-    _new_field['kds_validators'] += make_list(field.get('kds_propertyValidation', []))
-
+    if field.get('kds_overrideValidation'):
+        _new_field['kds_validators'] = field.get('kds_overrideValidation')
+    else:
+        _new_field['kds_validators'] = make_list(\
+                _form_instance_info.get('kds_formValidation', []))
+        _new_field['kds_validators'] += make_list(\
+                field.get('kds_formValidation', []))
+        _new_field['kds_validators'] += make_list(\
+                field.get('kds_propertyValidation', []))
     # get processing list
     _new_field['kds_processors'] = make_list(_form_instance_info.get('kds_formProcessing', []))
     _new_field['kds_processors'] += make_list(field.get('kds_formProcessing', []))
@@ -166,7 +171,7 @@ def get_wtform_field(field, instance='', **kwargs):
                             "doNotSave":True}]
         elif _field_mode == "kdr_LoginPassword":
             _form_field = PasswordField(_field_label,
-                                        [Required()],
+                                        [InputRequired()],
                                         description=\
                                                 field.get('kds_formFieldHelp', ''))
     elif _field_type == 'kdr_BooleanField':

@@ -12,6 +12,9 @@
 		{% elif form.instance_uri == 'kdr_NewForm' %}
 			<input type="submit" class="btn btn-success"></input>
 			<a class="btn btn-default" href="/" role="button">Cancel</a>
+		{% elif form.instance_uri == 'kdr_Login' %}
+			<input type="submit" class="btn btn-success" value="Sign in"></input>
+			<a class="btn btn-default" href="/" role="button">Cancel</a>
 		{% endif %}
 			
 		</section>

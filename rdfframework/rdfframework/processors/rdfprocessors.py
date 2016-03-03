@@ -2,7 +2,7 @@ import os
 from base64 import b64encode
 from passlib.hash import sha256_crypt
 from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
-        slugify
+        slugify, clean_iri
 from rdfframework import get_framework
 
 
@@ -75,17 +75,16 @@ def email_verification_processor(obj, prop, mode="save"):
         return obj
     return obj
 
-
-
 def password_processor(obj, prop, mode="save"):
     """Function handles application password actions
 
     Returns:
         modified passed in obj
     """
-    if mode in ["save", "verify"]:
+    salt_url = "kdr_SaltProcessor"
+    if mode == "save":
         # find the salt property
-        salt_url = "kdr_SaltProcessor"
+        
         _class_uri = obj['prop'].get("classUri")
         _class_properties = getattr(get_framework(), _class_uri).kds_properties
         salt_property = None
@@ -107,9 +106,28 @@ def password_processor(obj, prop, mode="save"):
                 obj['processedData'][obj['propUri']] = _hash_value
                 obj['prop']['calcValue'] = True
             return obj
-        # if in verify mode - look up the hash and return true or false
-        elif mode == "verify":
-            return sha256_crypt.verify(obj['password']+obj['salt'], obj['hash'])
+    elif mode == "verify":
+        # verify the supplied password matches the saved password
+        if not len(obj.query_data) > 0:
+            setattr(prop, "password_verified", False)
+            return obj    
+        _class_uri = prop.kds_classUri
+        _class_properties = getattr(get_framework(), _class_uri).kds_properties
+        salt_property = None
+        # find the property Uri that stores the salt value
+        for _class_prop in _class_properties.values():
+            if _class_prop.get("kds_propertyProcessing") == salt_url:
+                salt_property = _class_prop.get("kds_propUri")
+        # find the salt value in the query_data
+        salt_value = None
+        for subject, props in obj.query_data.items():
+            if clean_iri(props.get("rdf_type")) == _class_uri:
+                salt_value = props.get(salt_property)
+                hashed_password = props.get(prop.kds_propUri)
+                break
+        setattr(prop, "password_verified", \
+            sha256_crypt.verify(prop.data + salt_value, hashed_password)) 
+        return obj
     if mode == "load":
         return obj
     return obj

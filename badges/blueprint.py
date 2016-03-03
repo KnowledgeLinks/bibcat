@@ -16,7 +16,7 @@ from flask.ext.login import login_required, login_user
 from . import new_badge_class, issue_badge
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from rdfframework.utilities import render_without_request, code_timer, \
-        dumpable_obj, pp
+        remove_null, pp
 from rdfframework import get_framework as rdfw
 from rdfframework.forms import rdf_framework_form_factory 
 from .user import User
@@ -37,41 +37,7 @@ def record_params(setup_state):
     open_badge.config = dict(
         [(key, value) for (key, value) in app.config.items()]
     )
-    base_url = open_badge.config.get('ORGANIZATION').get('url')
-    triplestore_url = open_badge.config.get('TRIPLESTORE_URL')
-    # Strip off trailing forward slash for TTL template
-    if base_url.endswith("/"):
-        base_url = base_url[:-1]
-    # if the extensions exist in the triplestore drop the graph
-    stmt = "DROP GRAPH <http://knowledgelinks.io/ns/application-framework/>;"
-    drop_extensions = requests.post(
-        url=triplestore_url,
-        params={"update": stmt})
-    # render the extensions with the base URL
-    # must use a ***NON FLASK*** routing since flask is not completely
-    # initiated
-    rdf_resource_templates = [
-        "kds-app.ttl",
-        "kds-vocab.ttl",
-        "kds-resources.ttl"]
-    rdf_data = []
-    for template in rdf_resource_templates:
-        rdf_data.append(
-            render_without_request(
-                template,
-                base_url=base_url))
-    # load the extensions in the triplestore
-    context_uri = "http://knowledgelinks.io/ns/application-framework/"
-    print(triplestore_url) 
-    for data in rdf_data:
-        result = requests.post(
-            url=triplestore_url,
-            headers={"Content-Type": "text/turtle"},
-            params={"context-uri": context_uri},
-            data=data)
-        if result.status_code > 399:
-            raise ValueError("Cannot load extensions in {}".format(
-                triplestore_url))
+    # initialize the rdfframework
     rdfw(config=open_badge.config)
 
 def get_badge_classes():
@@ -115,7 +81,7 @@ def fedora_image_path():
         return redirect(url_for("open_badge.image_path",
                          image_id=uid))    
       
-@open_badge.route("/login", methods=["GET", "POST"])
+'''@open_badge.route("/login", methods=["GET", "POST"])
 def login_user_view():
     """Login view for badges"""
     val = None
@@ -138,7 +104,7 @@ def login_user_view():
         jsonFields=json.dumps(
             form.rdfFieldList,
             indent=4),
-        validated=val)
+        validated=val)'''
 
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
@@ -174,12 +140,12 @@ def form_rdf_class():
         json.dumps(rdfw().form_list, indent=2), 
         json.dumps(class_dict, indent=2),
         json.dumps(form_dict, indent=2))
-
-@open_badge.route("/<form_name>/<form_instance>",
-    methods=["POST", "GET"])
-@open_badge.route("/<form_name>/<form_instance>.html",
-    methods=["POST", "GET"])
-def rdf_class_forms(form_name, form_instance):
+        
+@open_badge.route("/<form_name>.html", methods=["POST", "GET"])
+@open_badge.route("/<form_name>", methods=["POST", "GET"])
+@open_badge.route("/<form_name>/<form_instance>", methods=["POST", "GET"])
+@open_badge.route("/<form_name>/<form_instance>.html", methods=["POST", "GET"])
+def rdf_class_forms(form_name, form_instance=None):
     """View for displaying forms
 
     Args:
@@ -189,7 +155,7 @@ def rdf_class_forms(form_name, form_instance):
         id -- the subject uri of the form data to lookup 
     """
     _display_mode = False
-    _form_path = "{}/{}".format(form_name, form_instance)
+    _form_path = "/".join(remove_null([form_name, form_instance]))
     _form_exists = rdfw().form_exists(_form_path)
     if _form_exists is False:
         return render_template(
@@ -211,7 +177,7 @@ def rdf_class_forms(form_name, form_instance):
             # if validated save the form 
             form.save()
             if form.save_state == "success":
-                return redirect(form.redirect_url())
+                return redirect(form.redirect_url(params=request.args))
 
         #form = form_class(subject_uri=request.args.get("id"))
     # if not POST, check the args and form instance

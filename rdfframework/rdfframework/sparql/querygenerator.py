@@ -2,7 +2,7 @@ import requests
 import copy
 from rdfframework import get_framework as rdfw
 from rdfframework.utilities import fw_config, make_triple, iri, uri,\
-        is_not_null, render_without_request, pp
+        is_not_null, render_without_request, make_list, pp
 DEBUG = False
 
 def get_data(obj, **kwargs):
@@ -25,9 +25,20 @@ def run_sparql_query(sparql, **kwargs):
     
 def create_data_sparql_query(obj, **kwargs):
     ''' generates the sparql query for getting an object's data '''
-    
+    from rdfframework import RdfDataType
     subject_uri = kwargs.get("subject_uri", obj.data_subject_uri)
     _class_uri = kwargs.get("class_uri", obj.data_class_uri)
+    subject_lookup = kwargs.get("subject_lookup")
+    if subject_lookup:
+        _kds_propUri = iri(uri(subject_lookup.kds_propUri))
+        _data_type = uri(make_list(subject_lookup.rdfs_range)[0])
+        _prop_value = RdfDataType(_data_type).sparql(\
+                str(subject_lookup.data))
+        _sparql = render_without_request("sparqlRelatedItemDataTemplate.rq",
+                                         prefix=rdfw().get_prefix(),
+                                         kds_propUri=_kds_propUri,
+                                         prop_value=_prop_value)
+        return _sparql          
     _lookup_class_uri = _class_uri
     _sparql_args = None
     _sparql_constructor = copy.deepcopy(obj.dependancies)
