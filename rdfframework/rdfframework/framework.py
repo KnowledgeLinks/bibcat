@@ -1,6 +1,7 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 import re
 import json
+import os
 import requests
 from wtforms import ValidationError
 from werkzeug.datastructures import MultiDict
@@ -448,13 +449,14 @@ class RdfFramework(object):
             _string_defs = _form_list.json().get(\
                     'results').get('bindings')[0]['app']['value']
             _json_defs = json.loads(_string_defs)
-            file_obj = open(JSON_LOCATION + "\\app_query.json", "w")
-            file_obj.write( _string_defs )
-            file_obj.close()
+            with open(
+                os.path.join(JSON_LOCATION, "app_query.json"), 
+                "w") as file_obj:
+                file_obj.write( _string_defs )
         else:
-            file_obj = open(JSON_LOCATION + "\\app_query.json")
-            _json_defs = json.loads(file_obj.read())
-            file_obj.close()
+            with open(
+                os.path.join(JSON_LOCATION, "app_query.json")) as file_obj:
+                _json_defs = json.loads(file_obj.read())
         return _json_defs
             
     def _load_rdf_class_defintions(self, reset):
@@ -472,13 +474,14 @@ class RdfFramework(object):
             _string_defs = _class_list.json().get(\
                     'results').get('bindings')[0]['appClasses']['value']
             _json_defs = json.loads(_string_defs)
-            file_obj = open(JSON_LOCATION + "\\class_query.json", "w")
-            file_obj.write( _string_defs )
-            file_obj.close()
+            with open(
+                os.path.join(JSON_LOCATION,"class_query.json"), 
+                "w") as file_obj:
+                file_obj.write( _string_defs )
         else:
-            file_obj = open(JSON_LOCATION + "\\class_query.json")
-            _json_defs = json.loads(file_obj.read())
-            file_obj.close()    
+            with open(
+                os.path.join(JSON_LOCATION, "class_query.json")) as file_obj:
+                _json_defs = json.loads(file_obj.read())
         return _json_defs
 
     def _load_rdf_form_defintions(self, reset):
@@ -496,13 +499,14 @@ class RdfFramework(object):
                     )[0]['appForms']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
             _json_defs = json.loads(_string_defs)
-            file_obj = open(JSON_LOCATION + "\\form_query.json", "w")
-            file_obj.write( _string_defs )
-            file_obj.close()
+            with open(
+                os.path.join(JSON_LOCATION, "form_query.json"),
+                "w") as file_obj:
+                file_obj.write( _string_defs)
         else:
-            file_obj = open(JSON_LOCATION + "\\form_query.json")
-            _json_defs = json.loads(file_obj.read())
-            file_obj.close()   
+            with open(
+                os.path.join(JSON_LOCATION, "form_query.json")) as file_obj:
+                _json_defs = json.loads(file_obj.read())
         return _json_defs
 
     def _validate_obj_by_class_reqs(self, rdf_obj):
