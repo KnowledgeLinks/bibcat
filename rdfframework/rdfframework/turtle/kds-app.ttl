@@ -34,15 +34,15 @@ obi:context a rdf:Property;
 	rdfs:range rdfs:string;
 	rdfs:comment "Name of the open badge instance.";
 	kds:jsonDefault [	
-		kds:useFor "default" ;
+		kds:appliesTo "default" ;
 		kds:jsonObjName "@context";
 		kds:jsonValFormat "objectValue" ;
 		kds:defaultVal "https://w3id.org/openbadges/v1" ;
 		kds:propertyField obi:context 
 	];
 	kds:json [
-		kds:useFor obi:BadgeClass ;
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:BadgeClass ;
+		kds:appliesTo obi:Assertion 
 	] ;
 	kds:formDefault [
 		kds:fieldType kdr:TextField;
@@ -61,7 +61,7 @@ obi:uid a rdf:Property;
 		kds:unionUrl "{{ base_url }}/badges/Assertion/"
 	];
 	kds:json [
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:Assertion 
 	] ;
 	kds:formDefault [
 		kds:fieldType kdr:ServerField
@@ -80,7 +80,7 @@ obi:hasBadge a rdf:Property;
 		kds:urlendfld schema:alternativeName
 	];
 	kds:json [
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:Assertion 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "Badge";
@@ -111,7 +111,7 @@ obi:issuedOn a rdf:Property;
 		kds:propertyField obi:issuedOn 
 	] ;
 	kds:json [
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:Assertion 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "issuedOn";
@@ -136,7 +136,7 @@ obi:expires a rdf:Property;
 		kds:propertyField obi:expires 
 	] ;
 	kds:json [
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:Assertion 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "expiresOn";
@@ -210,7 +210,7 @@ obi:recipient a rdf:Property;
 		]
 	] ;
 	kds:json [
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:Assertion 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "Recipient";
@@ -239,7 +239,7 @@ obi:verify a rdf:Property;
 	rdfs:range rdfs:string;
 	rdfs:comment "Instructions for third parties to verify this assertion.";	
 	kds:jsonDefault [
-		kds:useFor obi:Assertion;
+		kds:appliesTo obi:Assertion;
 		kds:jsonObjName "verify";
 		kds:jsonValFormat "lookupProperties" ;
 		kds:lookupReturnField [
@@ -255,7 +255,7 @@ obi:verify a rdf:Property;
 		]
 	] ;
 	kds:json [
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:Assertion 
 	] .
 	
 	
@@ -273,7 +273,7 @@ schema:name a rdf:Property;
 		kds:jsonValFormat "objectValue"
 	] ;
 	kds:json [
-		kds:useFor obi:BadgeClass 
+		kds:appliesTo obi:BadgeClass 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "badgeName";
@@ -298,7 +298,7 @@ schema:description a rdf:Property;
 		kds:jsonValFormat "objectValue"
 	] ;
 	kds:json [
-		kds:useFor obi:BadgeClass 
+		kds:appliesTo obi:BadgeClass 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "itemDescription";
@@ -323,7 +323,7 @@ obi:issuer a rdf:Property;
 		kds:lookupReturnField schema:URL;
 	] ;
 	kds:json [
-		kds:useFor obi:BadgeClass 
+		kds:appliesTo obi:BadgeClass 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "issuingOrg";
@@ -357,7 +357,7 @@ schema:affliation	a rdf:Property;
 		kds:fieldType [
 			a kdr:SelectField;
 			kds:selectQuery "SELECT * {
-																?s a schema:Organizatioin . 
+																?s a schema:Organization . 
 																?s schema:name ?name . 
 																} 
 																ORDER BY ?name";
@@ -374,19 +374,16 @@ obi:type a rdf:Property;
 	kds:requiredByDomain obi:BadgeClass;
 	kds:requiredByDomain obi:Assertion;
 	kds:defaultVal "item_class";
-	kds:propertyProcessing [
-		kds:appliesTo obi:BadgeClass;
-	];
 	kds:jsonDefault [
 		kds:jsonObjName "type";
 		kds:jsonValFormat "lookup";
 		kds:lookupReturnField kds:jsonObjName
 	];
 	kds:json [
-		kds:useFor obi:Assertion 
+		kds:appliesTo obi:Assertion 
 	] ;
 	kds:json [
-		kds:useFor obi:BadgeClass 
+		kds:appliesTo obi:BadgeClass 
 	] ;
 	kds:formDefault [
 		kds:fieldType [
@@ -403,21 +400,27 @@ schema:image a rdf:Property;
 	kds:requiredByDomain obi:Assertion;
 	kds:propertyProcessing [
 		kds:appliesTo obi:BadgeClass;
-		kds:propertyProcessing kdr:BadgeImageBakingProcessor
+		a kdr:ImageProcessor;
+		kds:imageOptions [
+			kds:imageHeight "220px";
+			kds:imageWidth "220px";
+			kds:imageSizeLimit "256kb";
+			kds:imageFormat "png"
+		]
 	];
 	kds:propertyProcessing [
 		kds:appliesTo obi:Assertion;
-		kds:propertyProcessing kdr:AssertionImageBakingProcessor
+		a kdr:AssertionImageBakingProcessor
 	];
 	rdfs:comment "Image of the item.";	
 	kds:json [ 
-		kds:useFor obi:BadgeClass ;
+		kds:appliesTo obi:BadgeClass ;
 		kds:jsonObjName "image";
 		kds:jsonValFormat "urlSub";
 		kds:baseUrl "{{ base_url }}/badges/BadgeImage/"
 	];
 	kds:json [
-		kds:useFor obi:Assertion ;
+		kds:appliesTo obi:Assertion ;
 		kds:urlendfld schema:alternativeName;
 		kds:jsonValFormat "subjectCalc" ;
 		kds:parseType "afterLastSlash" ;
@@ -448,7 +451,7 @@ obi:criteria a rdf:Property;
 		kds:urlendfld schema:alternativeName
 	] ;
 	kds:json [
-		kds:useFor obi:BadgeClass 
+		kds:appliesTo obi:BadgeClass 
 	] ;
 	kds:formDefault [
 		kds:formFieldName "criteria";
@@ -461,10 +464,14 @@ obi:criteria a rdf:Property;
 
 schema:alternativeName a rdf:Property;
 	rdfs:domain	obi:BadgeClass;
+	rdfs:domain	schema:Organization;
 	rdfs:range	xsd:string;
 	kds:requiredByDomain obi:BadgeClass;
-	kds:propertyProcessing kdr:CalculationProcessor;
-	kds:calculation "slugify(schema:name)" .
+	kds:requiredByDomain schema:Organization;
+	kds:propertyProcessing [
+		a kdr:CalculationProcessor;
+		kds:calculation "slugify(schema:name)" 
+	] .
 	
 	
 obi:id a rdf:Property;		
@@ -476,20 +483,22 @@ obi:id a rdf:Property;
 		kds:urlendfld schema:alternativeName
 	] ;
 	kds:json [
-		kds:useFor obi:BadgeClass ;
+		kds:appliesTo obi:BadgeClass ;
 	] .
 	
 obi:tags a rdf:Property;	
 	rdfs:domain	obi:BadgeClass;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "Tags for the badges.";
-	kds:propertyProcessing kdr:CSVstringToMultiPropertyProcessor;
+	kds:propertyProcessing [
+		a kdr:CSVstringToMultiPropertyProcessor
+	];
 	kds:jsonDefault [
 		kds:jsonObjName "tags";
 		kds:jsonValFormat "multiValArray"
 	] ;
 	kds:json [
-		kds:useFor obi:BadgeClass 	
+		kds:appliesTo obi:BadgeClass 	
 	] ;
 	kds:formDefault [
 		kds:formFieldName "itemtags";
@@ -613,7 +622,9 @@ schema:email a rdf:Property;
 	rdfs:domain	schema:Person;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "email address.";
-	kds:propertyProcessing kdr:EmailVerificationProcessor;                   
+	kds:propertyProcessing [
+		a kdr:EmailVerificationProcessor
+	];                   
 	kds:requiredByDomain schema:Person;
 	kds:propertyValidation [
 		a kdr:EmailValidator
@@ -666,7 +677,9 @@ kds:salt a rdf:Property;
 	# rdfs:range	xsd:string;	stated in vocab
 	kds:requiredByDomain kds:PasswordClass;
 	kds:requiredByDomain obi:Assertion;
-	kds:propertyProcessing kdr:SaltProcessor;
+	kds:propertyProcessing [
+		a kdr:SaltProcessor
+	] ;
 	kds:propertySecurity [
 		kds:appliesTo kds:PasswordClass;
 		acl:agent kdr:Self-SG;
@@ -677,10 +690,10 @@ kds:salt a rdf:Property;
 		kds:jsonValFormat "objectValue"
 	] ;
 	kds:json [
-		kds:useFor obi:Assertion
+		kds:appliesTo obi:Assertion
 	];
 	kds:json [
-		kds:useFor obi:UserClass
+		kds:appliesTo obi:UserClass
 	];
 	kds:formDefault [
 		kds:fieldType kdr:ServerField;
@@ -696,13 +709,15 @@ kds:password
 	kds:propertyValidation [
 		a kdr:PasswordValidator 
 	];
-	kds:propertyProcessing  kdr:PasswordProcessor;
+	kds:propertyProcessing  [
+		a kdr:PasswordProcessor
+	];
 	kds:jsonDefault [
 		kds:jsonObjName "password";
 		kds:jsonValFormat "objectValue"
 	];
 	kds:json [
-		kds:useFor obi:UserClass;
+		kds:appliesTo obi:UserClass;
 	];
 	kds:formDefault [
 		kds:fieldType kdr:PasswordField;
@@ -722,7 +737,7 @@ kds:hasPerson a rdf:Property;
 		]
 	];
 	kds:json [
-		kds:useFor obi:UserClass;
+		kds:appliesTo obi:UserClass;
 	];
 	kds:formDefault [
 		kds:formLabelName "Password";        
@@ -769,7 +784,7 @@ kds:hasPassword a rdf:Property;
 		]
 	] ;
 	kds:json [
-				kds:useFor obi:UserClass
+				kds:appliesTo obi:UserClass
 	].
  
 obi:LoginForm a kds:FormClass;
@@ -1296,3 +1311,105 @@ kds:hasUser a rdf:Property;
 			kds:selectDisplay "?name"
 		]	
 	] .
+	
+obi:BadgeApi a kds:ApiClass;
+	rdfs:label "Badge Definition";
+	rdfs:comment "This api returns an open badge assertion.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri obi:BadgeClass;
+		kds:lookupPropertyUri schema:alternativeName;
+		kds:apiUrl "badge";
+		kds:apiUrlExtension "json";
+		kds:returnType "json"
+	];
+	kds:hasProperty [
+		kds:propUri kds:StaticValue;
+		kds:returnValue "https://w3id.org/openbadges/v1";	
+		kds:classUri kds:NoClass;
+		kds:apiFieldName "@context";
+	];
+	kds:hasProperty [
+		kds:propUri obi:type;
+		kds:classUri obi:BadgeClass;
+		kds:apiFieldName "type";
+	];
+	kds:hasProperty [
+		kds:propUri schema:name;
+		kds:classUri obi:BadgeClass;
+		kds:apiFieldName "name";
+	];
+	kds:hasProperty [
+		kds:propUri schema:description;
+		kds:classUri obi:BadgeClass;
+		kds:apiFieldName "description";
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri obi:BadgeClass;
+		kds:apiFieldName "id";
+		kds:calculationType kdr:Concat;
+		kds:calculationSeparator ",";
+		kds:calculation "!--api_url"
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri obi:BadgeClass;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--base_api_url,badge/,<<schema:alternativeName>>,.png"
+		] ;
+		kds:apiFieldName "image";
+		
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri obi:BadgeClass;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--base_url,badge/DisplayForm.html?name=,<<schema:alternativeName>>"
+		] ;
+		kds:apiFieldName "criteria";
+	];
+	kds:hasProperty [
+		kds:propUri obi:tags;
+		kds:classUri obi:BadgeClass;
+		kds:propertyProcessing [
+			a kdr:MultiPropertyToArray
+		];
+		kds:apiFieldName "tags";
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri schema:Organization;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.json"
+		];
+		kds:apiFieldName "issuer";
+		
+	].
+	
+obi:BadgeImageApi a kds:ApiClass;
+	rdfs:label "Badge Definition";
+	rdfs:comment "This api returns an open badge image.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri obi:BadgeClass;
+		kds:lookupPropertyUri schema:alternativeName;
+		kds:apiUrl "badge";
+		kds:apiUrlExtension "png";
+		kds:returnType "file";
+		kds:mimeType "image/png"
+	];
+	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri obi:BadgeClass;
+		kds:apiFieldName "image";
+	].

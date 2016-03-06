@@ -1,0 +1,108 @@
+prefix acl: <http://www.w3.org/ns/auth/acl#> 
+prefix foaf: <http://xmlns.com/foaf/0.1/> 
+prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
+prefix kdr: <http://knowledgelinks.io/ns/data-resources/> 
+prefix obi: <https://w3id.org/openbadges#> 
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+prefix schema: <https://schema.org/> 
+prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
+
+SELECT  (CONCAT("{",GROUP_CONCAT(?classObj; SEPARATOR=","),"}") AS ?appClasses)
+{
+GRAPH <http://knowledgelinks.io/ns/application-framework/> 
+{
+  SELECT ?klClasses (CONCAT('"',STR(?klClasses),'":{"http://knowledgelinks.io/ns/data-structures/classUri":"',STR(?klClasses),'",',GROUP_CONCAT(?classJson; SEPARATOR=","),"}") AS ?classObj)
+  {
+  	{
+      SELECT ?klClasses (CONCAT(?prop,':',IF(?agType="obj","{",""),GROUP_CONCAT(?objJson; SEPARATOR=","),IF(?agType="obj","}","")) AS ?classJson)
+      {
+          SELECT ?klClasses ?prop ?agType (CONCAT(IF(?pp=kds:keyCombo,"[",""),GROUP_CONCAT(?rtn;SEPARATOR=","),IF(?pp=kds:keyCombo,"]","")) AS ?objJson)
+          {
+            ?klClasses a kds:ControlledClass .
+            ?klClasses ?p ?o . 
+            BIND (CONCAT('"',STR(?p),'"') AS  ?prop) .
+
+            ?o ?pp ?oo .
+            FILTER(isblank(?o))
+            BIND (CONCAT('"',STR(?pp),'"') AS  ?prop2) .
+            BIND (IF(?pp=kds:keyCombo,CONCAT('"',STR(?oo),'"'),CONCAT(?prop2,':"',STR(?oo),'"')) AS ?rtn) .
+            BIND (IF(?pp=kds:keyCombo,"array","obj") AS ?agType) .
+          }
+          GROUP BY ?prop ?klClasses ?pp ?agType
+      }
+      GROUP BY ?klClasses ?prop ?agType
+	} UNION {
+		SELECT ?klClasses (CONCAT(?prop,':',?rtn) AS ?classJson)
+		{
+		  ?klClasses a kds:ControlledClass .
+		  ?klClasses ?p ?o . 
+		  BIND (CONCAT('"',STR(?p),'"') AS  ?prop) .
+		  BIND (CONCAT('"',STR(?o),'"') AS ?rtn)  .
+		  FILTER (?p!=rdf:type) .
+		  FILTER (!(ISBLANK(?o))) .
+		}	
+	} UNION {
+      	SELECT ?klClasses (CONCAT('"http://knowledgelinks.io/ns/data-structures/properties":{',GROUP_CONCAT(?propVals; SEPARATOR=","),'}') AS ?classJson)
+      	{
+          SELECT ?klClasses  (CONCAT(?props,':{"kds_propUri":"',STR(?properties),'",',?newRange,',',GROUP_CONCAT(?jVal; SEPARATOR=","),'}') AS ?propVals)
+          {
+              SELECT DISTINCT ?klClasses ?properties ?props ?jVal ?newRange
+              {
+                  {
+                    SELECT ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra  (GROUP_CONCAT(?rangeItems; SEPARATOR=",") AS ?rangeVal) (GROUP_CONCAT(?stoType1; SEPARATOR=",") AS ?stoVal)
+                    {
+                      ?klClasses a kds:ControlledClass .
+                      ?properties rdfs:domain ?klClasses .
+                      ?properties ?attrs ?attrObjs .
+                      ?properties rdfs:range ?ra .
+
+
+                      OPTIONAL {
+                        ?properties rdfs:range ?objLookup .
+                        ?objLookup a kds:ControlledClass .
+                        ?objLookup kds:storageType ?stoType 
+                      } .
+                      OPTIONAL {
+                        ?attrObjs kds:appliesTo ?klClasses .
+                        ?attrObjs ?attrs ?bnVal .
+                        FILTER(ISBLANK(?attrObjs))
+                      }.
+
+                      BIND (CONCAT('"',IF(bound(?stoType),?stoType,"literal"),'"') AS ?stoType1) .
+                      BIND (IF(bound(?objLookup),CONCAT('{"rangeClass":"',STR(?objLookup),'","storageType":',?stoType1,'}'),"") AS ?rangeItems) .
+                      BIND (CONCAT('"',STR(?properties),'"') AS  ?props) .
+                      BIND (CONCAT('"',STR(?attrs),'"') AS  ?attrJson) .
+                      BIND (IF(?attrs=rdfs:range,IF(?rangeItems!='','',CONCAT('"http://www.w3.org/2000/01/rdf-schema#range":[{"rangeClass":"',STR(?attrObjs),'","storageType":',?stoType1,'}]')),(CONCAT(?attrJson,':"',STR(COALESCE(?bnVal,?attrObjs)),'"'))) AS ?jVal ).
+                      FILTER ((?attrs!=kds:json && ?attrs!=kds:formDefault && ?attrs != kds:jsonDefault && !(?attrObjs != ?klClasses && ?attrs = kds:requiredByDomain) && ?attrs != rdfs:domain)) .
+                      #FILTER (str(?jVal)!="") .
+                      FILTER(    
+                        (     
+                          ( ! (?attrs=rdfs:range&&?rangeItems!='') )    
+                         							
+                          && 
+                         	  
+                          (   
+                            	(!( isblank(?attrObjs) )  )
+                           				||
+                          		( isblank(?attrObjs) &&	bound(?bnVal) )   
+                           )
+                        )        
+                      )}
+                     GROUP BY ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra
+                  }
+                  BIND (CONCAT('"http://www.w3.org/2000/01/rdf-schema#range":[',IF(?rangeVal='',CONCAT('{"rangeClass":"',STR(?ra),'","storageType":',?stoVal,'}'),?rangeVal),']') AS ?newRange)
+                  FILTER(?attrs!=rdfs:range)  
+              }
+          }
+          GROUP BY ?klClasses ?props ?properties ?newRange 
+        }
+        GROUP BY ?klClasses
+    }
+    BIND(CONCAT('"',STR(?klClasses),'"') AS  ?className) .
+  } 
+  GROUP BY ?klClasses 
+
+}
+}
+ORDER BY ?klClasses

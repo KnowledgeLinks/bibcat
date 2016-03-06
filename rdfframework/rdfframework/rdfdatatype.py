@@ -2,7 +2,7 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 from rdflib import RDF, RDFS, OWL, XSD
 
-from rdfframework.utilities import iri, uri
+from rdfframework.utilities import iri, uri, make_list
 from .getframework import get_framework as rdfw
 
 class RdfDataType(object):
@@ -48,7 +48,8 @@ class RdfDataType(object):
     def _find_type(self, class_uri, prop_uri):
         '''find the data type based on class_uri and prop_uri'''
         _rdf_class = getattr(rdfw(), class_uri)
-        _range = _rdf_class.kds_properties.get(prop_uri).get("rdfs_range")[0]
+        _range = make_list(_rdf_class.kds_properties.get(prop_uri).get(\
+                "rdfs_range"))[0]
         _range.get("storageType")
         if _range.get("storageType") == "literal":
             _range = _range.get("rangeClass")

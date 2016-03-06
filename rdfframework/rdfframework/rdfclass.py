@@ -87,7 +87,10 @@ class RdfClass(object):
             old_data = {}
         _prop_name_list = []
         if hasattr(self, "kds_primaryKey"):
-            pkey = make_list(self.kds_primaryKey)
+            pkey = self.kds_primaryKey
+            if isinstance(pkey, dict):
+                pkey = pkey.get("kds_keyCombo",[])
+            pkey = make_list(pkey)
         else:
             pkey = []
         if debug: print(self.kds_classUri, " PrimaryKeys: ", pkey, "\n")
@@ -118,8 +121,8 @@ class RdfClass(object):
                 #get the _data_value to test against
                 _data_value = _new_class_data.get(key, _old_class_data.get(key))
                 if is_not_null(_data_value):
-                    _range_obj = self.kds_properties[key].get(\
-                            "rdfs_range", [{}])[0]
+                    _range_obj = make_list(self.kds_properties[key].get(\
+                            "rdfs_range", [{}]))[0]
                     _data_type = _range_obj.get('storageType')
                     _range = _range_obj.get('rangeClass')
                     if debug: print("_data_type: ", _data_type)
@@ -155,7 +158,6 @@ class RdfClass(object):
             if _key_changed:
                 if len(pkey) > 1:
                     args = _multi_key_query_args
-                    x=y
                 else:
                     args = _query_args
                 sparql = '''
@@ -227,14 +229,14 @@ class RdfClass(object):
         creation of another object'''
         _dependent_list = set()
         for _prop in self.kds_properties:
-            _range_list = self.kds_properties[_prop].get('rdfs_range')
+            _range_list = make_list(self.kds_properties[_prop].get('rdfs_range'))
             for _row in _range_list:
                 if _row.get('storageType') == "object" or \
                         _row.get('storageType') == "blanknode":
                     _dependent_list.add(_prop)
         _return_obj = []
         for _dep in _dependent_list:
-            _range_list = self.kds_properties[_dep].get('rdfs_range')
+            _range_list = make_list(self.kds_properties[_dep].get('rdfs_range'))
             for _row in _range_list:
                 if _row.get('storageType') == "object" or \
                    _row.get('storageType') == "blanknode":
@@ -314,8 +316,8 @@ class RdfClass(object):
             # find the processors that will generate a value
             for _processor in _processors:
                 #print("processor: ", processor)
-                if _processor in _value_processors:
-                    _calc_list.add(self.kds_properties[_prop].get('kds_propUri'))
+                if _processor.get("rdf_type") in _value_processors:
+                    _calc_list.add(_prop)
         #any dependant properties will be generated at time of save
         _dependent_list = self.list_dependant()
         # properties that are dependant on another class will assume to be 
@@ -363,7 +365,7 @@ class RdfClass(object):
     def _process_class_data(self, rdf_obj):
         '''Reads through the processors in the defination and processes the
             data for saving'''
-        debug = True
+        debug = False
         _pre_save_data = {}
         _save_data = {}
         _processed_data = {}
@@ -371,7 +373,6 @@ class RdfClass(object):
         _required_props = self.list_required()
         _calculated_props = self._get_calculated_properties()
         _old_data = self._select_class_query_data(rdf_obj.query_data) 
-        
         # cycle through the form class data and add old, new, doNotSave and
         # processors for each property
         _class_obj_props = rdf_obj.class_grouping.get(self.kds_classUri,[])
@@ -384,14 +385,19 @@ class RdfClass(object):
         subject_uri = _old_data.get("!!!!subjectUri", "<>")
         for prop in _class_obj_props:
             _prop_uri = prop.kds_propUri
-            # gather all of the processors for the proerty
+            if debug:
+                if _prop_uri == "schema_image":
+                    x=y
+            # gather all of the processors for the property
             _class_prop = self.kds_properties.get(_prop_uri,{})
-            _class_prop_processors = set(clean_processors(make_list(\
-                    _class_prop.get("kds_propertyProcessing"))))
-            _form_prop_processors = set(clean_processors(make_list(\
-                    prop.kds_processors)))
-            processors = remove_null(\
-                    _class_prop_processors.union(_form_prop_processors))
+            _class_prop_processors = make_list(_class_prop.get("kds_propertyProcessing"))
+            _form_prop_processors = make_list(prop.kds_processors)
+            # clean the list of processors by sending a list based on 
+            # precedence i.e. the form processors should override the rdf_class
+            # processors
+            processors = clean_processors([_form_prop_processors,
+                                           _class_prop_processors],
+                                           self.kds_classUri)
             # remove the property from the list of required properties
             # required properties not in the form will need to be addressed
             _required_prop = False
@@ -427,9 +433,11 @@ class RdfClass(object):
         # remaing properties and add them to the _pre_save_data object
         for _prop_uri in _required_props:
             _class_prop = self.kds_properties.get(_prop_uri,{})
-            _class_prop_processors =\
-                    remove_null(make_set(clean_processors(make_list(\
-                            _class_prop.get("kds_propertyProcessing")))))
+            _class_prop_processors = clean_processors([make_list(\
+                            _class_prop.get("kds_propertyProcessing"))],
+                            self.kds_classUri)
+            if _prop_uri == "schema_alternativeName":
+                x=1
             # remove the prop from the remaining calculated props
             if _prop_uri in _calculated_props:
                 _calculated_props.remove(_prop_uri)
@@ -442,8 +450,7 @@ class RdfClass(object):
                          "required": True,
                          "editable": True,
                          "processors":_class_prop_processors,
-                         "defaultVal":_class_prop.get("kds_defaultVal"),
-                         "calculation": _class_prop.get("kds_calculation")}
+                         "defaultVal":_class_prop.get("kds_defaultVal")}
                 if debug: print("psave: ", _pre_save_data[_prop_uri])
             else:
                 _temp_list = make_list(_pre_save_data[_prop_uri])
@@ -454,8 +461,7 @@ class RdfClass(object):
                          "classUri": self.kds_classUri,
                          "editable": True,
                          "processors":_class_prop_processors,
-                         "defaultVal":_class_prop.get("kds_defaultVal"),
-                         "calculation": _class_prop.get("kds_calculation")})
+                         "defaultVal":_class_prop.get("kds_defaultVal")})
         
         # now deal with missing calculated properties. cycle through the
         # remaing properties and add them to the _pre_save_data object
@@ -463,17 +469,16 @@ class RdfClass(object):
         for _prop_uri in _calculated_props:
             if debug: print("########### _calculated_props: ")
             _class_prop = self.kds_properties.get(_prop_uri,{})
-            _class_prop_processors = \
-                    remove_null(make_set(clean_processors(make_list(\
-                    _class_prop.get("kds_propertyProcessing")))))
+            _class_prop_processors = clean_processors([make_list(\
+                    _class_prop.get("kds_propertyProcessing"))],
+                    self.kds_classUri)
             if not _pre_save_data.get(_prop_uri):
                 _pre_save_data[_prop_uri] =\
                         {"new":NotInFormClass(),
                          "old":_old_data.get(_prop_uri),
                          "doNotSave":False,
                          "processors":_class_prop_processors,
-                         "defaultVal":_class_prop.get("kds_defaultVal"),
-                         "calculation": _class_prop.get("kds_calculation")}
+                         "defaultVal":_class_prop.get("kds_defaultVal")}
             else:
                 _temp_list = make_list(_pre_save_data[_prop_uri])
                 _pre_save_data[_prop_uri] =\
@@ -482,8 +487,7 @@ class RdfClass(object):
                                  "old":_old_data.get(_prop_uri),
                                  "doNotSave":False,
                                  "processors":_class_prop_processors,
-                                 "defaultVal":_class_prop.get("kds_defaultVal"),
-                                 "calculation": _class_prop.get("kds_calculation")})
+                                 "defaultVal":_class_prop.get("kds_defaultVal")})
         # cycle through the consolidated list of _pre_save_data to
         # test the security, run the processors and calculate any values
         for _prop_uri, prop in _pre_save_data.items():
@@ -501,7 +505,7 @@ class RdfClass(object):
                         _pre_save_data[_prop_uri].remove(_prop_instance)
                 if len(make_list(_pre_save_data[_prop_uri])) == 1:
                     _pre_save_data[_prop_uri] = _pre_save_data[_prop_uri][0]
-            #doNotSave = prop.get("doNotSave", False)
+            # doNotSave = prop.get("doNotSave", False)
         for _prop_uri, _prop in _pre_save_data.items():
             # send each property to be proccessed
             if _prop:
@@ -513,13 +517,9 @@ class RdfClass(object):
                 _pre_save_data = obj["preSaveData"]
         if debug: print("PreSaveData----------------")
         if debug: print(json.dumps(dumpable_obj(_pre_save_data), indent=4))
-            
         _save_data = {"data":self.__format_data_for_save(_processed_data,
                                                          _pre_save_data),
                       "subjectUri":subject_uri}
-
-        
-
         return _save_data
 
     def _generate_save_query(self, save_data_obj, subject_uri=None):
@@ -629,6 +629,8 @@ class RdfClass(object):
 
     def _process_prop(self, obj):
         # obj = propUri, prop, processedData, _pre_save_data
+        # !!!!!!! the merge_prop function will need to be relooked for 
+        # instances where we have multiple property entries i.e. a fieldList
         if len(make_list(obj['prop'])) > 1:
             obj = self.__merge_prop(obj)
         processors = obj['prop'].get("processors", [])
@@ -640,7 +642,7 @@ class RdfClass(object):
                 # run all processors: the processor determines how to
                 # handle if there is old data
                 if len(processors) > 0:
-                    for processor in processors:
+                    for processor in processors.values():
                         obj = run_processor(processor, obj)
                 # if the processors did not calculate a value for the
                 # property attempt to calculte from the default
@@ -666,7 +668,7 @@ class RdfClass(object):
                 # if the property has new data
                 elif is_not_null(obj['prop'].get("new")):
                     if len(processors) > 0:
-                        for processor in processors:
+                        for processor in processors.values():
                             obj = run_processor(processor, obj)
                         if not obj['prop'].get('calcValue', False):
                             obj['processedData'][_prop_uri] = \
@@ -685,10 +687,11 @@ class RdfClass(object):
         the only case is an image '''
         #_prop_list = obj['prop']
         _keep_image = -1
-        for i, prop in enumerate(obj['prop']):
-            _keep_image = i
+        
+        for i, prop in enumerate(obj['prop']):       
             if isinstance(prop['new'], FileStorage):
                 if prop['new'].filename:
+                    _keep_image = i
                     break
         for i, prop in enumerate(obj['prop']):
             if i != _keep_image:
@@ -736,8 +739,8 @@ class RdfClass(object):
                 # some properties have more than one option for the object 
                 # value i.e. schema:image can either store a ImageObject or
                 # a Url to an image. We need to determine the range options
-                _range_list = self.kds_properties[_prop_uri].get(\
-                        "rdfs_range", [{}])
+                _range_list = make_list(self.kds_properties[_prop_uri].get(\
+                        "rdfs_range", [{}]))
                 _storage_types = set()
                 _data_types = set()
                 # cycle through the range_list and get the sets of options

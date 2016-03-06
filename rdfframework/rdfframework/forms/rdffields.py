@@ -15,7 +15,7 @@ from rdfframework.forms.widgets import BsGridTableWidget, RepeatingSubFormWidget
 def get_field_json(field, instructions, instance, user_info, item_permissions=None):
     '''This function will read through the RDF defined info and proccess the
 	json to return the correct values for the instance, security and details'''
-
+    debug = False
     if item_permissions is None:
         item_permissions = []
     _rdf_app = rdfw().app
@@ -87,7 +87,9 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _new_field['kds_processors'] = make_list(_form_instance_info.get('kds_formProcessing', []))
     _new_field['kds_processors'] += make_list(field.get('kds_formProcessing', []))
     _new_field['kds_processors'] += make_list(field.get('kds_propertyProcessing', []))
-
+    if debug:
+        if field['kds_propUri'] == "schema_image":
+            x=y
     # get required state
     _required = False
     _field_req_var = cbool(field.get('kds_requiredField'))

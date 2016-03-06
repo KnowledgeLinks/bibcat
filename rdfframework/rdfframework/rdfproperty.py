@@ -3,6 +3,7 @@ class RdfProperty(object):
         for key, value in prop_list.items():
             setattr(self, key, value)
         self.data = data
+        self.default_value = None
         self.old_data = None
         self.processed_data = None
         self.query_data = None

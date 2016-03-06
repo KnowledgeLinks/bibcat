@@ -61,7 +61,7 @@ class UniqueValue(object):
 
     def __call__(self, form, field):
         # get the test query
-        debug = False
+        debug = True
         _sparql = self._make_unique_value_qry(form, field)
         if debug: print(_sparql)
         # run the test query
@@ -82,11 +82,12 @@ class UniqueValue(object):
 
 
     def _make_unique_value_qry(self, form, field):
+        debug = False
         _sparql_args = []
         # determine the property and class details of the field
         _prop_uri = field.kds_propUri
         _class_uri = field.kds_classUri
-        _range = field.kds_range
+        _range = field.rdfs_range
 
         # make the base triples for the query
         if _prop_uri:
@@ -99,13 +100,15 @@ class UniqueValue(object):
                                             _data_value))
         # see if the form is based on a set of triplestore data. if it is
         # remove that triple from consideration in the query
-        if hasattr(form, "dataSubjectUri"):
+        
+        if hasattr(form, "data_subject_uri"):
             _subject_uri = form.data_subject_uri
             _lookup_class_uri = form.data_class_uri
             # if the subject class is the same as the field class
             if _lookup_class_uri == _class_uri and _subject_uri:
                 _sparql_args.append("FILTER(?uri!={}) .".format(\
                         iri(_subject_uri)))
+            if debug: x=y
             # If not need to determine how the subject is related to the field
             # property
             elif _subject_uri:
