@@ -535,20 +535,14 @@ class RdfFramework(object):
                                                     'RDF_DEFINITION_GRAPH'))
             _class_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                         data={"query": _sparql, "format": "json"})
-            _string_defs = _class_list.json().get(\
-                    'results').get('bindings')[0]['appClasses']['value']
-            _json_defs = json.loads(_string_defs)
+            _raw_json = _class_list.json().get(\
+                    'results').get('bindings')[0]['klClasses']['value']
+            _string_defs = _raw_json.replace('hasProperty":', 'properties":')
+            _json_defs = json.loads(_string_defs) 
             with open(
                 os.path.join(JSON_LOCATION,"class_query.json"), 
                 "w") as file_obj:
                 file_obj.write( _string_defs )
-            _raw_json = _class_list.json().get(\
-                    'results').get('bindings')[0]['klClasses']['value']
-            _string_defs = _raw_json.replace('hasProperty":', 'properties":')
-            file_obj = open(JSON_LOCATION + "\\class_query.json", "w")
-            file_obj.write( _string_defs )
-            file_obj.close()
-            _json_defs = json.loads(_string_defs) 
         else:
             with open(
                 os.path.join(JSON_LOCATION, "class_query.json")) as file_obj:
@@ -595,13 +589,14 @@ class RdfFramework(object):
                     )[0]['appApis']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
             _json_defs = json.loads(_string_defs)
-            file_obj = open(JSON_LOCATION + "\\api_query.json", "w")
-            file_obj.write( _string_defs )
-            file_obj.close()
+            with open(
+                os.path.join(JSON_LOCATION, "api_query.json"),
+                "w") as file_obj:
+                file_obj.write( _string_defs )
         else:
-            file_obj = open(JSON_LOCATION + "\\api_query.json")
-            _json_defs = json.loads(file_obj.read())
-            file_obj.close()   
+            with open(
+                os.path.join(JSON_LOCATION, "api_query.json")) as file_obj:
+                _json_defs = json.loads(file_obj.read())
         return _json_defs
         
     def _validate_obj_by_class_reqs(self, rdf_obj):
