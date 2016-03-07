@@ -209,6 +209,8 @@ def calculation_processor(processor, obj, prop, mode="save"):
         _calc_type = processor.get('kds_calculationType')
         if _calc_type == "kdr_Concat":
             calculator_concat(processor, obj, prop, mode)
+        elif _calc_type == "kdr_ObjectGenerator":
+            calculator_object_generator(processor, obj, prop, mode)
 
     return obj
 
@@ -252,25 +254,46 @@ def clean_processors(processor_list_of_list, _class_uri=None):
         x=1
     return _return_obj
 
-def calculator_concat(processor, obj, prop, mode="save"):
+def calculate_value(value, obj, prop):
+    if value.startswith("<<"):
+        _lookup_value = _item.replace("<<","").replace(">>","")
+        if "|" in _lookup_value:
+            value_array = _lookup_value.split("|")
+            _lookup_value = value_array[0]
+            _class_uri = value_array[1]
+        else:
+            _class_uri = iri(prop.kds_classUri)
+        _query_data = obj.query_data
+        for _subject, _data in _query_data.items():
+            if _class_uri in make_list(_data.get("rdf_type")):
+                return _data.get(pyuri(_lookup_value))
+    elif _item.startswith("!--"):
+        if _item == "!--api_url":
+            return_val = obj.api_url
+        if _item == "!--base_url":
+            return_val = obj.base_url
+        if _item == "!--base_api_url":
+            return_val = obj.base_api_url 
+        return return_val
+    else:
+        return value
+           
+def calculator_concat(processor, obj, prop, mode="save", return_type="prop"):
     ''' Does a concatition based on the the provided args and kwargs '''
     _seperator = processor.get("kds_calculationSeparator",",")
     _calc_string = processor.get("kds_calculation")
     _concat_list = make_list(_calc_string.split(_seperator))
     for i, _item in enumerate(_concat_list):
-        if _item.startswith("<<"):
-            _lookup_value = _item.replace("<<","").replace(">>","")
-            _class_uri = iri(prop.kds_classUri)
-            _query_data = obj.query_data
-            for _subject, _data in _query_data.items():
-                if _class_uri in make_list(_data.get("rdf_type")):
-                    _concat_list[i] = _data.get(pyuri(_lookup_value))
-                    break
-        elif _item.startswith("!--"):
-            if _item == "!--api_url":
-                _concat_list[i] = obj.api_url
-            if _item == "!--base_url":
-                _concat_list[i] = obj.base_url
-            if _item == "!--base_api_url":
-                _concat_list[i] = obj.base_api_url
-    prop.processed_data = "".join(_concat_list)  
+        _concat_list[i] = calculate_value(_item, obj, prop)
+    if return_type == "prop":
+        prop.processed_data = "".join(_concat_list)
+    else:
+        return "".join(_concat_list)
+     
+   
+def calculator_object_generator(processor, obj, prop, mode):   
+    ''' returns and object of calculated values '''
+    
+    object_list = make_list(processor.get("kds_calculationObject")
+    for _object in object_list:
+        

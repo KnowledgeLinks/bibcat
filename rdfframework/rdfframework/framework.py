@@ -31,7 +31,7 @@ class RdfFramework(object):
     apis_initialized = False
 
     def __init__(self):
-        reset = True     
+        reset = True
 
         if DEBUG:
             print("*** Loading Framework ***")

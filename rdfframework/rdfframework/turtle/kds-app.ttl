@@ -1534,3 +1534,129 @@ obi:OrganizationImageApi a kds:ApiClass;
 		kds:classUri schema:Organization;
 		kds:apiFieldName "image";
 	].
+
+obi:AssertionImageApi a kds:ApiClass;
+	rdfs:label "Assertion Image";
+	rdfs:comment "This api returns an open badge assertion image.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri obi:Assertion;
+		kds:subjectUriTransform kdr:UidToRepositoryUri;
+		kds:apiUrl "assertion";
+		kds:apiUrlExtension "png";
+		kds:returnType "file";
+		kds:mimeType "image/png"
+	];
+	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri schema:Assertion;
+		kds:apiFieldName "image";
+	].	
+	
+obi:AssertionApi a kds:ApiClass;
+	rdfs:label "Asseriton Definition";
+	rdfs:comment "This api returns an open badge assertion.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri obi:Assertion;
+		kds:subjectUriTransform kdr:UidToRepositoryUri;
+		kds:apiUrl "assertion";
+		kds:apiUrlExtension "json";
+		kds:returnType "json"
+	];
+	kds:hasProperty [
+		kds:propUri kds:StaticValue;
+		kds:returnValue "https://w3id.org/openbadges/v1";	
+		kds:classUri kds:NoClass;
+		kds:apiFieldName "@context";
+	];
+	kds:hasProperty [
+		kds:propUri kds:StaticValue;
+		kds:returnValue "Assertion";	
+		kds:classUri kds:NoClass;
+		kds:apiFieldName "type";
+	];
+	kds:hasProperty [
+		kds:propUri obi:recipient;
+		kds:classUri obi:Assertion;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:UriTruncation;
+			kds:calculationField "!--subjectUri";
+			kds:calculation "!--afterLastSlash"
+		] ;
+		kds:apiFieldName "uid";
+	];
+	kds:hasProperty [
+		kds:propUri schema:email;
+		kds:classUri schema:Person;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:ObjectGenerator;
+			kds:returnType "json";
+			kds:calculationObject [
+				kds:objectKey "type";
+				kds:objectValue "email";
+				kds:calculationSeparator ","
+			];
+			kds:calculationObject [
+				kds:objectKey "hashed";
+				kds:objectValue "true";
+				kds:calculationSeparator ","
+			];
+			kds:calculationObject [
+				kds:objectKey "salt";
+				kds:objectValue "<<obi:salt|obi:Assertion>>";
+				kds:calculationSeparator ","
+			];
+			kds:calculationObject [
+				kds:objectKey "identity";
+				kds:objectValue "<<schema:email>>";
+				kds:calculationType kdr:ValueHasher;
+			]
+		] ;
+		kds:apiFieldName "recipient";
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri obi:Assertion;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--base_api_url,assertion/,kdr:UriTruncation||!--subjectUri||!--afterLastSlash,.png"
+		] ;
+		kds:apiFieldName "image";
+		
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri obi:BadgeClass;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--base_api_url,badge/,<<schema:alternativeName>>,.json"
+		] ;
+		kds:apiFieldName "badge";
+	];
+	kds:hasProperty [
+		kds:propUri obi:recipient;
+		kds:classUri obi:Assertion;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:ObjectGenerator;
+			kds:returnType "json";
+			kds:calculationObject [
+				kds:objectKey "type";
+				kds:objectValue "hosted"
+			];
+			kds:calculationObject [
+				kds:objectKey "hashed";
+				kds:objectValue "true";
+				kds:calculationSeparator ","
+			]
+		] ;
+		kds:apiFieldName "verify";
+	].
+	
