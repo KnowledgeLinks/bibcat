@@ -31,10 +31,11 @@ def get_api_field_json(field, instructions, instance, user_info, item_permission
     except:
         _class_prop = {}
     # merge the class prop attributes with the api prop
-    field = {**_class_prop, **field} 
-    #temp_field = _class_prop.copy()
-    #temp_field.update(field)
-    #field = temp_field
+
+    #field = {**_class_prop, **field} 
+    temp_field = _class_prop.copy()
+    temp_field.update(field)
+    field = temp_field
 
     # Determine Security Access
     _new_field = {}
@@ -132,7 +133,7 @@ def get_api_field_json(field, instructions, instance, user_info, item_permission
     
 def get_api_field(field, instance='', **kwargs):
     ''' return an API field '''
-    if DEBUG: debug = True
+    if DEBUG: debug = True
     else: debug = False
     _api_field = RdfProperty(field)
     _api_field.default_value = calculate_default_value(field)
