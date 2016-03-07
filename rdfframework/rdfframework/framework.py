@@ -6,14 +6,14 @@ import requests
 from wtforms import ValidationError
 from werkzeug.datastructures import MultiDict
 from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
-        remove_null, clean_iri, make_triple, convert_spo_to_dict, DEBUG, \
+        remove_null, clean_iri, make_triple, convert_spo_to_dict, \
         render_without_request, code_timer, create_namespace_obj, \
         convert_obj_to_rdf_namespace, pyuri, nouri, uri, pp, iris_to_strings, \
         JSON_LOCATION 
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from .rdfproperty import RdfProperty
-
+DEBUG = False
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
         framework'''
@@ -32,16 +32,14 @@ class RdfFramework(object):
 
     def __init__(self):
         reset = True
-
-        if DEBUG:
-            print("*** Loading Framework ***")
+        
+        print("*** Loading Framework ***")
         self._load_rdf_data(reset)
         self._load_app(reset)
         self._generate_classes(reset)
         self._generate_forms(reset)
         self._generate_apis(reset)
-        if DEBUG:
-            print("*** Framework Loaded ***")
+        print("*** Framework Loaded ***")
 
     def user_authentication(self, rdf_obj):
         ''' reads the object for authentication information and sets the
@@ -290,7 +288,11 @@ class RdfFramework(object):
         subject_uri: the URI for the subject
         class_uri: the rdf class of the subject
         '''
-        debug = False
+        if DEBUG:
+            debug = True
+        else:
+            debug = False
+        if debug: print("START get_obj_data ---------------------------\n")
         _class_uri = kwargs.get("class_uri", rdf_obj.data_class_uri)
         _lookup_class_uri = _class_uri
         subject_uri = kwargs.get("subject_uri", rdf_obj.data_subject_uri)
@@ -320,7 +322,7 @@ class RdfFramework(object):
                                                   subject_uri=subject_uri,
                                                   class_uri=_lookup_class_uri)
         _query_data = convert_spo_to_dict(convert_obj_to_rdf_namespace(\
-                    get_data(rdf_obj, **kwargs)))
+                    get_data(rdf_obj, **kwargs)), "subject", rdf_obj.xsd_load)
         rdf_obj.query_data = _query_data
         if debug: pp.pprint(_query_data)
         # compare the return results with the form fields and generate a
@@ -332,7 +334,7 @@ class RdfFramework(object):
             for _prop in rdf_obj.rdf_field_list:
                 _prop_uri = _prop.kds_propUri
                 _class_uri = _prop.kds_classUri
-                _data_value = None
+                _data_value = None 
                 if "subform" in _prop.kds_fieldType.get("rdf_type",'').lower():
                     for i, _data in enumerate(make_list(\
                             _subform_data.get("obj_data"))):
@@ -361,20 +363,14 @@ class RdfFramework(object):
                             if _prop.kds_propUri == "schema_image": x=y
                     if _prop.kds_propUri == "kds_StaticValue":
                         _prop.processed_data = _prop.kds_returnValue
-                        _data_value = _prop.kds_returnValue
+                        prop_old_data = _prop.kds_returnValue
                     if _prop.processed_data is not None:
-                        #print(_prop_uri, " __ ", _prop.query_data, "--pro--", _prop.processed_data)
-                        #_prop.old_data = _prop.processed_data
+                        if debug: print(_prop_uri, " __ ", type(_prop), "--pro--", _prop.processed_data)
                         prop_old_data = _prop.processed_data
                         _prop.processed_data = None
                     else:
                         prop_old_data = prop_query_data
-                        #_prop.old_data = _prop.query_data
-                        #print(_prop_uri, " __ ", _prop.query_data, "--old--", _prop.old_data)
-                    #if _prop.data is None and _prop.old_data is not None:
-                    #    _prop.data = _prop.old_data
-                    #    _data_value = _prop.data
-                    if _data_value is not None:
+                    if prop_old_data is not None:
                         if hasattr(_prop,"kds_formFieldName"):
                             _obj_data[_prop.kds_formFieldName] = prop_old_data 
                         elif hasattr(_prop,"kds_apiFieldName"):
@@ -388,6 +384,7 @@ class RdfFramework(object):
         else:
             _obj_data_dict = MultiDict()
         _obj_data = iris_to_strings(_obj_data)
+        if debug: print("END get_obj_data ---------------------------\n")
         return {"obj_data":_obj_data_dict,
                 "obj_json":_obj_data,
                 "query_data":_query_data,

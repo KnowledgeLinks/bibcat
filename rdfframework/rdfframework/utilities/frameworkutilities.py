@@ -1,6 +1,5 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-
 import os
 import re
 import copy
@@ -38,23 +37,25 @@ def render_without_request(template_name, **template_vars):
     return template.render(**template_vars)
     
 
-def cbool(value):
+def cbool(value, strict=True):
     ''' converts a value to true or false. Python's default bool() function
     does not handle 'true' of 'false' strings '''
-    
+    return_val = value
     if is_not_null(value):
         if isinstance(value, bool):
-            return value
+            return_val = value
         elif isinstance(value, str):
-            if value.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', \
-                    'certainly', 'uh-huh']:
-                return True
+            if value.lower() in ['true', '1', 't', 'y', 'yes']:
+                return_val = True
             elif value.lower() in ['false', '0', 'n', 'no']:
-                return False
+                return_val = False
             else:
-                return None
+                if strict:
+                    return_val = None
     else:
-        return None
+        if strict:
+            return_val = None
+    return return_val
 
 
 def iri(uri_string):
@@ -112,7 +113,15 @@ def make_set(value):
         _return_set.add(value)
     return _return_set
 
-
+def uid_to_repo_uri(id_value):
+    if id_value:
+        _uri = "{}/{}/{}/{}/{}/{}".format(fw_config().get('REPOSITORY_URL'),
+                                          id_value[:2],
+                                          id_value[2:4],
+                                          id_value[4:6],
+                                          id_value[6:8],
+                                          id_value)
+        return _uri
     
 def fw_config(**kwargs):
     ''' function returns the application configuration information '''

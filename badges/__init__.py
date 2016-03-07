@@ -35,8 +35,6 @@ try:
 except ImportError:
     from wtforms import Form
 from jinja2 import Environment, FileSystemLoader, PackageLoader
-from .graph import *
-from .forms import NewAssertion, NewBadgeClass
 from wsgiref import simple_server
 from wtforms.fields import *
 

@@ -8,15 +8,15 @@ import re
 import io
 import json
 import requests
+import falcon
 from flask import abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for, send_file
 from flask_negotiate import produces
 from flask.ext.login import login_required, login_user
 
 from . import new_badge_class, issue_badge
-from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from rdfframework.utilities import render_without_request, code_timer, \
-        remove_null, pp, clean_iri
+        remove_null, pp, clean_iri, uid_to_repo_uri
 from rdfframework import get_framework as rdfw
 from rdfframework.forms import rdf_framework_form_factory 
 from rdfframework.api import rdf_framework_api_factory
@@ -49,13 +49,7 @@ def base_path():
 @open_badge.route("/image/<image_id>", methods=["GET"])
 def image_path(image_id):
     ''' view passes the specified fedora image based on the uuid'''
-    _repo_image_uri = "{}/{}/{}/{}/{}/{}".format(\
-            open_badge.config.get('REPOSITORY_URL'),
-            image_id[:2],
-            image_id[2:4],
-            image_id[4:6],
-            image_id[6:8],
-            image_id)
+    _repo_image_uri = uid_to_repo_uri(image_id)
     repo_image_link = urllib.request.urlopen(_repo_image_uri)
     image = repo_image_link.read()  
     return send_file(io.BytesIO(image),
@@ -165,6 +159,7 @@ def rdf_api(api_name, id_value=None, ext=None):
     params:
         id -- the item to lookup 
     """
+    api_repsonder = falcon.API()
     _api_path = "|".join(remove_null([api_name, ext]))
     _api_exists = rdfw().api_exists(_api_path)
     if _api_exists is False:
@@ -194,12 +189,12 @@ def rdf_api(api_name, id_value=None, ext=None):
             api.save()
             if api.save_state == "success":
                 return api.return_message
-    # if not POST, check the args and form instance
+    # if not POST, check the args and api instance/extension
     else:
         api = api_class()
         api_data = rdfw().get_obj_data(api, id_value=id_value)
         #pp.pprint(api_data['form_data'])
-        if not (len(api_data['obj_json']) > 0):
+        if not (len(api_data['query_data']) > 0):
             return render_template(
                 "error_page_template.html",
                 error_message="The item does not exist") 

@@ -2,7 +2,7 @@ import requests
 import copy
 from rdfframework import get_framework as rdfw
 from rdfframework.utilities import fw_config, make_triple, iri, uri,\
-        is_not_null, render_without_request, make_list, pp
+        is_not_null, render_without_request, make_list, pp, uid_to_repo_uri
 DEBUG = False
 
 def get_data(obj, **kwargs):
@@ -28,13 +28,23 @@ def create_data_sparql_query(obj, **kwargs):
     if DEBUG:
         debug = True
     else:
-        debug = True
+        debug = False
+    if debug: print("START create_data_sparql_query -----------------------\n")
     from rdfframework import RdfDataType
     subject_uri = kwargs.get("subject_uri", obj.data_subject_uri)
     _class_uri = kwargs.get("class_uri", obj.data_class_uri)
     _formated_val = None
     _lookup_triple = ""
-    if kwargs.get("id_value"):
+    if obj.rdf_instructions.get("kds_subjectUriTransform"):
+        if obj.rdf_instructions.get("kds_subjectUriTransform") == \
+                "kdr_UidToRepositoryUri":
+            id_value = kwargs.get("id_value") 
+            if kwargs.get("id_value"):
+                id_value = kwargs.get("id_value")
+                _subject_uri = uid_to_repo_uri(id_value)
+                subject_uri = _subject_uri
+                obj.data_subject_uri = _subject_uri
+    elif kwargs.get("id_value"):
         # find the details for formating the sparql query for the supplied
         # id_value
         _kds_propUri = obj.rdf_instructions.get("kds_lookupPropertyUri")
@@ -210,6 +220,7 @@ def create_data_sparql_query(obj, **kwargs):
         if debug:
             print("SPARQL query")
             print(_sparql)
+        if debug: print("END create_data_sparql_query ---------------------\n")
         return _sparql
                                          
 def query_select_options(field):

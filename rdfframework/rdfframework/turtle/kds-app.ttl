@@ -623,13 +623,12 @@ schema:familyName a rdf:Property;
 schema:email a rdf:Property;	
 	rdfs:domain	schema:Person;	
 	rdfs:domain schema:Organization;
-	rdfs:requiredByDomain schema:Organization;
 	rdfs:range	xsd:string;	
 	rdfs:comment "email address.";
+	kds:requiredByDomain schema:Person;
 	kds:propertyProcessing [
 		a kdr:EmailVerificationProcessor
 	];                   
-	kds:requiredByDomain schema:Person;
 	kds:propertyValidation [
 		a kdr:EmailValidator
 	];
@@ -1078,6 +1077,7 @@ kdr:Badge a kds:FormClass;
 	];
 	kds:hasProperty [
 		kds:propUri schema:description;
+		kds:classUri obi:BadgeClass;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
 	];
@@ -1145,6 +1145,24 @@ obi:AssertionForm a kds:FormClass;
 		acl:mode acl:read
 	];
 	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri obi:BadgeClass;
+		kds:formFieldOrder .5;
+		kds:formLayoutRow 1;
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+			kds:formLabelName " ";
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+	];
+	kds:hasProperty [
 		kds:propUri obi:hasBadge;
 		kds:classUri obi:Assertion;
 		kds:formFieldOrder 1;
@@ -1159,7 +1177,7 @@ obi:AssertionForm a kds:FormClass;
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:DisplayForm;
-			kds:formLabelName "Badge Name"
+			kds:formLabelName "Badge Name";
 		];
 	];
 	kds:hasProperty [
@@ -1571,6 +1589,40 @@ obi:AssertionApi a kds:ApiClass;
 		kds:apiFieldName "@context";
 	];
 	kds:hasProperty [
+		kds:propUri obi:issuedOn;
+		kds:classUri obi:Assertion;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--api_url"
+		] ;
+		kds:apiFieldName "id";
+		
+	];
+	kds:hasProperty [
+		kds:propUri obi:issuedOn;
+		kds:classUri obi:Assertion;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:DateConvertor;
+			kds:calculation "Unix timestamp"
+		] ;
+		kds:apiFieldName "issuedOn";
+		
+	];
+	kds:hasProperty [
+		kds:propUri obi:expires;
+		kds:classUri obi:Assertion;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:DateConvertor;
+			kds:calculation "Unix timestamp"
+		] ;
+		kds:apiFieldName "expires";
+		
+	];
+	kds:hasProperty [
 		kds:propUri kds:StaticValue;
 		kds:returnValue "Assertion";	
 		kds:classUri kds:NoClass;
@@ -1606,7 +1658,7 @@ obi:AssertionApi a kds:ApiClass;
 			];
 			kds:calculationObject [
 				kds:objectKey "salt";
-				kds:objectValue "<<obi:salt|obi:Assertion>>";
+				kds:objectValue "<<kds:salt|obi:Assertion>>";
 				kds:calculationSeparator ","
 			];
 			kds:calculationObject [
@@ -1624,10 +1676,9 @@ obi:AssertionApi a kds:ApiClass;
 			a kdr:CalculationProcessor;
 			kds:calculationType kdr:Concat;
 			kds:calculationSeparator ",";
-			kds:calculation "!--base_api_url,assertion/,kdr:UriTruncation||!--subjectUri||!--afterLastSlash,.png"
+			kds:calculation "!--base_api_url,assertion/,kds:calculationType|kdr:UriTruncation||kds:calculationField|!--subjectUri||kds:calculation|!--afterLastSlash,.png"
 		] ;
 		kds:apiFieldName "image";
-		
 	];
 	kds:hasProperty [
 		kds:propUri schema:alternativeName;
@@ -1652,8 +1703,8 @@ obi:AssertionApi a kds:ApiClass;
 				kds:objectValue "hosted"
 			];
 			kds:calculationObject [
-				kds:objectKey "hashed";
-				kds:objectValue "true";
+				kds:objectKey "url";
+				kds:objectValue "!--api_url";
 				kds:calculationSeparator ","
 			]
 		] ;

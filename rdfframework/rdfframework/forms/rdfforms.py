@@ -44,6 +44,8 @@ class Form(flask_wtf.Form):
 
     def __init__(self, *args, **kwargs):
         super(Form, self).__init__(*args, **kwargs)
+        self.obj_type = "form"
+        self.xsd_load = "string"
         self.form_changed = False
         self.base_url = kwargs.get("base_url", self.base_url)
         self.current_url = kwargs.get("current_url", self.current_url)

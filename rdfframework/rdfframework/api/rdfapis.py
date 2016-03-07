@@ -16,6 +16,8 @@ class Api(object):
     ''' This class is used for a rdfframework API '''
 
     def __init__(self, *args, **kwargs):
+        self.obj_type = "api"
+        self.xsd_load = "python"
         self.id_value = kwargs.get("id_value")
         self.api_changed = False
         self.base_url = kwargs.get("base_url", self.base_url)
@@ -283,7 +285,10 @@ def get_api_instructions_json(instructions, instance):
                                     instructions.get("kds_returnType", ""))
     _new_instr['kds_mimeType'] = \
             _api_instance_info.get('kds_mimeType',
-                                    instructions.get("kds_mimeType", ""))                                
+                                    instructions.get("kds_mimeType", ""))  
+    _new_instr['kds_subjectUriTransform'] = \
+            _api_instance_info.get('kds_subjectUriTransform',
+                                    instructions.get("kds_subjectUriTransform", ""))                                                                                               
     return _new_instr
 
 
