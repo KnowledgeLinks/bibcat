@@ -16,5 +16,6 @@ vocabulary.
 from .getframework import get_framework
 from .rdfclass import RdfClass
 from .rdfdatatype import *
+from .rdfproperty import *
 
 __version__ = '0.0.1'

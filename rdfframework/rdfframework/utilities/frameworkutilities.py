@@ -59,6 +59,8 @@ def cbool(value):
 
 def iri(uri_string):
     "converts a string to an IRI or returns an IRI if already formated"
+    if uri_string[:1] == "?":
+        return uri_string
     if uri_string[:1] == "[":
         return uri_string
     if uri_string[:1] != "<":

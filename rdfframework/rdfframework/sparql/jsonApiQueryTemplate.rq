@@ -1,0 +1,139 @@
+PREFIX obi: <https://w3id.org/openbadges#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX kds: <http://knowledgelinks.io/ns/data-structures/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX acl: <http://www.w3.org/ns/auth/acl#>
+PREFIX schema: <https://schema.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX kdr: <http://knowledgelinks.io/ns/data-resources/>
+SELECT *
+{
+	GRAPH <http://knowledgelinks.io/ns/application-framework/>
+	{
+		SELECT (CONCAT("{",GROUP_CONCAT(?classes; SEPARATOR=','),"}") AS ?appApis)
+		{
+			{
+				SELECT ?klApi (COUNT(?klApi) AS ?poTest) (GROUP_CONCAT(?pV; SEPARATOR=',') as ?po) 
+				{
+					{
+						SELECT ?klApi ?p  (GROUP_CONCAT(?oVf; SEPARATOR=',') as ?oa) (COUNT(?p) AS ?oaTest)
+						{
+							{
+								SELECT ?klApi ?p ?o  (GROUP_CONCAT(?pV1; SEPARATOR=',') as ?p1o) (COUNT(?p) AS ?p1oTest)
+								{
+									{
+										SELECT ?klApi ?p ?o ?p1 (GROUP_CONCAT(?oV1; SEPARATOR=',') as ?o1a) (COUNT(?p1) AS ?o1aTest)
+										{
+											{
+												SELECT ?klApi ?p ?o ?p1 ?o1 (GROUP_CONCAT(?pV2; SEPARATOR=',') as ?p2o) (COUNT(?o1) AS ?p2oTest)
+												{
+													{
+														SELECT ?klApi ?p ?o ?p1 ?o1 ?p2 (GROUP_CONCAT(?oV2; SEPARATOR=',') as ?o2a) (COUNT(?p2) AS ?o2aTest)
+														{
+															{
+																SELECT ?klApi ?p ?o ?p1 ?o1 ?p2 ?o2 (GROUP_CONCAT(?pV3; SEPARATOR=',') as ?p3o) (COUNT(?o2) AS ?p3oTest)
+																{
+																	{
+																		SELECT ?klApi ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 (GROUP_CONCAT(?oV3; SEPARATOR=',') as ?o3a) (COUNT(?p3) AS ?o3aTest)
+																		{
+																			{
+																				SELECT ?klApi ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
+																				{
+																					{
+																						# Get all of the main Api attributes
+																						?klApi a kds:ApiClass .
+																						?klApi ?p ?o
+																						# pull all the blank node values 3 levels down
+																						OPTIONAL {
+																							?o ?p1_ ?o1_. 
+																							filter(isblank(?o))
+																							OPTIONAL {
+																								?o1_ ?p2_ ?o2_
+																								filter(isblank(?o1_))
+																								OPTIONAL {
+																									?o2_ ?p3_ ?o3_
+																									filter(isBlank(?o2_))
+																								}
+																							}
+																						}
+																					} UNION {
+																						# add triple for the apiUri
+																						?klApi a kds:ApiClass .
+																						BIND (kds:apiUri as ?p)
+																						BIND (?klApi as ?o)
+																					} 
+																					# add and emptry string for all the unbound results. 
+																					# This is required of GROUP_CONCAT()
+																					BIND(IF(bound(?p1_),?p1_,"") AS ?p1)
+																					BIND(IF(bound(?o1_),?o1_,"") AS ?o1)
+																					BIND(IF(bound(?p2_),?p2_,"") AS ?p2)
+																					BIND(IF(bound(?o2_),?o2_,"") AS ?o2)
+																					BIND(IF(bound(?p3_),?p3_,"") AS ?p3)
+																					BIND(IF(bound(?o3_),?o3_,"") AS ?o3)
+																				}
+																			}
+																			BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o3),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?oV3)
+																		}
+																		GROUP BY ?klApi ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3
+																	}
+																	BIND(IF(?o3aTest>1,true,false)AS?o3aTestResult) .
+																	BIND(IF(?o3a!='""',true,false)AS?o3aShow) .
+																	BIND(isBlank(?o2) AS ?level3Blank) .
+																	BIND(IF(?o3aShow&&?level3Blank,CONCAT('"',STR(?p3),'":',IF(?o3aTestResult,"[",""),?o3a,IF(?o3aTestResult,"]","")),"") as ?pV3)
+																}
+																GROUP BY ?klApi ?p ?o ?p1 ?o1 ?p2 ?o2
+															}
+															BIND(IF(?p3oTest>1||isblank(?o2),true,false)AS?p3oTestResult) .
+															BIND(IF(?o2!='',true,false)AS?o2Show) .
+															BIND(isBlank(?o2) AS ?level3pBlank) .
+															BIND(IF(?level3pBlank,
+																					CONCAT(IF(?p3oTestResult,"{",""),?p3o,IF(?p3oTestResult,"}","")),
+																					IF(?o2Show,CONCAT('"',str(?o2),'"'),"")) AS ?oV2)
+														}
+														GROUP BY ?klApi ?p ?o ?p1 ?o1 ?p2
+													}																		
+													BIND(IF(STRSTARTS(?o2a,'"keyCombo":'),CONCAT("{",?o2a,"}"),?o2a) AS ?o2am) .
+													BIND(IF(?o2aTest>1,true,false)AS?o2aTestResult) .
+													BIND(IF(?o2a!='',true,false)AS?o2aShow) .
+													BIND(isBlank(?o1) AS ?level2Blank) .
+													BIND(IF(?o2aShow,CONCAT('"',STR(?p2),'":',IF(?o2aTestResult,"[",""),?o2am,IF(?o2aTestResult,"]","")),"") as ?pV2)
+												}
+												GROUP BY ?klApi ?p ?o ?p1 ?o1
+											}
+											BIND(isBlank(?o1) as ?trueBlank) .
+											BIND(IF(bound(?o1),(isBlank(?o1)||(STRSTARTS(?o1,"blanknode"))), false) AS ?level2pBlank) .
+											BIND(IF(?p2oTest>1||(?level2pBlank&&?p2oTest=1),true,false)AS?p2oTestResult) .
+											BIND(IF(str(?o1)!='',true,false)AS?o1Show) .
+											BIND((!(bound(?level2pBlank))) as ?level2BoundTest) .
+											BIND(IF(?level2BoundTest,
+													IF(?o1Show,CONCAT('"',str(?o1),'"'),""),
+													IF(?level2pBlank,
+														CONCAT(IF(?p2oTestResult,"{",""),?p2o,IF(?p2oTestResult,"}","")),
+														IF(?o1Show,CONCAT('"',str(?o1),'"'),""))) AS ?oV1)	
+										}
+										GROUP BY ?klApi ?p ?o ?p1
+									}																		
+									BIND(IF(?o1aTest>1,true,false)AS?o1aTestResult) . 
+									BIND(IF(?o1a!='',true,false)AS?o1aShow) .
+									BIND(IF(?o1aShow,CONCAT('"',STR(?p1),'":',IF(?o1aTestResult,"[",""),?o1a,IF(?o1aTestResult,"]","")),"") as ?pV1)
+								}
+								GROUP BY ?klApi ?p ?o
+							}
+							#BIND(IF(?propClass="_____",true,false)AS?oShow) .
+							BIND(IF(?p1oTest>1||isblank(?o),true,false) AS ?p1oTestResult) .
+							BIND(CONCAT(IF(?p1oTestResult,"{",""),?p1o,IF(?p1oTestResult,"}","")) as ?oV)
+							BIND(IF(isBlank(?o),?oV,if(?oV!="",CONCAT('"',str(?o),'":',?oV),CONCAT('"',str(?o),'"'))) AS ?oVf)
+						}
+						GROUP BY ?klApi ?p
+					}
+					BIND(IF(?oaTest>1,true,false) as ?oaTestResult)
+					BIND(CONCAT('"',str(?p),'":',if(?oaTestResult,"[",""),?oa,if(?oaTestResult,"]","")) as ?pV)
+				}
+				GROUP BY ?klApi
+			}
+			BIND(IF(?poTest>1,true,false) as ?poTestResult)
+			BIND(CONCAT('"',str(?klApi),'":',IF(?poTestResult,"{",""),?po,IF(?poTestResult,"}","")) AS ?classes)
+		}
+	}
+}

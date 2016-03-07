@@ -16,9 +16,10 @@ from flask.ext.login import login_required, login_user
 from . import new_badge_class, issue_badge
 from .graph import FIND_ALL_CLASSES, FIND_IMAGE_SPARQL
 from rdfframework.utilities import render_without_request, code_timer, \
-        remove_null, pp
+        remove_null, pp, clean_iri
 from rdfframework import get_framework as rdfw
 from rdfframework.forms import rdf_framework_form_factory 
+from rdfframework.api import rdf_framework_api_factory
 from .user import User
 
 open_badge = Blueprint("open_badge", __name__,
@@ -40,19 +41,7 @@ def record_params(setup_state):
     # initialize the rdfframework
     rdfw(config=open_badge.config)
 
-def get_badge_classes():
-    """Helper function retrieves all badge classes from the triplestore"""
-    all_badges_response = requests.post(
-        open_badge.config.get('TRIPLESTORE_URL'),
-        data={"query": FIND_ALL_CLASSES,
-              "format": "json"})
-    if all_badges_response.status_code > 399:
-        abort(502)
-    bindings = all_badges_response.json().get('results').get('bindings')
-    #uid = re.sub(r'^(.*[#/])','',bindings[0].get('subject')['value'])
-    #, re.sub(r'^(.*[#/])','',r.get('subject')['value'])
-    return [(r.get('altName')['value'],
-             r.get('name')['value']) for r in bindings]
+
 @open_badge.route("/")
 def base_path():
     return ""
@@ -120,26 +109,111 @@ def form_rdf_class():
     form_dict = rdfw().rdf_form_dict
     class_dict = rdfw().rdf_class_dict
     app_dict = rdfw().rdf_app_dict
+    api_dict = rdfw().rdf_api_dict
     table_template = '''
-    <table>
-      <tr>
-        <td><h1>Application JSON</h1></td>
-        <td><h1>Class JSON</h1></td>
-        <td><h1>Form Paths</h1></td>
-    	<td><h1>Form Json</h1></td>    	
-      </tr>
-      <tr>
-        <td style='vertical-align:top'><pre>{0}</pre></td>
-        <td style='vertical-align:top'><pre>{2}</pre></td>
-        <td style='vertical-align:top'><pre>{1}</pre></td>
-    	<td style='vertical-align:top'><pre>{3}</pre></td>
-      </tr>
+    <style>
+        table.fixed {{ 
+            table-layout:fixed;
+            width: 2000px
+        }}
+        table.fixed td {{ 
+            overflow: hidden;
+            vertical-align:top; 
+        }}
+    </style>
+    <table class="fixed">
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <tr>
+            <td><h1>Application JSON</h1></td>
+            <td><h1>Class JSON</h1></td>
+            <td><h1>Form Paths</h1></td>
+        	<td><h1>Form Json</h1></td>
+        	<td><h1>API List</h1></td>
+        	<td><h1>API Json</h1></td>     	
+        </tr>
+        <tr>
+            <td><pre>{0}</pre></td>
+            <td><pre>{2}</pre></td>
+            <td><pre>{1}</pre></td>
+        	<td><pre>{3}</pre></td>
+        	<td><pre>{5}</pre></td>
+        	<td><pre>{4}</pre></td>
+        </tr>
     </table>'''
     return table_template.format(
         json.dumps(app_dict, indent=2),
         json.dumps(rdfw().form_list, indent=2), 
         json.dumps(class_dict, indent=2),
-        json.dumps(form_dict, indent=2))
+        json.dumps(form_dict, indent=2),
+        json.dumps(api_dict, indent=2),
+        json.dumps(rdfw().api_list, indent=2))
+
+@open_badge.route("/api/<api_name>/<id_value>.<ext>", methods=["POST", "GET"])
+@open_badge.route("/api/<api_name>", methods=["POST", "GET"])
+def rdf_api(api_name, id_value=None, ext=None):
+    """View for displaying forms
+
+    Args:
+        api_name -- url path of the api (new, edit)
+        ext -- url extension for the api ie (.json, .html)
+        
+    params:
+        id -- the item to lookup 
+    """
+    _api_path = "|".join(remove_null([api_name, ext]))
+    _api_exists = rdfw().api_exists(_api_path)
+    if _api_exists is False:
+        return render_template(
+            "error_page_template.html",
+            error_message="The web address is invalid")
+    api_uri = _api_exists.get("api_uri")
+    # generate the api class
+    base_url = "%s%s" % (request.url_root[:-1], url_for("open_badge.base_path")) 
+    current_url = request.url
+    base_api_url = "%s%sapi/" % (request.url_root[:-1],
+                                   url_for("open_badge.base_path"))
+    api_url = request.base_url
+    api_class = rdf_framework_api_factory(_api_path, 
+                                          base_url=base_url, 
+                                          current_url=current_url,
+                                          base_api_url=base_api_url,
+                                          api_url=api_url)   
+    # if request method is post 
+    if request.method == "POST":
+        # let api load with post data
+        api = api_class(id_value=id_value)
+        # validate the form 
+        if api.validate():
+            # if validated save the form 
+            api.save()
+            if api.save_state == "success":
+                return api.return_message
+    # if not POST, check the args and form instance
+    else:
+        api = api_class()
+        api_data = rdfw().get_obj_data(api, id_value=id_value)
+        #pp.pprint(api_data['form_data'])
+        if not (len(api_data['obj_json']) > 0):
+            return render_template(
+                "error_page_template.html",
+                error_message="The item does not exist") 
+        else:
+            return_type = api.rdf_instructions.get("kds_returnType")
+            if return_type == "file":
+                repo_uri = clean_iri(list(api_data['obj_json'].values())[0])
+                repo_link = urllib.request.urlopen(repo_uri)
+                repo_file = repo_link.read()  
+                return send_file(io.BytesIO(repo_file),
+                     attachment_filename="%s.%s" % (id_value, ext),
+                     mimetype=api.rdf_instructions.get("kds_mimeType"))
+            else:
+                return "<pre>{}</pre>".format(json.dumps(api_data['obj_json'],indent=4)) 
+
         
 @open_badge.route("/<form_name>.html", methods=["POST", "GET"])
 @open_badge.route("/<form_name>", methods=["POST", "GET"])
@@ -168,7 +242,7 @@ def rdf_class_forms(form_name, form_instance=None):
             base_url=url_for("open_badge.base_path"), 
             current_url=request.url)
             
-    # if request method is post
+    # if request method is post 
     if request.method == "POST":
         # let form load with post data
         form = form_class(subject_uri=request.args.get("id"))
@@ -211,7 +285,7 @@ def rdf_class_forms(form_name, form_instance=None):
             form_data = rdfw().get_obj_data(form_class(\
                     no_query=True, subject_uri=request.args.get("id")))
             #pp.pprint(form_data['form_data'])
-            form = form_class(form_data['form_data'],\
+            form = form_class(form_data['obj_data'],\
                       query_data=form_data['query_data'],\
                       subject_uri=request.args.get("id"))
             if not (len(form_data['query_data']) > 0):
@@ -232,3 +306,4 @@ def rdf_class_forms(form_name, form_instance=None):
                 'kds_dataFormats',{}).get('kds_javascriptDateFormat',''),
         debug=request.args.get("debug",False))
     return template
+    

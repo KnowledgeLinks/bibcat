@@ -1,108 +1,232 @@
-prefix acl: <http://www.w3.org/ns/auth/acl#> 
-prefix foaf: <http://xmlns.com/foaf/0.1/> 
-prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
-prefix kdr: <http://knowledgelinks.io/ns/data-resources/> 
-prefix obi: <https://w3id.org/openbadges#> 
-prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
-prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-prefix schema: <https://schema.org/> 
-prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
+PREFIX obi: <https://w3id.org/openbadges#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX kds: <http://knowledgelinks.io/ns/data-structures/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX acl: <http://www.w3.org/ns/auth/acl#>
+PREFIX schema: <https://schema.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX kdr: <http://knowledgelinks.io/ns/data-resources/>
 
-SELECT  (CONCAT("{",GROUP_CONCAT(?classObj; SEPARATOR=","),"}") AS ?appClasses)
+SELECT *
 {
-GRAPH <http://knowledgelinks.io/ns/application-framework/> 
-{
-  SELECT ?klClasses (CONCAT('"',STR(?klClasses),'":{"http://knowledgelinks.io/ns/data-structures/classUri":"',STR(?klClasses),'",',GROUP_CONCAT(?classJson; SEPARATOR=","),"}") AS ?classObj)
-  {
-  	{
-      SELECT ?klClasses (CONCAT(?prop,':',IF(?agType="obj","{",""),GROUP_CONCAT(?objJson; SEPARATOR=","),IF(?agType="obj","}","")) AS ?classJson)
-      {
-          SELECT ?klClasses ?prop ?agType (CONCAT(IF(?pp=kds:keyCombo,"[",""),GROUP_CONCAT(?rtn;SEPARATOR=","),IF(?pp=kds:keyCombo,"]","")) AS ?objJson)
-          {
-            ?klClasses a kds:ControlledClass .
-            ?klClasses ?p ?o . 
-            BIND (CONCAT('"',STR(?p),'"') AS  ?prop) .
-
-            ?o ?pp ?oo .
-            FILTER(isblank(?o))
-            BIND (CONCAT('"',STR(?pp),'"') AS  ?prop2) .
-            BIND (IF(?pp=kds:keyCombo,CONCAT('"',STR(?oo),'"'),CONCAT(?prop2,':"',STR(?oo),'"')) AS ?rtn) .
-            BIND (IF(?pp=kds:keyCombo,"array","obj") AS ?agType) .
-          }
-          GROUP BY ?prop ?klClasses ?pp ?agType
-      }
-      GROUP BY ?klClasses ?prop ?agType
-	} UNION {
-		SELECT ?klClasses (CONCAT(?prop,':',?rtn) AS ?classJson)
+	GRAPH <http://knowledgelinks.io/ns/application-framework/>
+	{
+		SELECT (CONCAT("{",GROUP_CONCAT(?classes; SEPARATOR=','),"}") AS ?klClasses)
 		{
-		  ?klClasses a kds:ControlledClass .
-		  ?klClasses ?p ?o . 
-		  BIND (CONCAT('"',STR(?p),'"') AS  ?prop) .
-		  BIND (CONCAT('"',STR(?o),'"') AS ?rtn)  .
-		  FILTER (?p!=rdf:type) .
-		  FILTER (!(ISBLANK(?o))) .
-		}	
-	} UNION {
-      	SELECT ?klClasses (CONCAT('"http://knowledgelinks.io/ns/data-structures/properties":{',GROUP_CONCAT(?propVals; SEPARATOR=","),'}') AS ?classJson)
-      	{
-          SELECT ?klClasses  (CONCAT(?props,':{"kds_propUri":"',STR(?properties),'",',?newRange,',',GROUP_CONCAT(?jVal; SEPARATOR=","),'}') AS ?propVals)
-          {
-              SELECT DISTINCT ?klClasses ?properties ?props ?jVal ?newRange
-              {
-                  {
-                    SELECT ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra  (GROUP_CONCAT(?rangeItems; SEPARATOR=",") AS ?rangeVal) (GROUP_CONCAT(?stoType1; SEPARATOR=",") AS ?stoVal)
-                    {
-                      ?klClasses a kds:ControlledClass .
-                      ?properties rdfs:domain ?klClasses .
-                      ?properties ?attrs ?attrObjs .
-                      ?properties rdfs:range ?ra .
+			{
+				SELECT ?klClass (COUNT(?klClass) AS ?poTest) (GROUP_CONCAT(?pV; SEPARATOR=',') as ?po) 
+				{
+					{
+						SELECT ?klClass ?p  (GROUP_CONCAT(?oVf; SEPARATOR=',') as ?oa) (COUNT(?p) AS ?oaTest)
+						{
+							{
+								SELECT ?klClass ?p ?o  (GROUP_CONCAT(?pV1; SEPARATOR=',') as ?p1o) (COUNT(?p) AS ?p1oTest)
+								{
+									{
+										SELECT ?klClass ?p ?o ?p1 (GROUP_CONCAT(?oV1; SEPARATOR=',') as ?o1a) (COUNT(?p1) AS ?o1aTest)
+										{
+											{
+												SELECT ?klClass ?p ?o ?p1 ?o1 (GROUP_CONCAT(?pV2; SEPARATOR=',') as ?p2o) (COUNT(?o1) AS ?p2oTest)
+												{
+													{
+														SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 (GROUP_CONCAT(?oV2; SEPARATOR=',') as ?o2a) (COUNT(?p2) AS ?o2aTest)
+														{
+															{
+																SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 (GROUP_CONCAT(?pV3; SEPARATOR=',') as ?p3o) (COUNT(?o2) AS ?p3oTest)
+																{
+																	{
+																		SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 (GROUP_CONCAT(?oV3; SEPARATOR=',') as ?o3a) (COUNT(?p3) AS ?o3aTest)
+																		{
+																			{
+																				SELECT * 
+																				{
+																					{
+																						# Get the property details from the property definition
+																						SELECT ?klClass ?p (?properties as ?o) ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
+																						{
+																							{
 
+																								{ 
 
-                      OPTIONAL {
-                        ?properties rdfs:range ?objLookup .
-                        ?objLookup a kds:ControlledClass .
-                        ?objLookup kds:storageType ?stoType 
-                      } .
-                      OPTIONAL {
-                        ?attrObjs kds:appliesTo ?klClasses .
-                        ?attrObjs ?attrs ?bnVal .
-                        FILTER(ISBLANK(?attrObjs))
-                      }.
-
-                      BIND (CONCAT('"',IF(bound(?stoType),?stoType,"literal"),'"') AS ?stoType1) .
-                      BIND (IF(bound(?objLookup),CONCAT('{"rangeClass":"',STR(?objLookup),'","storageType":',?stoType1,'}'),"") AS ?rangeItems) .
-                      BIND (CONCAT('"',STR(?properties),'"') AS  ?props) .
-                      BIND (CONCAT('"',STR(?attrs),'"') AS  ?attrJson) .
-                      BIND (IF(?attrs=rdfs:range,IF(?rangeItems!='','',CONCAT('"http://www.w3.org/2000/01/rdf-schema#range":[{"rangeClass":"',STR(?attrObjs),'","storageType":',?stoType1,'}]')),(CONCAT(?attrJson,':"',STR(COALESCE(?bnVal,?attrObjs)),'"'))) AS ?jVal ).
-                      FILTER ((?attrs!=kds:json && ?attrs!=kds:formDefault && ?attrs != kds:jsonDefault && !(?attrObjs != ?klClasses && ?attrs = kds:requiredByDomain) && ?attrs != rdfs:domain)) .
-                      #FILTER (str(?jVal)!="") .
-                      FILTER(    
-                        (     
-                          ( ! (?attrs=rdfs:range&&?rangeItems!='') )    
-                         							
-                          && 
-                         	  
-                          (   
-                            	(!( isblank(?attrObjs) )  )
-                           				||
-                          		( isblank(?attrObjs) &&	bound(?bnVal) )   
-                           )
-                        )        
-                      )}
-                     GROUP BY ?klClasses ?properties ?attrs ?props ?attrJson ?jVal ?ra
-                  }
-                  BIND (CONCAT('"http://www.w3.org/2000/01/rdf-schema#range":[',IF(?rangeVal='',CONCAT('{"rangeClass":"',STR(?ra),'","storageType":',?stoVal,'}'),?rangeVal),']') AS ?newRange)
-                  FILTER(?attrs!=rdfs:range)  
-              }
-          }
-          GROUP BY ?klClasses ?props ?properties ?newRange 
-        }
-        GROUP BY ?klClasses
-    }
-    BIND(CONCAT('"',STR(?klClasses),'"') AS  ?className) .
-  } 
-  GROUP BY ?klClasses 
-
+																									{
+																										# get the property object that apply to the current class
+																										?klClass a kds:ControlledClass .
+																										?properties rdfs:domain ?klClass .
+																										?properties ?p1 ?o1.
+																										?o1 kds:appliesTo ?appliesTest .
+																										filter(?appliesTest=?klClass)
+																										#?o1 ?p2_ ?o2_ .
+																									} UNION {
+																										# get all the property objects that are not bound by a class restriction
+																										?klClass a kds:ControlledClass .
+																										?properties rdfs:domain ?klClass .
+																										?properties ?p1 ?o1 .
+																										OPTIONAL {
+																											?o1 kds:appliesTo ?appliesTest .
+																										}
+																										filter(!(bound(?appliesTest)))
+																									} 
+																									# get the blank nodes of the property
+																									OPTIONAL {
+																										?o1 ?p2_ ?o2_ .
+																										filter(isblank(?o1))
+																										OPTIONAL {
+																											?o2_ ?p3_ ?o3_
+																											filter(isblank(?o2_))
+																										}
+																									}
+																								}
+																								filter(?p1!=rdfs:range)
+																								filter(?p1!=kds:requiredByDomain)
+																								filter(IF(?p1=rdfs:domain,if(?klClass=?o1,true,false),true))
+																								#filter(?klClass = obi:BadgeClass) 
+																								#filter(?properties = schema:image) 
+																							} UNION {
+																								# get the range information
+																								SELECT ?klClass	?properties	?p1 ?o1 ?p2_ ?o2_
+																								{
+																									{
+																										# get the range information
+																										?klClass a kds:ControlledClass .
+																										?properties rdfs:domain ?klClass .
+																										?properties rdfs:range ?ignore .
+																										OPTIONAL {
+																										  ?ignore kds:storageType ?sto_
+																										} .
+																										BIND (IF(bound(?sto_),?sto_,"literal") AS ?o2_)
+																										BIND (CONCAT("blanknode",STR(?ignore)) as ?o1)
+																										BIND ("storageType" as ?p2_)
+																										#?ignore ?p2_ ?o2_.
+																										Bind(rdfs:range as ?p1)
+																										#filter(?klClass = obi:BadgeClass) 
+																										#filter(?properties = schema:image) 
+																									} UNION {
+																										?klClass a kds:ControlledClass .
+																										?properties rdfs:domain ?klClass .
+																										?properties rdfs:range ?o2_ .
+																										BIND (CONCAT("blanknode",STR(?o2_)) as ?o1)
+																										BIND ("rangeClass" as ?p2_)
+																										Bind(rdfs:range as ?p1)
+																										#filter(?klClass = obi:BadgeClass) 
+																										#filter(?properties = schema:image) 
+																									} UNION {
+																										?klClass a kds:ControlledClass .
+																										?properties rdfs:domain ?klClass .
+																										BIND (kds:propUri as ?p1) .
+																										BIND (?properties as ?o1) .
+																										#filter(?klClass = obi:BadgeClass) 
+																										#filter(?properties = schema:image) 
+																									} UNION {
+																										?klClass a kds:ControlledClass .
+																										?properties rdfs:domain ?klClass .
+																										?properties kds:requiredByDomain ?klClass .
+																										BIND (kds:requiredByDomain as ?p1) .
+																										BIND (?klClass as ?o1) .
+																										#filter(?klClass = obi:BadgeClass) 
+																										#filter(?properties = schema:image) 
+																									}
+																								}
+																							}
+																							BIND(IF(bound(?p2_),?p2_,"") AS ?p2)
+																							BIND(IF(bound(?o2_),?o2_,"") AS ?o2)
+																							BIND(IF(bound(?p3_),?p3_,"") AS ?p3)
+																							BIND(IF(bound(?o3_),?o3_,"") AS ?o3)
+																							BIND(kds:hasProperty as ?p)
+																						}
+																					} UNION {
+																						# get all of the class information
+																						SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
+																						{
+																							{
+																								?klClass a kds:ControlledClass .
+																								?klClass ?p ?o
+																								OPTIONAL {
+																								  ?o ?p1_ ?o1_. 
+																								  filter(isblank(?o))
+																								}
+																							} UNION {
+																								# add triple for the classUri
+																								?klClass a kds:ControlledClass .
+																								BIND (kds:classUri as ?p)
+																								BIND (?klClass as ?o)
+																							}
+																							BIND(IF(bound(?p1_),?p1_,"") AS ?p1)
+																							BIND(IF(bound(?o1_),?o1_,"") AS ?o1)
+																							BIND("" AS ?p2)
+																							BIND("" AS ?o2)
+																							BIND("" AS ?p3)
+																							BIND("" AS ?o3)
+																							#filter(?klClass = obi:BadgeClass) 
+																						}
+																					}
+																				}								
+																			}
+																			BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o3),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?oV3)
+																		}
+																		GROUP BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3
+																		ORDER BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3
+																	}
+																	BIND(IF(?o3aTest>1,true,false)AS?o3aTestResult) .
+																	BIND(IF(?o3a!='""',true,false)AS?o3aShow) .
+																	BIND(isBlank(?o2) AS ?level3Blank) .
+																	BIND(IF(?o3aShow&&?level3Blank,CONCAT('"',STR(?p3),'":',IF(?o3aTestResult,"[",""),?o3a,IF(?o3aTestResult,"]","")),"") as ?pV3)
+																}
+																GROUP BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2
+															}
+															BIND(IF(?p3oTest>1||isblank(?o2),true,false)AS?p3oTestResult) .
+															BIND(IF(?o2!='',true,false)AS?o2Show) .
+															BIND(isBlank(?o2) AS ?level3pBlank) .
+															BIND(IF(?level3pBlank,
+																					CONCAT(IF(?p3oTestResult,"{",""),?p3o,IF(?p3oTestResult,"}","")),
+																					IF(?o2Show,CONCAT('"',str(?o2),'"'),"")) AS ?oV2)
+														}
+														GROUP BY ?klClass ?p ?o ?p1 ?o1 ?p2
+													}																		
+													BIND(IF(STRSTARTS(?o2a,'"keyCombo":'),CONCAT("{",?o2a,"}"),?o2a) AS ?o2am) .
+													BIND(IF(?o2aTest>1,true,false)AS?o2aTestResult) .
+													BIND(IF(?o2a!='',true,false)AS?o2aShow) .
+													BIND(isBlank(?o1) AS ?level2Blank) .
+													BIND(IF(?o2aShow,CONCAT('"',STR(?p2),'":',IF(?o2aTestResult,"[",""),?o2am,IF(?o2aTestResult,"]","")),"") as ?pV2)
+												}
+												GROUP BY ?klClass ?p ?o ?p1 ?o1
+											}
+											BIND(isBlank(?o1) as ?trueBlank) .
+											BIND(IF(bound(?o1),(isBlank(?o1)||(STRSTARTS(?o1,"blanknode"))), false) AS ?level2pBlank) .
+											BIND(IF(?p2oTest>1||(?level2pBlank&&?p2oTest=1),true,false)AS?p2oTestResult) .
+											BIND(IF(str(?o1)!='',true,false)AS?o1Show) .
+											BIND((!(bound(?level2pBlank))) as ?level2BoundTest) .
+											BIND(IF(?level2BoundTest,
+													IF(?o1Show,CONCAT('"',str(?o1),'"'),""),
+													IF(?level2pBlank,
+														CONCAT(IF(?p2oTestResult,"{",""),?p2o,IF(?p2oTestResult,"}","")),
+														IF(?o1Show,CONCAT('"',str(?o1),'"'),""))) AS ?oV1)	
+										}
+										GROUP BY ?klClass ?p ?o ?p1
+									}																		
+									BIND(IF(?o1aTest>1,true,false)AS?o1aTestResult) . 
+									BIND(IF(?o1a!='',true,false)AS?o1aShow) .
+									BIND(IF(?o1aShow,CONCAT('"',STR(?p1),'":',IF(?o1aTestResult,"[",""),?o1a,IF(?o1aTestResult,"]","")),"") as ?pV1)
+								}
+								GROUP BY ?klClass ?p ?o
+							}
+							#BIND(IF(?propClass="_____",true,false)AS?oShow) .
+							BIND(IF(?p1oTest>1||isblank(?o),true,false) AS ?p1oTestResult) .
+							BIND(CONCAT(IF(?p1oTestResult,"{",""),?p1o,IF(?p1oTestResult,"}","")) as ?oV)
+							BIND(IF(isBlank(?o),?oV,if(?oV!="",CONCAT('"',str(?o),'":',?oV),CONCAT('"',str(?o),'"'))) AS ?oVf)
+						}
+						GROUP BY ?klClass ?p
+					}
+					BIND(IF(?oaTest>1,true,false) as ?oaTestResult)
+					#BIND(if(?oaTestResult&&?p=kds:hasProperty,"{",if(?oaTestResult,"[","")) as ?open)
+					#BIND(if(?oaTestResult&&?p=kds:hasProperty,"}",if(?oaTestResult,"]","")) as ?close)
+					BIND(CONCAT('"',str(?p),'":',if(?oaTestResult&&?p=kds:hasProperty,"{",if(?oaTestResult,"[","")),?oa,if(?oaTestResult&&?p=kds:hasProperty,"}",if(?oaTestResult,"]","")),"") as ?pV)
+				}
+				GROUP BY ?klClass
+			}
+			BIND(IF(?poTest>1,true,false) as ?poTestResult)
+			BIND(CONCAT('"',str(?klClass),'":',IF(?poTestResult,"{",""),?po,IF(?poTestResult,"}","")) AS ?classes)
+		}
+	}
 }
-}
-ORDER BY ?klClasses
+

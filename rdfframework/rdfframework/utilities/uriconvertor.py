@@ -20,7 +20,7 @@ def convert_to_ns(value, ns_obj=None):
                     "<","").replace(">","")
     return value
     
-def convert_to_uri(value, ns_obj=None):
+def convert_to_uri(value, ns_obj=None, strip_iri=False):
     ''' converts a prefixed rdf ns equivalent value to its uri form. 
         If not found returns the value as is '''
     
@@ -30,7 +30,11 @@ def convert_to_uri(value, ns_obj=None):
     for _prefix, _ns_uri in ns_obj.items():
         if str(value).startswith(_prefix + "_") or \
                 str(value).startswith("<%s_" % _prefix):
-            return value.replace("%s_" % _prefix, _ns_uri)
+            if strip_iri:
+                return value.replace("%s_" % _prefix, _ns_uri).replace(\
+                        "<","").replace(">","")
+            else:
+                return value.replace("%s_" % _prefix, _ns_uri)
     if str(value).lower() == "none":
         return ""
     else:
@@ -127,4 +131,32 @@ def uri(value):
         return value
     else:
         return convert_to_uri(value)
-           
+     
+def iris_to_strings(obj, ns_obj=None):
+    if ns_obj is None:
+        from rdfframework import get_framework
+        ns_obj = get_framework().ns_obj    
+    
+    if isinstance(obj, list):
+        _return_list = []
+        for item in obj:
+            if isinstance(item, list):
+                _return_list.append(iris_to_strings(item, ns_obj))
+            elif isinstance(item, dict):
+                _return_list.append(iris_to_strings(item, ns_obj))
+            else:
+                 _return_list.append(convert_to_uri(item, ns_obj, True))
+        return _return_list
+    elif isinstance(obj, dict):
+        _return_obj = {}
+        for key, item in obj.items():
+            nkey = convert_to_ns(key, ns_obj)
+            if isinstance(item, list):
+                _return_obj[nkey] = iris_to_strings(item, ns_obj)
+            elif isinstance(item, dict):
+                _return_obj[nkey] = iris_to_strings(item, ns_obj)
+            else:
+                _return_obj[nkey] = convert_to_uri(item, ns_obj, True)
+        return _return_obj
+    else:
+        return convert_to_uri(obj, ns_obj, True)
