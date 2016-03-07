@@ -32,7 +32,10 @@ def get_api_field_json(field, instructions, instance, user_info, item_permission
         _class_prop = {}
     # merge the class prop attributes with the api prop
     field = {**_class_prop, **field} 
-    
+    #temp_field = _class_prop.copy()
+    #temp_field.update(field)
+    #field = temp_field
+
     # Determine Security Access
     _new_field = {}
     

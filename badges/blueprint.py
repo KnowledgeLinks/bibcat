@@ -182,7 +182,8 @@ def rdf_api(api_name, id_value=None, ext=None):
                                           base_url=base_url, 
                                           current_url=current_url,
                                           base_api_url=base_api_url,
-                                          api_url=api_url)   
+                                          api_url=api_url) 
+     
     # if request method is post 
     if request.method == "POST":
         # let api load with post data

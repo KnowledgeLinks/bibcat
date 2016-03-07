@@ -289,7 +289,8 @@ schema:name a rdf:Property;
 	] .
 
 schema:description a rdf:Property;	
-	rdfs:domain	obi:BadgeClass;	
+	rdfs:domain	obi:BadgeClass;
+	rdfs:domain	schema:Organization;		
 	rdfs:range	xsd:string;	
 	rdfs:comment "Description of the open badge instance.";	
 	kds:requiredByDomain obi:BadgeClass;
@@ -394,6 +395,7 @@ obi:type a rdf:Property;
 schema:image a rdf:Property;	
 	rdfs:domain	obi:BadgeClass;	
 	rdfs:domain obi:Assertion;
+	rdfs:domain schema:Organization;
 	rdfs:range	schema:ImageObject;
 	rdfs:range	schema:URL;
 	kds:requiredByDomain obi:BadgeClass;
@@ -620,6 +622,8 @@ schema:familyName a rdf:Property;
 	
 schema:email a rdf:Property;	
 	rdfs:domain	schema:Person;	
+	rdfs:domain schema:Organization;
+	rdfs:requiredByDomain schema:Organization;
 	rdfs:range	xsd:string;	
 	rdfs:comment "email address.";
 	kds:propertyProcessing [
@@ -868,6 +872,26 @@ obi:OrganizationForm a kds:FormClass;
 		kds:classUri schema:Organization;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2
+	] ;
+	kds:hasProperty [
+		kds:propUri schema:description;
+		kds:classUri schema:Organization;
+		kds:formLabelName "Description";
+		kds:formFieldOrder 3;
+		kds:formLayoutRow 3
+	] ;
+	kds:hasProperty [
+		kds:propUri schema:email;
+		kds:classUri schema:Organization;
+		kds:formLabelName "Organizational Email";
+		kds:formFieldOrder 4;
+		kds:formLayoutRow 4
+	] ;
+	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri schema:Organization;
+		kds:formFieldOrder 5;
+		kds:formLayoutRow 5;
 	].
 
 
@@ -1411,5 +1435,102 @@ obi:BadgeImageApi a kds:ApiClass;
 	kds:hasProperty [
 		kds:propUri schema:image;
 		kds:classUri obi:BadgeClass;
+		kds:apiFieldName "image";
+	].
+
+obi:IssuerApi a kds:ApiClass;
+	rdfs:label "Badge Definition";
+	rdfs:comment "This api returns an issuer definition.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri schema:Organization;
+		kds:lookupPropertyUri schema:alternativeName;
+		kds:apiUrl "issuer";
+		kds:apiUrlExtension "json";
+		kds:returnType "json"
+	];
+	kds:hasProperty [
+		kds:propUri kds:StaticValue;
+		kds:returnValue "https://w3id.org/openbadges/v1";	
+		kds:classUri kds:NoClass;
+		kds:apiFieldName "@context";
+	];
+	kds:hasProperty [
+		kds:propUri kds:StaticValue;
+		kds:returnValue "Issuer";	
+		kds:classUri kds:NoClass;
+		kds:apiFieldName "type";
+	];
+	kds:hasProperty [
+		kds:propUri schema:name;
+		kds:classUri schema:Organization;
+		kds:apiFieldName "name";
+	];
+	kds:hasProperty [
+		kds:propUri schema:description;
+		kds:classUri schema:Organization;
+		kds:apiFieldName "description";
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri schema:Organization;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--api_url"
+		] ;
+		kds:apiFieldName "id";
+		
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri schema:Organization;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.png"
+		] ;
+		kds:apiFieldName "image";
+		
+	];
+	kds:hasProperty [
+		kds:propUri schema:URL;
+		kds:classUri schema:Organization;
+		kds:apiFieldName "url";
+	];
+	kds:hasProperty [
+		kds:propUri schema:email;
+		kds:classUri schema:Organization;
+		kds:apiFieldName "email";
+	];
+	kds:hasProperty [
+		kds:propUri schema:alternativeName;
+		kds:classUri schema:Organization;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator ",";
+			kds:calculation "!--base_api_url,revoked.json"
+		] ;
+		kds:apiFieldName "revocationList";
+	].
+	
+obi:OrganizationImageApi a kds:ApiClass;
+	rdfs:label "Badge Definition";
+	rdfs:comment "This api returns an open badge image.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri schema:Organization;
+		kds:lookupPropertyUri schema:alternativeName;
+		kds:apiUrl "issuer";
+		kds:apiUrlExtension "png";
+		kds:returnType "file";
+		kds:mimeType "image/png"
+	];
+	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri schema:Organization;
 		kds:apiFieldName "image";
 	].
