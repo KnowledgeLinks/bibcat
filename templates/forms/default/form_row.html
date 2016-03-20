@@ -1,0 +1,21 @@
+{% set current_row = form.rdf_field_list[0].kds_formLayoutRow|float %}
+		<div class="row {{ form.rdf_instructions['rowCss'] }}">
+{% set first=True %}
+{% for fld in form.rdf_field_list %}
+	{% if first %}{% set first_fld=fld %}{% endif %}
+	{% set errorCss = '' %}
+	{% if fld.errors %}{% set errorCss = " has-error" %}{% endif %}
+	{% if fld.kds_formLayoutRow|float > current_row %}
+		{% set current_row = fld.kds_formLayoutRow|float %}
+		</div>
+		<div class="row {{ form.rdf_instructions['rowCss'] }}">
+	{% endif %}
+	{% if not 'subform' in fld.kds_fieldType['rdf_type'].lower() %}
+		{% include "/forms/default/form_section.html" %}
+	{% else %}
+	</div>
+			{{ fld(class_=fld.kds_css,readonly=not fld.editable) }}
+	<div class="row {{ form.rdf_instructions['rowCss'] }}">
+	{% endif %}
+{% endfor %}
+		</div>

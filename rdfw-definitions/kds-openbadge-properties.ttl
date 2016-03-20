@@ -1,0 +1,528 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+obi:context a rdf:Property;
+	rdfs:domain obi:Resource;
+	rdfs:range rdfs:string;
+	rdfs:comment "Name of the open badge instance.";
+	kds:formDefault [
+		kds:fieldType kdr:TextField;
+		kds:formFieldName "Context"
+	] .
+
+obi:uid a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range kds:calculated;
+	kds:storageType "none";
+	rdfs:comment "Uuid of the open badge assertion.";
+	kds:formDefault [
+		kds:fieldType kdr:ServerField
+	] .
+	
+obi:hasBadge a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range obi:BadgeClass;
+	rdfs:comment "Badge used for the badge assertion.";
+	kds:requiredByDomain obi:Assertion;
+	kds:formDefault [
+		kds:formFieldName "Badge";
+		kds:formLabelName "Select a Badge";
+		kds:formFieldHelp "Please select the badge that you want to award.";
+		kds:fieldType [
+			a	kdr:SelectField;
+			kds:selectQuery "SELECT * {?s a obi:BadgeClass . ?s schema:name ?name .}";
+			kds:selectBoundValue "?s";
+			kds:selectDisplay "?name";
+			kds:hasButton [
+				kds:buttonLink "!--goToForm,obi:BadgeForm,kdr:NewForm";
+				kds:buttonText "New Badge"
+			]
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:NotEditable
+		]
+	] .
+		
+obi:claimDate a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range xsd:date;
+	rdfs:comment "The date an openbadge has been claimed.";
+	kds:formDefault [
+		kds:formFieldName "claimbadge";
+		kds:formLabelName " ";
+		kds:formFieldHelp "Click to claim/resend your badge to Mozilla.";
+		kds:fieldType [
+			a	kdr:OpenBadgeSenderField;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:RemoveFromForm
+		]
+	] .
+
+kds:errorLog a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range xsd:string;
+	rdfs:comment "an error message".
+
+obi:issuedOn a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range xsd:date;
+	rdfs:comment "Timestamp when badge was issued.";	
+	kds:requiredByDomain obi:Assertion;
+	kds:defaultVal "now";
+	kds:formDefault [
+		kds:formFieldName "issuedOn";
+		kds:formLabelName "Issued On";
+		kds:formFieldHelp "Enter the date that the badge was awarded.";
+		kds:fieldType kdr:DateField;
+		kds:addonCss "dp";
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:NotEditable
+		]
+	] .
+	
+obi:expires a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range rdfs:datetime;
+	rdfs:comment "Timestamp when badge expires.";	
+	kds:defaultVal "now + 360";
+	kds:formDefault [
+		kds:formFieldName "expiresOn";
+		kds:formLabelName "Expires On";
+		kds:formFieldHelp "Enter the date that the awarded Badge will expire.";
+		kds:fieldType kdr:DateTimeField;
+		kds:addonCss "dp";
+	] .
+	
+obi:startDate a rdf:Property;
+	rdfs:domain obi:BadgeClass;
+	rdfs:range xsd:date;
+	rdfs:comment "Date the badge is available.";	
+	kds:defaultVal "today";
+	kds:requiredByDomain obi:BadgeClass;
+	kds:formDefault [
+		kds:formFieldName "startDate";
+		kds:formLabelName "Start Date";
+		kds:formFieldHelp "Enter the date that the badge is available.";
+		kds:fieldType kdr:DateField;
+		kds:addonCss "dp";
+	] .
+	
+obi:endDate a rdf:Property;
+	rdfs:domain obi:BadgeClass;
+	rdfs:range xsd:date;
+	rdfs:comment "Date the badge is no longer available.";	
+	kds:formDefault [
+		kds:formFieldName "endDate";
+		kds:formLabelName "End Date";
+		kds:formFieldHelp "Enter the date that the badge is no longer available.";
+		kds:fieldType kdr:DateField;
+		kds:addOnCss "dp";
+	] .
+
+obi:recipient a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range schema:Person;
+	kds:requiredByDomain obi:Assertion;
+	rdfs:comment "Recipient of a Badge.";	
+	kds:formDefault [
+		kds:formFieldName "Recipient";
+		kds:formLabelName "Select the Recipient";
+		kds:formFieldHelp "Please select or enter a new recipient.";
+		kds:fieldType [
+			a	kdr:SelectField;
+			kds:selectQuery "SELECT * {
+																?s a schema:Person . 
+																?s schema:familyName ?familyName .
+																?s schema:givenName ?givenName .
+																BIND (CONCAT(?familyName,', ',?givenName) AS ?name) 
+																} 
+																ORDER BY ?name";
+			kds:selectBoundValue "?s";
+			kds:selectDisplay "?name" 
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:NotEditable
+		]
+	] .
+	
+	
+schema:name a rdf:Property;	
+	rdfs:domain	obi:BadgeClass;
+	rdfs:domain schema:Organization;
+	rdfs:domain kds:UserGroup;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Name of the open badge instance.";	
+	kds:requiredByDomain obi:BadgeClass;
+	kds:requiredByDomain schema:Organization;
+	kds:requiredByDomain kds:UserGroup;
+	kds:formDefault [
+		kds:formFieldName "badgeName";
+		kds:formLabelName "Badge Name";
+		kds:formFieldHelp "Enter the name of the Badge you want to create.";
+		kds:fieldType [
+			a	kdr:TextField 
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:NotEditable
+		]
+	] .
+
+schema:description a rdf:Property;	
+	rdfs:domain	obi:BadgeClass;
+	rdfs:domain	schema:Organization;		
+	rdfs:range	xsd:string;	
+	rdfs:comment "Description of the open badge instance.";	
+	kds:requiredByDomain obi:BadgeClass;
+	kds:formDefault [
+		kds:formFieldName "itemDescription";
+		kds:formLabelName "Description";
+		kds:formFieldHelp "Please enter a description.";
+		kds:fieldType [
+			a	kdr:TextAreaField
+		]
+	] .
+	
+
+obi:issuer a rdf:Property;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	schema:Organization;	
+	rdfs:label "Issuer";
+	rdfs:comment "Issuer of the open badge instance.";	
+	kds:requiredByDomain obi:BadgeClass;
+	kds:defaultVal	"defaultOrgURI";
+	kds:formDefault [
+		kds:formFieldName "issuingOrg";
+		kds:formLabelName "Issuing Organization";
+		kds:formFieldHelp "Select the badge issuing organization";
+		kds:fieldType [
+			a	kdr:SelectField;
+			kds:selectQuery "SELECT * {
+																?s a schema:Organization . 
+																?s schema:name ?name . 
+																} 
+																ORDER BY ?name";
+			kds:selectBoundValue "?s";
+			kds:selectDisplay "?name";
+			kds:linkedForm obi:OrganizationForm 
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:NotEditable
+		]
+	] .
+	
+schema:affliation	a rdf:Property;
+	rdfs:domain schema:Person;
+	rdfs:range schema:Organization;
+	rdfs:label "Affiliated with";
+	kds:formDefault [
+		kds:formFieldName "affiliation";
+		kds:formLabelName "Organization";
+		kds:formFieldHelp "Enter an affiliated organization.";
+		kds:fieldType [
+			a kdr:SelectField;
+			kds:selectQuery "SELECT * {
+																?s a schema:Organization . 
+																?s schema:name ?name . 
+																} 
+																ORDER BY ?name";
+			kds:selectBoundValue "?s";
+			kds:selectDisplay "?name" 
+		]
+	] .
+
+obi:type a rdf:Property;	
+	rdfs:domain	obi:BadgeClass;
+	rdfs:domain obi:Assertion;
+	rdfs:range	rdf:Class;	
+	rdfs:comment "Type of item";
+	kds:requiredByDomain obi:BadgeClass;
+	kds:requiredByDomain obi:Assertion;
+	kds:defaultVal "item_class";
+	kds:formDefault [
+		kds:fieldType [
+			a kdr:ServerField
+		]
+	] .
+
+schema:image a rdf:Property;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:domain obi:Assertion;
+	rdfs:domain schema:Organization;
+	rdfs:range	schema:ImageObject;
+	rdfs:range	schema:URL;
+	kds:requiredByDomain obi:BadgeClass;
+	kds:requiredByDomain obi:Assertion;
+	kds:propertyProcessing [
+		kds:appliesTo obi:BadgeClass;
+		a kdr:ImageProcessor;
+		kds:imageOptions [
+			kds:imageHeight "220px";
+			kds:imageWidth "220px";
+			kds:imageSizeLimit "256kb";
+			kds:imageFormat "png"
+		]
+	];
+	kds:propertyProcessing [
+		kds:appliesTo obi:Assertion;
+		a kdr:AssertionImageBakingProcessor
+	];
+	rdfs:comment "Image of the item.";
+	kds:formDefault [
+		kds:formFieldName "imageOptions";
+		kds:formLabelName "Image";
+		kds:formFieldHelp "Select an Image for the item.";
+		kds:fieldType [
+			a	kdr:ImageFileOrURLField; 
+		];
+		#kds:formInstance [
+		#	kds:formInstanceType kdr:EditForm;
+		#	kds:applicationAction kdr:NotEditable
+		#]
+	] .
+
+
+obi:criteria a rdf:Property;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Criteria for earning the Badge.";	
+	kds:requiredByDomain obi:BadgeClass;
+	kds:formDefault [
+		kds:formFieldName "criteria";
+		kds:formLabelName "Criteria";
+		kds:formFieldHelp "Enter the criteria for earing the Badge.";
+		kds:fieldType [
+			a	kdr:TextField; 
+		]
+	].
+
+schema:alternativeName a rdf:Property;
+	rdfs:domain	obi:BadgeClass;
+	rdfs:domain	schema:Organization;
+	rdfs:range	xsd:string;
+	kds:requiredByDomain obi:BadgeClass;
+	kds:requiredByDomain schema:Organization;
+	kds:propertyProcessing [
+		a kdr:CalculationProcessor;
+		kds:calculation "slugify(schema:name)" 
+	] .
+	
+	
+obi:tags a rdf:Property;	
+	rdfs:domain	obi:BadgeClass;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Tags for the badges.";
+	kds:propertyProcessing [
+		a kdr:CSVstringToMultiPropertyProcessor
+	];
+	kds:formDefault [
+		kds:formFieldName "itemtags";
+		kds:formLabelName "Tags";
+		kds:formFieldHelp "Add tags seperated by commas.";
+		kds:fieldType [
+			a	kdr:TextField; 
+		]
+	] .
+	
+rdf:Class kds:storageType "object" ;
+	a kds:ControlledClass .
+
+schema:url a rdf:Property;
+	rdfs:domain	schema:Organization;	
+	rdfs:range	schema:URL;	
+	rdfs:comment "url for the item";	
+	kds:requiredByDomain schema:Organization;
+	kds:formDefault [
+		kds:formFieldName "website";
+		kds:formLabelName "Web Address";
+		kds:formFieldHelp "Enter the web address in 'http...' format.";
+		kds:fieldType [
+			a	kdr:UrlField; 
+		];
+	] .
+
+schema:givenName a rdf:Property;	
+	rdfs:domain	schema:Person;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "First name or given name for an individual.";	
+	kds:requiredByDomain schema:Person;
+	kds:formDefault [
+		kds:formFieldName "givenname";
+		kds:formLabelName "First name";
+		kds:formFieldHelp "Enter the person's first/given name.";
+		kds:fieldType [
+			a	kdr:TextField; 
+		];
+	] .
+	
+schema:familyName a rdf:Property;	
+	rdfs:domain	schema:Person;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Last name or family name for an individual.";	
+	kds:requiredByDomain schema:Person;
+	kds:formDefault [
+		kds:formFieldName "familyname";
+		kds:formLabelName "Last name";
+		kds:formFieldHelp "Enter the person's last/family name.";
+		kds:fieldType [
+			a	kdr:TextField; 
+		];
+	] .
+	
+schema:email a rdf:Property;	
+	rdfs:domain	schema:Person;	
+	rdfs:domain schema:Organization;
+	rdfs:range	xsd:string;	
+	rdfs:comment "email address.";
+	kds:requiredByDomain schema:Person;
+	kds:propertyProcessing [
+		a kdr:EmailVerificationProcessor
+	];                   
+	kds:propertyValidation [
+		a kdr:EmailValidator
+	];
+	kds:propertySecurity [
+		acl:agent kdr:Self-SG;
+		acl:mode acl:Read, acl:Write
+	] ;
+	kds:formDefault [
+		kds:formFieldName "emailaddr";
+		kds:formLabelName "Email Address";
+		kds:formFieldHelp "Enter a valid email address.";
+		kds:fieldType [
+			a	kdr:TextField
+		]
+	] .
+
+kds:userName a rdf:Property;	
+	rdfs:domain	kds:UserClass;	
+	rdfs:range xsd:string;	
+	rdfs:comment "Individual's username.";	           
+	kds:requiredByDomain kds:UserClass;
+	kds:propertyValidation [
+		a	kdr:UniqueValueValidator;
+	];
+	kds:propertyValidation [
+		a kdr:StringLengthValidator;
+		kds:parameters "max=25,min=10"
+	];
+	kds:formDefault [
+		kds:formFieldName "username";
+		kds:formLabelName "Username";
+		kds:formFieldHelp "Enter username for ";
+		kds:fieldType [
+			a	kdr:TextField
+		]
+	] .
+
+kds:salt a rdf:Property;	
+	#rdfs:domain	kds:PasswordClass; listed in Vocab def
+	rdfs:domain obi:Assertion;	
+	# rdfs:range	xsd:string;	stated in vocab
+	kds:requiredByDomain kds:PasswordClass;
+	kds:requiredByDomain obi:Assertion;
+	kds:propertyProcessing [
+		a kdr:SaltProcessor
+	] ;
+	kds:propertySecurity [
+		kds:appliesTo kds:PasswordClass;
+		acl:agent kdr:Self-SG;
+		acl:mode acl:Read, acl:Write
+	] ;
+	kds:formDefault [
+		kds:fieldType kdr:ServerField;
+		kds:fieldProcessing "salt";
+		kds:formFieldName "salt"
+	].
+	
+	
+kds:password 	
+	#rdfs:domain	kds:PasswordClass;	Stated in Vocab
+	#rdfs:range	xsd:string;	stated in Vocab
+	kds:requiredByDomain kds:PasswordClass;	
+	kds:propertyValidation [
+		a kdr:PasswordValidator 
+	];
+	kds:propertyProcessing  [
+		a kdr:PasswordProcessor
+	];
+	kds:formDefault [
+		kds:fieldType kdr:PasswordField;
+		kds:formLabelName "Password";        
+		kds:formFieldName "password"
+	] .	
+
+kds:hasPerson a rdf:Property;
+	rdfs:range schema:Person;
+	kds:requiredByDomain kds:UserClass;
+	kds:formDefault [
+		kds:formLabelName "Password";        
+		kds:formFieldName "password";
+		kds:formFieldHelp "Enter Password: Minimum 16 characters with 2 uppercase, 2 lowercase and 2 special characters.";
+		kds:fieldType [
+			a	kds:SelectField;
+			kds:selectQuery "SELECT ?s ?name 
+											{
+												?s a schema:Person .
+												?s a schema:givenName ?givenName .
+												?s a schema:familyName ?familyName .
+												BIND (CONCAT(?familyName,', ',?givenName) AS ?name .
+												OPTIONAL {
+													?u a kds:UserClass .
+													?u kds:hasPerson ?s .
+												}
+												FILTER (!(bound(?s))
+											}
+											ORDER BY ?name";
+			kds:selectBoundValue "?s";
+			kds:selectDisplay "?name"
+		]	
+	] .
+	
+kds:hasPassword a rdf:Property;	
+	rdfs:domain	kds:UserClass;	
+	rdfs:range	kds:PasswordClass;	
+	rdfs:comment "User's account password object.";
+	kds:requiredByDomain kds:UserClass .
+ 
+kds:hasUser a rdf:Property;
+	rdfs:domain kds:UserGroup;
+	rdfs:range schema:Person;
+	kds:formDefault [
+		kds:formLabelName "User";        
+		kds:formFieldName "user";
+		kds:formFieldHelp "Select the user";
+		kds:fieldType [
+			a	kdr:FieldList;
+			kds:listFieldType kdr:SelectField;
+			kds:selectQuery "SELECT ?s ?name 
+							{
+								?user a kds:UserClass .
+								?user kds:hasPerson ?s .
+								?s schema:givenName ?givenName .
+								?s schema:familyName ?familyName . 
+								?s schema:email ?email .
+								BIND (CONCAT(?familyName,'-',?givenName,'-',?email) AS ?name) .
+							}
+							ORDER BY ?name";
+			kds:selectBoundValue "?user";
+			kds:selectDisplay "?name"
+		]	
+	] .

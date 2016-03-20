@@ -1,0 +1,80 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+obi:Assertion a rdf:Class;
+	a kds:ControlledClass;
+	rdfs:label "Open Badge Assertion";
+	rdfs:comment "Assertion for open badges.";
+	kds:storageType "object";
+	kds:primaryKey [
+		kds:keyCombo obi:recipient;
+		kds:keyCombo obi:hasBadge
+	]; 
+	kds:jsonDefault [
+		kds:jsonObjName "Assertion" 
+	];
+	kds:classSecurity [
+		acl:agent kdr:Admin-SG;
+		acl:mode acl:Read, acl:Write
+	] ;
+	kds:classSecurity [
+		acl:agent kdr:User-SG;
+		acl:mode acl:Read
+	] .
+	
+rdf:Class kds:storageType "object" ;
+	a kds:ControlledClass .
+
+schema:Organization a rdf:Class;
+	a kds:ControlledClass ;
+	kds:storageType "object";
+	kds:primaryKey schema:name;
+	kds:jsonDefault [
+		kds:jsonObjName "org";
+		kds:jsonValFormat "lookup";
+		kds:lookupReturnField schema:name
+	] .
+	
+schema:ImageObject a rdf:Class;
+	a kds:ControlledClass ;
+	kds:storageType "object".
+	
+schema:URL a rdf:Class;
+	a kds:ControlledClass ;
+	kds:storageType "literal".
+	
+obi:BadgeClass a rdf:Class;
+	a kds:ControlledClass ;
+	kds:storageType "object";
+	kds:primaryKey schema:name;
+	rdfs:comment "Class for open badges.";	
+	rdfs:label "Open Badge Class";
+	kds:jsonDefault [
+		kds:jsonObjName "badgeClass";
+		kds:jsonValFormat "lookup";
+		kds:lookupReturnField schema:name
+	] .
+	
+kds:UserClass a kds:ControlledClass ;
+	kds:storageType "object" ;
+	kds:primaryKey kds:hasPerson.
+	
+kds:UserGroup kds:primaryKey schema:name ;
+	kds:saveLocation "triplestore" ;
+	kds:subjectCalc "slugify(schema:name)" .
+	
+kds:PasswordClass a kds:ControlledClass;
+	kds:storageType "object" .
+
+
+schema:Person a kds:ControlledClass ;
+	kds:storageType "object";
+	kds:primaryKey schema:email.
+	

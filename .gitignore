@@ -1,0 +1,15 @@
+*.swp
+*.war
+*.rdb
+*.bat
+*.log
+*.bak
+*.pyc
+data*
+build*
+dist*
+*egg-info*
+__pycache__
+application.cfg
+*DS_Store
+/rdfframework/rdfframework/json-definitions/*.json

@@ -1,0 +1,8 @@
+<table class="{{ form.rdf_instructions['tableCss'] }}">
+	<row class="{{ form.rdf_instructions['tableRowCss'] }}">
+		<th class="{{ form.rdf_instructions['tableThCss'] }}">
+			{{ fld.label }}
+			{% if fld.flags.required and not display_mode %} *{% endif %}
+		</th>
+	</row>
+</table>

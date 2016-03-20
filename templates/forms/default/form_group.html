@@ -1,0 +1,17 @@
+<div class="form-group {{ errorCss }}">	
+	<label class="control-label">{{ fld.label }}{% if fld.flags.required and not display_mode %} *{% endif %}</label>
+	<div title="{{ fld.description }}" data-toggle="tooltip">
+	{% if first %}
+		{{ fld(class_=fld.kds_css,disabled=not fld.editable,autofocus="autofocus") }}
+		{% set first = False %}
+	{% else %}
+		{{ fld(class_=fld.kds_css,disabled=not fld.editable) }}
+	{% endif %}
+	</div>
+	{% if fld.errors %}
+		<ul class="help-block">{% for error in fld.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+	{% endif %}	
+	{% if debug %}
+		<div><pre>{{fld.debug_data}}</pre></div>
+	{% endif %}
+</div>
