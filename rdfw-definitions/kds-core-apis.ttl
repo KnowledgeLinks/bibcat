@@ -1,0 +1,27 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+kdr:OrganizationImageApi a kds:ApiClass;
+	rdfs:label "Badge Definition";
+	rdfs:comment "This api returns an open badge image.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri schema:Organization;
+		kds:lookupPropertyUri schema:alternativeName;
+		kds:apiUrl "issuer";
+		kds:apiUrlExtension "png";
+		kds:returnType "file";
+		kds:mimeType "image/png"
+	];
+	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri schema:Organization;
+		kds:apiFieldName "image";
+	].

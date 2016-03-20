@@ -62,10 +62,6 @@ obi:application a kds:Application;
 		kds:prefix "rdfs";
 		kds:nameSpaceUri "http://www.w3.org/2000/01/rdf-schema#"
 	]; 
-	kds:appNameSpace [
-		kds:prefix "obi";
-		kds:nameSpaceUri "https://w3id.org/openbadges#"
-	];
 	kds:saveLocation "triplestore";
 	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid".
 

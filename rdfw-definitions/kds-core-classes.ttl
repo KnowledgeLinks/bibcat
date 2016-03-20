@@ -8,27 +8,6 @@
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-obi:Assertion a rdf:Class;
-	a kds:ControlledClass;
-	rdfs:label "Open Badge Assertion";
-	rdfs:comment "Assertion for open badges.";
-	kds:storageType "object";
-	kds:primaryKey [
-		kds:keyCombo obi:recipient;
-		kds:keyCombo obi:hasBadge
-	]; 
-	kds:jsonDefault [
-		kds:jsonObjName "Assertion" 
-	];
-	kds:classSecurity [
-		acl:agent kdr:Admin-SG;
-		acl:mode acl:Read, acl:Write
-	] ;
-	kds:classSecurity [
-		acl:agent kdr:User-SG;
-		acl:mode acl:Read
-	] .
-	
 rdf:Class kds:storageType "object" ;
 	a kds:ControlledClass .
 
@@ -50,18 +29,6 @@ schema:URL a rdf:Class;
 	a kds:ControlledClass ;
 	kds:storageType "literal".
 	
-obi:BadgeClass a rdf:Class;
-	a kds:ControlledClass ;
-	kds:storageType "object";
-	kds:primaryKey schema:name;
-	rdfs:comment "Class for open badges.";	
-	rdfs:label "Open Badge Class";
-	kds:jsonDefault [
-		kds:jsonObjName "badgeClass";
-		kds:jsonValFormat "lookup";
-		kds:lookupReturnField schema:name
-	] .
-	
 kds:UserClass a kds:ControlledClass ;
 	kds:storageType "object" ;
 	kds:primaryKey kds:hasPerson.
@@ -72,7 +39,6 @@ kds:UserGroup kds:primaryKey schema:name ;
 	
 kds:PasswordClass a kds:ControlledClass;
 	kds:storageType "object" .
-
 
 schema:Person a kds:ControlledClass ;
 	kds:storageType "object";
