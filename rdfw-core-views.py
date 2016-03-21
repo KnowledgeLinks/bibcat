@@ -24,30 +24,15 @@ from rdfframework.utilities import render_without_request, code_timer, \
 from rdfframework.forms import rdf_framework_form_factory 
 from rdfframework.api import rdf_framework_api_factory, Api
 from rdfframework.security import User
+from .. import app, login_manager
+
 DEBUG = True
-open_badge = Blueprint("open_badge", __name__,
-                       template_folder="templates")
-open_badge.config = {}
 
-@open_badge.record
-def record_params(setup_state):
-    """Function takes the setup_state and updates configuration from
-    the active application.
-
-    Args:
-        setup_state -- Setup state of the application.
-    """
-    app = setup_state.app
-    open_badge.config = dict(
-        [(key, value) for (key, value) in app.config.items()]
-    )
-
-
-@open_badge.route("/")
+@app.route("/")
 def base_path():
     return ""
 
-@open_badge.route("/image/<image_id>", methods=["GET"])
+@app.route("/image/<image_id>", methods=["GET"])
 def image_path(image_id):
     ''' view passes the specified fedora image based on the uuid'''
     if not DEBUG:
@@ -74,23 +59,23 @@ def image_path(image_id):
                      attachment_filename='%s.png' % image_id,
                      mimetype='image/png')
 
-@open_badge.route("/fedora_image", methods=["GET"])
+@app.route("/fedora_image", methods=["GET"])
 def fedora_image_path():
     ''' view for finding an image based on the fedora uri'''
     if request.args.get("id"):
         uid = re.sub(r'^(.*[#/])','',request.args.get("id"))
-        return redirect(url_for("open_badge.image_path",
+        return redirect(url_for("app.image_path",
                          image_id=uid))    
       
-@open_badge.route("/test/", methods=["POST", "GET"])
+@app.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
     f=rdfw() #This is an intentional error to cause a break in the code
     y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
-@open_badge.route("/api/<api_name>/<id_value>.<ext>", methods=["POST", "GET"])
-@open_badge.route("/api/<api_name>", methods=["POST", "GET"])
+@app.route("/api/<api_name>/<id_value>.<ext>", methods=["POST", "GET"])
+@app.route("/api/<api_name>", methods=["POST", "GET"])
 def rdf_api(api_name, id_value=None, ext=None):
     """View for displaying forms
 
@@ -115,10 +100,10 @@ def rdf_api(api_name, id_value=None, ext=None):
             error_message="The web address is invalid")
     api_uri = _api_exists.get("api_uri")
     # generate the api class
-    base_url = "%s%s" % (request.url_root[:-1], url_for("open_badge.base_path")) 
+    base_url = "%s%s" % (request.url_root[:-1], url_for("app.base_path")) 
     current_url = request.url
     base_api_url = "%s%sapi/" % (request.url_root[:-1],
-                                   url_for("open_badge.base_path"))
+                                   url_for("app.base_path"))
     api_url = request.base_url
     api_class = rdf_framework_api_factory(_api_path, 
                                           base_url=base_url, 
@@ -171,10 +156,10 @@ def rdf_api(api_name, id_value=None, ext=None):
                 if debug: print("END rdf_api blueprint.py --- json --------\n")
                 return jsonify(api_data['obj_json'])
         
-@open_badge.route("/<form_name>.html", methods=["POST", "GET"])
-@open_badge.route("/<form_name>", methods=["POST", "GET"])
-@open_badge.route("/<form_name>/<form_instance>", methods=["POST", "GET"])
-@open_badge.route("/<form_name>/<form_instance>.html", methods=["POST", "GET"])
+@app.route("/<form_name>.html", methods=["POST", "GET"])
+@app.route("/<form_name>", methods=["POST", "GET"])
+@app.route("/<form_name>/<form_instance>", methods=["POST", "GET"])
+@app.route("/<form_name>/<form_instance>.html", methods=["POST", "GET"])
 def rdf_class_forms(form_name, form_instance=None):
     """View for displaying forms
 
@@ -197,7 +182,7 @@ def rdf_class_forms(form_name, form_instance=None):
     form_uri = _form_exists.get("form_uri")
     # generate the form class
     form_class = rdf_framework_form_factory(_form_path, \
-            base_url=url_for("open_badge.base_path"), 
+            base_url=url_for("app.base_path"), 
             current_url=request.url)
     # test to see if the form requires a login
     login_message = None
@@ -232,7 +217,7 @@ def rdf_class_forms(form_name, form_instance=None):
         # the below forms remove the params
         if instance_uri not in ["kdr_EditForm", "kdr_DisplayForm", "kdr_Login"]\
                  and request.args.get("id"):
-            redirect_url = url_for("open_badge.rdf_class_forms",
+            redirect_url = url_for("app.rdf_class_forms",
                                     form_name=form_name,
                                     form_instance=form_instance)
             return redirect(redirect_url)
@@ -240,7 +225,7 @@ def rdf_class_forms(form_name, form_instance=None):
         # redirect to NewForm
         if instance_uri in ["kdr_EditForm","kdr_DisplayForm"] and \
                 not request.args.get("id"):
-            redirect_url = url_for("open_badge.base_path") + \
+            redirect_url = url_for("app.base_path") + \
                     rdfw().get_form_path(form_uri, "kdr_NewForm")
             return redirect(redirect_url)
         # if the display form does not have an ID return an error
@@ -281,7 +266,7 @@ def rdf_class_forms(form_name, form_instance=None):
     return template
     
 
-@open_badge.route("/api/form_generic_prop/<class_uri>/<prop_uri>",
+@app.route("/api/form_generic_prop/<class_uri>/<prop_uri>",
                   methods=["POST", "GET"])
 def rdf_generic_api(class_uri, prop_uri):
     if not DEBUG:
@@ -310,10 +295,10 @@ def rdf_generic_api(class_uri, prop_uri):
     prop_json['kds_classUri'] = class_uri
     prop_json['kds_apiFieldName'] = prop_uri
     prop = RdfProperty(prop_json, data, subject_uri)
-    base_url = "%s%s" % (request.url_root[:-1], url_for("open_badge.base_path")) 
+    base_url = "%s%s" % (request.url_root[:-1], url_for("app.base_path")) 
     current_url = request.url
     base_api_url = "%s%sapi/form_generic_prop/" % (request.url_root[:-1],
-                                   url_for("open_badge.base_path"))
+                                   url_for("app.base_path"))
     if debug:
         print('rdf_class: ', rdf_class)
         print('prop_json: ', prop_json)
@@ -343,7 +328,7 @@ def rdf_generic_api(class_uri, prop_uri):
         if debug: print("END rdf_generic_api GET --------------------------\n")
         return json.dumps(api_data['obj_json'], indent=4) 
         
-@open_badge.route("/api/form_lookup/<class_uri>/<prop_uri>",
+@app.route("/api/form_lookup/<class_uri>/<prop_uri>",
                   methods=["GET"])
 def rdf_lookup_api(class_uri, prop_uri):
     if not DEBUG:
@@ -353,7 +338,7 @@ def rdf_lookup_api(class_uri, prop_uri):
     if debug: print("START rdf_lookup_api ----------------------------\n")
     return abort(400)
     referer = request.environ.get("HTTP_REFERER")
-    form_function_path = url_for("open_badge.rdf_class_forms",
+    form_function_path = url_for("app.rdf_class_forms",
                                  form_name="form_name",
                                  form_instance="form_instance")
     base_form_path = \
@@ -391,10 +376,10 @@ def rdf_lookup_api(class_uri, prop_uri):
     prop_json['kds_classUri'] = class_uri
     prop_json['kds_apiFieldName'] = prop_uri
     prop = RdfProperty(prop_json, data, subject_uri)
-    base_url = "%s%s" % (request.url_root[:-1], url_for("open_badge.base_path")) 
+    base_url = "%s%s" % (request.url_root[:-1], url_for("app.base_path")) 
     current_url = request.url
     base_api_url = "%s%sapi/form_generic_prop/" % (request.url_root[:-1],
-                                   url_for("open_badge.base_path"))
+                                   url_for("app.base_path"))
     if debug:
         print('subject_uri: ', subject_uri)
         print('data: ', data)
@@ -426,7 +411,7 @@ def rdf_lookup_api(class_uri, prop_uri):
         if debug: print("END rdf_generic_api GET --------------------------\n")
         return json.dumps(api_data['obj_json'], indent=4) '''
         
-@open_badge.route("/rdfjson/", methods=["POST", "GET"])
+@app.route("/rdfjson/", methods=["POST", "GET"])
 def form_rdf_class():
     """View displays the RDF json"""
     form_dict = rdfw().rdf_form_dict
