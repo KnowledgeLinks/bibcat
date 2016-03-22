@@ -15,22 +15,19 @@ from flask import redirect, url_for, send_file, current_app
 from flask_negotiate import produces
 from flask.ext.login import login_required, login_user, current_user
 from flask_wtf import CsrfProtect
-
-from . import new_badge_class, issue_badge
 from rdfframework import RdfProperty, get_framework as rdfw
 from rdfframework.utilities import render_without_request, code_timer, \
         remove_null, pp, clean_iri, uid_to_repo_uri, cbool, make_list
-
 from rdfframework.forms import rdf_framework_form_factory 
 from rdfframework.api import rdf_framework_api_factory, Api
 from rdfframework.security import User
 from .. import app, login_manager
 
 DEBUG = True
-
+print("core views")
 @app.route("/")
 def base_path():
-    return ""
+    return "<h1>base<h1>"
 
 @app.route("/image/<image_id>", methods=["GET"])
 def image_path(image_id):
