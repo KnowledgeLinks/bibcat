@@ -21,15 +21,31 @@ from rdfframework.utilities import render_without_request, code_timer, \
 from rdfframework.forms import rdf_framework_form_factory 
 from rdfframework.api import rdf_framework_api_factory, Api
 from rdfframework.security import User
-from .. import app, login_manager
 
+rdfw_core = Blueprint("rdfw_core", __name__,
+                       template_folder="templates")
+rdfw_core.config = {}
+
+@rdfw_core.record
+def record_params(setup_state):
+    """Function takes the setup_state and updates configuration from
+    the active application.
+
+    Args:
+        setup_state -- Setup state of the application.
+    """
+    app = setup_state.app
+    rdfw_core.config = dict(
+        [(key, value) for (key, value) in app.config.items()]
+    )
+    
 DEBUG = True
-print("core views")
-@app.route("/")
+
+@rdfw_core.route("/")
 def base_path():
     return "<h1>base<h1>"
 
-@app.route("/image/<image_id>", methods=["GET"])
+@rdfw_core.route("/image/<image_id>", methods=["GET"])
 def image_path(image_id):
     ''' view passes the specified fedora image based on the uuid'''
     if not DEBUG:
@@ -56,7 +72,7 @@ def image_path(image_id):
                      attachment_filename='%s.png' % image_id,
                      mimetype='image/png')
 
-@app.route("/fedora_image", methods=["GET"])
+@rdfw_core.route("/fedora_image", methods=["GET"])
 def fedora_image_path():
     ''' view for finding an image based on the fedora uri'''
     if request.args.get("id"):
@@ -64,15 +80,15 @@ def fedora_image_path():
         return redirect(url_for("app.image_path",
                          image_id=uid))    
       
-@app.route("/test/", methods=["POST", "GET"])
+@rdfw_core.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""
     f=rdfw() #This is an intentional error to cause a break in the code
     y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
-@app.route("/api/<api_name>/<id_value>.<ext>", methods=["POST", "GET"])
-@app.route("/api/<api_name>", methods=["POST", "GET"])
+@rdfw_core.route("/api/<api_name>/<id_value>.<ext>", methods=["POST", "GET"])
+@rdfw_core.route("/api/<api_name>", methods=["POST", "GET"])
 def rdf_api(api_name, id_value=None, ext=None):
     """View for displaying forms
 
@@ -153,10 +169,10 @@ def rdf_api(api_name, id_value=None, ext=None):
                 if debug: print("END rdf_api blueprint.py --- json --------\n")
                 return jsonify(api_data['obj_json'])
         
-@app.route("/<form_name>.html", methods=["POST", "GET"])
-@app.route("/<form_name>", methods=["POST", "GET"])
-@app.route("/<form_name>/<form_instance>", methods=["POST", "GET"])
-@app.route("/<form_name>/<form_instance>.html", methods=["POST", "GET"])
+@rdfw_core.route("/<form_name>.html", methods=["POST", "GET"])
+@rdfw_core.route("/<form_name>", methods=["POST", "GET"])
+@rdfw_core.route("/<form_name>/<form_instance>", methods=["POST", "GET"])
+@rdfw_core.route("/<form_name>/<form_instance>.html", methods=["POST", "GET"])
 def rdf_class_forms(form_name, form_instance=None):
     """View for displaying forms
 
@@ -263,7 +279,7 @@ def rdf_class_forms(form_name, form_instance=None):
     return template
     
 
-@app.route("/api/form_generic_prop/<class_uri>/<prop_uri>",
+@rdfw_core.route("/api/form_generic_prop/<class_uri>/<prop_uri>",
                   methods=["POST", "GET"])
 def rdf_generic_api(class_uri, prop_uri):
     if not DEBUG:
@@ -325,7 +341,7 @@ def rdf_generic_api(class_uri, prop_uri):
         if debug: print("END rdf_generic_api GET --------------------------\n")
         return json.dumps(api_data['obj_json'], indent=4) 
         
-@app.route("/api/form_lookup/<class_uri>/<prop_uri>",
+@rdfw_core.route("/api/form_lookup/<class_uri>/<prop_uri>",
                   methods=["GET"])
 def rdf_lookup_api(class_uri, prop_uri):
     if not DEBUG:
@@ -408,7 +424,7 @@ def rdf_lookup_api(class_uri, prop_uri):
         if debug: print("END rdf_generic_api GET --------------------------\n")
         return json.dumps(api_data['obj_json'], indent=4) '''
         
-@app.route("/rdfjson/", methods=["POST", "GET"])
+@rdfw_core.route("/rdfjson/", methods=["POST", "GET"])
 def form_rdf_class():
     """View displays the RDF json"""
     form_dict = rdfw().rdf_form_dict
