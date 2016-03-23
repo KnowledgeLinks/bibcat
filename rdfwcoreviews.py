@@ -1,4 +1,4 @@
-"""Flask Blueprint for Open Badges"""
+"""Flask Blueprint for rdfw core views"""
 __author__ = "Jeremy Nelson, Mike Stabile"
 
 import time
@@ -45,6 +45,7 @@ DEBUG = True
 def base_path():
     return "<h1>base<h1>"
 
+    
 @rdfw_core.route("/image/<image_id>", methods=["GET"])
 def image_path(image_id):
     ''' view passes the specified fedora image based on the uuid'''
@@ -195,7 +196,7 @@ def rdf_class_forms(form_name, form_instance=None):
     form_uri = _form_exists.get("form_uri")
     # generate the form class
     form_class = rdf_framework_form_factory(_form_path, \
-            base_url=url_for("app.base_path"), 
+            base_url=url_for("rdfw_core.base_path"), 
             current_url=request.url)
     # test to see if the form requires a login
     login_message = None
@@ -426,7 +427,7 @@ def rdf_lookup_api(class_uri, prop_uri):
         
 @rdfw_core.route("/rdfjson/", methods=["POST", "GET"])
 def form_rdf_class():
-    """View displays the RDF json"""
+    '''View displays the RDF json'''
     form_dict = rdfw().rdf_form_dict
     class_dict = rdfw().rdf_class_dict
     app_dict = rdfw().rdf_app_dict
