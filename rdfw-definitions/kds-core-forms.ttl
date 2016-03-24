@@ -56,7 +56,7 @@ kdr:LoginForm a kds:FormClass;
 				a kdr:PasswordField;
 				kds:fieldMode kdr:ChangePassword
 			];
-		]
+		];
 	].
 
 kdr:OrganizationForm a kds:FormClass;

@@ -1,0 +1,170 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+#-------------------------------------------------------------------
+# The Following resources are instances of the classess defined in the
+# kds-vocab.ttl file. The are used to enumarte the options available to those
+# specified classes.
+#-------------------------------------------------------------------
+
+# FieldClasses ***********************************************	
+
+	kdr:TextField a kds:FieldClass;
+		rdfs:label "Text field.";
+		rdfs:comment "Standard form text field".
+		
+	kdr:TextAreaField a kds:FieldClass;
+		rdfs:label "Text Area field.";
+		rdfs:comment "Standard form textarea field".
+		
+	kdr:SelectField a kds:FieldClass;
+		rdfs:label "Select field";
+		rdfs:comment "Standard select field." .
+		
+	kdr:ServerField a kds:FieldClass;
+		rdfs:label	"Server Field";
+		rdfs:comment "A field that is to be kept and processed on the server only." .
+	
+	kdr:ImageFileOrURLField a kds:FieldClass;
+		rdfs:label "Image File or Url";
+		rdfs:comment "A Image file upload and Image URL field combo." .
+		
+	kdr:DateTimeField a kds:FieldClass;
+		rdfs:label "Date-time";
+		rdfs:comment "A Date time field." .
+		
+	kdr:DateField a kds:FieldClass;
+		rdfs:label "Date";
+		rdfs:comment "A Date field." .
+		
+	kdr:BooleanField a kds:FieldClass;
+		rdfs:label "Boolean" ;
+		rdfs:comment "A boolean field." .
+		
+  kdr:PasswordField a kds:FieldClass;
+  	rdfs:label "Password";
+  	rdfs:comment "A password field." .
+	
+# DataTypes ***********************************************	
+
+	kdr:PasswordHash a kds:DataType;
+		rdfs:label "Password Hash";
+		rdfs:comment "A data type that requries a hashed and salted password".
+
+# PropertyProcessors ***********************************************	
+		
+	kdr:SaltProcessor a kds:PropertyProcessor;
+		rdfs:label "Salt Processor";
+		rdfs:comment "Application should generate a random Salt value to store.";
+		kds:resultType "propertyValue".
+		
+	kdr:PasswordProcessor a kds:PropertyProcessor;
+		rdfs:label "Password Processor";
+		rdfs:comment "Application should process as a password for storage. i.e. salting and hashing".
+
+	kdr:CalculationProcessor a kds:PropertyProcessor;
+		rdfs:label "Calculation Processor";
+		rdfs:comment "Application should process the property according to the rules listed int he kds:calulation property." ;
+		kds:resultType "propertyValue".
+
+	kdr:CSVstringToMultiPropertyProcessor a kds:PropertyProcessor;
+		rdfs:label "CSV to Properties";
+		rdfs:comment "Application takes a CSV string and adds each value as a seperate triple to the class instance." .
+	
+	kdr:AssertionImageBakingProcessor a kds:PropertyProcessor;
+		rdfs:label "Assertion Baker";
+		rdfs:comment "Application sends badge image to the a badge baking service with the assertion." ;
+		kds:resultType "propertyValue".
+	
+	kdr:EmailVerificationProcessor a kds:PropertyProcessor;
+		rdfs:label "Email Verifier";
+		rdfs:comment "Application application initiates a process to verify the email address is a valid working address." .
+
+# Validators ***********************************************	
+		
+	kdr:PasswordValidator a kds:Validator;
+		rdfs:label "Password validator";
+		rdfs:comment "The application should validate the property as a password before saving.".
+
+	kdr:EmailValidator a kds:Validator;
+		rdfs:label "Email validator";
+		rdfs:comment "The application should validate the property object that it is a valid email address.".
+		
+	kdr:UrlValidator a kds:Validator;
+		rdfs:label "URL validator";
+		rdfs:comment "The application should validate the property object is a valid URL.".
+	
+	kdr:UniqueValueValidator a kds:Validator;
+		rdfs:label "Unique Value";
+		rdfs:comment "Will validate if the value is a unique to the property and class.".
+	
+	kdr:StringLengthValidator a kds:Validator;
+		rdfs:label "Length Validator" ;
+		rdfs:comment "Validate that the length of the string is long enought." .
+
+# UserGroups ***********************************************	
+
+	kdr:Admin-SG a kds:UserGroup;	
+		rdfs:comment	"The application admin security group for managing content";
+		rdfs:label	"Admin-SG" .
+
+	kdr:Public-SG a kds:UserGroup;
+		rdfs:label "Public-SG";
+		rdfs:comment "The security group for public access".
+			
+	kdr:Self-SG	 a kds:UserGroup;
+		rdfs:label "Self-SG";
+		rdfs:comment "The security group pertaining to logged in user level permissions".
+			
+	kdr:SysAdmin-SG	a kds:UserGroup;
+		rdfs:label "SysAdmin-SG";
+		rdfs:comment "The application system admin security group".
+
+	kdr:User-SG	a kds:UserGroup;
+		rdfs:label "User-SG";
+		rdfs:comment "The security class for any logged in User".
+		
+# Permissions rights ***********************************************
+	acl:Read a kds:PermissionsClass. 
+	acl:Write a kds:PermissionsClass.
+	acl:Append a kds:PermissionsClass.
+	
+	acl:mode a kds:SecurityProperty;
+		rdfs:range kds:PermissionsClass;
+		rdfs:domain kds:SecurityClass .
+	
+# ApplicationActionClasses ***********************************************	
+
+		
+	kdr:HideUnless a kds:ApplicationActionClass;
+		rdfs:label "Hide field Unless data needed";
+		rdfs:comment "Application should generate the field but keep it hidden.".
+
+	kdr:LookupAddNewWorkFlow a kds:ApplicationActionClass;
+		rdfs:label "Lookup and Add New workflow" ;
+		rdfs:comment "Form should present a field to lookup a resource and if resource does not exist add the resource." .
+		
+	kdr:RemoveFromForm a kds:ApplicationActionClass;
+		rdfs:label "Remove property from form" ;
+		rdfs:comment "Property should be removed from form. This is usually associated with a form instance." .
+		
+# FormInstanceTypeClasses ***********************************************	
+
+	kdr:NewForm a kds:FormInstanceTypeClass;
+		rdfs:label "New form";
+		rdfs:comment "A form for creating a new data".
+		
+	kdr:EditForm a kds:FormInstanceTypeClass;
+		rdfs:label "Edit form";
+		rdfs:comment "A form for editing data".
+		
+	kdr:DisplayForm a kds:FormInstanceTypeClass;
+		rdfs:label "Display form";
+		rdfs:comment "A form for displaying data".
