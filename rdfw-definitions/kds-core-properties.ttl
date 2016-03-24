@@ -50,7 +50,7 @@ schema:description a rdf:Property;
 	] .
 	
 
-schema:affliation	a rdf:Property;
+schema:affiliation	a rdf:Property;
 	rdfs:domain schema:Person;
 	rdfs:range schema:Organization;
 	rdfs:label "Affiliated with";

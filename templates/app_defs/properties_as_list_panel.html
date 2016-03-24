@@ -1,0 +1,28 @@
+
+	<div class="panel-group" id="prop_accordion{{ count }}" role="tablist" aria-multiselectable="true">
+	{% set first = False %}
+	{% set prop_count = 0 %}
+	{% for prop in props %}			
+		<div class="panel panel-success">
+			<div class="panel-heading" role="tab" id="heading{{ count }}_{{ prop_count }}">
+				<h6 class="panel-title">
+					<a class="collapsed" role="button" data-toggle="collapse" data-parent="#prop_accordion{{ count }}" href="#{{ prop['kds_propUri'] + count|string}}_{{ prop_count }}" aria-expanded="false" aria-controls="{{ prop['kds_propUri'] + count|string}}_{{ prop_count }}">
+					{{ prop['kds_propUri'] }} - <small>rdf:Class {{ prop['kds_classUri'] }}</small>
+					</a>
+				</h6>
+			</div>
+			<div id="{{ prop['kds_propUri'] + count|string}}_{{ prop_count }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ count }}_{{ prop_count }}">
+				<div class="panel-body">
+					<pre>{{ prop|pjson }}</pre>
+				</div>
+			</div>
+		</div>
+		{% set prop_count = prop_count + 1 %}
+	{% endfor %}
+	</div>
+
+
+				
+
+
+

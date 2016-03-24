@@ -9,9 +9,10 @@ import json
 import requests
 from urllib.request import urlopen
 from werkzeug import wsgi
-from flask import Flask, abort, Blueprint, jsonify, render_template, Response, request
-from flask import redirect, url_for, send_file, current_app
-from flask.ext.login import login_required, login_user, current_user
+from flask import Flask, abort, Blueprint, jsonify, render_template, Response,\
+        request, redirect, url_for, send_file, current_app
+from flask.ext.login import login_required, login_user, current_user, \
+        logout_user
 from flask_wtf import CsrfProtect
 from rdfframework import RdfProperty, get_framework as rdfw
 from rdfframework.utilities import render_without_request, code_timer, \
@@ -43,6 +44,12 @@ DEBUG = True
 def base_path():
     return "<h1>base<h1>"
 
+@rdfw_core.route("/logout")
+@login_required
+def logout():
+    User().del_user_obj(current_user.username)
+    logout_user()
+    return redirect("/")
     
 @rdfw_core.route("/image/<image_id>", methods=["GET"])
 def image_path(image_id):
@@ -422,53 +429,19 @@ def rdf_lookup_api(class_uri, prop_uri):
         if debug: print("\t**** api_data:\n",pp.pprint(api_data))
         if debug: print("END rdf_generic_api GET --------------------------\n")
         return json.dumps(api_data['obj_json'], indent=4) '''
-        
-@rdfw_core.route("/rdfjson/", methods=["POST", "GET"])
-def form_rdf_class():
+
+      
+@rdfw_core.route("/appdefs/", methods=["POST", "GET"])
+@login_required
+def app_defintions():
     '''View displays the RDF json'''
-    form_dict = rdfw().rdf_form_dict
-    class_dict = rdfw().rdf_class_dict
-    app_dict = rdfw().rdf_app_dict
-    api_dict = rdfw().rdf_api_dict
-    table_template = '''
-    <style>
-        table.fixed {{ 
-            table-layout:fixed;
-            width: 2000px
-        }}
-        table.fixed td {{ 
-            overflow: hidden;
-            vertical-align:top; 
-        }}
-    </style>
-    <table class="fixed">
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <tr>
-            <td><h1>Application JSON</h1></td>
-            <td><h1>Class JSON</h1></td>
-            <td><h1>Form Paths</h1></td>
-        	<td><h1>Form Json</h1></td>
-        	<td><h1>API List</h1></td>
-        	<td><h1>API Json</h1></td>     	
-        </tr>
-        <tr>
-            <td><pre>{0}</pre></td>
-            <td><pre>{2}</pre></td>
-            <td><pre>{1}</pre></td>
-        	<td><pre>{3}</pre></td>
-        	<td><pre>{5}</pre></td>
-        	<td><pre>{4}</pre></td>
-        </tr>
-    </table>'''
-    return table_template.format(
-        json.dumps(app_dict, indent=2),
-        json.dumps(rdfw().form_list, indent=2), 
-        json.dumps(class_dict, indent=2),
-        json.dumps(form_dict, indent=2),
-        json.dumps(api_dict, indent=2),
-        json.dumps(rdfw().api_list, indent=2))
+    defs = [{"id":"app", "name":"Application", "data":rdfw().rdf_app_dict},
+            {"id":"rdfclass", "name":"Rdf Classes", "data":rdfw().rdf_class_dict},
+            {"id":"formpath", "name":"Form Paths", "data":rdfw().form_list},
+            {"id":"formdef", "name":"Form Definitons", "data":rdfw().rdf_form_dict},
+            {"id":"apipath", "name":"API Paths", "data":rdfw().api_list},
+            {"id":"apidef", "name":"API Definitons", "data":rdfw().rdf_api_dict}]
+    template = render_template(
+        "/app_definitions.html",
+        defs=defs)
+    return template
