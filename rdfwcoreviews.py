@@ -7,12 +7,10 @@ import re
 import io
 import json
 import requests
-import falcon
 from urllib.request import urlopen
 from werkzeug import wsgi
 from flask import Flask, abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for, send_file, current_app
-from flask_negotiate import produces
 from flask.ext.login import login_required, login_user, current_user
 from flask_wtf import CsrfProtect
 from rdfframework import RdfProperty, get_framework as rdfw
