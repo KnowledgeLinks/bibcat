@@ -63,5 +63,6 @@ kdr:Application a kds:Application;
 		kds:nameSpaceUri "http://www.w3.org/2000/01/rdf-schema#"
 	]; 
 	kds:saveLocation "triplestore";
-	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid".
+	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid";
+	kds:frameworkDocUrl "http://knowledgelinks.io/products/rdfframework" .
 
