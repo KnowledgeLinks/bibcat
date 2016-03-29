@@ -280,3 +280,29 @@ kds:hasUser a rdf:Property;
 			kds:selectDisplay "?name"
 		]	
 	] .
+
+kds:changePasswordRequired 
+	kds:formDefault [
+		kds:formLabelName "Change Password Required";        
+		kds:formFieldName "changePassword";
+		kds:formFieldHelp "Require the user to change their password on next login";
+		kds:fieldType [
+			a kdr:BooleanField
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+		]
+	];
+	kds:defaultVal "false";
+	kds:propertySecurity [
+		kds:appliesTo kds:PasswordClass;
+		acl:agent kdr:Admin-SG;
+		acl:mode acl:Read, acl:Write
+	] .
+		

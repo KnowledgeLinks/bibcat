@@ -7,6 +7,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 
 kdr:Application a kds:Application;
 	kds:applicationSecurity [
@@ -41,6 +42,10 @@ kdr:Application a kds:Application;
 	kds:appNameSpace [
 		kds:prefix "xsd";
 		kds:nameSpaceUri "http://www.w3.org/2001/XMLSchema#"
+	]; 
+	kds:appNameSpace [
+		kds:prefix "vcard";
+		kds:nameSpaceUri "http://www.w3.org/2006/vcard/ns#"
 	]; 
 	kds:appNameSpace [
 		kds:prefix "schema";

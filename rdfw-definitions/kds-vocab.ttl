@@ -447,3 +447,10 @@ kds:password a rdf:Property;
 	rdfs:range	xsd:string;
 	rdfs:label "password";
 	rdfs:comment "User's account password".
+	
+kds:changePasswordRequired a rdf:Property;
+	rdfs:subPropertyOf kds:securityProperty;
+	rdfs:domain	kds:UserClass;
+	rdfs:range	xsd:boolean;
+	rdfs:label "Change password";
+	rdfs:comment "A user is required to change their password.".

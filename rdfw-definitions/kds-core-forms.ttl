@@ -32,6 +32,9 @@ kdr:LoginForm a kds:FormClass;
 			kds:submitSuccessRedirect "!--source";
 			kds:submitFailRedirect "!--currentpage";
 			kds:instanceUrl "reset";
+		];
+		kds:formProcessing [
+			a kdr:PasswordStatusChecker
 		]
 	];    
 	kds:hasProperty [
@@ -146,7 +149,7 @@ kdr:UserForm a kds:FormClass;
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
-			kds:formDescription "Edit user information."
+			kds:formDescription "Edit user information." 
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:DisplayForm
@@ -192,9 +195,15 @@ kdr:UserForm a kds:FormClass;
 			kds:formInstanceType kdr:EditForm;
 			kds:fieldType [
 				a kdr:PasswordField;
-				kds:fieldMode kdr:ChangePassword
+				kds:fieldMode kdr:ChangePassword;
+				kds:requiredField "false"
 			] 
 		]
+	];
+	kds:hasProperty [
+		kds:propUri kds:changePasswordRequired;
+		kds:formFieldOrder 6;
+		kds:formLayoutRow 5
 	].
 		
 kdr:UserGroupForm a kds:FormClass;

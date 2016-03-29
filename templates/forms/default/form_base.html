@@ -8,7 +8,7 @@
 			<a class="btn btn-success" href="{{ form.edit_path }}" role="button">Edit</a>
 			{% endif %}
 			<a class="btn btn-default" href="/" role="button">Close</a>
-		{% elif form.instance_uri == 'kdr_EditForm' %}
+		{% elif form.instance_uri in ['kdr_EditForm', 'kdr_LoginReset'] %}
 			<input type="submit" class="btn btn-success"></input>
 			<a class="btn btn-default" href="{{ form.display_path }}" role="button">Cancel</a>
 		{% elif form.instance_uri == 'kdr_NewForm' %}
