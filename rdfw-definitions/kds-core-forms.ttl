@@ -32,6 +32,7 @@ kdr:LoginForm a kds:FormClass;
 			kds:submitSuccessRedirect "!--source";
 			kds:submitFailRedirect "!--currentpage";
 			kds:instanceUrl "reset";
+			kds:saveAction kdr:ClearPasswordReset;
 		];
 		kds:formProcessing [
 			a kdr:PasswordStatusChecker
