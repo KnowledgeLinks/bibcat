@@ -187,10 +187,11 @@ def rdf_class_forms(form_name, form_instance=None):
     """View for displaying forms
 
     Args:
-        form_instance -- Type of form (new, edit)
+        form_name -- main form url part
+        form_instance -- specific instance of the form (new, edit)
         
     params:
-        id -- the subject uri of the form data to lookup 
+        id -- the lookup value for the form to lookup data 
     """
     _display_mode = False
     _form_path = "/".join(remove_null([form_name, form_instance]))
@@ -209,14 +210,12 @@ def rdf_class_forms(form_name, form_instance=None):
             current_url=request.url)
     # test to see if the form requires a login
     login_message = None
-    print(_form_path, ": login required -> ", cbool(form_class.rdf_instructions.get("kds_loginRequired",False)))
     if cbool(form_class.rdf_instructions.get("kds_loginRequired",False)) is \
             True:
         if isinstance(current_user.is_authenticated, bool):
             auth = current_user.is_authenticated
         else:
             auth = current_user.is_authenticated()
-        print("auth: ", auth)
         if not auth:
             current_app.login_manager.login_message = \
                     "Please log in to access this page"
@@ -232,7 +231,6 @@ def rdf_class_forms(form_name, form_instance=None):
             if form.save_state == "success":
                 if isinstance(form.save_results, User):
                     login_user(form.save_results)
-                    #x=y
                 return redirect(form.redirect_url(params=request.args))
             else:
                 redirect_url = form.redirect_url(params=request.args)
@@ -269,10 +267,12 @@ def rdf_class_forms(form_name, form_instance=None):
                 _display_mode = True
             form_data = rdfw().get_obj_data(form_class(\
                     no_query=True, subject_uri=request.args.get("id")))
-            #pp.pprint(form_data['form_data'])
+            #pp.pprint(form_data)
             form = form_class(form_data['obj_data'],\
                       query_data=form_data['query_data'],\
                       subject_uri=request.args.get("id"))
+            #pp.pprint(form)
+            
             if not (len(form_data['query_data']) > 0):
                 return render_template(
                     "error_page_template.html",
