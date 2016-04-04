@@ -2,9 +2,9 @@
 	{% if display_mode %}
 		{% include "/forms/default/form_display_form_group.html" %}
 	{% else %}
-		{% if fld.type == 'BooleanField' %}
+		{% if fld.type == "BooleanField" %}
 			{% include "/forms/default/form_checkbox.html" %}
-		{% else %}
+		{% else %} 
 			{% include "/forms/default/form_group.html" %}
 		{% endif %}
 	{% endif %}

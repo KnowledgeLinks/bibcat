@@ -19,6 +19,11 @@
 	kdr:TextField a kds:FieldClass;
 		rdfs:label "Text field.";
 		rdfs:comment "Standard form text field".
+	
+	kdr:FieldList a kds:FieldClass;
+		rdfs:label "Text field.";
+		rdfs:comment "Standard form text field";
+		kds:templateUrl "/widgets/form_fieldlist.html" .
 		
 	kdr:TextAreaField a kds:FieldClass;
 		rdfs:label "Text Area field.";

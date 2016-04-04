@@ -219,7 +219,7 @@ def rdf_class_forms(form_name, form_instance=None):
         if not auth:
             current_app.login_manager.login_message = \
                     "Please log in to access this page"
-            return current_app.login_manager.unauthorized()        
+            #return current_app.login_manager.unauthorized()        
     # if request method is post 
     if request.method == "POST":
         # let form load with post data
@@ -281,7 +281,6 @@ def rdf_class_forms(form_name, form_instance=None):
         # if not on EditForm or DisplayForm render form
         else:
             form = form_class()
-    
     template = render_template(
         "/forms/default/app_form_template.html",
         actionUrl=request.url,

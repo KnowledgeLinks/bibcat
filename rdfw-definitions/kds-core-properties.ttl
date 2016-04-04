@@ -235,8 +235,8 @@ kds:hasPerson a rdf:Property;
 			kds:selectQuery "SELECT ?s ?name 
 											{
 												?s a schema:Person .
-												?s a schema:givenName ?givenName .
-												?s a schema:familyName ?familyName .
+												?s schema:givenName ?givenName .
+												?s schema:familyName ?familyName .
 												BIND (CONCAT(?familyName,', ',?givenName) AS ?name .
 												OPTIONAL {
 													?u a kds:UserClass .
@@ -255,27 +255,41 @@ kds:hasPassword a rdf:Property;
 	rdfs:range	kds:PasswordClass;	
 	rdfs:comment "User's account password object.";
 	kds:requiredByDomain kds:UserClass .
- 
-kds:hasUser a rdf:Property;
+
+kds:hasMember a rdf:Property;
 	rdfs:domain kds:UserGroup;
+	rdfs:range kds:UserGroupMember;
+	kds:requiredByDomain kds:UserGroup .
+	
+kds:dateAdded a rdf:Property;
+	rdfs:domain kds:UserGroupMember;
+	rdfs:range xsd:dateTime;
+	kds:defaultVal "now" ;
+	kds:requiredByDomain kds:UserGroupMember .
+	 
+kds:hasUser a rdf:Property;
+	rdfs:domain kds:UserGroupMember;
 	rdfs:range schema:Person;
+	#rdfs:range kds:UserGroup;
 	kds:formDefault [
-		kds:formLabelName "User";        
+		kds:formLabelName "Members";        
 		kds:formFieldName "user";
 		kds:formFieldHelp "Select the user";
 		kds:fieldType [
 			a	kdr:FieldList;
 			kds:listFieldType kdr:SelectField;
-			kds:selectQuery "SELECT ?s ?name 
-							{
-								?user a kds:UserClass .
-								?user kds:hasPerson ?s .
-								?s schema:givenName ?givenName .
-								?s schema:familyName ?familyName . 
-								?s schema:email ?email .
-								BIND (CONCAT(?familyName,'-',?givenName,'-',?email) AS ?name) .
-							}
-							ORDER BY ?name";
+			kds:templatePath  "/widgets/form_fieldlist.html";
+			kds:templateName "/widgets/form_fieldlist.html";
+				kds:selectQuery "SELECT ?s ?name ?user 
+								{
+									?user a kds:UserClass .
+									?user kds:hasPerson ?s .
+									?s schema:givenName ?givenName .
+									?s schema:familyName ?familyName . 
+									?s schema:email ?email .
+									BIND (CONCAT(?familyName,'-',?givenName,'-',?email) AS ?name) .
+								}
+								ORDER BY ?name";
 			kds:selectBoundValue "?user";
 			kds:selectDisplay "?name"
 		]	

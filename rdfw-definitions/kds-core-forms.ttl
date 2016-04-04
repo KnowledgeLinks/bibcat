@@ -213,7 +213,7 @@ kdr:UserGroupForm a kds:FormClass;
 	kds:formInstructions [
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
-		kds:formTitle "User group managment";
+		kds:formTitle "User group management";
 		kds:formDescription "Add and remove users from the group";
 		kds:lookupClassUri kds:UserGroup;
 		kds:lookupPropUri "class_subject";
@@ -221,12 +221,12 @@ kdr:UserGroupForm a kds:FormClass;
 		kds:submitFailRedirect "!--currentpage";
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
-			kds:formTitle "New Badge Assertion";
-			kds:formDescription "Award a badge."
+			kds:formTitle "New User Group";
+			kds:formDescription "Create a new user group."
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
-			kds:formDescription "Edit assertion information."
+			kds:formDescription "Edit user group information."
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:DisplayForm
@@ -248,16 +248,11 @@ kdr:UserGroupForm a kds:FormClass;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1;
 		kds:formFieldName "usergroupname";
-		kds:formLabelName "User group";
-		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
-			kds:formLabelName "Badge Name";
-			kds:applicationAction kdr:NotEditable
-		];
+		kds:formLabelName "User group name"
 	];
 	kds:hasProperty [
 		kds:propUri kds:hasUser;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
-		kds:requiredField true ;
+		kds:requiredField true 
 	].

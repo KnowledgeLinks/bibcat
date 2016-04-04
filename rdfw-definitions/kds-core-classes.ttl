@@ -35,8 +35,12 @@ kds:UserClass a kds:ControlledClass ;
 	kds:primaryKey kds:hasPerson.
 	
 kds:UserGroup kds:primaryKey schema:name ;
+	kds:storageType "object" ;
 	kds:saveLocation "triplestore" ;
 	kds:subjectCalc "slugify(schema:name)" .
+	
+kds:UserGroupMember a kds:ControlledClass ;
+	kds:storageType "blanknode" .
 	
 kds:PasswordClass a kds:ControlledClass;
 	kds:storageType "object" .

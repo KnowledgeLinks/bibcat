@@ -29,7 +29,8 @@ kdr:Application a kds:Application;
 	];
 	kds:dataFormats [
 		kds:pythonDateFormat "%m/%d/%Y";
-		kds:javascriptDateFormat "mm/dd/yyyy"
+		kds:javascriptDateFormat "mm/dd/yyyy";
+		kds:pythonDateTimeFormat "%Y-%m-%dT%H:%M:%SZ"
 	];
 	kds:appNameSpace [
 		kds:prefix "rdf";

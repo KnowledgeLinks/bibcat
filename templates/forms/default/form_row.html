@@ -10,12 +10,17 @@
 		</div>
 		<div class="row {{ form.rdf_instructions['rowCss'] }}">
 	{% endif %}
-	{% if not 'subform' in fld.kds_fieldType['rdf_type'].lower() %}
-		{% include "/forms/default/form_section.html" %}
-	{% else %}
-	</div>
+	{% if 'subform' in fld.kds_fieldType['rdf_type'].lower() %}
+		</div>
 			{{ fld(class_=fld.kds_css,readonly=not fld.editable) }}
-	<div class="row {{ form.rdf_instructions['rowCss'] }}">
+		<div class="row {{ form.rdf_instructions['rowCss'] }}">	
+	{% elif fld.type == "FieldList" %}
+		</div>
+			{{ fld(class_=fld.kds_css,readonly=not fld.editable)|safe }}
+		<div class="row {{ form.rdf_instructions['rowCss'] }}">	
+	{% else %}
+		{% include "/forms/default/form_section.html" %}
+	
 	{% endif %}
 {% endfor %}
 		</div>
