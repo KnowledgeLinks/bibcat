@@ -29,11 +29,11 @@ kds:UserClass a kds:ControlledClass ;
 	kds:storageType "object" ;
 	kds:primaryKey kds:hasPerson.
 	
-kds:UserGroup kds:primaryKey schema:name ;
+kds:UserGroup kds:primaryKey rdfs:label ;
 	kds:storageType "object" ;
 	kds:saveLocation "triplestore" ;
 	kds:subjectCalc "slugify(schema:name)" ;
-	kds:subjectPattern "http://knowledgelinks.io/ns/data-resources/,!--slugify(schema:name)" .
+	kds:subjectPattern "http://knowledgelinks.io/ns/data-resources/,!--slugify(rdfs:label)" .
 	
 kds:UserGroupMember a kds:ControlledClass ;
 	kds:storageType "blanknode" .

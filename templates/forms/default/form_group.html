@@ -9,7 +9,7 @@
 	{% endif %}
 	</div>
 	{% if fld.errors %}
-		<ul class="help-block">{% for error in fld.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+		<ul class="list-unstyled help-block">{% for error in fld.errors %}<li>{{ error }}</li>{% endfor %}</ul>
 	{% endif %}	
 	{% if debug %}
 		<div><pre>{{fld.debug_data}}</pre></div>
