@@ -239,11 +239,11 @@ kdr:UserGroupForm a kds:FormClass;
 	];
 	kds:formSecurity [
 		acl:accessTo kdr:DisplayForm;
-		acl:agent kdr:User-SG;
+		acl:agent kdr:user-sg;
 		acl:mode acl:read
 	];
 	kds:hasProperty [
-		kds:propUri schema:name;
+		kds:propUri rdfs:label;
 		kds:classUri kds:UserGroup;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1;
@@ -251,8 +251,16 @@ kdr:UserGroupForm a kds:FormClass;
 		kds:formLabelName "User group name"
 	];
 	kds:hasProperty [
-		kds:propUri kds:hasUser;
+		kds:propUri rdfs:comment;
+		kds:classUri kds:UserGroup;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
+		kds:formFieldName "usergroupdescrip";
+		kds:formLabelName "Description"
+	];
+	kds:hasProperty [
+		kds:propUri kds:hasUser;
+		kds:formFieldOrder 3;
+		kds:formLayoutRow 3;
 		kds:requiredField true 
 	].

@@ -15,12 +15,7 @@ rdf:Class kds:storageType "object" ;
 schema:Organization a rdf:Class;
 	a kds:ControlledClass ;
 	kds:storageType "object";
-	kds:primaryKey schema:name;
-	kds:jsonDefault [
-		kds:jsonObjName "org";
-		kds:jsonValFormat "lookup";
-		kds:lookupReturnField schema:name
-	] .
+	kds:primaryKey schema:name.
 	
 schema:ImageObject a rdf:Class;
 	a kds:ControlledClass ;
@@ -37,7 +32,8 @@ kds:UserClass a kds:ControlledClass ;
 kds:UserGroup kds:primaryKey schema:name ;
 	kds:storageType "object" ;
 	kds:saveLocation "triplestore" ;
-	kds:subjectCalc "slugify(schema:name)" .
+	kds:subjectCalc "slugify(schema:name)" ;
+	kds:subjectPattern "http://knowledgelinks.io/ns/data-resources/,!--slugify(schema:name)" .
 	
 kds:UserGroupMember a kds:ControlledClass ;
 	kds:storageType "blanknode" .

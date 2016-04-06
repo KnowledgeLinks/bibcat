@@ -13,16 +13,39 @@ kds:errorLog a rdf:Property;
 	rdfs:range xsd:string;
 	rdfs:comment "an error message".
 
+rdfs:label a rdf:Property;	
+	rdfs:domain kds:UserGroup;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Label for the item.";	
+	kds:requiredByDomain kds:UserGroup;
+	kds:formDefault [
+		kds:formFieldName "namelabel";
+		kds:formLabelName "Name/Label";
+		kds:formFieldHelp "Enter the name/label for the item";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .	
 	
+rdfs:comment a rdf:Property;	
+	rdfs:domain kds:UserGroup;	
+	rdfs:range	xsd:string;	
+	rdfs:comment "Description of the item.";	
+	kds:requiredByDomain kds:UserGroup;
+	kds:formDefault [
+		kds:formFieldName "rdfscomment";
+		kds:formLabelName "Description";
+		kds:formFieldHelp "Enter a description for the item.";
+		kds:fieldType [
+			a	kdr:TextArea 
+		]
+	] .	
 	
 schema:name a rdf:Property;	
 	rdfs:domain schema:Organization;
-	rdfs:domain kds:UserGroup;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "Name of the open badge instance.";	
-	kds:requiredByDomain obi:BadgeClass;
 	kds:requiredByDomain schema:Organization;
-	kds:requiredByDomain kds:UserGroup;
 	kds:formDefault [
 		kds:formFieldName "badgeName";
 		kds:formLabelName "Badge Name";
@@ -153,7 +176,7 @@ schema:email a rdf:Property;
 		a kdr:EmailValidator
 	];
 	kds:propertySecurity [
-		acl:agent kdr:Self-SG;
+		acl:agent kdr:self-sg;
 		acl:mode acl:Read, acl:Write
 	] ;
 	kds:formDefault [
@@ -197,7 +220,7 @@ kds:salt a rdf:Property;
 	] ;
 	kds:propertySecurity [
 		kds:appliesTo kds:PasswordClass;
-		acl:agent kdr:Self-SG;
+		acl:agent kdr:self-sg;
 		acl:mode acl:Read, acl:Write
 	] ;
 	kds:formDefault [
@@ -269,7 +292,7 @@ kds:dateAdded a rdf:Property;
 	 
 kds:hasUser a rdf:Property;
 	rdfs:domain kds:UserGroupMember;
-	rdfs:range schema:Person;
+	rdfs:range kds:UserClass;
 	#rdfs:range kds:UserGroup;
 	kds:formDefault [
 		kds:formLabelName "Members";        
@@ -316,7 +339,7 @@ kds:changePasswordRequired
 	kds:defaultVal "false";
 	kds:propertySecurity [
 		kds:appliesTo kds:PasswordClass;
-		acl:agent kdr:Admin-SG;
+		acl:agent kdr:admin-sg;
 		acl:mode acl:Read, acl:Write
 	] .
 		

@@ -116,23 +116,23 @@
 
 # UserGroups ***********************************************	
 
-	kdr:Admin-SG a kds:UserGroup;	
-		rdfs:comment	"The application admin security group for managing content";
+	kdr:admin-sg a kds:UserGroup;	
+		rdfs:comment "The application admin security group for managing content";
 		rdfs:label	"Admin-SG" .
 
-	kdr:Public-SG a kds:UserGroup;
+	kdr:public-sg a kds:UserGroup;
 		rdfs:label "Public-SG";
 		rdfs:comment "The security group for public access".
 			
-	kdr:Self-SG	 a kds:UserGroup;
+	kdr:self-sg	 a kds:UserGroup;
 		rdfs:label "Self-SG";
-		rdfs:comment "The security group pertaining to logged in user level permissions".
+		rdfs:comment "The security group pertaining to the logged-in user's level permissions".
 			
-	kdr:SysAdmin-SG	a kds:UserGroup;
+	kdr:sysadmin-sg	a kds:UserGroup;
 		rdfs:label "SysAdmin-SG";
 		rdfs:comment "The application system admin security group".
 
-	kdr:User-SG	a kds:UserGroup;
+	kdr:user-sg	a kds:UserGroup;
 		rdfs:label "User-SG";
 		rdfs:comment "The security class for any logged in User".
 		
