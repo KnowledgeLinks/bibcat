@@ -32,7 +32,6 @@ kds:UserClass a kds:ControlledClass ;
 kds:UserGroup kds:primaryKey rdfs:label ;
 	kds:storageType "object" ;
 	kds:saveLocation "triplestore" ;
-	kds:subjectCalc "slugify(schema:name)" ;
 	kds:subjectPattern "http://knowledgelinks.io/ns/data-resources/,!--slugify(rdfs:label)" .
 	
 kds:UserGroupMember a kds:ControlledClass ;
