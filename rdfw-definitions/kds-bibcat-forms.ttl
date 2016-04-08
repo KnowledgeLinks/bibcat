@@ -44,10 +44,10 @@ bf:InstanceForm a kds:FormClass;
 		kds:classUri bf:Instance;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1
-	] ;
-	kds:hasProperty [
-		kds:propUri bf:ansi;
-		kds:classUri bf:Instance;
-		kds:formFieldOrder 2;
-		kds:formLayoutRow 2
-	] .
+	] . #;
+#	kds:hasProperty [
+#		kds:propUri bf:ansi;
+#		kds:classUri bf:Instance;
+#		kds:formFieldOrder 2;
+#		kds:formLayoutRow 2
+#	] . 
