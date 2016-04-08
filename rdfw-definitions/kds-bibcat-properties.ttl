@@ -9,6 +9,17 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix bf: <http://bibframe.org/vocab/> .
 
+bf:title rdfs:domain bf:Instance;
+	rdfs:range xsd:string ;
+	kds:requiredByDomain bf:Instance ;
+	kds:formDefault [
+		kds:fieldType [
+			a kdr:TextField
+		];
+		kds:formFieldName "itemtitle";
+		kds:formLabelName "Title"
+	] .
+
 bf:abbreviatedTitle rdf:type rdf:Property ;
 	 rdfs:comment "Title as abbreviated for indexing or identification." ;
 	 rdfs:domain bf:Instance ;
@@ -20,8 +31,15 @@ bf:ansi rdf:type rdf:Property ;
 	 rdfs:comment "American National Standards Institute identifier." ;
 	 rdfs:domain bf:Instance ;
 	 rdfs:label "ANSI number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
+	 rdfs:range xsd:string ;
+	 rdfs:subPropertyOf bf:identifier ;
+	 kds:formDefault [
+		kds:fieldType [
+			a kdr:TextField
+		];
+		kds:formFieldName "ansi";
+		kds:formLabelName "ANSI number" ;
+	] .
 
 bf:arrangement rdf:type rdf:Property ;
 	 rdfs:comment "Information about the organization and arrangement of a collection of resources." ;

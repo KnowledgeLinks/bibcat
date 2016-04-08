@@ -8,3 +8,46 @@
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix bf: <http://bibframe.org/vocab/> .
+
+bf:InstanceForm a kds:FormClass;
+	rdfs:label "BIBFRAME Instance Form";
+	rdfs:comment "Form used for CRUD operations for an Instance.";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:formTitle "Instance";
+		kds:lookupClassUri bf:Instance;
+		kds:formDescription "Instance of a particular Work";
+		kds:formUrl "instance";
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:formTitle "New Instance";
+			kds:formDescription "Create a new Instance";
+			kds:submitSuccessRedirect kdr:DisplayForm;
+			kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "new";
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formDescription "Edit instance information.";
+			kds:submitSuccessRedirect kdr:DisplayForm;
+			kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "edit";
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+			kds:instanceUrl "view";
+		]
+	];
+	kds:hasProperty [
+		kds:propUri bf:title;
+		kds:classUri bf:Instance;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1
+	] ;
+	kds:hasProperty [
+		kds:propUri bf:ansi;
+		kds:classUri bf:Instance;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 2
+	] .
