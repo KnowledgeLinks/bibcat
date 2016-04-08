@@ -7,339 +7,491 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix bf: <http://bibframe.org/vocab/> .
 
-kds:errorLog a rdf:Property;
-	rdfs:domain kdr:UserGroup;
-	rdfs:range xsd:string;
-	rdfs:comment "an error message".
+bf:abbreviatedTitle rdf:type rdf:Property ;
+	 rdfs:comment "Title as abbreviated for indexing or identification." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Abbreviated title" ;
+	 rdfs:range bf:Title ;
+	 rdfs:subPropertyOf bf:instanceTitle .
 
-rdfs:label a rdf:Property;	
-	rdfs:domain kds:UserGroup;	
-	rdfs:range	xsd:string;	
-	rdfs:comment "Label for the item.";	
-	kds:requiredByDomain kds:UserGroup;
-	kds:formDefault [
-		kds:formFieldName "namelabel";
-		kds:formLabelName "Name/Label";
-		kds:formFieldHelp "Enter the name/label for the item";
-		kds:fieldType [
-			a	kdr:TextField 
-		]
-	] .	
-	
-rdfs:comment a rdf:Property;	
-	rdfs:domain kds:UserGroup;	
-	rdfs:range	xsd:string;	
-	rdfs:comment "Description of the item.";	
-	kds:requiredByDomain kds:UserGroup;
-	kds:formDefault [
-		kds:formFieldName "rdfscomment";
-		kds:formLabelName "Description";
-		kds:formFieldHelp "Enter a description for the item.";
-		kds:fieldType [
-			a	kdr:TextArea 
-		]
-	] .	
-	
-schema:name a rdf:Property;	
-	rdfs:domain schema:Organization;
-	rdfs:range	xsd:string;	
-	rdfs:comment "Name of the open badge instance.";	
-	kds:requiredByDomain schema:Organization;
-	kds:formDefault [
-		kds:formFieldName "badgeName";
-		kds:formLabelName "Badge Name";
-		kds:formFieldHelp "Enter the name of the Badge you want to create.";
-		kds:fieldType [
-			a	kdr:TextField 
-		];
-		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
-			kds:applicationAction kdr:NotEditable
-		]
-	] .
+bf:ansi rdf:type rdf:Property ;
+	 rdfs:comment "American National Standards Institute identifier." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "ANSI number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
 
-schema:description a rdf:Property;	
-	rdfs:domain	schema:Organization;		
-	rdfs:range	xsd:string;	
-	rdfs:comment "Description of an item.";	
-	kds:formDefault [
-		kds:formFieldName "itemDescription";
-		kds:formLabelName "Description";
-		kds:formFieldHelp "Please enter a description.";
-		kds:fieldType [
-			a	kdr:TextAreaField
-		]
-	] .
-	
+bf:arrangement rdf:type rdf:Property ;
+	 rdfs:comment "Information about the organization and arrangement of a collection of resources." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Organization and Arrangement" ;
+	 rdfs:range bf:Arrangement .
 
-schema:affiliation	a rdf:Property;
-	rdfs:domain schema:Person;
-	rdfs:range schema:Organization;
-	rdfs:label "Affiliated with";
-	kds:formDefault [
-		kds:formFieldName "affiliation";
-		kds:formLabelName "Organization";
-		kds:formFieldHelp "Enter an affiliated organization.";
-		kds:fieldType [
-			a kdr:SelectField;
-			kds:selectQuery "SELECT * {
-																?s a schema:Organization . 
-																?s schema:name ?name . 
-																} 
-																ORDER BY ?name";
-			kds:selectBoundValue "?s";
-			kds:selectDisplay "?name" 
-		]
-	] .
+bf:aspectRatio rdf:type rdf:Property ;
+	 rdfs:comment "Proportional relationship between an image's width and its height." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Aspect ratio" ;
+	 rdfs:range rdfs:Literal .
 
-schema:image a rdf:Property;	
-	rdfs:domain schema:Organization;
-	rdfs:range	schema:ImageObject;
-	rdfs:range	schema:URL;
-	rdfs:comment "Image of the item.";
-	kds:formDefault [
-		kds:formFieldName "imageOptions";
-		kds:formLabelName "Image";
-		kds:formFieldHelp "Select an Image for the item.";
-		kds:fieldType [
-			a	kdr:ImageFileOrURLField; 
-		];
-	] .
+bf:awardNote rdf:type rdf:Property ;
+	 rdfs:comment "Information on awards associated with the described resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Award note" ;
+	 rdfs:range rdfs:Literal .
 
-schema:alternativeName a rdf:Property;
-	rdfs:domain	obi:BadgeClass;
-	rdfs:domain	schema:Organization;
-	rdfs:range	xsd:string;
-	kds:requiredByDomain obi:BadgeClass;
-	kds:requiredByDomain schema:Organization;
-	kds:propertyProcessing [
-		a kdr:CalculationProcessor;
-		kds:calculation "slugify(schema:name)" 
-	] .
+bf:carrierCategory rdf:type rdf:Property ;
+	 rdfs:comment "Categorization reflecting the format of the storage medium and housing of a carrier." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Carrier type" ;
+	 rdfs:range bf:Category .
 
-rdf:Class kds:storageType "object" ;
-	a kds:ControlledClass .
+bf:coden rdf:type rdf:Property ;
+	 rdfs:comment "Identifier for scientific and technical periodical titles assigned by the International CODEN Section of Chemical Abstracts Service." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "CODEN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
 
-schema:url a rdf:Property;
-	rdfs:domain	schema:Organization;	
-	rdfs:range	schema:URL;	
-	rdfs:comment "url for the item";	
-	kds:requiredByDomain schema:Organization;
-	kds:formDefault [
-		kds:formFieldName "website";
-		kds:formLabelName "Web Address";
-		kds:formFieldHelp "Enter the web address in 'http...' format.";
-		kds:fieldType [
-			a	kdr:UrlField; 
-		];
-	] .
+bf:colorContent rdf:type rdf:Property ;
+	 rdfs:comment "Color characteristics, e.g. black and white, multicolored, etc." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Color content" ;
+	 rdfs:range rdfs:Literal .
 
-schema:givenName a rdf:Property;	
-	rdfs:domain	schema:Person;	
-	rdfs:range	xsd:string;	
-	rdfs:comment "First name or given name for an individual.";	
-	kds:requiredByDomain schema:Person;
-	kds:formDefault [
-		kds:formFieldName "givenname";
-		kds:formLabelName "First name";
-		kds:formFieldHelp "Enter the person's first/given name.";
-		kds:fieldType [
-			a	kdr:TextField; 
-		];
-	] .
-	
-schema:familyName a rdf:Property;	
-	rdfs:domain	schema:Person;	
-	rdfs:range	xsd:string;	
-	rdfs:comment "Last name or family name for an individual.";	
-	kds:requiredByDomain schema:Person;
-	kds:formDefault [
-		kds:formFieldName "familyname";
-		kds:formLabelName "Last name";
-		kds:formFieldHelp "Enter the person's last/family name.";
-		kds:fieldType [
-			a	kdr:TextField; 
-		];
-	] .
-	
-schema:email a rdf:Property;	
-	rdfs:domain	schema:Person;	
-	rdfs:domain schema:Organization;
-	rdfs:range	xsd:string;	
-	rdfs:comment "email address.";
-	kds:requiredByDomain schema:Person;
-	kds:propertyProcessing [
-		a kdr:EmailVerificationProcessor
-	];                   
-	kds:propertyValidation [
-		a kdr:EmailValidator
-	];
-	kds:propertySecurity [
-		acl:agent kdr:self-sg;
-		acl:mode acl:Read, acl:Write
-	] ;
-	kds:formDefault [
-		kds:formFieldName "emailaddr";
-		kds:formLabelName "Email Address";
-		kds:formFieldHelp "Enter a valid email address.";
-		kds:fieldType [
-			a	kdr:TextField
-		]
-	] .
+bf:contentAccessibility rdf:type rdf:Property ;
+	 rdfs:comment "Content that assists those with a sensory impairment for greater understanding of content, e.g., labels, captions." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Content accessibility note" ;
+	 rdfs:range rdfs:Literal .
 
-kds:userName a rdf:Property;	
-	rdfs:domain	kds:UserClass;	
-	rdfs:range xsd:string;	
-	rdfs:comment "Individual's username.";	           
-	kds:requiredByDomain kds:UserClass;
-	kds:propertyValidation [
-		a	kdr:UniqueValueValidator;
-	];
-	kds:propertyValidation [
-		a kdr:StringLengthValidator;
-		kds:parameters "max=25,min=10"
-	];
-	kds:formDefault [
-		kds:formFieldName "username";
-		kds:formLabelName "Username";
-		kds:formFieldHelp "Enter username for ";
-		kds:fieldType [
-			a	kdr:TextField
-		]
-	] .
+bf:contentsNote rdf:type rdf:Property ;
+	 rdfs:comment "List of subunits of the resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Contents" ;
+	 rdfs:range rdfs:Literal .
 
-kds:salt a rdf:Property;	
-	#rdfs:domain	kds:PasswordClass; listed in Vocab def
-	rdfs:domain obi:Assertion;	
-	# rdfs:range	xsd:string;	stated in vocab
-	kds:requiredByDomain kds:PasswordClass;
-	kds:requiredByDomain obi:Assertion;
-	kds:propertyProcessing [
-		a kdr:SaltProcessor
-	] ;
-	kds:propertySecurity [
-		kds:appliesTo kds:PasswordClass;
-		acl:agent kdr:self-sg;
-		acl:mode acl:Read, acl:Write
-	] ;
-	kds:formDefault [
-		kds:fieldType kdr:ServerField;
-		kds:fieldProcessing "salt";
-		kds:formFieldName "salt"
-	].
-	
-	
-kds:password 	
-	#rdfs:domain	kds:PasswordClass;	Stated in Vocab
-	#rdfs:range	xsd:string;	stated in Vocab
-	kds:requiredByDomain kds:PasswordClass;	
-	kds:propertyValidation [
-		a kdr:PasswordValidator 
-	];
-	kds:propertyProcessing  [
-		a kdr:PasswordProcessor
-	];
-	kds:formDefault [
-		kds:fieldType kdr:PasswordField;
-		kds:formLabelName "Password";        
-		kds:formFieldName "password"
-	] .	
+bf:custodialHistory rdf:type rdf:Property ;
+	 rdfs:comment "Information about the provenance, such as origin, ownership and custodial history (chain of custody), of a resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Custodial history" ;
+	 rdfs:range rdfs:Literal .
 
-kds:hasPerson a rdf:Property;
-	rdfs:range schema:Person;
-	kds:requiredByDomain kds:UserClass;
-	kds:formDefault [
-		kds:formLabelName "Password";        
-		kds:formFieldName "password";
-		kds:formFieldHelp "Enter Password: Minimum 16 characters with 2 uppercase, 2 lowercase and 2 special characters.";
-		kds:fieldType [
-			a	kds:SelectField;
-			kds:selectQuery "SELECT ?s ?name 
-											{
-												?s a schema:Person .
-												?s schema:givenName ?givenName .
-												?s schema:familyName ?familyName .
-												BIND (CONCAT(?familyName,', ',?givenName) AS ?name .
-												OPTIONAL {
-													?u a kds:UserClass .
-													?u kds:hasPerson ?s .
-												}
-												FILTER (!(bound(?s))
-											}
-											ORDER BY ?name";
-			kds:selectBoundValue "?s";
-			kds:selectDisplay "?name"
-		]	
-	] .
-	
-kds:hasPassword a rdf:Property;	
-	rdfs:domain	kds:UserClass;	
-	rdfs:range	kds:PasswordClass;	
-	rdfs:comment "User's account password object.";
-	kds:requiredByDomain kds:UserClass .
+bf:dimensions rdf:type rdf:Property ;
+	 rdfs:comment "Measurements of the carrier or carriers and/or the container of a resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Dimensions" ;
+	 rdfs:range rdfs:Literal .
 
-kds:hasMember a rdf:Property;
-	rdfs:domain kds:UserGroup;
-	rdfs:range kds:UserGroupMember;
-	kds:requiredByDomain kds:UserGroup .
-	
-kds:dateAdded a rdf:Property;
-	rdfs:domain kds:UserGroupMember;
-	rdfs:range xsd:dateTime;
-	kds:defaultVal "now" ;
-	kds:requiredByDomain kds:UserGroupMember .
-	 
-kds:hasUser a rdf:Property;
-	rdfs:domain kds:UserGroupMember;
-	rdfs:range kds:UserClass;
-	#rdfs:range kds:UserGroup;
-	kds:formDefault [
-		kds:formLabelName "Members";        
-		kds:formFieldName "user";
-		kds:formFieldHelp "Select the user";
-		kds:fieldType [
-			a	kdr:FieldList;
-			kds:listFieldType kdr:SelectField;
-			kds:templatePath  "/widgets/form_fieldlist.html";
-			kds:templateName "/widgets/form_fieldlist.html";
-				kds:selectQuery "SELECT ?s ?name ?user 
-								{
-									?user a kds:UserClass .
-									?user kds:hasPerson ?s .
-									?s schema:givenName ?givenName .
-									?s schema:familyName ?familyName . 
-									?s schema:email ?email .
-									BIND (CONCAT(?familyName,'-',?givenName,'-',?email) AS ?name) .
-								}
-								ORDER BY ?name";
-			kds:selectBoundValue "?user";
-			kds:selectDisplay "?name"
-		]	
-	] .
+bf:distribution rdf:type rdf:Property ;
+	 rdfs:comment "Information relating to distribution of an instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Distribution event" ;
+	 rdfs:range bf:Provider ;
+	 rdfs:subPropertyOf bf:provider .
 
-kds:changePasswordRequired 
-	kds:formDefault [
-		kds:formLabelName "Change Password Required";        
-		kds:formFieldName "changePassword";
-		kds:formFieldHelp "Require the user to change their password on next login";
-		kds:fieldType [
-			a kdr:BooleanField
-		];
-		kds:formInstance [
-			kds:formInstanceType kdr:NewForm;
-		];
-		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
-		];
-		kds:formInstance [
-			kds:formInstanceType kdr:DisplayForm;
-		]
-	];
-	kds:defaultVal "false";
-	kds:propertySecurity [
-		kds:appliesTo kds:PasswordClass;
-		acl:agent kdr:admin-sg;
-		acl:mode acl:Read, acl:Write
-	] .
-		
+bf:doi rdf:type rdf:Property ;
+	 rdfs:comment "Digital Object Identifier." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "DOI" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:duration rdf:type rdf:Property ;
+	 rdfs:comment "Information about the playing time or duration in an unstructured form, e.g., '2 hours'." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Duration" ;
+	 rdfs:range rdfs:Literal .
+
+bf:ean rdf:type rdf:Property ;
+	 rdfs:comment "International Article Identifier." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "EAN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:edition rdf:type rdf:Property ;
+	 rdfs:comment "Information identifying the edition or version of the resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Edition statement" ;
+	 rdfs:range rdfs:Literal .
+
+bf:editionResponsibility rdf:type rdf:Property ;
+	 rdfs:comment "Statement relating to the identification of any persons, families, or corporate bodies responsible for the edition being described." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Edition responsibility" ;
+	 rdfs:range rdfs:Literal .
+
+bf:extent rdf:type rdf:Property ;
+	 rdfs:comment "Number and type of units and/or subunits making up a resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Extent" ;
+	 rdfs:range rdfs:Literal .
+
+bf:fingerprint rdf:type rdf:Property ;
+	 rdfs:comment "Identifier that is used to assist in the identification of antiquarian books by recording information comprising groups of characters taken from specified positions on specified pages of the book." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Fingerprint identifier" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:format rdf:type rdf:Property ;
+	 rdfs:comment "File format or physical medium of an instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Format" ;
+	 rdfs:range rdfs:Literal .
+
+bf:formatOfMusic rdf:type rdf:Property ;
+	 rdfs:comment "Format of a musical composition, e.g. full score, condensed score, vocal score, etc." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Format of music" ;
+	 rdfs:range rdfs:Literal .
+
+bf:frequency rdf:type rdf:Property ;
+	 rdfs:comment "Intervals at which the issues or parts of a serial or the updates to an integrating resource are issued." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Frequency" ;
+	 rdfs:range rdfs:Literal .
+
+bf:frequencyNote rdf:type rdf:Property ;
+	 rdfs:comment "Current or former publication frequency of a resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Frequency note" ;
+	 rdfs:range rdfs:Literal .
+
+bf:graphicScaleNote rdf:type rdf:Property ;
+	 rdfs:comment "Textual information about scale, including the scale of graphic material item such as architectural drawings or three-dimensional artifacts." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Graphic scale" ;
+	 rdfs:range rdfs:Literal .
+
+bf:hdl rdf:type rdf:Property ;
+	 rdfs:comment "Unique and persistent identifier for digital objects developed by the Corporation for National Research Initiatives." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Handle" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:illustrationNote rdf:type rdf:Property ;
+	 rdfs:comment "Information about illustrative material in the resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Illustrative content note" ;
+	 rdfs:range rdfs:Literal .
+
+bf:instanceOf rdf:type rdf:Property ;
+	 rdfs:comment "Work this resource instantiates or manifests. For use to connect Instances to Works in the BIBFRAME structure." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Instance of" ;
+	 rdfs:range bf:Work ;
+	 rdfs:subPropertyOf bf:relatedTo .
+
+bf:instanceTitle rdf:type rdf:Property ;
+	 rdfs:comment "Word, character, or group of words and/or characters that is the main name of an instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Instance title" ;
+	 rdfs:range bf:Title .
+
+bf:isbn rdf:type rdf:Property ;
+	 rdfs:comment "International Standard Book Number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "ISBN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:isbn10 rdf:type rdf:Property ;
+	 rdfs:comment "10 digit version of the International Standard Book Number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "ISBN-10" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:isbn .
+
+bf:isbn13 rdf:type rdf:Property ;
+	 rdfs:comment "13 digit version of the International Standard Book Number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "ISBN-13" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:isbn .
+
+bf:ismn rdf:type rdf:Property ;
+	 rdfs:comment "International Standard Music Number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "ISMN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:iso rdf:type rdf:Property ;
+	 rdfs:comment "International Organization for Standardization standard number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "ISO number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:issn rdf:type rdf:Property ;
+	 rdfs:comment "International Standard Serial Number identifier." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "ISSN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:issuedWith rdf:type rdf:Property ;
+	 rdfs:comment "Instance that is issued on the same carrier as the manifestation being described." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Issued with" ;
+	 rdfs:range bf:Instance ;
+	 rdfs:subPropertyOf bf:hasAccompaniment .
+
+bf:issueNumber rdf:type rdf:Property ;
+	 rdfs:comment "Number used to identify the issue designation, or serial identification, assigned by a publisher to a sound recording." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Audio issue number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:keyTitle rdf:type rdf:Property ;
+	 rdfs:comment "Unique title for a continuing resource that is assigned by the ISSN International Center in conjunction with an ISSN." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Key title" ;
+	 rdfs:range bf:Title ;
+	 rdfs:subPropertyOf bf:instanceTitle .
+
+bf:lccn rdf:type rdf:Property ;
+	 rdfs:comment "Library of Congress Control Number, which identifies the resource description." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "LCCN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:lcOverseasAcq rdf:type rdf:Property ;
+	 rdfs:comment "Identification number assigned by the Library of Congress to works acquired through one of its overseas acquisition programs." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "LC acquisition program" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:legalDeposit rdf:type rdf:Property ;
+	 rdfs:comment "Number assigned to a copyright or legal deposit, which Identifies a resource description." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Copyright number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:manufacture rdf:type rdf:Property ;
+	 rdfs:comment "Information relating to manufacture of an instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Manufacture event" ;
+	 rdfs:range bf:Provider ;
+	 rdfs:subPropertyOf bf:provider .
+
+bf:matrixNumber rdf:type rdf:Property ;
+	 rdfs:comment "Matrix number from the master from which a specific sound recording was pressed." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Audio matrix number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:mediaCategory rdf:type rdf:Property ;
+	 rdfs:comment "Categorization reflecting the general type of intermediation device required to view, play, run, etc., the content of a resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Media type" ;
+	 rdfs:range bf:Category .
+
+bf:modeOfIssuance rdf:type rdf:Property ;
+	 rdfs:comment "Categorization reflecting whether a resource is issued in one or more parts, the way it is updated, and its intended termination." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Mode of issuance" ;
+	 rdfs:range rdfs:Literal .
+
+bf:musicPlate rdf:type rdf:Property ;
+	 rdfs:comment "Number assigned by a music publisher to a specific music publication." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Music plate number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:musicPublisherNumber rdf:type rdf:Property ;
+	 rdfs:comment "Number assigned to a music publication other than an issue, matrix, or plate number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Music publisher number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:nban rdf:type rdf:Property ;
+	 rdfs:comment "National Bibliography Agency Number, which identifies the resource description." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "NBAN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:nbn rdf:type rdf:Property ;
+	 rdfs:comment "National Bibliography Number, which identifies the resource description." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "NBN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:notation rdf:type rdf:Property ;
+	 rdfs:comment "Information on the alphabet, script, or symbol system used to convey the content of the resource, including specialized scripts, typefaces, tactile notation, and musical notation." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Notation system" ;
+	 rdfs:range rdfs:Literal .
+
+bf:otherPhysicalFormat rdf:type rdf:Property ;
+	 rdfs:comment "Resource that is manifested in another physical carrier." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Has other physical format" ;
+	 rdfs:range bf:Instance ;
+	 rdfs:subPropertyOf bf:hasEquivalent .
+
+bf:postalRegistration rdf:type rdf:Property ;
+	 rdfs:comment "Number assigned to a publication for which the specified postal service permits the use of a special mailing class privilege." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Postal registration number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:preferredCitation rdf:type rdf:Property ;
+	 rdfs:comment "Citation to the resource preferred by its custodian." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Preferred citation" ;
+	 rdfs:range rdfs:Literal .
+
+bf:production rdf:type rdf:Property ;
+	 rdfs:comment "Information relating to production of an instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Production event" ;
+	 rdfs:range bf:Provider ;
+	 rdfs:subPropertyOf bf:provider .
+
+bf:provider rdf:type rdf:Property ;
+	 rdfs:comment "Place, name, and/or date information relating to the publication, printing, distribution, issue, release, or production instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Provider" ;
+	 rdfs:range bf:Provider .
+
+bf:providerStatement rdf:type rdf:Property ;
+	 rdfs:comment "Transcribed provider statement" ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Provider statement" ;
+	 rdfs:range rdfs:Literal .
+
+bf:publication rdf:type rdf:Property ;
+	 rdfs:comment "Information relating to publication of an instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Publication event" ;
+	 rdfs:range bf:Provider ;
+	 rdfs:subPropertyOf bf:provider .
+
+bf:publisherNumber rdf:type rdf:Property ;
+	 rdfs:comment "Number assigned by a publisher that is not one of the specific defined types." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Other publisher number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:relatedInstance rdf:type rdf:Property ;
+	 rdfs:comment "General instance to instance relationship." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Related Instance" ;
+	 rdfs:range bf:Instance ;
+	 rdfs:subPropertyOf bf:relatedTo .
+
+bf:reportNumber rdf:type rdf:Property ;
+	 rdfs:comment "Identification number of a report that is not a Standard Technical Report Number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Technical report number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:reproduction rdf:type rdf:Property ;
+	 rdfs:comment "Instance that reproduces another Instance embodying the same work." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Has reproduction" ;
+	 rdfs:range bf:Instance ;
+	 rdfs:subPropertyOf bf:hasEquivalent .
+
+bf:responsibilityStatement rdf:type rdf:Property ;
+	 rdfs:comment "Statement relating to the identification and/or function of any persons, families, or corporate bodies responsible for the creation of, or contributing to the content of a resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Edition responsibility" ;
+	 rdfs:range rdfs:Literal .
+
+bf:serialFirstIssue rdf:type rdf:Property ;
+	 rdfs:comment "Beginning date of an instance and/or the sequential designations." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Serial first issue" ;
+	 rdfs:range rdfs:Literal .
+
+bf:serialLastIssue rdf:type rdf:Property ;
+	 rdfs:comment "Ending date of an instance and/or the sequential designations." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Serial last issue" ;
+	 rdfs:range rdfs:Literal .
+
+bf:sici rdf:type rdf:Property ;
+	 rdfs:comment "Serial Item and Contribution Identifier." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "SICI" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:soundContent rdf:type rdf:Property ;
+	 rdfs:comment "Indication of whether the production of sound is an integral part of the resource." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Sound content" ;
+	 rdfs:range rdfs:Literal .
+
+bf:stockNumber rdf:type rdf:Property ;
+	 rdfs:comment "Identification number such as distributor, publisher, or vendor number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Stock number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:strn rdf:type rdf:Property ;
+	 rdfs:comment "Standard Technical Report Number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "STRN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:studyNumber rdf:type rdf:Property ;
+	 rdfs:comment "Identification number for a computer data file." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Study number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:supplementaryContentNote rdf:type rdf:Property ;
+	 rdfs:comment "Information on the presence of one or more bibliographies, discographies, filmographies, and/or other bibliographic references in a described resource or in accompanying material." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Supplementary content note" ;
+	 rdfs:range rdfs:Literal .
+
+bf:titleStatement rdf:type rdf:Property ;
+	 rdfs:comment "Title transcribed from an instance." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Transcribed title" ;
+	 rdfs:range rdfs:Literal .
+
+bf:upc rdf:type rdf:Property ;
+	 rdfs:comment "Universal Product Code." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "UPC" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:urn rdf:type rdf:Property ;
+	 rdfs:comment "Uniform Resource Number." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "URN" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+
+bf:videorecordingNumber rdf:type rdf:Property ;
+	 rdfs:comment "Number assigned by a publisher to a videorecording." ;
+	 rdfs:domain bf:Instance ;
+	 rdfs:label "Videorecording number" ;
+	 rdfs:range bf:Identifier ;
+	 rdfs:subPropertyOf bf:identifier .
+

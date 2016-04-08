@@ -8,39 +8,9 @@
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix bf: <http://bibframe.org/vocab/> .
 
-rdf:Class kds:storageType "object" ;
-	a kds:ControlledClass .
-
-schema:Organization a rdf:Class;
-	a kds:ControlledClass ;
-	kds:storageType "object";
-	kds:primaryKey schema:name.
-	
-schema:ImageObject a rdf:Class;
-	a kds:ControlledClass ;
-	kds:storageType "object".
-	
-schema:URL a rdf:Class;
-	a kds:ControlledClass ;
-	kds:storageType "literal".
-	
-kds:UserClass a kds:ControlledClass ;
-	kds:storageType "object" ;
-	kds:primaryKey kds:hasPerson.
-	
-kds:UserGroup kds:primaryKey rdfs:label ;
-	kds:storageType "object" ;
-	kds:saveLocation "triplestore" ;
-	kds:subjectPattern "http://knowledgelinks.io/ns/data-resources/,!--slugify(rdfs:label)" .
-	
-kds:UserGroupMember a kds:ControlledClass ;
-	kds:storageType "blanknode" .
-	
-kds:PasswordClass a kds:ControlledClass;
-	kds:storageType "object" .
-
-schema:Person a kds:ControlledClass ;
-	kds:storageType "object";
-	kds:primaryKey schema:email.
+bf:Instance a kds:ControlledClass ;
+	rdfs:comment "Resource reflecting an individual, material embodiment of the Work." ;
+	rdfs:label "Instance" .
 	
