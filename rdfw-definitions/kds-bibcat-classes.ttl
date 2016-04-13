@@ -13,5 +13,6 @@
 bf:Instance a kds:ControlledClass ;
 	rdfs:comment "Resource reflecting an individual, material embodiment of the Work." ;
 	rdfs:label "Instance" ;
+	kds:subjectPattern "http://id.loc.gov/,!--slugify(bf:title)" ;
 	kds:storageType "object" .
 	
