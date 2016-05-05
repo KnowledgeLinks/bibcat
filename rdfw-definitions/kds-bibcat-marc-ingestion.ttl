@@ -8,5 +8,14 @@
 
 bf:mainTitle a <http://www.w3.org/2002/07/owl#DatatypeProperty> ;
     kds:marc2bibframe <http://marc21rdf.info/elements/2XX/M24500a>,
-        <http://marc21rdf.info/elements/2XX/M24510a> ;
+        <http://marc21rdf.info/elements/2XX/M24510a>,
+        <http://marc21rdf.info/elements/2XX/M24511a>,
+        <http://marc21rdf.info/elements/2XX/M24512a>,
+        <http://marc21rdf.info/elements/2XX/M24513a>,
+        <http://marc21rdf.info/elements/2XX/M24514a>,
+        <http://marc21rdf.info/elements/2XX/M24515a>,
+        <http://marc21rdf.info/elements/2XX/M24516a>,
+        <http://marc21rdf.info/elements/2XX/M24517a>,
+        <http://marc21rdf.info/elements/2XX/M24518a>,
+         <http://marc21rdf.info/elements/2XX/M24519a>;
     rdfs:range xsd:string .

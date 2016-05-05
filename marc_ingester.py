@@ -1,8 +1,10 @@
-"""MARC21 to BIBFRAME 2.0 ingester"""
+"""MARC21 to BIBFRAME 2.0 command-line ingester"""
 __author__ = "Jeremy Nelson, Mike Stabile"
 
+import click
 import pymarc
 import rdflib
+import requests
 
 def match_marc(record, pattern):
     """Takes a MARC21 and pattern extracted from the last element from a 
@@ -19,3 +21,6 @@ def match_marc(record, pattern):
         if field.indicators == [pattern[4], pattern[5]]:
             return field.get_subfields(pattern[6])
 
+
+if __name__ == "__main__":
+    print("In MARC21 to BIBFRAME 2.0")
