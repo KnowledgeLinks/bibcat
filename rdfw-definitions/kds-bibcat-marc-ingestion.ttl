@@ -5,17 +5,18 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefic marc21: <http://marc21rdf.info/elements/2XX/> 
 
-bf:mainTitle a <http://www.w3.org/2002/07/owl#DatatypeProperty> ;
-    kds:marc2bibframe <http://marc21rdf.info/elements/2XX/M24500a>,
-        <http://marc21rdf.info/elements/2XX/M24510a>,
-        <http://marc21rdf.info/elements/2XX/M24511a>,
-        <http://marc21rdf.info/elements/2XX/M24512a>,
-        <http://marc21rdf.info/elements/2XX/M24513a>,
-        <http://marc21rdf.info/elements/2XX/M24514a>,
-        <http://marc21rdf.info/elements/2XX/M24515a>,
-        <http://marc21rdf.info/elements/2XX/M24516a>,
-        <http://marc21rdf.info/elements/2XX/M24517a>,
-        <http://marc21rdf.info/elements/2XX/M24518a>,
-         <http://marc21rdf.info/elements/2XX/M24519a>;
+bf:mainTitle a owl:DatatypeProperty ;
+    kds:marc2bibframe marc21:M24500a,
+        marc21:M24510a,
+        marc21:M24511a,
+        marc21:M24512a,
+        marc21:M24513a,
+        marc21:M24514a,
+        marc21:M24515a,
+        marc21:M24516a,
+        marc21:M24517a,
+        marc21:M24518a,
+		marc21:M24519a;
     rdfs:range xsd:string .
