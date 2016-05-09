@@ -5,7 +5,12 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefic marc21: <http://marc21rdf.info/elements/2XX/> 
+@prefic marc21: <http://marc21rdf.info/elements/2XX/> .
+@prefix relator: <http://id.loc.gov/vocabulary/relators>
+
+bf:copyrightDate a owl:DatatypeProperty ;
+    kds:marc2bibframe marc21:M260__c;
+    rdfs:range xsd:string .
 
 bf:mainTitle a owl:DatatypeProperty ;
     kds:marc2bibframe marc21:M24500a,
@@ -20,3 +25,8 @@ bf:mainTitle a owl:DatatypeProperty ;
         marc21:M24518a,
 		marc21:M24519a;
     rdfs:range xsd:string .
+
+
+relator:aut a owl:Class ;
+    kds:marc2bibframe marc21:M10001a;
+    rdfs:range bf:Work .
