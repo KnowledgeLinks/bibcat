@@ -5,28 +5,52 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefic marc21: <http://marc21rdf.info/elements/2XX/> .
-@prefix relator: <http://id.loc.gov/vocabulary/relators>
+@prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+
+bf:Carrier a owl:Class;
+    kds:marc2bibframe <http://marc21rdf.info/elements/3XX/M338__a>,
+        <http://marc21rdf.info/elements/3XX/M338__b> ;
+    rdfs:domain bf:Instance ;
+    rdfs:range xsd:string .
 
 bf:copyrightDate a owl:DatatypeProperty ;
-    kds:marc2bibframe marc21:M260__c;
+    kds:marc2bibframe <http://marc21rdf.info/elements/2XX/M260__c> ;
+    rdfs:domain bf:Work,
+        bf:Instance ;
     rdfs:range xsd:string .
 
 bf:mainTitle a owl:DatatypeProperty ;
-    kds:marc2bibframe marc21:M24500a,
-        marc21:M24510a,
-        marc21:M24511a,
-        marc21:M24512a,
-        marc21:M24513a,
-        marc21:M24514a,
-        marc21:M24515a,
-        marc21:M24516a,
-        marc21:M24517a,
-        marc21:M24518a,
-		marc21:M24519a;
+    kds:marc2bibframe <http://marc21rdf.info/elements/2XX/M24500a> ,
+        <http://marc21rdf.info/elements/2XX/M24510a>,
+        <http://marc21rdf.info/elements/2XX/M24511a>,
+        <http://marc21rdf.info/elements/2XX/M24512a>,
+        <http://marc21rdf.info/elements/2XX/M24513a>,
+        <http://marc21rdf.info/elements/2XX/M24514a>,
+        <http://marc21rdf.info/elements/2XX/M24515a>,
+        <http://marc21rdf.info/elements/2XX/M24516a>,
+        <http://marc21rdf.info/elements/2XX/M24517a>,
+        <http://marc21rdf.info/elements/2XX/M24518a>,
+	<http://marc21rdf.info/elements/2XX/M24519a> ;
+    rdfs:domain bf:Title,
+        bf:WorkTitle,
+        bf:InstanceTitle,
+        bf:VariantTitle ;
     rdfs:range xsd:string .
 
+bf:Topic a owl:Class;
+    kds:marc2bibframe <http://marc21rdf.info/elements/65X/M650_0a>,
+        <http://marc21rdf.info/elements/65X/M650_0b>,
+        <http://marc21rdf.info/elements/65X/M650_0c>,
+        <http://marc21rdf.info/elements/65X/M650_0x>;
+    rdfs:domain bf:Work,
+        bf:Instance,
+        bf:Item;
+    rdfs:range xsd:string .
 
 relator:aut a owl:Class ;
-    kds:marc2bibframe marc21:M10001a;
-    rdfs:range bf:Work .
+    kds:marc2bibframe <http://marc21rdf.info/elements/1XX/M1000_a>,
+        <http://marc21rdf.info/elements/1XX/M1001_a>,
+        <http://marc21rdf.info/elements/1XX/M1003_a>;
+    rdfs:domain bf:Work ;
+    rdfs:range xsd:string,
+        xsd:uri .

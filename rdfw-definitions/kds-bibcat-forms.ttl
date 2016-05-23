@@ -8,6 +8,7 @@
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix bf: <http://bibframe.org/vocab/> .
+@prefix relator: <http://id.loc.gov/vocabulary/relators/> .
 
 bf:InstanceForm a kds:FormClass;
 	rdfs:label "BIBFRAME Instance Form";
@@ -51,3 +52,48 @@ bf:InstanceForm a kds:FormClass;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2
 	] . 
+
+bf:WorkForm a kds:FormClass;
+        rdfs:label "BIBFRAME Work Form";
+        rdfs:comment "Form used for CRUD operations for a Work.";
+        kds:formInstructions [
+                kds:form_Method "POST";
+                kds:form_enctype "multipart/form-data";
+                kds:formTitle "Work";
+                kds:lookupClassUri bf:Work;
+                kds:formDescription "Resource reflecting a conceptual essence of a cataloging resource.";
+                kds:formUrl "work";
+                kds:formInstance [
+                        kds:formInstanceType kdr:NewForm;
+                        kds:formTitle "New Work";
+               	        kds:formDescription "Create a new Work";
+		        kds:submitSuccessRedirect kdr:DisplayForm;
+		        kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "new";
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:formDescription "Edit Work information.";
+			kds:submitSuccessRedirect kdr:DisplayForm;
+			kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "edit";
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+			kds:instanceUrl "view";
+		]
+	];
+	kds:hasProperty [
+            kds:propUri bf:WorkTitle;
+            kds:classUri bf:Work;
+            kds:formFieldOrder 1;
+            kds:formLayoutRow 1
+        ] ;
+        kds:hasProperty [
+            kds:propUri realtor:aut;
+            kds:classUri bf:Work;
+            kds:formFieldOrder 2;
+            kds:formLayoutRow 1
+        ] .
+    
+

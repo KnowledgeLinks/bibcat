@@ -10,9 +10,18 @@
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix bf: <http://bibframe.org/vocab/> .
 
+bf:Item a kds:ControlledClass ;
+        rdfs:comment "Single example of an Instance." ;
+        rdfs:label "Item" ;
+        kds:storageType "object" .
+
 bf:Instance a kds:ControlledClass ;
 	rdfs:comment "Resource reflecting an individual, material embodiment of the Work." ;
 	rdfs:label "Instance" ;
 	kds:subjectPattern "http://id.loc.gov/,!--slugify(bf:title)" ;
 	kds:storageType "object" .
-	
+
+bf:Work a kds;ControlledClass ;
+        rdfs:comment "Resource reflecting a conceptual essence of a cataloging resource." ;
+        rdfs:Label "Work" ;
+        kds:storageType "object" .	
