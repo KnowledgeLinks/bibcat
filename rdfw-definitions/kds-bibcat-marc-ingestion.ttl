@@ -51,6 +51,18 @@ relator:aut a owl:Class ;
     kds:marc2bibframe <http://marc21rdf.info/elements/1XX/M1000_a>,
         <http://marc21rdf.info/elements/1XX/M1001_a>,
         <http://marc21rdf.info/elements/1XX/M1003_a>;
-    rdfs:domain bf:Work ;
+    rdfs:domain bf:Person,
+        bf:Organization,
+        bf:Family,
+        bf:Meeting;
     rdfs:range xsd:string,
         xsd:uri .
+
+kds:PersonIdentifir a kds:Deduplicator;
+    kds:exactMatch rdfs:value;
+    rdfs:domain bf:Person .
+
+kds:WorkIdentifier a kds:Deduplicator;
+    kds:exactMatch bf:mainTitle,
+        relator:aut ;
+    rdfs:domain bf:Work .
