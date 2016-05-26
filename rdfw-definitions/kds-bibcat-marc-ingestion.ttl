@@ -19,6 +19,15 @@ bf:copyrightDate a owl:DatatypeProperty ;
         bf:Instance ;
     rdfs:range xsd:string .
 
+bf:barcode a owl:DatatypeProperty ;
+    rdfs:domain bf:Item;
+    rdfs:range bf:Barcode .
+
+bf:electronicLocation a owl:DatatypeProperty ;
+    kds:marc2bibframe <http://marc21rdf.info/elements/8XX/M856__a;
+    rdfs:domain bf:Item;
+    rdfs:range xsd:string .
+
 bf:mainTitle a owl:DatatypeProperty ;
     kds:marc2bibframe <http://marc21rdf.info/elements/2XX/M24500a> ,
         <http://marc21rdf.info/elements/2XX/M24510a>,
@@ -35,6 +44,12 @@ bf:mainTitle a owl:DatatypeProperty ;
         bf:WorkTitle,
         bf:InstanceTitle,
         bf:VariantTitle ;
+    rdfs:range xsd:string .
+
+bf:originDate a owl:DatatypeProperty ;
+    kds:marc2bibframe <http://marc21rdf.info/elements/00X/M00807-10>,
+        <http://marc21rdf.info/elements/2XX/M2602_c>;
+    rdfs:domain bf:Work;
     rdfs:range xsd:string .
 
 bf:Topic a owl:Class;
