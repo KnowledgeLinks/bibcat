@@ -1,515 +1,640 @@
 @prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix obi: <https://w3id.org/openbadges#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix bf: <http://bibframe.org/vocab/> .
-
-bf:title rdfs:domain bf:Instance;
-	rdfs:range xsd:string ;
-	kds:requiredByDomain bf:Instance ;
-	kds:formDefault [
-		kds:fieldType [
-			a kdr:TextField
-		];
-		kds:formFieldName "itemtitle";
-		kds:formLabelName "Title"
-	] .
-
-bf:abbreviatedTitle rdf:type rdf:Property ;
-	 rdfs:comment "Title as abbreviated for indexing or identification." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Abbreviated title" ;
-	 rdfs:range bf:Title ;
-	 rdfs:subPropertyOf bf:instanceTitle .
-
-bf:ansi rdf:type rdf:Property ;
-	 rdfs:comment "American National Standards Institute identifier." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "ANSI number" ;
-	 rdfs:range xsd:string ;
-	 rdfs:subPropertyOf bf:identifier ;
-	 kds:formDefault [
-		kds:fieldType [
-			a kdr:TextField
-		];
-		kds:formFieldName "ansi";
-		kds:formLabelName "ANSI number" ;
-	] .
-
-bf:arrangement rdf:type rdf:Property ;
-	 rdfs:comment "Information about the organization and arrangement of a collection of resources." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Organization and Arrangement" ;
-	 rdfs:range bf:Arrangement .
-
-bf:aspectRatio rdf:type rdf:Property ;
-	 rdfs:comment "Proportional relationship between an image's width and its height." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Aspect ratio" ;
-	 rdfs:range rdfs:Literal .
-
-bf:awardNote rdf:type rdf:Property ;
-	 rdfs:comment "Information on awards associated with the described resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Award note" ;
-	 rdfs:range rdfs:Literal .
-
-bf:carrierCategory rdf:type rdf:Property ;
-	 rdfs:comment "Categorization reflecting the format of the storage medium and housing of a carrier." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Carrier type" ;
-	 rdfs:range bf:Category .
-
-bf:coden rdf:type rdf:Property ;
-	 rdfs:comment "Identifier for scientific and technical periodical titles assigned by the International CODEN Section of Chemical Abstracts Service." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "CODEN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:colorContent rdf:type rdf:Property ;
-	 rdfs:comment "Color characteristics, e.g. black and white, multicolored, etc." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Color content" ;
-	 rdfs:range rdfs:Literal .
-
-bf:contentAccessibility rdf:type rdf:Property ;
-	 rdfs:comment "Content that assists those with a sensory impairment for greater understanding of content, e.g., labels, captions." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Content accessibility note" ;
-	 rdfs:range rdfs:Literal .
-
-bf:contentsNote rdf:type rdf:Property ;
-	 rdfs:comment "List of subunits of the resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Contents" ;
-	 rdfs:range rdfs:Literal .
-
-bf:custodialHistory rdf:type rdf:Property ;
-	 rdfs:comment "Information about the provenance, such as origin, ownership and custodial history (chain of custody), of a resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Custodial history" ;
-	 rdfs:range rdfs:Literal .
-
-bf:dimensions rdf:type rdf:Property ;
-	 rdfs:comment "Measurements of the carrier or carriers and/or the container of a resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Dimensions" ;
-	 rdfs:range rdfs:Literal .
-
-bf:distribution rdf:type rdf:Property ;
-	 rdfs:comment "Information relating to distribution of an instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Distribution event" ;
-	 rdfs:range bf:Provider ;
-	 rdfs:subPropertyOf bf:provider .
-
-bf:doi rdf:type rdf:Property ;
-	 rdfs:comment "Digital Object Identifier." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "DOI" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:duration rdf:type rdf:Property ;
-	 rdfs:comment "Information about the playing time or duration in an unstructured form, e.g., '2 hours'." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Duration" ;
-	 rdfs:range rdfs:Literal .
-
-bf:ean rdf:type rdf:Property ;
-	 rdfs:comment "International Article Identifier." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "EAN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:edition rdf:type rdf:Property ;
-	 rdfs:comment "Information identifying the edition or version of the resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Edition statement" ;
-	 rdfs:range rdfs:Literal .
-
-bf:editionResponsibility rdf:type rdf:Property ;
-	 rdfs:comment "Statement relating to the identification of any persons, families, or corporate bodies responsible for the edition being described." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Edition responsibility" ;
-	 rdfs:range rdfs:Literal .
-
-bf:extent rdf:type rdf:Property ;
-	 rdfs:comment "Number and type of units and/or subunits making up a resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Extent" ;
-	 rdfs:range rdfs:Literal .
-
-bf:fingerprint rdf:type rdf:Property ;
-	 rdfs:comment "Identifier that is used to assist in the identification of antiquarian books by recording information comprising groups of characters taken from specified positions on specified pages of the book." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Fingerprint identifier" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:format rdf:type rdf:Property ;
-	 rdfs:comment "File format or physical medium of an instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Format" ;
-	 rdfs:range rdfs:Literal .
-
-bf:formatOfMusic rdf:type rdf:Property ;
-	 rdfs:comment "Format of a musical composition, e.g. full score, condensed score, vocal score, etc." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Format of music" ;
-	 rdfs:range rdfs:Literal .
-
-bf:frequency rdf:type rdf:Property ;
-	 rdfs:comment "Intervals at which the issues or parts of a serial or the updates to an integrating resource are issued." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Frequency" ;
-	 rdfs:range rdfs:Literal .
-
-bf:frequencyNote rdf:type rdf:Property ;
-	 rdfs:comment "Current or former publication frequency of a resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Frequency note" ;
-	 rdfs:range rdfs:Literal .
-
-bf:graphicScaleNote rdf:type rdf:Property ;
-	 rdfs:comment "Textual information about scale, including the scale of graphic material item such as architectural drawings or three-dimensional artifacts." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Graphic scale" ;
-	 rdfs:range rdfs:Literal .
-
-bf:hdl rdf:type rdf:Property ;
-	 rdfs:comment "Unique and persistent identifier for digital objects developed by the Corporation for National Research Initiatives." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Handle" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:illustrationNote rdf:type rdf:Property ;
-	 rdfs:comment "Information about illustrative material in the resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Illustrative content note" ;
-	 rdfs:range rdfs:Literal .
-
-bf:instanceOf rdf:type rdf:Property ;
-	 rdfs:comment "Work this resource instantiates or manifests. For use to connect Instances to Works in the BIBFRAME structure." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Instance of" ;
-	 rdfs:range bf:Work ;
-	 rdfs:subPropertyOf bf:relatedTo .
-
-bf:instanceTitle rdf:type rdf:Property ;
-	 rdfs:comment "Word, character, or group of words and/or characters that is the main name of an instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Instance title" ;
-	 rdfs:range bf:Title .
-
-bf:isbn rdf:type rdf:Property ;
-	 rdfs:comment "International Standard Book Number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "ISBN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:isbn10 rdf:type rdf:Property ;
-	 rdfs:comment "10 digit version of the International Standard Book Number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "ISBN-10" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:isbn .
-
-bf:isbn13 rdf:type rdf:Property ;
-	 rdfs:comment "13 digit version of the International Standard Book Number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "ISBN-13" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:isbn .
-
-bf:ismn rdf:type rdf:Property ;
-	 rdfs:comment "International Standard Music Number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "ISMN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:iso rdf:type rdf:Property ;
-	 rdfs:comment "International Organization for Standardization standard number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "ISO number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:issn rdf:type rdf:Property ;
-	 rdfs:comment "International Standard Serial Number identifier." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "ISSN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:issuedWith rdf:type rdf:Property ;
-	 rdfs:comment "Instance that is issued on the same carrier as the manifestation being described." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Issued with" ;
-	 rdfs:range bf:Instance ;
-	 rdfs:subPropertyOf bf:hasAccompaniment .
-
-bf:issueNumber rdf:type rdf:Property ;
-	 rdfs:comment "Number used to identify the issue designation, or serial identification, assigned by a publisher to a sound recording." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Audio issue number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:keyTitle rdf:type rdf:Property ;
-	 rdfs:comment "Unique title for a continuing resource that is assigned by the ISSN International Center in conjunction with an ISSN." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Key title" ;
-	 rdfs:range bf:Title ;
-	 rdfs:subPropertyOf bf:instanceTitle .
-
-bf:lccn rdf:type rdf:Property ;
-	 rdfs:comment "Library of Congress Control Number, which identifies the resource description." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "LCCN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:lcOverseasAcq rdf:type rdf:Property ;
-	 rdfs:comment "Identification number assigned by the Library of Congress to works acquired through one of its overseas acquisition programs." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "LC acquisition program" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:legalDeposit rdf:type rdf:Property ;
-	 rdfs:comment "Number assigned to a copyright or legal deposit, which Identifies a resource description." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Copyright number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:manufacture rdf:type rdf:Property ;
-	 rdfs:comment "Information relating to manufacture of an instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Manufacture event" ;
-	 rdfs:range bf:Provider ;
-	 rdfs:subPropertyOf bf:provider .
-
-bf:matrixNumber rdf:type rdf:Property ;
-	 rdfs:comment "Matrix number from the master from which a specific sound recording was pressed." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Audio matrix number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:mediaCategory rdf:type rdf:Property ;
-	 rdfs:comment "Categorization reflecting the general type of intermediation device required to view, play, run, etc., the content of a resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Media type" ;
-	 rdfs:range bf:Category .
-
-bf:modeOfIssuance rdf:type rdf:Property ;
-	 rdfs:comment "Categorization reflecting whether a resource is issued in one or more parts, the way it is updated, and its intended termination." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Mode of issuance" ;
-	 rdfs:range rdfs:Literal .
-
-bf:musicPlate rdf:type rdf:Property ;
-	 rdfs:comment "Number assigned by a music publisher to a specific music publication." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Music plate number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:musicPublisherNumber rdf:type rdf:Property ;
-	 rdfs:comment "Number assigned to a music publication other than an issue, matrix, or plate number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Music publisher number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:nban rdf:type rdf:Property ;
-	 rdfs:comment "National Bibliography Agency Number, which identifies the resource description." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "NBAN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:nbn rdf:type rdf:Property ;
-	 rdfs:comment "National Bibliography Number, which identifies the resource description." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "NBN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:notation rdf:type rdf:Property ;
-	 rdfs:comment "Information on the alphabet, script, or symbol system used to convey the content of the resource, including specialized scripts, typefaces, tactile notation, and musical notation." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Notation system" ;
-	 rdfs:range rdfs:Literal .
-
-bf:otherPhysicalFormat rdf:type rdf:Property ;
-	 rdfs:comment "Resource that is manifested in another physical carrier." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Has other physical format" ;
-	 rdfs:range bf:Instance ;
-	 rdfs:subPropertyOf bf:hasEquivalent .
-
-bf:postalRegistration rdf:type rdf:Property ;
-	 rdfs:comment "Number assigned to a publication for which the specified postal service permits the use of a special mailing class privilege." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Postal registration number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:preferredCitation rdf:type rdf:Property ;
-	 rdfs:comment "Citation to the resource preferred by its custodian." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Preferred citation" ;
-	 rdfs:range rdfs:Literal .
-
-bf:production rdf:type rdf:Property ;
-	 rdfs:comment "Information relating to production of an instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Production event" ;
-	 rdfs:range bf:Provider ;
-	 rdfs:subPropertyOf bf:provider .
-
-bf:provider rdf:type rdf:Property ;
-	 rdfs:comment "Place, name, and/or date information relating to the publication, printing, distribution, issue, release, or production instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Provider" ;
-	 rdfs:range bf:Provider .
-
-bf:providerStatement rdf:type rdf:Property ;
-	 rdfs:comment "Transcribed provider statement" ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Provider statement" ;
-	 rdfs:range rdfs:Literal .
-
-bf:publication rdf:type rdf:Property ;
-	 rdfs:comment "Information relating to publication of an instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Publication event" ;
-	 rdfs:range bf:Provider ;
-	 rdfs:subPropertyOf bf:provider .
-
-bf:publisherNumber rdf:type rdf:Property ;
-	 rdfs:comment "Number assigned by a publisher that is not one of the specific defined types." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Other publisher number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:relatedInstance rdf:type rdf:Property ;
-	 rdfs:comment "General instance to instance relationship." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Related Instance" ;
-	 rdfs:range bf:Instance ;
-	 rdfs:subPropertyOf bf:relatedTo .
-
-bf:reportNumber rdf:type rdf:Property ;
-	 rdfs:comment "Identification number of a report that is not a Standard Technical Report Number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Technical report number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:reproduction rdf:type rdf:Property ;
-	 rdfs:comment "Instance that reproduces another Instance embodying the same work." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Has reproduction" ;
-	 rdfs:range bf:Instance ;
-	 rdfs:subPropertyOf bf:hasEquivalent .
-
-bf:responsibilityStatement rdf:type rdf:Property ;
-	 rdfs:comment "Statement relating to the identification and/or function of any persons, families, or corporate bodies responsible for the creation of, or contributing to the content of a resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Edition responsibility" ;
-	 rdfs:range rdfs:Literal .
-
-bf:serialFirstIssue rdf:type rdf:Property ;
-	 rdfs:comment "Beginning date of an instance and/or the sequential designations." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Serial first issue" ;
-	 rdfs:range rdfs:Literal .
-
-bf:serialLastIssue rdf:type rdf:Property ;
-	 rdfs:comment "Ending date of an instance and/or the sequential designations." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Serial last issue" ;
-	 rdfs:range rdfs:Literal .
-
-bf:sici rdf:type rdf:Property ;
-	 rdfs:comment "Serial Item and Contribution Identifier." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "SICI" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:soundContent rdf:type rdf:Property ;
-	 rdfs:comment "Indication of whether the production of sound is an integral part of the resource." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Sound content" ;
-	 rdfs:range rdfs:Literal .
-
-bf:stockNumber rdf:type rdf:Property ;
-	 rdfs:comment "Identification number such as distributor, publisher, or vendor number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Stock number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:strn rdf:type rdf:Property ;
-	 rdfs:comment "Standard Technical Report Number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "STRN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:studyNumber rdf:type rdf:Property ;
-	 rdfs:comment "Identification number for a computer data file." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Study number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:supplementaryContentNote rdf:type rdf:Property ;
-	 rdfs:comment "Information on the presence of one or more bibliographies, discographies, filmographies, and/or other bibliographic references in a described resource or in accompanying material." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Supplementary content note" ;
-	 rdfs:range rdfs:Literal .
-
-bf:titleStatement rdf:type rdf:Property ;
-	 rdfs:comment "Title transcribed from an instance." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Transcribed title" ;
-	 rdfs:range rdfs:Literal .
-
-bf:upc rdf:type rdf:Property ;
-	 rdfs:comment "Universal Product Code." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "UPC" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:urn rdf:type rdf:Property ;
-	 rdfs:comment "Uniform Resource Number." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "URN" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
-
-bf:videorecordingNumber rdf:type rdf:Property ;
-	 rdfs:comment "Number assigned by a publisher to a videorecording." ;
-	 rdfs:domain bf:Instance ;
-	 rdfs:label "Videorecording number" ;
-	 rdfs:range bf:Identifier ;
-	 rdfs:subPropertyOf bf:identifier .
+
+bf:absorbed a rdf:Property ;
+    rdfs:label "Absorption of" ;
+    rdfs:comment "Resource that has been incorporated into another resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:absorbedBy a rdf:Property ;
+    rdfs:label "Absorbed by" ;
+    rdfs:comment "Resource that incorporates another resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:accompaniedBy a rdf:Property ;
+    rdfs:label "Accompanied by" ;
+    rdfs:comment "Resource that accompanies the described resource." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:accompanies a rdf:Property ;
+    rdfs:label "Accompanies" ;
+    rdfs:comment "Resource that adds to or is issued with the described resource." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:adminMetadata a rdf:Property ;
+    rdfs:label "Administrative metadata" ;
+    rdfs:comment "Metadata about the metadata, especially provenance information." .
+
+bf:agent a rdf:Property ;
+    rdfs:label "Associated agent" ;
+    rdfs:comment "Entity associated with a resource or element of description, such as the name of the entity responsible for the content or of the publication, printing, distribution, issue, release or production of a resource." .
+
+bf:appliedMaterial a rdf:Property ;
+    rdfs:label "Applied material" ;
+    rdfs:comment "Physical or chemical substance applied to a base material of a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:arrangement a rdf:Property ;
+    rdfs:label "Organization and arrangement" ;
+    rdfs:comment "Information about the organization and arrangement of a collection of resources." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:aspectRatio a rdf:Property ;
+    rdfs:label "Aspect ratio" ;
+    rdfs:comment "Proportional relationship between an image's width and its height." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:barcode a rdf:Property ;
+    rdfs:label "Barcode" ;
+    rdfs:comment "Optical machine-readable representation of data relating to the item, to which it is attached." ;
+    rdfs:domain bf:Item .
+
+bf:baseMaterial a rdf:Property ;
+    rdfs:label "Base material" ;
+    rdfs:comment "Underlying physical material of a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:bookFormat a rdf:Property ;
+    rdfs:label "Book format" ;
+    rdfs:comment "Result of folding a printed sheet to form a gathering of leaves." ;
+    rdfs:domain bf:Instance .
+
+bf:capture a rdf:Property ;
+    rdfs:label "Capture of content" ;
+    rdfs:comment "Information about place and date associated with the capture (e.g., recording, filming) of the content of a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:carrier a rdf:Property ;
+    rdfs:label "Carrier type" ;
+    rdfs:comment "Categorization reflecting the format of the storage medium and housing of a carrier." ;
+    rdfs:domain bf:Instance .
+
+bf:cartographicAttributes a rdf:Property ;
+    rdfs:label "Cartographic data" ;
+    rdfs:comment "Cartographic data that identifies characteristics of the resource, such as coordinates, projection, etc." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:classification a rdf:Property ;
+    rdfs:label "Classification" ;
+    rdfs:comment "Classification number in any scheme." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:colorContent a rdf:Property ;
+    rdfs:label "Color content" ;
+    rdfs:comment "Color characteristics, e.g., black and white, multicolored." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:content a rdf:Property ;
+    rdfs:label "Content type" ;
+    rdfs:comment "Categorization reflecting the fundamental form of communication in which the content is expressed and the human sense through which it is intended to be perceived." ;
+    rdfs:domain bf:Work .
+
+bf:continuedBy a rdf:Property ;
+    rdfs:label "Continued by" ;
+    rdfs:comment "Resource whose content continues an earlier resource under a new title." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:continuedInPartBy a rdf:Property ;
+    rdfs:label "Continued in part by" ;
+    rdfs:comment "Resource part of whose content separated from an earlier resource to form a new resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:continues a rdf:Property ;
+    rdfs:label "Continuation of" ;
+    rdfs:comment "Resource that is continued by the content of a later resource under a new title." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:continuesInPart a rdf:Property ;
+    rdfs:label "Continuation in part of" ;
+    rdfs:comment "Resource that split into two or more separate resources with new titles." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:contribution a rdf:Property ;
+    rdfs:label "Contributor role" ;
+    rdfs:comment "Agent and its role in relation to the resource." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:contributor a rdf:Property ;
+    rdfs:label "Contributor" ;
+    rdfs:comment "Generalized relationship role when no specific role can be given." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:copyrightRegistration a rdf:Property ;
+    rdfs:label "Copyright registration information" ;
+    rdfs:comment "Copyright and Legal Deposit registration information" ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:coverArt a rdf:Property ;
+    rdfs:label "Cover art" ;
+    rdfs:comment "Cover art image of a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:dataSource a rdf:Property ;
+    rdfs:label "Data source" ;
+    rdfs:comment "Resource that is a data source to which the described resource is related. It may contain information about other files, printed sources, or collection procedures." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:derivativeOf a rdf:Property ;
+    rdfs:label "Is derivative of" ;
+    rdfs:comment "Source work from which the described resource is derived." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:digitalCharacteristic a rdf:Property ;
+    rdfs:label "Digital characteristic" ;
+    rdfs:comment "Technical specification relating to the digital encoding of text, image, audio, video, and other types of data in a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:dissertation a rdf:Property ;
+    rdfs:label "Dissertation Information" ;
+    rdfs:comment "Work presented as part of the formal requirements for an academic degree." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:electronicLocator a rdf:Property ;
+    rdfs:label "Electronic location" ;
+    rdfs:comment "Electronic location from which the resource is available." ;
+    rdfs:domain bf:Item .
+
+bf:emulsion a rdf:Property ;
+    rdfs:label "Emulsion" ;
+    rdfs:comment "Suspension of light-sensitive chemicals used as a coating on a microfilm or microfiche, e.g., silver halide." ;
+    rdfs:domain bf:Instance .
+
+bf:ensemble a rdf:Property ;
+    rdfs:label "Ensemble" ;
+    rdfs:comment "Ensemble for which a musical work is appropriate." ;
+    rdfs:domain bf:Work .
+
+bf:enumerationAndChronology a rdf:Property ;
+    rdfs:label "Numbering or other enumeration and dates associated with issues or items held." ;
+    rdfs:comment "Numbering and dates of issues or items held." ;
+    rdfs:domain bf:Item .
+
+bf:eventContentOf a rdf:Property ;
+    rdfs:label "Has event content" ;
+    rdfs:comment "Event that is the content of the described work." ;
+    rdfs:domain bf:Work .
+
+bf:expressionOf a rdf:Property ;
+    rdfs:label "Expression of" ;
+    rdfs:comment "Work that the described Work is an expression of. For use to connect Works under FRBR/RDA rules." ;
+    rdfs:domain bf:Work .
+
+bf:extent a rdf:Property ;
+    rdfs:label "Extent" ;
+    rdfs:comment "Number and type of units and/or subunits making up a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:findingAid a rdf:Property ;
+    rdfs:label "Finding aid" ;
+    rdfs:comment "Relationship for archival, visual, and manuscript resources to a finding aid or similar control materials." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:findingAidOf a rdf:Property ;
+    rdfs:label "Finding aid for" ;
+    rdfs:comment "Finding aid or similar control materials for archival, visual, and manuscript resources." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:fontSize a rdf:Property ;
+    rdfs:label "Font size" ;
+    rdfs:comment "Size of the type used to represent the characters and symbols in a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:frequency a rdf:Property ;
+    rdfs:label "Frequency" ;
+    rdfs:comment "Intervals at which the parts of a serially produced resource or the updates to an integrating resource are issued." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:generation a rdf:Property ;
+    rdfs:label "Generation" ;
+    rdfs:comment "Relationship between an original carrier and the carrier of a reproduction made from the original." ;
+    rdfs:domain bf:Instance .
+
+bf:genreForm a rdf:Property ;
+    rdfs:label "Genre/form" ;
+    rdfs:comment "Form category or genre to which a resource belongs" ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:hasDerivative a rdf:Property ;
+    rdfs:label "Has derivative" ;
+    rdfs:comment "Resource that is a modification of the described work." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:hasExpression a rdf:Property ;
+    rdfs:label "Expressed as" ;
+    rdfs:comment "Work that is an expression of a described Work. For use to relate Works under FRBR/RDA rules." ;
+    rdfs:domain bf:Work .
+
+bf:hasInstance a rdf:Property ;
+    rdfs:label "Instance of Work" ;
+    rdfs:comment "Instance is related to described Work. For use to connect Works to Instances in the BIBFRAME structure." ;
+    rdfs:domain bf:Work .
+
+bf:hasItem a rdf:Property ;
+    rdfs:label "Has holding" ;
+    rdfs:comment "Item for which the described Instance is an exemplar." ;
+    rdfs:domain bf:Instance .
+
+bf:hasPart a rdf:Property ;
+    rdfs:label "Has part" ;
+    rdfs:comment "Resource that is included either physically or logically in the described resource" ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:hasReproduction a rdf:Property ;
+    rdfs:label "Reproduced as" ;
+    rdfs:comment "Resource that reproduces another Resource." ;
+    rdfs:domain bf:Instance .
+
+bf:hasSeries a rdf:Property ;
+    rdfs:label "In series" ;
+    rdfs:comment "Resource in which the part has been issued; the title of the larger resource appears on the part." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:hasSubseries a rdf:Property ;
+    rdfs:label "Subseries" ;
+    rdfs:comment "series resource that is part of another series." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:heldBy a rdf:Property ;
+    rdfs:label "Held by" ;
+    rdfs:comment "Entity holding the item or from which it is available." ;
+    rdfs:domain bf:Item .
+
+bf:identifiedBy a rdf:Property ;
+    rdfs:label "Identifier" ;
+    rdfs:comment "Character string associated with a resource that serves to differentiate that resource from other resources, i.e., that uniquely identifies an entity." .
+
+bf:illustrativeContent a rdf:Property ;
+    rdfs:label "Illustrative content information" ;
+    rdfs:comment "Information about content intended to illustrate a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:index a rdf:Property ;
+    rdfs:label "Index" ;
+    rdfs:comment "Resource has an accompanying index" ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:indexOf a rdf:Property ;
+    rdfs:label "Index to" ;
+    rdfs:comment "Index that accompanies a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:instanceOf a rdf:Property ;
+    rdfs:label "Instance of" ;
+    rdfs:comment "Work the Instance described instantiates or manifests. For use to connect Instances to Works in the BIBFRAME structure." ;
+    rdfs:domain bf:Instance .
+
+bf:instrument a rdf:Property ;
+    rdfs:label "Instrument" ;
+    rdfs:comment "Instrument for which a musical Work is appropriate." ;
+    rdfs:domain bf:Work .
+
+bf:intendedAudience a rdf:Property ;
+    rdfs:label "Intended audience" ;
+    rdfs:comment "Information that identifies the specific audience or intellectual level for which the content of the resource is considered appropriate." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:issuance a rdf:Property ;
+    rdfs:label "Mode of issuance" ;
+    rdfs:comment "Categorization reflecting whether a resource is issued in one or more parts, the way it is updated, and its intended termination." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:itemOf a rdf:Property ;
+    rdfs:label "Holding for" ;
+    rdfs:comment "Instance that is an example of the described Item." ;
+    rdfs:domain bf:Item .
+
+bf:language a rdf:Property ;
+    rdfs:label "Language information" ;
+    rdfs:comment "Language associated with a resource or its parts." .
+
+bf:layout a rdf:Property ;
+    rdfs:label "Layout" ;
+    rdfs:comment "Arrangement of text, images, tactile notation, etc., in a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:media a rdf:Property ;
+    rdfs:label "Media type" ;
+    rdfs:comment "Categorization reflecting the general type of intermediation device required to view, play, run, etc., the content of a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:mergedToForm a rdf:Property ;
+    rdfs:label "Merged to form" ;
+    rdfs:comment "One of two or more resources that come together to form a new resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:mergerOf a rdf:Property ;
+    rdfs:label "Merger of" ;
+    rdfs:comment "One of two or more resources which came together to form a new resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:mount a rdf:Property ;
+    rdfs:label "Mount material" ;
+    rdfs:comment "Physical material used for the support or backing to which the base material of a resource has been attached." ;
+    rdfs:domain bf:Instance .
+
+bf:musicFormat a rdf:Property ;
+    rdfs:label "Format of notated music" ;
+    rdfs:comment "Layout for content of a resource that is presented in the form of musical notation, such as full score, condensed score, vocal score, etc." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:musicMedium a rdf:Property ;
+    rdfs:label "Music medium of performance" ;
+    rdfs:comment "Instrumental, vocal, and/or other medium of performance for which a musical resource was originally conceived, written or performed." ;
+    rdfs:domain bf:Work .
+
+bf:notation a rdf:Property ;
+    rdfs:label "Notation system" ;
+    rdfs:comment "Alphabet, script, or symbol system used to convey the content of the resource, including specialized scripts, typefaces, tactile notation, movement notation, and musical notation." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:note a rdf:Property ;
+    rdfs:label "Note" ;
+    rdfs:comment "General textual information relating to a resource, such as Information about a specific copy of a resource or information about a particular attribute of a resource." .
+
+bf:originPlace a rdf:Property ;
+    rdfs:label "Associated title place" ;
+    rdfs:comment "Place from which the creation of the Work originated." ;
+    rdfs:domain bf:Work .
+
+bf:originalVersion a rdf:Property ;
+    rdfs:label "Original version" ;
+    rdfs:comment "Resource is the original version of which this resource is a reproduction." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:originalVersionOf a rdf:Property ;
+    rdfs:label "Original version of" ;
+    rdfs:comment "Original version of a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:partOf a rdf:Property ;
+    rdfs:label "Is part of" ;
+    rdfs:comment "Resource in which the described resource is physically or logically contained." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:place a rdf:Property ;
+    rdfs:label "Place" ;
+    rdfs:comment "Geographic location or place entity associated with a resource or element of description, such as the place associated with the publication, printing, distribution, issue, release or production of a resource, place of an event." .
+
+bf:polarity a rdf:Property ;
+    rdfs:label "Polarity" ;
+    rdfs:comment "Relationship of the colors and tones in an image to the colors and tones of the object reproduced." ;
+    rdfs:domain bf:Instance .
+
+bf:precededBy a rdf:Property ;
+    rdfs:label "Preceded by" ;
+    rdfs:comment "Resource that precedes the resource being described, e.g., is earlier in time or before in narrative." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:productionMethod a rdf:Property ;
+    rdfs:label "Production method" ;
+    rdfs:comment "Process used to produce a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:projectionChracteristic a rdf:Property ;
+    rdfs:label "Projection characteristic" ;
+    rdfs:comment "Technical specification relating to the projection of a motion picture film." ;
+    rdfs:domain bf:Instance .
+
+bf:provisionActivity a rdf:Property ;
+    rdfs:label "Provider" ;
+    rdfs:comment "Place, name, and/or date information relating to the publication, printing, distribution, issue, release, or production of a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:reductionRatio a rdf:Property ;
+    rdfs:label "Reduction ratio" ;
+    rdfs:comment "Size of a micro-image in relation to the original from which it was produced." ;
+    rdfs:domain bf:Instance .
+
+bf:referencedBy a rdf:Property ;
+    rdfs:label "Referenced by" ;
+    rdfs:comment "Resource that references the described resource" ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:references a rdf:Property ;
+    rdfs:label "References" ;
+    rdfs:comment "Resource that is referenced by the described resource." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:replacedBy a rdf:Property ;
+    rdfs:label "Succeeded by" ;
+    rdfs:comment "Later resource used in place of an earlier resource, usually because the later resource contains updated or new information." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:replacementOf a rdf:Property ;
+    rdfs:label "Preceded by" ;
+    rdfs:comment "Earlier resource whose content has been replaced by a later resource, usually because the later resource contains updated or new information." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:reproductionOf a rdf:Property ;
+    rdfs:label "Reproduction of" ;
+    rdfs:comment "Resource that is a reproduction of another Resource." ;
+    rdfs:domain bf:Instance .
+
+bf:review a rdf:Property ;
+    rdfs:label "Review content" ;
+    rdfs:comment "Review of a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:separatedFrom a rdf:Property ;
+    rdfs:label "Separated from" ;
+    rdfs:comment "Resource that spun off a part of its content to form a new resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:seriesOf a rdf:Property ;
+    rdfs:label "Series container of" ;
+    rdfs:comment "Resource that is a part of a larger resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:shelfMark a rdf:Property ;
+    rdfs:label "Shelf mark" ;
+    rdfs:comment "Piece identifier, such as a call or other type of number." ;
+    rdfs:domain bf:Item .
+
+bf:soundCharacteristic a rdf:Property ;
+    rdfs:label "Sound characteristic" ;
+    rdfs:comment "Technical specification relating to the encoding of sound in a resource." ;
+    rdfs:domain bf:Instance .
+
+bf:soundContent a rdf:Property ;
+    rdfs:label "Sound content" ;
+    rdfs:comment "Indication of whether the production of sound is an integral part of the resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:source a rdf:Property ;
+    rdfs:label "Source" ;
+    rdfs:comment "Resource from which value or label came or was derived, such as the formal source/scheme from which a classification number is taken or derived, list from which an agent name is taken or derived, source within which an identifier is unique." .
+
+bf:splitInto a rdf:Property ;
+    rdfs:label "Split into" ;
+    rdfs:comment "One of two or more resources resulting from the division of an earlier resource into separate resources." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:status a rdf:Property ;
+    rdfs:label "Status" ;
+    rdfs:comment "Designation of the validity or position of something, such as indication that the classification number is canceled or invalid, circulation availability of an item, indication of whether the identifier is canceled or invalid." .
+
+bf:subLocation a rdf:Property ;
+    rdfs:label "Held in sublocation" ;
+    rdfs:comment "Specific place within the holding entity where the item is located or made available." ;
+    rdfs:domain bf:Item .
+
+bf:subject a rdf:Property ;
+    rdfs:label "Subject" ;
+    rdfs:comment "Subject term(s) describing a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:subseriesOf a rdf:Property ;
+    rdfs:label "Subseries of" ;
+    rdfs:comment "Series resource of which the described resource is a part." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:succeededBy a rdf:Property ;
+    rdfs:label "Succeeded by" ;
+    rdfs:comment "Resource that succeeds the resource being described, e.g., later in time or after in a narrative." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:summary a rdf:Property ;
+    rdfs:label "Summary content" ;
+    rdfs:comment "Summary or abstract of the resource described." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:supplement a rdf:Property ;
+    rdfs:label "Supplement" ;
+    rdfs:comment "Resource that updates or otherwise complements the predominant resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:supplementTo a rdf:Property ;
+    rdfs:label "Supplement to" ;
+    rdfs:comment "Resource that is updated or otherwise complemented by the augmenting resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:supplementaryContent a rdf:Property ;
+    rdfs:label "Supplementary material" ;
+    rdfs:comment "Material such as an index, bibliography, appendix intended to supplement the primary content of a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:tableOfContents a rdf:Property ;
+    rdfs:label "Table of contents content" ;
+    rdfs:comment "Table of contents of the described resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:title a rdf:Property ;
+    rdfs:label "Title resource" ;
+    rdfs:comment "Name given to a resource." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:translation a rdf:Property ;
+    rdfs:label "Translation as" ;
+    rdfs:comment "Resource that translates the text of the source entity into a language different from that of the original." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:translationOf a rdf:Property ;
+    rdfs:label "Translation of" ;
+    rdfs:comment "Resource that has been translated, i.e., the text is expressed in a language different from that of the original resource." ;
+    rdfs:domain bf:Instance,
+        bf:Work .
+
+bf:unit a rdf:Property ;
+    rdfs:label "Type of unit" ;
+    rdfs:comment "Units in which a value is expressed, such as the physical or logical constituent of a resource (e.g., a volume, audiocassette, film reel, a map, a digital file)." .
+
+bf:usageAndAccessPolicy a rdf:Property ;
+    rdfs:label "Use and access condition" ;
+    rdfs:comment "General statement of allowances and restrictions on access to a resource, including retention, reproduction, access, and lending." ;
+    rdfs:domain bf:Instance,
+        bf:Item,
+        bf:Work .
+
+bf:videoCharacteristic a rdf:Property ;
+    rdfs:label "Video characteristic" ;
+    rdfs:comment "Technical specification relating to the encoding of video images in a resource" ;
+    rdfs:domain bf:Instance .
+
+bf:voice a rdf:Property ;
+    rdfs:label "Voice" ;
+    rdfs:comment "Voice for which a musical work is appropriate, such as soprano, tenor, mixed." ;
+    rdfs:domain bf:Work .
 
