@@ -78,6 +78,16 @@ kds:PersonIdentifir a kds:Deduplicator;
     rdfs:domain bf:Person .
 
 kds:WorkIdentifier a kds:Deduplicator;
-    kds:exactMatch bf:mainTitle,
-        relator:aut ;
+    kds:deDupeMethod [
+    	a kds:exactMatch; 
+    	kds:propUri bf:mainTitle,
+        	    relator:aut 
+    ];
+    kds:deDupeMethod [
+    	a kds:looseMatch; 
+    	kds:propUri bf:mainTitle,
+        	    relator:aut,
+        	    relator:contributor;
+   	kds:matchCriteria kds:2outOf3
+    ];
     rdfs:domain bf:Work .
