@@ -6,18 +6,31 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix m211: <http://marc21rdf.info/elements/1XX/> .
+@prefix m212: <http://marc21rdf.info/elements/2XX/> .
+@prefix m213: <http://marc21rdf.info/elements/3XX/> .
+@prefix m214: <http://marc21rdf.info/elements/4XX/> .
+@prefix m215: <http://marc21rdf.info/elements/5XX/> .
+@prefix m216: <http://marc21rdf.info/elements/6XX/> .
+@prefix m217: <http://marc21rdf.info/elements/7XX/> .
+@prefix m218: <http://marc21rdf.info/elements/8XX/> .
 
-bf:Carrier a owl:Class;
-    kds:marc2bibframe <http://marc21rdf.info/elements/3XX/M338__a>,
-        <http://marc21rdf.info/elements/3XX/M338__b> ;
-    rdfs:domain bf:Instance ;
-    rdfs:range xsd:string .
+bc:m21-bf_carrier a kds:PropertyLinker;
+    kds:srcPropUri m213:M338__a,
+    		   M338__b;
+    kds:destClassUri bf:Carrier;  # the class the value will be saved in
+    kds:destPropUri rdf:value;    # the property the value will be saved in
+    kds:linkedRange bf:carrier;   # the property the resultant uri will be saved in
+    kds:linkedClass bf:Instance.   # the class of the linked Range
 
-bf:copyrightDate a owl:DatatypeProperty ;
-    kds:marc2bibframe <http://marc21rdf.info/elements/2XX/M260__c> ;
-    rdfs:domain bf:Work,
-        bf:Instance ;
-    rdfs:range xsd:string .
+bc:m21-bf_copyrightDate a kds:PropertyLinker;
+    kds:srcPropUri m212:M260__c;
+    kds:destClassUri bf:Instance;
+    kds:destPropUri bf:copyrightDate.
+    # a linkedRange and class are not required since the m21 value is not being saved a class first
+
+#----- Below Not Done yet -------------------
 
 bf:barcode a owl:DatatypeProperty ;
     rdfs:domain bf:Item;
