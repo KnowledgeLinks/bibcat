@@ -7,59 +7,59 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix relator: <http://id.loc.gov/vocabulary/relators/> .
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
-@prefix m211: <http://marc21rdf.info/elements/1XX/> .
-@prefix m212: <http://marc21rdf.info/elements/2XX/> .
-@prefix m213: <http://marc21rdf.info/elements/3XX/> .
-@prefix m214: <http://marc21rdf.info/elements/4XX/> .
-@prefix m215: <http://marc21rdf.info/elements/5XX/> .
-@prefix m216: <http://marc21rdf.info/elements/6XX/> .
-@prefix m217: <http://marc21rdf.info/elements/7XX/> .
-@prefix m218: <http://marc21rdf.info/elements/8XX/> .
+@prefix m21.1: <http://marc21rdf.info/elements/1XX/> .
+@prefix m21.2: <http://marc21rdf.info/elements/2XX/> .
+@prefix m21.3: <http://marc21rdf.info/elements/3XX/> .
+@prefix m21.4: <http://marc21rdf.info/elements/4XX/> .
+@prefix m21.5: <http://marc21rdf.info/elements/5XX/> .
+@prefix m21.6: <http://marc21rdf.info/elements/6XX/> .
+@prefix m21.7: <http://marc21rdf.info/elements/7XX/> .
+@prefix m21.8: <http://marc21rdf.info/elements/8XX/> .
 
 bc:m21-bf_carrier a kds:PropertyLinker;
-    kds:srcPropUri m213:M338__a,
-    		   M338__b;
+    kds:srcPropUri m21.3:M338__a,
+                   m21.3:M338__b;
     kds:destClassUri bf:Carrier;  # the class the value will be saved in
     kds:destPropUri rdf:value;    # the property the value will be saved in
     kds:linkedRange bf:carrier;   # the property the resultant uri will be saved in
     kds:linkedClass bf:Instance.   # the class of the linked Range
 
 bc:m21-bf_copyrightDate a kds:PropertyLinker;
-    kds:srcPropUri m212:M260__c;
+    kds:srcPropUri m21.2:M260__c;
     kds:destClassUri bf:Instance;
     kds:destPropUri bf:copyrightDate.
     # a linkedRange and class are not required since the m21 value is not being saved a class first
 
+bc:m21-bf_barcode a kds:PropertyLinker ;
+	kds:srcPropUri m21.1:barcodeField
+    kds:destClassUri bf:Item;
+    kds:destPropUri bf:barcode.
+
+bc:m21-bf_electronicLocation a kds:PropertyLinker ;
+	kds:srcPropUri m21.8:M856__a ;
+	kds:destClassUri bf:Item ;
+	kds:destPropUri bf:electronicLocation. 
+
+bc:m21-bf_InstanceTitle a a kds:PropertyLinker ;
+	kds:srcPropUri 	m21.2:M24500a,
+					m21.2:M24510a,
+					m21.2:M24511a,
+					m21.2:M24512a,
+					m21.2:M24513a,
+					m21.2:M24514a,
+					m21.2:M24515a,
+					m21.2:M24516a,
+					m21.2:M24517a,
+					m21.2:M24518a,
+					m21.2:M24519a ;
+	kds:destClassUri bf:InstanceTitle;
+	kds:destPropUri bf:mainTitle;
+	kds:linkedRange bf:title;
+	kds:linkedClass	bf:Instance .
+
 #----- Below Not Done yet -------------------
 
-bf:barcode a owl:DatatypeProperty ;
-    rdfs:domain bf:Item;
-    rdfs:range bf:Barcode .
-
-bf:electronicLocation a owl:DatatypeProperty ;
-    kds:marc2bibframe <http://marc21rdf.info/elements/8XX/M856__a;
-    rdfs:domain bf:Item;
-    rdfs:range xsd:string .
-
-bf:mainTitle a owl:DatatypeProperty ;
-    kds:marc2bibframe <http://marc21rdf.info/elements/2XX/M24500a> ,
-        <http://marc21rdf.info/elements/2XX/M24510a>,
-        <http://marc21rdf.info/elements/2XX/M24511a>,
-        <http://marc21rdf.info/elements/2XX/M24512a>,
-        <http://marc21rdf.info/elements/2XX/M24513a>,
-        <http://marc21rdf.info/elements/2XX/M24514a>,
-        <http://marc21rdf.info/elements/2XX/M24515a>,
-        <http://marc21rdf.info/elements/2XX/M24516a>,
-        <http://marc21rdf.info/elements/2XX/M24517a>,
-        <http://marc21rdf.info/elements/2XX/M24518a>,
-	<http://marc21rdf.info/elements/2XX/M24519a> ;
-    rdfs:domain bf:Title,
-        bf:WorkTitle,
-        bf:InstanceTitle,
-        bf:VariantTitle ;
-    rdfs:range xsd:string .
-
-bf:originDate a owl:DatatypeProperty ;
+bc:m21-bf_originDate a owl:DatatypeProperty ;
     kds:marc2bibframe <http://marc21rdf.info/elements/00X/M00807-10>,
         <http://marc21rdf.info/elements/2XX/M2602_c>;
     rdfs:domain bf:Work;
@@ -86,7 +86,7 @@ relator:aut a owl:Class ;
     rdfs:range xsd:string,
         xsd:uri .
 
-kds:PersonIdentifir a kds:Deduplicator;
+kds:PersonIdentifier a kds:Deduplicator;
     kds:exactMatch rdfs:value;
     rdfs:domain bf:Person .
 
