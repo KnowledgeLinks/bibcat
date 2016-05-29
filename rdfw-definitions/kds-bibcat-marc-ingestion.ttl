@@ -7,67 +7,61 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix relator: <http://id.loc.gov/vocabulary/relators/> .
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
-@prefix m21.1: <http://marc21rdf.info/elements/1XX/> .
-@prefix m21.2: <http://marc21rdf.info/elements/2XX/> .
-@prefix m21.3: <http://marc21rdf.info/elements/3XX/> .
-@prefix m21.4: <http://marc21rdf.info/elements/4XX/> .
-@prefix m21.5: <http://marc21rdf.info/elements/5XX/> .
-@prefix m21.6: <http://marc21rdf.info/elements/6XX/> .
-@prefix m21.7: <http://marc21rdf.info/elements/7XX/> .
-@prefix m21.8: <http://marc21rdf.info/elements/8XX/> .
+@prefix m21: <http://knowledgelinks.io/ns/marc21/> .
+
 
 bc:m21-bf_carrier a kds:PropertyLinker;
-    kds:srcPropUri m21.3:M338__a,
-                   m21.3:M338__b;
+    kds:srcPropUri m21:M338__a,
+                   m21:M338__b;
     kds:destClassUri bf:Carrier;  # the class the value will be saved in
     kds:destPropUri rdf:value;    # the property the value will be saved in
     kds:linkedRange bf:carrier;   # the property the resultant uri will be saved in
     kds:linkedClass bf:Instance.   # the class of the linked Range
 
 bc:m21-bf_copyrightDate a kds:PropertyLinker;
-    kds:srcPropUri m21.2:M260__c;
+    kds:srcPropUri m21:M260__c;
     kds:destClassUri bf:Instance;
     kds:destPropUri bf:copyrightDate.
     # a linkedRange and class are not required since the m21 value is not being saved a class first
 
 bc:m21-bf_barcode a kds:PropertyLinker ;
-	kds:srcPropUri m21.1:barcodeField
+	kds:srcPropUri m21:barcodeField
     kds:destClassUri bf:Item;
     kds:destPropUri bf:barcode.
 
 bc:m21-bf_electronicLocation a kds:PropertyLinker ;
-	kds:srcPropUri m21.8:M856__a ;
+	kds:srcPropUri m21:M856__a ;
 	kds:destClassUri bf:Item ;
 	kds:destPropUri bf:electronicLocation. 
 
 bc:m21-bf_InstanceTitle a kds:PropertyLinker ;
-	kds:srcPropUri 	m21.2:M24500a,
-					m21.2:M24510a,
-					m21.2:M24511a,
-					m21.2:M24512a,
-					m21.2:M24513a,
-					m21.2:M24514a,
-					m21.2:M24515a,
-					m21.2:M24516a,
-					m21.2:M24517a,
-					m21.2:M24518a,
-					m21.2:M24519a ;
+	kds:srcPropUri 	m21:M24500a,
+					m21:M24510a,
+					m21:M24511a,
+					m21:M24512a,
+					m21:M24513a,
+					m21:M24514a,
+					m21:M24515a,
+					m21:M24516a,
+					m21:M24517a,
+					m21:M24518a,
+					m21:M24519a ;
 	kds:destClassUri bf:InstanceTitle;
 	kds:destPropUri bf:mainTitle;
 	kds:linkedRange bf:title;
 	kds:linkedClass	bf:Instance .
 
 bc:m21-bf_originDate a kds:PropertyLinker ;
-	kds:srcPropUri m21.0:M00807-10,
-				   m21.2:M2602_c;
+	kds:srcPropUri m21:M00807-10,
+				   m21:M2602_c;
 	kds:destClassUri bf:Instance;
 	kds:destPropUri bf:originDate .
 
 bc:m21-bf_subject_LocSh a kds:PropertyLinker;
-	kds:srcPropUri 	m21-65:M650_0a,
-        			m21-65:M650_0b,
-        			m21-65:M650_0c,
-        			m21-65:M650_0x;
+	kds:srcPropUri 	m21:M650_0a,
+        			m21:M650_0b,
+        			m21:M650_0c,
+        			m21:M650_0x;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Topic ;
     kds:linkedRange bf:subject ;
@@ -76,9 +70,9 @@ bc:m21-bf_subject_LocSh a kds:PropertyLinker;
     
 
 bc:m21-author a kds:PropertyLinker ;
-	kds:srcPropUri m21.1:M1000_a,
-			        m21.1:M1001_a,
-			        m21.1:M1003_a;
+	kds:srcPropUri m21:M1000_a,
+			        m21:M1001_a,
+			        m21:M1003_a;
 	kds:destClassUri bf:Person;
 	kds:destPropUri schema:alternativeName;
 	kds:linkedRange relator:aut;

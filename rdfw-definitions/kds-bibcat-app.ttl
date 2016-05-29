@@ -17,27 +17,6 @@ kdr:Application
 		kds:nameSpaceUri "http://bibframe.org/vocab/"
 	] ;
 	kds:appNameSpace [
-		kds:prefix "m21.1";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/1XX/"
-	] ;kds:appNameSpace [
-		kds:prefix "m21.2";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/2XX/"
-	] ;kds:appNameSpace [
-		kds:prefix "m21.3";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/3XX/"
-	] ;kds:appNameSpace [
-		kds:prefix "m21.4";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/4XX/"
-	] ;kds:appNameSpace [
-		kds:prefix "m21.5";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/5XX/"
-	] ;kds:appNameSpace [
-		kds:prefix "m21.6";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/6XX/"
-	] ;kds:appNameSpace [
-		kds:prefix "m21.7";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/7XX/"
-	] ;kds:appNameSpace [
-		kds:prefix "m21.8";
-		kds:nameSpaceUri "http://marc21rdf.info/elements/8XX/"
-	] .
+		kds:prefix "m21";
+		kds:nameSpaceUri "http://knowledgelinks.io/ns/marc21/"
+	]  .
