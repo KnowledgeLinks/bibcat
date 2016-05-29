@@ -8,7 +8,8 @@
 @prefix relator: <http://id.loc.gov/vocabulary/relators/> .
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix m21: <http://knowledgelinks.io/ns/marc21/> .
-
+@prefix loc: <http://id.loc.gov/> .
+@prefix schema: <http://www.schema.org/> .
 
 bc:m21-bf_carrier a kds:PropertyLinker;
     kds:srcPropUri m21:M338__a,
@@ -25,7 +26,7 @@ bc:m21-bf_copyrightDate a kds:PropertyLinker;
     # a linkedRange and class are not required since the m21 value is not being saved a class first
 
 bc:m21-bf_barcode a kds:PropertyLinker ;
-	kds:srcPropUri m21:barcodeField
+	kds:srcPropUri m21:barcodeField;
     kds:destClassUri bf:Item;
     kds:destPropUri bf:barcode.
 
