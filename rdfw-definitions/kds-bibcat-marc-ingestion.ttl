@@ -9,7 +9,7 @@
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix m21: <http://knowledgelinks.io/ns/marc21/> .
 @prefix loc: <http://id.loc.gov/> .
-@prefix schema: <http://www.schema.org/> .
+@prefix schema: <https://www.schema.org/> .
 
 bc:m21-bf_carrier a kds:PropertyLinker;
     kds:srcPropUri m21:M338__a,
@@ -30,10 +30,29 @@ bc:m21-bf_barcode a kds:PropertyLinker ;
     kds:destClassUri bf:Item;
     kds:destPropUri bf:barcode.
 
+bc:m21-bf_dimensions a kds:PropertyLinker ;
+	kds:srcPropUri m21:M300_c;
+	kds:destClassUri bf:Instance;
+	kds:destPropUri bf:dimensions .
+
 bc:m21-bf_electronicLocation a kds:PropertyLinker ;
 	kds:srcPropUri m21:M856__a ;
 	kds:destClassUri bf:Item ;
 	kds:destPropUri bf:electronicLocation. 
+
+bc:m21-bf_extent a kds:PropertyLinker ;
+	kds:srcPropUri m21:M300__a;
+	kds:destClassUri bf:Extent ;
+	kds:destPropUri rdf:value ;
+	kds:linkedRange bf:extent ;
+	kds:linkedClass bf:Instance.
+
+bc:m21-bf_illustrativeContent a kds:PropertyLinker ;
+	kds:srcPropUri m21:M300_b;
+	kds:destClassUri bf:Illustration;
+	kds:destPropUri rdf:value;
+	kds:linkedRange bf:illustrativeContent;
+	kds:linkedClass bf:Instance.
 
 bc:m21-bf_InstanceTitle a kds:PropertyLinker ;
 	kds:srcPropUri 	m21:M24500a,
@@ -51,6 +70,13 @@ bc:m21-bf_InstanceTitle a kds:PropertyLinker ;
 	kds:destPropUri bf:mainTitle;
 	kds:linkedRange bf:title;
 	kds:linkedClass	bf:Instance .
+
+bc:m21-bf_identifiedByIsbn a kds:PropertyLinker ;
+	kds:srcPropUri m21:M020__a ;
+	kds:destClassUri bf:Isbn ;
+	kds:destPropUri rdf:value ;
+	kds:linkedRange bf:identifiedBy ;
+	kds:linkedClass bf:Instance .
 
 bc:m21-bf_originDate a kds:PropertyLinker ;
 	kds:srcPropUri m21:M00807-10,

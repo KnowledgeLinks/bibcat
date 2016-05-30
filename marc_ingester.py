@@ -13,6 +13,7 @@ from collections import OrderedDict
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
 RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
+SCHEMA = rdflib.Namespace("https://www.schema.org/")
 
 # SPARQL query templates
 PREFIX  = """PREFIX bf: <{}>
@@ -96,7 +97,6 @@ def match_marc(record, pattern):
         if field.is_control_field():
             start, end = pattern[4:].split("-")
             output.append(field.data[int(start):int(end)+1])
-
             continue
         indicator_key = "{}{}".format(
             field.indicators[0].replace(" ", "_"),
@@ -114,6 +114,7 @@ def new_graph():
     graph.namespace_manager.bind("rdf", rdflib.RDF)
     graph.namespace_manager.bind("rdfs", rdflib.RDFS)
     graph.namespace_manager.bind("relators", RELATORS)
+    graph.namespace_manager.bind("schema", SCHEMA)
     return graph
 
 @click.command()
@@ -146,14 +147,16 @@ def populate_entity(entity_class, graph, record):
     sparql = GET_LINKED_CLASSES.format(entity_class)
     for dest_property, dest_class, prop in MARC2BIBFRAME.query(sparql):
         #! Should dedup dest_class here, return found URI or BNode
-        bf_class = rdflib.BNode()
-        graph.add((bf_class, rdflib.RDF.type, dest_class))
-        graph.add((entity, prop, bf_class)) 
         for row in MARC2BIBFRAME.query(
             GET_MARC.format(dest_class, entity_class)):
             marc = row[0]
             pattern = str(marc).split("/")[-1]
             for value in match_marc(record, pattern):
+                if len(value.strip()) < 1:
+                    continue
+                bf_class = rdflib.BNode()
+                graph.add((bf_class, rdflib.RDF.type, dest_class))
+                graph.add((entity, prop, bf_class))
                 graph.add((bf_class, dest_property, rdflib.Literal(value)))
     sparql2 = GET_DIRECT_PROPS.format(entity_class)
     for dest_prop, marc in MARC2BIBFRAME.query(sparql2):
