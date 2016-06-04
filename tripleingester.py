@@ -18,7 +18,7 @@ mname = inspect.stack()[0][1]
 #logging.basicConfig(level=logging.INFO)
 pp = pprint.PrettyPrinter(indent=2)
 
-class TripleInjestor():
+class TripleIngester():
     ''' Class will take a large RDF file and send the data in batchs to the
         graph database. This will be done either by splitting a file into
         smaller files or reading the file line by line and sending it in 
@@ -33,7 +33,7 @@ class TripleInjestor():
         :completed_folder: Folder path to move completed temporary files
     '''
     # set the classname
-    ln = "%s-TirpleInjestor" % mname
+    ln = "%s-TirpleIngester" % mname
     # set specific logging handler for the module allows turning on and off
     # debug as required
     log_level = logging.DEBUG
@@ -91,7 +91,7 @@ class TripleInjestor():
             break
         lg.debug("STARTING batch writing")
         for batch in batches:
-            lg.debug("batch file: %s"
+            lg.debug("batch file: %s", batch)
             data_file = open(os.path.join(self.temp_folder,batch),"r")
             batch_data = data_file.read()
             data_file.close()
@@ -261,15 +261,15 @@ def log_attrs(class2log):
     return "\n***Class attributes:\n%s" % "\n".join(rtn_list)
     
 if __name__ == "__main__":
-    ''' runs the injestor '''
+    ''' runs the ingester '''
     logging.basicConfig(level=logging.DEBUG)
     
     logging.info("Running *** %s *** from command line",
                   inspect.stack()[0][1])
 
-    injestor = TripleInjestor( \
+    ingester = TripleIngester( \
             db_url="http://stadeskserver:9999/blazegraph/sparql")
-    injestor.run()
+    ingester.run()
     
     
 
