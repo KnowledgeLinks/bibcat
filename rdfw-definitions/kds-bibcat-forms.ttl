@@ -90,7 +90,7 @@ bf:WorkForm a kds:FormClass;
             kds:formLayoutRow 1
         ] ;
         kds:hasProperty [
-            kds:propUri realtor:aut;
+            kds:propUri relator:aut;
             kds:classUri bf:Work;
             kds:formFieldOrder 2;
             kds:formLayoutRow 1

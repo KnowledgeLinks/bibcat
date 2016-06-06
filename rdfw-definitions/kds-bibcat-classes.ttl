@@ -21,7 +21,8 @@ bf:Instance a kds:ControlledClass ;
 	kds:subjectPattern "http://id.loc.gov/,!--slugify(bf:title)" ;
 	kds:storageType "object" .
 
-bf:Work a kds;ControlledClass ;
+bf:Work a kds:ControlledClass ;
         rdfs:comment "Resource reflecting a conceptual essence of a cataloging resource." ;
-        rdfs:Label "Work" ;
-        kds:storageType "object" .	
+        rdfs:label "Work" ;
+        kds:storageType "object" .
+
