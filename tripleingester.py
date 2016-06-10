@@ -19,10 +19,9 @@ mname = inspect.stack()[0][1]
 pp = pprint.PrettyPrinter(indent=2)
 
 class TripleIngester():
-    ''' Class will take a large RDF file and send the data in batchs to the
-        graph database. This will be done either by splitting a file into
-        smaller files or reading the file line by line and sending it in 
-        batches 
+    """ Class will take a large RDF file and send the data in batchs to the
+    graph database. This will be done either by splitting a file into smaller
+    files or reading the file line by line and sending it in batches 
         
         * denotes required
         :kwarg db_url: * The url to the SPARQL endpoint
@@ -31,7 +30,7 @@ class TripleIngester():
         :start_line: The line to start on when reading a file
         :temp_folder: Folder path for storing temporary files
         :completed_folder: Folder path to move completed temporary files
-    '''
+    """
     # set the classname
     ln = "%s-TirpleIngester" % mname
     # set specific logging handler for the module allows turning on and off
@@ -59,7 +58,7 @@ class TripleIngester():
         lg.debug(log_attrs(self))
         
     def run(self):
-        ''' reads the data file and sends the data to the database '''
+        """ reads the data file and sends the data to the database """
         lg = logging.getLogger("%s-%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         # read the triple data file and send to the database in the 
@@ -75,7 +74,7 @@ class TripleIngester():
         lg.debug("---FINISH")
         
     def _write_batches(self):
-        ''' reads through the temp folder and sends the files to th db '''
+        """ reads through the temp folder and sends the files to th db """
         lg = logging.getLogger("%s-%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         
@@ -101,7 +100,7 @@ class TripleIngester():
                           os.path.join(self.completed_folder,batch))
                    
     def _make_batches(self):
-        ''' cycles through the file and creates temporary files '''
+        """ cycles through the file and creates temporary files """
         lg = logging.getLogger("%s-%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         self._decompress()
@@ -135,7 +134,7 @@ class TripleIngester():
                 self._write_batch_file(batch)
     
     def _action_folder(self, folder, action="test"):
-        ''' perform actions against the temp_folder '''
+        """ perform actions against the temp_folder """
         lg = logging.getLogger("%s-%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         
@@ -152,7 +151,7 @@ class TripleIngester():
             delete_dir(folder, "preserve")
             
     def _send_to_db(self, batch):
-        ''' sends the batch data to the database '''
+        """ sends the batch data to the database """
         lg = logging.getLogger("%s-%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         # set the params if the data is to be pushed to a graph
@@ -181,7 +180,7 @@ class TripleIngester():
                                       self.batch_count))
 
     def _write_batch_file(self, batch):
-        ''' writes the batch to a tempfile '''
+        """ writes the batch to a tempfile """
         lg = logging.getLogger("%s-%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         # set the params if the data is to be pushed to a graph
@@ -201,7 +200,7 @@ class TripleIngester():
                                          self.triple_count))
                  
     def _set_sys_os(self):
-        ''' sets the self.os attribute to windows, linux or OS X '''
+        """ sets the self.os attribute to windows, linux or OS X """
         lg = logging.getLogger("%s-%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         
@@ -209,17 +208,17 @@ class TripleIngester():
         lg.debug("system os: %s", self.os)
         
     def _decompress():
-        ''' will decompress the file if it is compressed '''
+        """ will decompress the file if it is compressed """
                     
         
 def check_kwargs(kwargs, required):
-    ''' Checks to see if all kwargs are supplied and raises a MissingKwargs
+    """ Checks to see if all kwargs are supplied and raises a MissingKwargs
         error if required kwargs are not supplied 
         
         :arg kwargs: the function/method's kwargs
         :arg required: list of required kwargs
         
-    '''        
+    """        
     if not isinstance(required, list):
        required = [required]
     required_kwargs = set(required)
@@ -243,11 +242,11 @@ def delete_dir(directory, action="preserve"):
         os.mkdir(directory)
 
 def log_attrs(class2log):
-    ''' Reads through a classes atributes and returns a string of the 
+    """ Reads through a classes atributes and returns a string of the 
         attributes and their values.
         
         :arg class2log: The class to read
-    '''
+    """
     # start the logger
     lg = logging.getLogger("%s-%s" % (inspect.stack()[0][1], 
                                       inspect.stack()[0][3]))
@@ -261,7 +260,7 @@ def log_attrs(class2log):
     return "\n***Class attributes:\n%s" % "\n".join(rtn_list)
     
 if __name__ == "__main__":
-    ''' runs the ingester '''
+    """ runs the ingester """
     logging.basicConfig(level=logging.DEBUG)
     
     logging.info("Running *** %s *** from command line",
