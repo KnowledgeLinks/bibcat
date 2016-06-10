@@ -9,6 +9,7 @@ import pymarc
 import rdflib
 import requests
 import click
+import uuid
 
 from collections import OrderedDict
 # get the current file name for logs and set logging level
@@ -19,19 +20,25 @@ logging.basicConfig(level=logging.DEBUG)
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
 RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("https://www.schema.org/")
+SCHEMA = rdflib.Namespace("http://www.schema.org/")
+
+BIBCAT_URL = "http://bibcat.org/"
 
 # SPARQL query templates
 PREFIX  = """PREFIX bf: <{}>
 PREFIX kds: <{}>
 PREFIX rdf: <{}>
 PREFIX rdfs: <{}>
-PREFIX relators: <{}>""".format(
+PREFIX bc: <http://knowledgelinks.io/ns/bibcat/> 
+PREFIX m21: <http://knowledgelinks.io/ns/marc21/> 
+PREFIX relators: <{}>
+PREFIX schema: <{}>""".format(
     BF,
     KDS,
     rdflib.RDF,
     rdflib.RDFS,
-    RELATORS)
+    RELATORS,
+    SCHEMA)
 
 #GET_ENTITY_MARC = PREFIX + """
 #SELECT ?prop ?marc
@@ -49,7 +56,19 @@ WHERE {{
    ?subj kds:destPropUri ?dest_prop .
    ?subj kds:linkedRange ?linked_range .
    ?subj kds:linkedClass <{0}> .
+   ?subj rdf:type kds:PropertyLinker .
 }}"""
+
+GET_ORDERED_CLASSES = PREFIX + """
+SELECT ?dest_prop ?dest_class ?linked_range
+WHERE {{
+   ?subj kds:destClassUri ?dest_class .
+   ?subj kds:destPropUri ?dest_prop .
+   ?subj kds:linkedRange ?linked_range .
+   ?subj kds:linkedClass <{0}> .
+   ?subj rdf:type kds:OrderedPropertyLinker .
+}}"""
+
 
 GET_DIRECT_PROPS = PREFIX + """
 SELECT ?dest_prop ?marc
@@ -59,6 +78,13 @@ WHERE {{
     ?subj kds:srcPropUri ?marc .
 }}"""
 
+GET_ORDERED_MARC = PREFIX + """
+SELECT ?marc
+WHERE {{
+    ?subj kds:srcOrderedPropUri/rdf:rest*/rdf:first ?marc .
+    ?subj kds:destClassUri <{0}> .
+}}"""
+
 GET_MARC = PREFIX + """
 SELECT ?marc
 WHERE {{
@@ -66,6 +92,8 @@ WHERE {{
     ?subj kds:destClassUri <{0}> .
     ?subj kds:linkedClass <{1}> .
 }}"""
+
+
 
 MARC2BIBFRAME = None
 TRIPLESTORE_URL = "http://localhost:9999/blazegraph/sparql"
@@ -180,8 +208,26 @@ def populate_entity(entity_class, graph, record):
     lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
     lg.setLevel(MLOG_LVL)
     
-    entity = rdflib.BNode()
+    entity = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
     graph.add((entity, rdflib.RDF.type, entity_class))
+    update_linked_classes(entity, graph, record)
+    update_direct_properties(entity_class, entity, graph, record)
+    update_ordered_linked_classes(entity, graph, record)
+    return entity
+
+def update_direct_properties(entity_class, 
+                             entity,
+                             graph, 
+                             record):
+    sparql = GET_DIRECT_PROPS.format(entity_class)
+    for dest_prop, marc in MARC2BIBFRAME.query(sparql):
+        for value in match_marc(record, str(marc).split("/")[-1]):
+            graph.add((entity, dest_prop, rdflib.Literal(value)))
+
+def update_linked_classes(entity_class,
+                          entity, 
+                          graph, 
+                          record):
     sparql = GET_LINKED_CLASSES.format(entity_class)
     for dest_property, dest_class, prop in MARC2BIBFRAME.query(sparql):
         #! Should dedup dest_class here, return found URI or BNode
@@ -196,11 +242,23 @@ def populate_entity(entity_class, graph, record):
                 graph.add((bf_class, rdflib.RDF.type, dest_class))
                 graph.add((entity, prop, bf_class))
                 graph.add((bf_class, dest_property, rdflib.Literal(value)))
-    sparql2 = GET_DIRECT_PROPS.format(entity_class)
-    for dest_prop, marc in MARC2BIBFRAME.query(sparql2):
-        for value in match_marc(record, str(marc).split("/")[-1]):
-            graph.add((entity, dest_prop, rdflib.Literal(value)))
-    return entity
+
+def update_ordered_linked_classes(entity_class,
+                                  entity,
+                                  graph,
+                                  record):
+    sparql = GET_ORDERED_CLASSES.format(entity_class)
+    for dest_property, dest_class, prop in MARC2BIBFRAME.query(sparql):
+        bf_class = rdflib.BNode()
+        graph.add((bf_class, rdflib.RDF.type, dest_class))
+        for row in MARC2BIBFRAME.query(GET_ORDERED_MARC.format(dest_class):
+            marc = row[0]
+            pattern =  str(marc).split("/")[-1]
+            
+            output = match_marc(record, pattern).join(" ")
+            
+               
+            
 
 def setup():
     # setup log
@@ -233,8 +291,8 @@ def transform(record):
     
     lg.debug("*** record ***\n&s", record)
     g = new_graph()
-    instance = populate_entity(BF.Instance, g, record)
     item = populate_entity(BF.Item, g, record)
+    instance = populate_entity(BF.Instance, g, record)
     g.add((instance, BF.hasItem, item))
     g.add((item, BF.itemOf, instance))
     return g

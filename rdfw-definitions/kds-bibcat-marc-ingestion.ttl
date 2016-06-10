@@ -9,7 +9,7 @@
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix m21: <http://knowledgelinks.io/ns/marc21/> .
 @prefix loc: <http://id.loc.gov/> .
-@prefix schema: <https://www.schema.org/> .
+@prefix schema: <http://www.schema.org/> .
 
 bc:m21-bf_carrier a kds:PropertyLinker;
     kds:srcPropUri m21:M338__a,
@@ -29,6 +29,14 @@ bc:m21-bf_barcode a kds:PropertyLinker ;
 	kds:srcPropUri m21:barcodeField;
     kds:destClassUri bf:Item;
     kds:destPropUri bf:barcode.
+
+bc:m21-bf_classification_lcc a kds:OrderedPropertyLinker ;
+    kds:srcOrderedPropUri (m21:M050__a m21:M050__b);
+    kds:destClassUri bf:ClassificationLcc ;
+    kds:destPropUri rdf:value ;
+    kds:linkedRange bf:classification ;
+    kds:linkedClass bf:Instance .
+
 
 bc:m21-bf_dimensions a kds:PropertyLinker ;
 	kds:srcPropUri m21:M300_c;
@@ -84,6 +92,20 @@ bc:m21-bf_originDate a kds:PropertyLinker ;
 	kds:destClassUri bf:Instance;
 	kds:destPropUri bf:originDate .
 
+bc:m21-bf_publisher_name a kds:PropertyLinker ;
+        kds:srcPropUri m21:M260__b;
+        kds:destClassUri bf:Publication ;
+        kds:destPropUri relator:pbl ;
+        kds:linkedRange bf:provisionActivity ;
+        kds:linkedClass bf:Instance .
+
+#bc:m21-bf_publisher_place a kds:PropertyLinker ;
+#        kds:srcPropUri m21:M260__a;
+#        kds:destClassUri bf:Publication ;
+#        kds:destPropUri  schema:place ;
+#        kds:linkedRange bf:provisionActivity ;
+#        kds:linkedClass bf:Instance .
+
 bc:m21-bf_subject_LocSh a kds:PropertyLinker;
 	kds:srcPropUri 	m21:M650_0a,
         			m21:M650_0b,
@@ -95,6 +117,7 @@ bc:m21-bf_subject_LocSh a kds:PropertyLinker;
     kds:linkedClass bf:Instance ; 
     kds:lookupClassUri loc:Subject .
     
+
 
 bc:m21-author a kds:PropertyLinker ;
 	kds:srcPropUri m21:M1000_a,
