@@ -7,10 +7,11 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix bf: <http://bibframe.org/vocab/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> . 
 
-bf:InstanceForm a kds:FormClass;
+bc:InstanceForm a kds:FormClass;
 	rdfs:label "BIBFRAME Instance Form";
 	rdfs:comment "Form used for CRUD operations for an Instance.";
 	kds:formInstructions [
@@ -47,13 +48,13 @@ bf:InstanceForm a kds:FormClass;
 		kds:formLayoutRow 1
 	] ;
 	kds:hasProperty [
-		kds:propUri bf:ansi;
+		kds:propUri bf:identifiedBy;
 		kds:classUri bf:Instance;
 		kds:formFieldOrder 2;
-		kds:formLayoutRow 2
-	] . 
+		kds:formLayoutRow 1
+	] .
 
-bf:WorkForm a kds:FormClass;
+bc:WorkForm a kds:FormClass;
         rdfs:label "BIBFRAME Work Form";
         rdfs:comment "Form used for CRUD operations for a Work.";
         kds:formInstructions [
@@ -89,11 +90,11 @@ bf:WorkForm a kds:FormClass;
             kds:formFieldOrder 1;
             kds:formLayoutRow 1
         ] ;
-        kds:hasProperty [
-            kds:propUri relator:aut;
-            kds:classUri bf:Work;
-            kds:formFieldOrder 2;
-            kds:formLayoutRow 1
-        ] .
+    kds:hasProperty [
+        kds:propUri relator:aut;
+        kds:classUri bf:Work;
+        kds:formFieldOrder 2;
+        kds:formLayoutRow 1
+    ] .
     
 

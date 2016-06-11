@@ -1,0 +1,90 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> . 
+
+bc:InstanceTitleSubForm a kds:FormClass;
+	rdfs:label "BIBFRAME Title";
+	rdfs:comment "Form used as a subform for the bf:title property";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:formTitle "Title";
+		kds:lookupClassUri bf:Title;
+		kds:formDescription "Instance of a particular Work";
+		kds:formUrl "instance";
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+		]
+	];
+	kds:hasProperty [
+		kds:propUri bf:mainTitle;
+		kds:classUri bf:InstanceTitle;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1
+	] ;
+	kds:hasProperty [
+		kds:propUri bf:subTitle;
+		kds:classUri bf:InstanceTitle;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 1
+	] ;
+	kds:hasProperty [
+		kds:propUri bf:partName;
+		kds:classUri bf:InstanceTitle;
+		kds:formFieldOrder 3;
+		kds:formLayoutRow 1
+	] ;
+	kds:hasProperty [
+		kds:propUri bf:partNumber;
+		kds:classUri bf:InstanceTitle;
+		kds:formFieldOrder 4;
+		kds:formLayoutRow 1
+	] . 
+
+bc:IdentifierSubForm a kds:FormClass;
+	rdfs:label "BIBFRAME Identifier form";
+	rdfs:comment "Form used as a subform for the bf:identifiedBy property";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:formTitle "Title";
+		kds:lookupClassUri bf:Identifier;
+		kds:formDescription "Identifier used to identify an Instance or Item";
+		kds:formUrl "instance";
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+		]
+	];
+	kds:hasProperty [
+		kds:propUri rdf:type;
+		kds:classUri bf:Identifier;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1
+	] ;
+	kds:hasProperty [
+		kds:propUri rdf:value;
+		kds:classUri bf:Identifier;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 1
+	] .

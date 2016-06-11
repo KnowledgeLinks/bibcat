@@ -7,5 +7,5 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix bf: <http://bibframe.org/vocab/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 

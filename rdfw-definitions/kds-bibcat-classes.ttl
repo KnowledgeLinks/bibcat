@@ -8,12 +8,12 @@
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
-@prefix bf: <http://bibframe.org/vocab/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 
 bf:Item a kds:ControlledClass ;
-        rdfs:comment "Single example of an Instance." ;
-        rdfs:label "Item" ;
-        kds:storageType "object" .
+    rdfs:comment "Single example of an Instance." ;
+    rdfs:label "Item" ;
+    kds:storageType "object" .
 
 bf:Instance a kds:ControlledClass ;
 	rdfs:comment "Resource reflecting an individual, material embodiment of the Work." ;
@@ -22,7 +22,24 @@ bf:Instance a kds:ControlledClass ;
 	kds:storageType "object" .
 
 bf:Work a kds:ControlledClass ;
-        rdfs:comment "Resource reflecting a conceptual essence of a cataloging resource." ;
-        rdfs:label "Work" ;
-        kds:storageType "object" .
+    rdfs:comment "Resource reflecting a conceptual essence of a cataloging resource." ;
+    rdfs:label "Work" ;
+    kds:storageType "object" .
 
+bf:Title a kds:ControlledClass ;
+	rdfs:comment "Title information relating to a resource: mail title, translated title, or variant form of title." ;
+	rdfs:label "Title Entity" ;
+	kds:storageType "object" .
+	
+bf:WorkTitle a kds:ControlledClass ;
+	rdfs:comment "Work title" ;
+	rdfs:label "Title or form of title chosen to identify the work, such as a preferred title, preferred title with additions, uniform title, etc." ;
+	kds:storageType "object" .
+	
+bf:InstanceTitle a kds:ControlledClass ;
+	rdfs:comment "Work title" ;
+	rdfs:label "Title or form of title chosen to identify the work, such as a preferred title, preferred title with additions, uniform title, etc." ;
+	kds:storageType "object" .
+
+bf:Identifier a kds:ControlledClass ;
+    kds:storageType "object" .
