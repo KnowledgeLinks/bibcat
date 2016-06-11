@@ -210,9 +210,9 @@ def populate_entity(entity_class, graph, record):
     
     entity = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
     graph.add((entity, rdflib.RDF.type, entity_class))
-    update_linked_classes(entity, graph, record)
+    update_linked_classes(entity_class, entity, graph, record)
     update_direct_properties(entity_class, entity, graph, record)
-    update_ordered_linked_classes(entity, graph, record)
+    update_ordered_linked_classes(entity_class, entity, graph, record)
     return entity
 
 def update_direct_properties(entity_class, 
@@ -250,13 +250,18 @@ def update_ordered_linked_classes(entity_class,
     sparql = GET_ORDERED_CLASSES.format(entity_class)
     for dest_property, dest_class, prop in MARC2BIBFRAME.query(sparql):
         bf_class = rdflib.BNode()
-        graph.add((bf_class, rdflib.RDF.type, dest_class))
-        for row in MARC2BIBFRAME.query(GET_ORDERED_MARC.format(dest_class):
+        added2graph = False
+        for row in MARC2BIBFRAME.query(GET_ORDERED_MARC.format(dest_class)):
             marc = row[0]
             pattern =  str(marc).split("/")[-1]
-            
-            output = match_marc(record, pattern).join(" ")
-            
+            output = " ".join(match_marc(record, pattern))
+            if len(output) > 0:
+                added2graph = True
+                graph.add((bf_class, prop, rdflib.Literal(output)))
+        if added2graph is True:
+            graph.add((bf_class, rdflib.RDF.type, dest_class))
+            graph.add((entity, prop, bf_class))
+
                
             
 
