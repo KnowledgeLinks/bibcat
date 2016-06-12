@@ -20,15 +20,14 @@ bc:InstanceTitleSubForm a kds:FormClass;
 		kds:formTitle "Title";
 		kds:lookupClassUri bf:Title;
 		kds:formDescription "Instance of a particular Work";
-		kds:formUrl "instance";
 		kds:formInstance [
-			kds:formInstanceType kdr:NewForm;
+			kds:formInstanceType kdr:NewForm
 		];
 		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
+			kds:formInstanceType kdr:EditForm
 		];
 		kds:formInstance [
-			kds:formInstanceType kdr:DisplayForm;
+			kds:formInstanceType kdr:DisplayForm
 		]
 	];
 	kds:hasProperty [
@@ -65,15 +64,14 @@ bc:IdentifierSubForm a kds:FormClass;
 		kds:formTitle "Title";
 		kds:lookupClassUri bf:Identifier;
 		kds:formDescription "Identifier used to identify an Instance or Item";
-		kds:formUrl "instance";
 		kds:formInstance [
-			kds:formInstanceType kdr:NewForm;
+			kds:formInstanceType kdr:NewForm
 		];
 		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
+			kds:formInstanceType kdr:EditForm
 		];
 		kds:formInstance [
-			kds:formInstanceType kdr:DisplayForm;
+			kds:formInstanceType kdr:DisplayForm
 		]
 	];
 	kds:hasProperty [
