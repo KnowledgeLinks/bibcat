@@ -48,10 +48,16 @@ bf:title a rdf:Property ;
     rdfs:domain bf:Instance, bf:Work;
     rdfs:range bf:Title, bf:InstanceTitle, bf:WorkTitle;
     kds:requiredByDomain bf:Work, bf:Instance;
-    kds:fieldType [
-		a kdr:SubForm;
-		kds:subFormUri bc:InstanceTitleSubForm;
-		kds:subFormInstance kdr:LinkWithParent 
+    kds:formDefault [
+    	kds:formFieldName "InstanceTitle";
+		kds:formLabelName "Enter the Instance Title";
+	    kds:fieldType [
+			a kdr:SubForm;
+			kds:templatePath  "/widgets/form_subform.html";
+			kds:templateName "/widgets/form_subform.html";
+			kds:subFormUri bc:InstanceTitleSubForm;
+			kds:subFormInstance kdr:LinkWithParent 
+		]
 	] .
 	
 bf:mainTitle a rdf:Property ;
@@ -104,7 +110,7 @@ bf:partNumber a rdf:Property ;
     rdfs:range xsd:string;
     kds:requiredByDomain bf:Work, bf:Instance;
     kds:formDefault [
-		kds:formFieldName "mainTitle";
+		kds:formFieldName "partNumber";
 		kds:formLabelName "Part number";
 		kds:formFieldHelp "Part or section enumeration of a title.";
 		kds:fieldType [
@@ -120,12 +126,18 @@ bf:partNumber a rdf:Property ;
 bf:identifiedBy a rdf:property ;
 	rdfs:domain bf:Instance, bf:Work;
 	rdfs:range bf:Identifier ;
-	kds:fieldType [
-		a kdr:SubForm;
-		kds:subFormUri bc:IdentifierSubForm;
-		kds:subFormInstance kdr:LinkWithParent;
-		kds:subFormMode kdr:RepeatingSubForm
-	] .
+	kds:formDefault [
+		kds:formFieldName "identifiedBy";
+		kds:formLabelName "Identifiers";
+		kds:fieldType [
+			a kdr:SubForm;
+			kds:templatePath  "/widgets/form_onlinesubform.html";
+			kds:templateName "/widgets/form_onlinesubform.html";
+			kds:subFormUri bc:IdentifierSubForm;
+			kds:subFormInstance kdr:LinkWithParent;
+			kds:subFormMode kdr:RepeatingSubForm
+		] 
+	].
 	
 rdf:type a rdf:Property ;
 	rdfs:domain bf:Identifier;
@@ -144,9 +156,10 @@ rdf:type a rdf:Property ;
 								    ?s skos:definition ?comment
 								  } .
 								  BIND (REPLACE(REPLACE(REPLACE(?comment,'International Standard', 'Int Std'),'Identifier','[ID]'),'Identification','[ID]') AS ?ncomment)
-								  BIND (SUBSTR(CONCAT(?label,' (',?ncomment,')'),1,50) as ?name)
+								  BIND (SUBSTR(CONCAT(?label,' (',?ncomment,')'),1,150) as ?name)
 								  
-								}" ;
+								}
+							ORDER BY ?name" ;
 			kds:selectBoundValue "?s";
 			kds:selectDisplay "?name" 
 		]
