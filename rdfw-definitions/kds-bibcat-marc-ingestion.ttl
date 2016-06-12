@@ -30,6 +30,13 @@ bc:m21-bf_barcode a kds:PropertyLinker ;
     kds:destClassUri bf:Item;
     kds:destPropUri bf:barcode.
 
+bc:m21-bf_bookFormat a kds:PropertyLinker ;
+    kds:srcPropUri m21:M020__q ;
+    kds:destClassUri bf:BookFormat ;
+    kds:destPropUri rdf:value ;
+    kds:linkedRange bf:bookFormat ;
+    kds:linkedClass bf:Instance .
+
 bc:m21-bf_classification_lcc a kds:OrderedPropertyLinker ;
     kds:srcPropUri m21:M050__ab;
     kds:destClassUri bf:ClassificationLcc ;
@@ -39,7 +46,7 @@ bc:m21-bf_classification_lcc a kds:OrderedPropertyLinker ;
 
 
 bc:m21-bf_dimensions a kds:PropertyLinker ;
-	kds:srcPropUri m21:M300_c;
+	kds:srcPropUri m21:M300__c;
 	kds:destClassUri bf:Instance;
 	kds:destPropUri bf:dimensions .
 
@@ -63,8 +70,7 @@ bc:m21-bf_illustrativeContent a kds:PropertyLinker ;
 	kds:linkedClass bf:Instance.
 
 bc:m21-bf_InstanceTitle a kds:PropertyLinker ;
-	kds:srcPropUri 	m21:M24500a,
-					m21:M24510a,
+	kds:srcPropUri    m21:M24510a, 
 					m21:M24511a,
 					m21:M24512a,
 					m21:M24513a,
@@ -74,8 +80,9 @@ bc:m21-bf_InstanceTitle a kds:PropertyLinker ;
 					m21:M24517a,
 					m21:M24518a,
 					m21:M24519a ;
+
+        kds:destPropUri bf:mainTitle;
 	kds:destClassUri bf:InstanceTitle;
-	kds:destPropUri bf:mainTitle;
 	kds:linkedRange bf:title;
 	kds:linkedClass	bf:Instance .
 
@@ -85,6 +92,15 @@ bc:m21-bf_identifiedByIsbn a kds:PropertyLinker ;
 	kds:destPropUri rdf:value ;
 	kds:linkedRange bf:identifiedBy ;
 	kds:linkedClass bf:Instance .
+
+bc:m21-bf_note_summary a kds:PropertyLinker ;
+        kds:srcPropUri m21:M520__a ;
+        kds:destClassUri bf:Summary ;
+        kds:destPropUri rdf:value ;
+        #kds:destAdditionalPropUris [ bf:noteType "summary" ];
+        kds:linkedRange bf:summary ;
+        kds:linkedClass bf:Instance .
+
 
 bc:m21-bf_originDate a kds:PropertyLinker ;
 	kds:srcPropUri m21:M00807-10,
@@ -106,15 +122,31 @@ bc:m21-bf_publisher_name a kds:PropertyLinker ;
 #        kds:linkedRange bf:provisionActivity ;
 #        kds:linkedClass bf:Instance .
 
-bc:m21-bf_subject_LocSh a kds:OrderedPropertyLinker;
+bc:m21-bf_subject_Person_tocSh a kds:OrderedPropertyLinker;
+    kds:srcPropUri m21:M60000adx,
+        m21:m60010adx,
+        m21:m60030adx ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Person ;
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance ; 
+    kds:lookupClassUri loc:NameAuthority .
+
+
+bc:m21-bf_subject_Topic_tocSh a kds:OrderedPropertyLinker;
     kds:srcPropUri m21:M650_0azv ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Topic ;
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance ; 
     kds:lookupClassUri loc:Subject .
-    
 
+bc:m21_bf_tableOfContents a kds:PropertyLinker ;    
+        kds:srcPropUri m21:M5050_a;
+        kds:destClassUri bf:TableOfContents;
+        kds:destPropUri  rdf:value ;
+        kds:linkedRange bf:tableOfContents ;
+        kds:linkedClass bf:Instance .
 
 bc:m21-author a kds:PropertyLinker ;
 	kds:srcPropUri m21:M1000_a,
@@ -127,6 +159,8 @@ bc:m21-author a kds:PropertyLinker ;
 	kds:lookupClassUri schema:Person;
 	kds:lookupPropUri schema:alternativeName;
 	kds:lookupSource "viaf" .
+
+
 
 kds:PersonIdentifier a kds:Deduplicator;
     kds:exactMatch rdfs:value;

@@ -48,9 +48,15 @@ PREFIX schema: <{}>""".format(
 #}}
 #ORDER BY ?marc"""
 
+GET_ADDL_PROPS = PREFIX + """
+SELECT ?pred ?obj
+WHERE {{
+  <{0}> kds:destAdditionalPropUris ?subj .
+  ?subj ?pred ?obj .
+}}"""
 
 GET_LINKED_CLASSES = PREFIX + """
-SELECT ?dest_prop ?dest_class ?linked_range
+SELECT ?dest_prop ?dest_class ?linked_range ?subj
 WHERE {{
    ?subj kds:destClassUri ?dest_class .
    ?subj kds:destPropUri ?dest_prop .
@@ -60,7 +66,7 @@ WHERE {{
 }}"""
 
 GET_ORDERED_CLASSES = PREFIX + """
-SELECT ?dest_prop ?dest_class ?linked_range
+SELECT ?dest_prop ?dest_class ?linked_range ?subj
 WHERE {{
    ?subj kds:destClassUri ?dest_class .
    ?subj kds:destPropUri ?dest_prop .
@@ -92,6 +98,7 @@ WHERE {{
     ?subj kds:srcPropUri ?marc .
     ?subj kds:destClassUri <{0}> .
     ?subj kds:linkedClass <{1}> .
+    ?subj rdf:type <{2}> .
 }}"""
 
 
@@ -220,6 +227,15 @@ def update_direct_properties(entity_class,
                              entity,
                              graph, 
                              record):
+    """Update the graph by adding all direct literal properties of the entity 
+    in the graph.
+
+    Args:
+        entity_class (url): URL of the entity's class
+        entity (rdflib.URIRef): RDFlib Entity
+        graph (rdflib.Graph): RDFlib Graph
+        record (pymarc.Record): MARC21 Record
+    """
     sparql = GET_DIRECT_PROPS.format(entity_class)
     for dest_prop, marc in MARC2BIBFRAME.query(sparql):
         for value in match_marc(record, str(marc).split("/")[-1]):
@@ -229,11 +245,19 @@ def update_linked_classes(entity_class,
                           entity, 
                           graph, 
                           record):
+    """Updates RDF Graph of linked classes
+
+    Args:
+        entity_class (url): URL of the entity's class
+        entity (rdflib.URIRef): RDFlib Entity
+        graph (rdflib.Graph): RDFlib Graph
+        record (pymarc.Record): MARC21 Record
+    """
     sparql = GET_LINKED_CLASSES.format(entity_class)
-    for dest_property, dest_class, prop in MARC2BIBFRAME.query(sparql):
+    for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
         #! Should dedup dest_class here, return found URI or BNode
         for row in MARC2BIBFRAME.query(
-            GET_MARC.format(dest_class, entity_class)):
+            GET_MARC.format(dest_class, entity_class, KDS.PropertyLinker)):
             marc = row[0]
             pattern = str(marc).split("/")[-1]
             for value in match_marc(record, pattern):
@@ -243,16 +267,22 @@ def update_linked_classes(entity_class,
                 graph.add((bf_class, rdflib.RDF.type, dest_class))
                 graph.add((entity, prop, bf_class))
                 graph.add((bf_class, dest_property, rdflib.Literal(value)))
+                # Sets additional properties
+                for pred, obj in MARC2BIBFRAME.query(
+                        GET_ADDL_PROPS.format(subj)):
+                    graph.add((bf_class, pred, obj))
+
 
 def update_ordered_linked_classes(entity_class,
                                   entity,
                                   graph,
                                   record):
     sparql = GET_ORDERED_CLASSES.format(entity_class)
-    for dest_property, dest_class, prop in MARC2BIBFRAME.query(sparql):
+    for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
         for row in MARC2BIBFRAME.query(
             GET_MARC.format(dest_class, 
-                            entity_class)):
+                            entity_class,
+                            KDS.OrderedPropertyLinker)):
             marc = row[0]
             pattern =  str(marc).split("/")[-1]
             field_name = pattern[1:4]
@@ -275,7 +305,7 @@ def update_ordered_linked_classes(entity_class,
                         (bf_class, dest_property, rdflib.Literal(ordered_value.strip())))
                     graph.add((bf_class, rdflib.RDF.type, dest_class))
                     graph.add((entity, prop, bf_class))
-
+                    # Retrieve and set additional properties 
 
                
             
