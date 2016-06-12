@@ -55,6 +55,12 @@ WHERE {{
   ?subj ?pred ?obj .
 }}"""
 
+GET_BLANK_NODE = PREFIX + """
+SELECT ?subject 
+WHERE {{
+    ?instance <{0}> ?subject .
+}}"""
+
 GET_LINKED_CLASSES = PREFIX + """
 SELECT ?dest_prop ?dest_class ?linked_range ?subj
 WHERE {{
@@ -169,6 +175,27 @@ def match_marc(record, pattern):
     lg.debug("\n**** output ****\n%s", output)
     return output
 
+def new_existing_bnode(graph, bf_property):
+    """Returns existing blank node or a new if it doesn't exist
+
+    Args:
+        graph (rdflib.Graph): RDF graph of new entity
+        bf_property (str): RDF property URI
+
+    Returns:
+        rdflib.BNode: Existing or New blank node
+    """
+    blank_node = None
+    
+    for subject in graph.query(GET_BLANK_NODE.format(bf_property)):
+        # set to first and exist loop
+        blank_node = subject[0]
+        break
+    if not blank_node:
+        blank_node = rdflib.BNode()
+    return blank_node
+
+
 def new_graph():
     # setup log
     lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
@@ -263,7 +290,7 @@ def update_linked_classes(entity_class,
             for value in match_marc(record, pattern):
                 if len(value.strip()) < 1:
                     continue
-                bf_class = rdflib.BNode()
+                bf_class = new_existing_bnode(graph, prop)
                 graph.add((bf_class, rdflib.RDF.type, dest_class))
                 graph.add((entity, prop, bf_class))
                 graph.add((bf_class, dest_property, rdflib.Literal(value)))
@@ -290,7 +317,7 @@ def update_ordered_linked_classes(entity_class,
             subfields = pattern[6:]
             fields = record.get_fields(field_name)
             for field in fields:
-                bf_class = rdflib.BNode()
+                bf_class = new_existing_bnode(graph, prop)
                 indicator_key = "{}{}".format(
                     field.indicators[0].replace(" ", "_"),
                     field.indicators[1].replace(" ", "_"))
