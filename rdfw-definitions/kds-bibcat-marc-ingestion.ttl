@@ -106,11 +106,8 @@ bc:m21-bf_publisher_name a kds:PropertyLinker ;
 #        kds:linkedRange bf:provisionActivity ;
 #        kds:linkedClass bf:Instance .
 
-bc:m21-bf_subject_LocSh a kds:PropertyLinker;
-	kds:srcPropUri 	m21:M650_0a,
-        			m21:M650_0b,
-        			m21:M650_0c,
-        			m21:M650_0x;
+bc:m21-bf_subject_LocSh a kds:OrderedPropertyLinker;
+    kds:srcOrderedPropUri (m21:M650_0a m21:M650_0z m21:M650_0v) ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Topic ;
     kds:linkedRange bf:subject ;
