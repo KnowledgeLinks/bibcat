@@ -31,7 +31,7 @@ bc:m21-bf_barcode a kds:PropertyLinker ;
     kds:destPropUri bf:barcode.
 
 bc:m21-bf_classification_lcc a kds:OrderedPropertyLinker ;
-    kds:srcOrderedPropUri (m21:M050__a m21:M050__b);
+    kds:srcPropUri m21:M050__ab;
     kds:destClassUri bf:ClassificationLcc ;
     kds:destPropUri rdf:value ;
     kds:linkedRange bf:classification ;
@@ -107,7 +107,7 @@ bc:m21-bf_publisher_name a kds:PropertyLinker ;
 #        kds:linkedClass bf:Instance .
 
 bc:m21-bf_subject_LocSh a kds:OrderedPropertyLinker;
-    kds:srcOrderedPropUri (m21:M650_0a m21:M650_0z m21:M650_0v) ;
+    kds:srcPropUri m21:M650_0azv ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Topic ;
     kds:linkedRange bf:subject ;

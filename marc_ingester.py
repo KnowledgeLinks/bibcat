@@ -78,7 +78,8 @@ WHERE {{
     ?subj kds:srcPropUri ?marc .
 }}"""
 
-GET_ORDERED_MARC = PREFIX + """
+
+GET_ORDERED_MARC_LIST = PREFIX + """
 SELECT ?marc
 WHERE {{
     ?subj kds:srcOrderedPropUri/rdf:rest*/rdf:first ?marc .
@@ -249,18 +250,32 @@ def update_ordered_linked_classes(entity_class,
                                   record):
     sparql = GET_ORDERED_CLASSES.format(entity_class)
     for dest_property, dest_class, prop in MARC2BIBFRAME.query(sparql):
-        bf_class = rdflib.BNode()
-        added2graph = False
-        for row in MARC2BIBFRAME.query(GET_ORDERED_MARC.format(dest_class)):
+        for row in MARC2BIBFRAME.query(
+            GET_MARC.format(dest_class, 
+                            entity_class)):
             marc = row[0]
             pattern =  str(marc).split("/")[-1]
-            output = " ".join(match_marc(record, pattern))
-            if len(output) > 0:
-                added2graph = True
-                graph.add((bf_class, prop, rdflib.Literal(output)))
-        if added2graph is True:
-            graph.add((bf_class, rdflib.RDF.type, dest_class))
-            graph.add((entity, prop, bf_class))
+            field_name = pattern[1:4]
+            indicators = pattern[4:6]
+            subfields = pattern[6:]
+            fields = record.get_fields(field_name)
+            for field in fields:
+                bf_class = rdflib.BNode()
+                indicator_key = "{}{}".format(
+                    field.indicators[0].replace(" ", "_"),
+                    field.indicators[1].replace(" ", "_"))
+                if indicator_key != indicators:
+                    continue
+                ordered_value = ''
+                for subfield in subfields:
+                    ordered_value += ' '.join(
+                        field.get_subfields(subfield)) + " "
+                if len(ordered_value) > 0:
+                    graph.add(
+                        (bf_class, dest_property, rdflib.Literal(ordered_value.strip())))
+                    graph.add((bf_class, rdflib.RDF.type, dest_class))
+                    graph.add((entity, prop, bf_class))
+
 
                
             
