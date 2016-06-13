@@ -103,10 +103,16 @@ SELECT ?marc
 WHERE {{
     ?subj kds:srcPropUri ?marc .
     ?subj kds:destClassUri <{0}> .
-    ?subj kds:linkedClass <{1}> .
-    ?subj rdf:type <{2}> .
+    ?subj kds:destPropUri <{1}> .
+    ?subj kds:linkedClass <{2}> .
+    ?subj rdf:type <{3}> .
 }}"""
 
+HAS_MULTI_NODES = PREFIX + """
+SELECT DISTINCT ?is_multi_nodes
+WHERE {{
+    <{0}> kds:hasIndividualNodes ?is_multi_nodes .
+}}"""
 
 
 MARC2BIBFRAME = None
@@ -175,18 +181,21 @@ def match_marc(record, pattern):
     lg.debug("\n**** output ****\n%s", output)
     return output
 
-def new_existing_bnode(graph, bf_property):
+def new_existing_bnode(graph, bf_property, rule):
     """Returns existing blank node or a new if it doesn't exist
 
     Args:
         graph (rdflib.Graph): RDF graph of new entity
         bf_property (str): RDF property URI
+        rule (rdflib.URIRef): RDF subject of the map rule
 
     Returns:
         rdflib.BNode: Existing or New blank node
     """
     blank_node = None
-    
+    for row in MARC2BIBFRAME.query(HAS_MULTI_NODES.format(rule)):
+        if str(row[0]).lower().startswith("true"):
+            return rdflib.BNode()
     for subject in graph.query(GET_BLANK_NODE.format(bf_property)):
         # set to first and exist loop
         blank_node = subject[0]
@@ -284,13 +293,17 @@ def update_linked_classes(entity_class,
     for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
         #! Should dedup dest_class here, return found URI or BNode
         for row in MARC2BIBFRAME.query(
-            GET_MARC.format(dest_class, entity_class, KDS.PropertyLinker)):
+            GET_MARC.format(
+                dest_class, 
+                dest_property,
+                entity_class, 
+                KDS.PropertyLinker)):
             marc = row[0]
             pattern = str(marc).split("/")[-1]
             for value in match_marc(record, pattern):
                 if len(value.strip()) < 1:
                     continue
-                bf_class = new_existing_bnode(graph, prop)
+                bf_class = new_existing_bnode(graph, prop, subj)
                 graph.add((bf_class, rdflib.RDF.type, dest_class))
                 graph.add((entity, prop, bf_class))
                 graph.add((bf_class, dest_property, rdflib.Literal(value)))
@@ -307,7 +320,8 @@ def update_ordered_linked_classes(entity_class,
     sparql = GET_ORDERED_CLASSES.format(entity_class)
     for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
         for row in MARC2BIBFRAME.query(
-            GET_MARC.format(dest_class, 
+            GET_MARC.format(dest_class,
+                            dest_property,
                             entity_class,
                             KDS.OrderedPropertyLinker)):
             marc = row[0]
@@ -317,7 +331,7 @@ def update_ordered_linked_classes(entity_class,
             subfields = pattern[6:]
             fields = record.get_fields(field_name)
             for field in fields:
-                bf_class = new_existing_bnode(graph, prop)
+                bf_class = new_existing_bnode(graph, prop, subj)
                 indicator_key = "{}{}".format(
                     field.indicators[0].replace(" ", "_"),
                     field.indicators[1].replace(" ", "_"))

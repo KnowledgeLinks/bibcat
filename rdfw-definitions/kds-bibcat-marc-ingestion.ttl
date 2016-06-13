@@ -147,6 +147,7 @@ bc:m21-bf_subject_Person_locSh a kds:OrderedPropertyLinker;
         m21:m60030adx ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Person ;
+    kds:hasIndividualNodes "true" ;
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance ; 
     kds:lookupClassUri loc:NameAuthority .
@@ -155,7 +156,7 @@ bc:m21-bf_subject_Person_locSh a kds:OrderedPropertyLinker;
 bc:m21-bf_subject_Topic_locSh a kds:OrderedPropertyLinker;
     kds:srcPropUri m21:M650_0azv ;
     kds:destPropUri rdf:value ;
-    kds:individualNodes "true" ;
+    kds:hasIndividualNodes "true" ;
     kds:destClassUri bf:Topic ;
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance ; 
