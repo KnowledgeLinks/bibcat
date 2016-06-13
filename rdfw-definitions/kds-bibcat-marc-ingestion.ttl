@@ -38,7 +38,8 @@ bc:m21-bf_bookFormat a kds:PropertyLinker ;
     kds:linkedClass bf:Instance .
 
 bc:m21-bf_classification_lcc a kds:OrderedPropertyLinker ;
-    kds:srcPropUri m21:M050__ab;
+    kds:srcPropUri m21:M050__ab, 
+                   m21:M05000ab;
     kds:destClassUri bf:ClassificationLcc ;
     kds:destPropUri rdf:value ;
     kds:linkedRange bf:classification ;
@@ -69,7 +70,7 @@ bc:m21-bf_illustrativeContent a kds:PropertyLinker ;
 	kds:linkedRange bf:illustrativeContent;
 	kds:linkedClass bf:Instance.
 
-bc:m21-bf_InstanceTitle a kds:PropertyLinker ;
+bc:m21-bf_InstanceTitle_mainTitle a kds:PropertyLinker ;
 	kds:srcPropUri    m21:M24510a, 
 					m21:M24511a,
 					m21:M24512a,
@@ -85,6 +86,24 @@ bc:m21-bf_InstanceTitle a kds:PropertyLinker ;
 	kds:destClassUri bf:InstanceTitle;
 	kds:linkedRange bf:title;
 	kds:linkedClass	bf:Instance .
+
+bc:m21-bf_InstanceTitle_subtitle a kds:PropertyLinker ;
+	kds:srcPropUri    m21:M24510b, 
+					m21:M24511b,
+					m21:M24512b,
+					m21:M24513b,
+					m21:M24514b,
+					m21:M24515b,
+					m21:M24516b,
+					m21:M24517b,
+					m21:M24518b,
+					m21:M24519b ;
+
+        kds:destPropUri bf:subtitle;
+	kds:destClassUri bf:InstanceTitle;
+	kds:linkedRange bf:title;
+	kds:linkedClass	bf:Instance .
+
 
 bc:m21-bf_identifiedByIsbn a kds:PropertyLinker ;
 	kds:srcPropUri m21:M020__a ;
@@ -122,20 +141,22 @@ bc:m21-bf_publisher_name a kds:PropertyLinker ;
 #        kds:linkedRange bf:provisionActivity ;
 #        kds:linkedClass bf:Instance .
 
-bc:m21-bf_subject_Person_tocSh a kds:OrderedPropertyLinker;
+bc:m21-bf_subject_Person_locSh a kds:OrderedPropertyLinker;
     kds:srcPropUri m21:M60000adx,
         m21:m60010adx,
         m21:m60030adx ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Person ;
+    kds:hasIndividualNodes "true" ;
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance ; 
     kds:lookupClassUri loc:NameAuthority .
 
 
-bc:m21-bf_subject_Topic_tocSh a kds:OrderedPropertyLinker;
+bc:m21-bf_subject_Topic_locSh a kds:OrderedPropertyLinker;
     kds:srcPropUri m21:M650_0azv ;
     kds:destPropUri rdf:value ;
+    kds:hasIndividualNodes "true" ;
     kds:destClassUri bf:Topic ;
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance ; 
