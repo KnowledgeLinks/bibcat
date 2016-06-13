@@ -1,0 +1,255 @@
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sesame: <http://www.openrdf.org/schema/sesame#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix fn: <http://www.w3.org/2005/xpath-functions#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix hint: <http://www.bigdata.com/queryHints#> .
+@prefix bd: <http://www.bigdata.com/rdf#> .
+@prefix bds: <http://www.bigdata.com/rdf/search#> .
+
+<http://id.loc.gov/vocabulary/carriers/ca> bf:code "ca" ;
+	rdfs:label "computer tape cartridge"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+bc:ComputerCarrier rdfs:label "Computer carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/cb> bf:code "cb" ;
+	rdfs:label "computer chip cartridge"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/cd> bf:code "cd" ;
+	rdfs:label "computer disc"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/ce> bf:code "ce" ;
+	rdfs:label "computer disc cartridge"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/cf> bf:code "cf" ;
+	rdfs:label "computer tape cassette"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/ch> bf:code "ch" ;
+	rdfs:label "computer tape reel"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/ck> bf:code "ck" ;
+	rdfs:label "computer card"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/cr> bf:code "cr" ;
+	rdfs:label "online resource"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/cz> bf:code "cz" ;
+	rdfs:label "other computer carrier"^^xsd:string ;
+	a bf:Carrier , bc:ComputerCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/ha> bf:code "ha" ;
+	rdfs:label "aperture card"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+bc:MicroformCarrier rdfs:label "Microform carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/hb> bf:code "hb" ;
+	rdfs:label "microfilm cartridge"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/hc> bf:code "hc" ;
+	rdfs:label "microfilm cassette"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/gc> bf:code "gc" ;
+	rdfs:label "filmstrip cartridge"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+bc:ProjectedImageCarrier rdfs:label "Projected image carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/gd> bf:code "gd" ;
+	rdfs:label "filmslip"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/gf> bf:code "gf" ;
+	rdfs:label "filmstrip"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/gs> bf:code "gs" ;
+	rdfs:label "slide"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/gt> bf:code "gt" ;
+	rdfs:label "overhead transparency"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/eh> bf:code "eh" ;
+	rdfs:label "stereograph card"^^xsd:string ;
+	a bf:Carrier , bc:StereographicCarrier .
+
+bc:StereographicCarrier rdfs:label "Stereographic carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/es> bf:code "es" ;
+	rdfs:label "stereograph disc"^^xsd:string ;
+	a bf:Carrier , bc:StereographicCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/ez> bf:code "ez" ;
+	rdfs:label "other stereographic carrier"^^xsd:string ;
+	a bf:Carrier , bc:StereographicCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/hd> bf:code "hd" ;
+	rdfs:label "microfilm reel"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/he> bf:code "he" ;
+	rdfs:label "microfiche"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/hf> bf:code "hf" ;
+	rdfs:label "microfiche cassette"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/hg> bf:code "hg" ;
+	rdfs:label "microopaque"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/hh> bf:code "hh" ;
+	rdfs:label "microfilm slip"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/hj> bf:code "hj" ;
+	rdfs:label "microfilm roll"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/hz> bf:code "hz" ;
+	rdfs:label "other microform carrier"^^xsd:string ;
+	a bf:Carrier , bc:MicroformCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/pp> bf:code "pp" ;
+	rdfs:label "microscope slide"^^xsd:string ;
+	a bf:Carrier , bc:MicroscopicCarrierr .
+
+bc:MicroscopicCarrierr a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/mc> bf:code "mc" ;
+	rdfs:label "film cartridge"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/mf> bf:code "mf" ;
+	rdfs:label "film cassette"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/mo> bf:code "mo" ;
+	rdfs:label "film roll"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/mz> bf:code "mz" ;
+	rdfs:label "other projected carrier"^^xsd:string ;
+	a bf:Carrier , bc:ProjectedImageCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/na> bf:code "na" ;
+	rdfs:label "roll"^^xsd:string ;
+	a bf:Carrier , bc:UnmediatedCarrier .
+
+bc:UnmediatedCarrier rdfs:label "Unmediated carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/nb> bf:code "nb" ;
+	rdfs:label "sheet"^^xsd:string ;
+	a bf:Carrier , bc:UnmediatedCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/nc> bf:code "nc" ;
+	rdfs:label "volume"^^xsd:string ;
+	a bf:Carrier , bc:UnmediatedCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/nn> bf:code "nn" ;
+	rdfs:label "flipchart"^^xsd:string ;
+	a bf:Carrier , bc:UnmediatedCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/no> bf:code "no" ;
+	rdfs:label "card"^^xsd:string ;
+	a bf:Carrier , bc:UnmediatedCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/nr> bf:code "nr" ;
+	rdfs:label "object"^^xsd:string ;
+	a bf:Carrier , bc:UnmediatedCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/nz> bf:code "nz" ;
+	rdfs:label "other unmediated carrier"^^xsd:string ;
+	a bf:Carrier , bc:UnmediatedCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/sd> bf:code "sd" ;
+	rdfs:label "audio disc"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+bc:AudioCarrier rdfs:label "Audio carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/se> bf:code "se" ;
+	rdfs:label "audio cylinder"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/sg> bf:code "sg" ;
+	rdfs:label "audio cartridge"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/si> bf:code "si" ;
+	rdfs:label "sound track reel"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/sq> bf:code "sq" ;
+	rdfs:label "audio roll"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/ss> bf:code "ss" ;
+	rdfs:label "audiocassette"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/st> bf:code "st" ;
+	rdfs:label "audiotape reel"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/sz> bf:code "sz" ;
+	rdfs:label "other audio carrier"^^xsd:string ;
+	a bf:Carrier , bc:AudioCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/pz> bf:code "pz" ;
+	rdfs:label "other microscopic carrier"^^xsd:string ;
+	a bf:Carrier , bc:MicroscopicCarrierr .
+
+<http://id.loc.gov/vocabulary/carriers/zu> bf:code "zu" ;
+	rdfs:label "unspecified"^^xsd:string ;
+	a bf:Carrier , bc:UnspecifiedCarrier .
+
+bc:UnspecifiedCarrier rdfs:label "Unspecified carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/vc> bf:code "vc" ;
+	rdfs:label "video cartridge"^^xsd:string ;
+	a bf:Carrier , bc:VideoCarrier .
+
+bc:VideoCarrier rdfs:label "Video carriers"^^xsd:string ;
+	a bc:CarrierGroup .
+
+<http://id.loc.gov/vocabulary/carriers/vd> bf:code "vd" ;
+	rdfs:label "videodisc"^^xsd:string ;
+	a bf:Carrier , bc:VideoCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/vf> bf:code "vf" ;
+	rdfs:label "videocassette"^^xsd:string ;
+	a bf:Carrier , bc:VideoCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/vr> bf:code "vr" ;
+	rdfs:label "videotape reel"^^xsd:string ;
+	a bf:Carrier , bc:VideoCarrier .
+
+<http://id.loc.gov/vocabulary/carriers/vz> bf:code "vz" ;
+	rdfs:label "other video carrier"^^xsd:string ;
+	a bf:Carrier , bc:VideoCarrier .
