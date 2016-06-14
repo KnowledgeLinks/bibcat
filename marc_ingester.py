@@ -48,6 +48,14 @@ PREFIX schema: <{}>""".format(
 #}}
 #ORDER BY ?marc"""
 
+DEDUP_ENTITIES = PREFIX + """
+SELECT DISTINCT ?entity
+WHERE {{
+    ?entity bf:identifiedBy ?identifier .
+    ?identifier rdf:type <{0}> .
+    ?identifier rdf:value "{1}" .
+}}"""
+
 GET_ADDL_PROPS = PREFIX + """
 SELECT ?pred ?obj
 WHERE {{
@@ -90,6 +98,14 @@ WHERE {{
     ?subj kds:srcPropUri ?marc .
 }}"""
 
+GET_IDENTIFIERS = PREFIX + """
+SELECT ?entity ?ident_value
+WHERE {{
+    ?entity rdf:type <{0}> .
+    ?entity bf:identifiedBy ?identifier .
+    ?identifier rdf:type <{1}> .
+    ?identifier rdf:value ?ident_value .
+}}"""
 
 GET_ORDERED_MARC_LIST = PREFIX + """
 SELECT ?marc
@@ -116,7 +132,9 @@ WHERE {{
 
 
 MARC2BIBFRAME = None
-TRIPLESTORE_URL = "http://localhost:9999/blazegraph/sparql"
+TRIPLESTORE_URL = "http://localhost:8080/blazegraph/sparql"
+
+
 
 def add_admin_metadata(graph, entity):
     """Takes a graph and adds the AdminMetadata for the entity
@@ -137,24 +155,61 @@ def add_admin_metadata(graph, entity):
     graph.add((entity, BF.generationProcess, generation_process))
 
 
-def deduplicate(graph):
-    """ Takes a BIBFRAME 2.0 graph and attempts to deduplicate any Works and
+def add_to_triplestore(graph):
+    """Takes graph and sends POST to add to triplestore
+
+    Args:
+        graph(rdflib.Graph): Transformed and deduplicated RDF BIBFRAME Graph
+    """
+    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
+    lg.setLevel(MLOG_LVL)
+    add_result = requests.post(TRIPLESTORE_URL,
+            data=graph.serialize(format='turtle'),
+	    headers={"Content-Type": "text/turtle"})
+    if add_result.status_code > 399:
+        lg.error("Could not add graph to {}, status={}".format(
+            TRIPLESTORE_URL,
+            add_result.status_code))
+
+def deduplicate_instances(graph, identifiers=[BF.Isbn]):
+    """ Takes a BIBFRAME 2.0 graph and attempts to de-duplicate 
         Instances.
 
-        :arg graph: RDF Graph
+    Args:
+        graph (rdflib.Graph): RDF Graph of transformed MARC to BIBFRAME
+        identifiers (list): List of BIBFRAME identifiers to run 
     """
     # setup log
     lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
     lg.setLevel(MLOG_LVL)
-    
-    title, authors = None, []
-    result = requests.post(TRIPLESTORE_URL,
-        data={"query": DEDUP_WORK.format(title, authors),
-              "format": "json"})
-    lg.debug("\nquery: %s", DEDUP_WORK.format(title, authors))
-    if result.status_code > 399:
-        lg.warn("result.status_code: %s", result.status_code)
-        return
+    for identifier in identifiers:
+        sparql = GET_IDENTIFIERS.format(BF.Instance, identifier) 
+        for row in graph.query(sparql):
+            instance_uri, ident_value = row
+            # get temp Instance URIs and 
+            sparql = DEDUP_ENTITIES.format(identifier, ident_value)
+            result = requests.post(TRIPLESTORE_URL,
+                data={"query": sparql,
+                      "format": "json"})
+            lg.debug("\nquery: %s", sparql)
+            if result.status_code > 399:
+                lg.warn("result.status_code: %s", result.status_code)
+                continue
+            bindings = result.json().get('results', dict()).get('bindings', [])
+            if len(bindings) < 1:
+                continue
+            #! Exits out of all for loops with the first match
+            existing_uri = rdflib.URIRef(
+                    bindings[0].get('entity',{}).get('value'))
+            #! SPARQL not working so looping graph manually :-(
+            for pred, obj in graph.predicate_objects(subject=instance_uri):
+                if isinstance(obj, rdflib.BNode):
+                    for bpred, bobj in graph.predicate_objects(subject=obj):
+                        graph.remove((obj, bpred, bobj))
+                graph.remove((instance_uri, pred, obj))
+                if pred == BF.hasItem:
+                    graph.add((existing_uri, pred, obj))
+
 
 def match_marc(record, pattern):
     """Takes a MARC21 and pattern extracted from the last element from a 
@@ -254,11 +309,10 @@ def process(filepath):
     lg.info("Started at %s", start)
     for i, record in enumerate(marc_reader):
         bf_graph = transform(record)
-        #deduplicate(bf_graph)
         if not i%10 and i > 0:
-            lg.debug(".", end="")
+            lg.info(".", end="")
         if not i%100:
-            lg.debug(i, end="")
+            lg.info(i, end="")
         total = i
     end = datetime.datetime.utcnow()
     lg.info("\nFinished %s at %s, total time=%s mins",
@@ -401,11 +455,15 @@ def transform(record):
     lg.setLevel(MLOG_LVL)
     
     lg.debug("*** record ***\n&s", record)
+    if not MARC2BIBFRAME:
+        setup()
     g = new_graph()
     item = populate_entity(BF.Item, g, record)
     instance = populate_entity(BF.Instance, g, record)
     g.add((instance, BF.hasItem, item))
     g.add((item, BF.itemOf, instance))
+    deduplicate_instances(g)
+    add_to_triplestore(g)
     return g
                                
 if __name__ == "__main__":

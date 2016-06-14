@@ -63,6 +63,13 @@ bc:m21-bf_extent a kds:PropertyLinker ;
 	kds:linkedRange bf:extent ;
 	kds:linkedClass bf:Instance.
 
+bc:m21-bf_heldBy a kds:PropertyLinker ;
+        kds:srcPropUri m21:M049__a ;
+        kds:destClassUri bf:Organization ;
+        kds:destPropUri schema:oclc ;
+        kds:linkedRange bf:heldBy ;
+        kds:linkedClass bf:Item .
+
 bc:m21-bf_illustrativeContent a kds:PropertyLinker ;
 	kds:srcPropUri m21:M300_b;
 	kds:destClassUri bf:Illustration;
