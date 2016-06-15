@@ -241,7 +241,6 @@ def deduplicate_agents(graph, filter_class, agent_class):
             new_agent_uri = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
         else:
             new_agent_uri = rdflib.URIRef(bindings[0].get("agent").get("value"))
-        print(agent_uri, new_agent_uri)
         for subject, pred in graph.subject_predicates(object=agent_uri):
             graph.remove((subject, pred, agent_uri))
             graph.add((subject, pred, new_agent_uri))
