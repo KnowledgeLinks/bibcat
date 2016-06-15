@@ -51,9 +51,16 @@ PREFIX schema: <{}>""".format(
 DEDUP_ENTITIES = PREFIX + """
 SELECT DISTINCT ?entity
 WHERE {{
-    ?entity bf:identifiedBy ?identifier .
-    ?identifier rdf:type <{0}> .
-    ?identifier rdf:value "{1}" .
+    ?entity <{0}> ?identifier .
+    ?identifier rdf:type <{1}> .
+    ?identifier rdf:value "{2}" .
+}}"""
+
+DEDUP_AGENTS = PREFIX + """
+SELECT DISTINCT ?agent
+WHERE {{
+    ?agent rdf:type <{0}> .
+    ?agent <{1}>  "{2}" .
 }}"""
 
 GET_ADDL_PROPS = PREFIX + """
@@ -187,7 +194,10 @@ def deduplicate_instances(graph, identifiers=[BF.Isbn]):
         for row in graph.query(sparql):
             instance_uri, ident_value = row
             # get temp Instance URIs and 
-            sparql = DEDUP_ENTITIES.format(identifier, ident_value)
+            sparql = DEDUP_ENTITIES.format(
+                BF.identifiedBy, 
+                identifier, 
+                ident_value)
             result = requests.post(TRIPLESTORE_URL,
                 data={"query": sparql,
                       "format": "json"})
@@ -201,15 +211,66 @@ def deduplicate_instances(graph, identifiers=[BF.Isbn]):
             #! Exits out of all for loops with the first match
             existing_uri = rdflib.URIRef(
                     bindings[0].get('entity',{}).get('value'))
-            #! SPARQL not working so looping graph manually :-(
-            for pred, obj in graph.predicate_objects(subject=instance_uri):
-                if isinstance(obj, rdflib.BNode):
-                    for bpred, bobj in graph.predicate_objects(subject=obj):
-                        graph.remove((obj, bpred, bobj))
-                graph.remove((instance_uri, pred, obj))
-                if pred == BF.hasItem:
-                    graph.add((existing_uri, pred, obj))
+            replace_uris(graph, instance_uri, existing_uri, [BF.hasItem,])
 
+def deduplicate_agents(graph, filter_class, agent_class):
+    """Deduplicates graph"""
+    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
+    lg.setLevel(MLOG_LVL)
+    sparql = PREFIX + """
+        SELECT DISTINCT ?subject ?value
+        WHERE {{
+            ?subject rdf:type <{0}> .
+            ?subject <{1}> ?value .
+        }}""".format(agent_class, filter_class)
+    for row in graph.query(sparql):
+        agent_uri, value = row
+        sparql = DEDUP_AGENTS.format(
+            agent_class,
+            filter_class,
+            value)
+        result = requests.post(TRIPLESTORE_URL,
+            data={"query": sparql,
+                  "format": "json"})
+        if result.status_code > 399:
+            lg.warn("result.status_code: %s", result.status_code)
+            continue
+        bindings = result.json().get('results', dict()).get('bindings', [])
+        if len(bindings) < 1:
+            # Agent doesn't exit in triplestore add new URI
+            new_agent_uri = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
+        else:
+            new_agent_uri = rdflib.URIRef(bindings[0].get("agent").get("value"))
+        print(agent_uri, new_agent_uri)
+        for subject, pred in graph.subject_predicates(object=agent_uri):
+            graph.remove((subject, pred, agent_uri))
+            graph.add((subject, pred, new_agent_uri))
+        for pred, obj in graph.predicate_objects(subject=agent_uri):
+            graph.remove((agent_uri, pred, obj))
+            graph.add((new_agent_uri, pred, obj))
+        #graph.remove((agent_uri, 
+        #replace_uris(graph, agent_uri, new_agent_uri)
+        
+
+    
+
+def remove_blank_nodes(graph, bnode):
+    for pred, obj in graph.predicate_objects(subject=bnode):
+        graph.remove((bnode, pred, obj))
+        if isinstance(obj, rdflib.BNode):
+            remove_blank_nodes(graph, obj)
+
+
+def replace_uris(graph, old_uri, new_uri, excludes=[]):
+    """Replaces all occurrences of an old uri with a new uri"""
+    #! SPARQL not working so looping graph manually :-(
+    for pred, obj in graph.predicate_objects(subject=old_uri):
+        if isinstance(obj, rdflib.BNode):
+            remove_blank_nodes(graph, obj)
+        graph.remove((old_uri, pred, obj))
+        if pred in excludes:
+            graph.add((new_uri, pred, obj))
+    
 
 def match_marc(record, pattern):
     """Takes a MARC21 and pattern extracted from the last element from a 
@@ -463,6 +524,7 @@ def transform(record):
     g.add((instance, BF.hasItem, item))
     g.add((item, BF.itemOf, instance))
     deduplicate_instances(g)
+    deduplicate_agents(g, SCHEMA.oclc, BF.Organization) 
     add_to_triplestore(g)
     return g
                                
