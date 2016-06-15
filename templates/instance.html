@@ -1,0 +1,32 @@
+{% extends 'index.html' %}
+{% block view_title %}
+	App Definitions
+{% endblock %}
+{% block head_title %}Institutions{% endblock %}
+{% block more_css %}
+{% endblock %}
+{% block main %}
+{% if not debug %}{% set debug = False %}{% endif %}
+{% if not display_mode %}{% set display_mode = False %}{% endif %}
+
+<div class="container">
+	{% include 'snippets/navbar.html' %}
+	<div class="row">
+		<section class="col-md-12">
+			<div>
+				<h1>Instance</h1>
+				<h2>{{title['bf_mainTitle']}}</h2>
+				<h3>{{title['bf_subtitle']}}</h3>
+				<pre>{{ instance }}</pre>
+			</div>
+		</section>
+	</div>
+<div>
+
+{% endblock %}
+{% block more_js %}
+{% endblock %}
+
+
+
+

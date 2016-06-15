@@ -5,7 +5,7 @@
 @prefix obi: <https://w3id.org/openbadges#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <https://schema.org/> .
+@prefix schema: <http://www.schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
@@ -23,6 +23,10 @@ kdr:Application
 	kds:appNameSpace [
 		kds:prefix "m21";
 		kds:nameSpaceUri "http://knowledgelinks.io/ns/marc21/"
+	]  ;
+	kds:appNameSpace [
+		kds:prefix "relators";
+		kds:nameSpaceUri "http://id.loc.gov/vocabulary/relators/"
 	]  ;
 	kds:appNameSpace [
 		kds:prefix "skos";

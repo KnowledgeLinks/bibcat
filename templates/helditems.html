@@ -1,0 +1,44 @@
+{% extends 'index.html' %}
+{% block view_title %}
+	App Definitions
+{% endblock %}
+{% block head_title %}Institutions{% endblock %}
+{% block more_css %}
+{% endblock %}
+{% block main %}
+{% if not debug %}{% set debug = False %}{% endif %}
+{% if not display_mode %}{% set display_mode = False %}{% endif %}
+
+<div class="container">
+	{% include 'snippets/navbar.html' %}
+	<div class="row">
+		<section class="col-md-12">
+			<div>
+				<h1>{{ org }}'s held items.</h1>
+				<table class="table table-striped">
+					<tr>
+						<th>Title</th>
+						<th>Author</th>
+						<th>ISBN</th>
+					</tr>
+				{% for item in helditems %}
+					<tr>
+						<td><a href="/instance?id={{ item['i']['value'] }}">{{ item['title']['value'] }}</a></td>
+						<td>{{ item['aut']['value'] }}</td>
+						<td>{{ item['isbn']['value'] }}</td>
+					</tr>
+				{% endfor %}
+
+				</table>
+			</div>
+		</section>
+	</div>
+<div>
+
+{% endblock %}
+{% block more_js %}
+{% endblock %}
+
+
+
+

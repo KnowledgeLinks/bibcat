@@ -5,7 +5,7 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix m21: <http://knowledgelinks.io/ns/marc21/> .
 @prefix loc: <http://id.loc.gov/> .
@@ -137,7 +137,7 @@ bc:m21-bf_originDate a kds:PropertyLinker ;
 bc:m21-bf_publisher_name a kds:PropertyLinker ;
         kds:srcPropUri m21:M260__b;
         kds:destClassUri bf:Publication ;
-        kds:destPropUri relator:pbl ;
+        kds:destPropUri relators:pbl ;
         kds:linkedRange bf:provisionActivity ;
         kds:linkedClass bf:Instance .
 
@@ -182,7 +182,7 @@ bc:m21-author a kds:PropertyLinker ;
 			        m21:M1003_a;
 	kds:destClassUri bf:Person;
 	kds:destPropUri schema:alternativeName;
-	kds:linkedRange relator:aut;
+	kds:linkedRange relators:aut;
 	kds:linkedClass bf:Instance ;
 	kds:lookupClassUri schema:Person;
 	kds:lookupPropUri schema:alternativeName;
@@ -198,13 +198,13 @@ kds:WorkIdentifier a kds:Deduplicator;
     kds:deDupeMethod [
     	a kds:exactMatch; 
     	kds:propUri bf:mainTitle,
-        	    relator:aut 
+        	    relators:aut 
     ];
     kds:deDupeMethod [
     	a kds:looseMatch; 
     	kds:propUri bf:mainTitle,
-        	    relator:aut,
-        	    relator:contributor;
+        	    relators:aut,
+        	    relators:contributor;
    	kds:matchCriteria kds:2outOf3
     ];
     rdfs:domain bf:Work .

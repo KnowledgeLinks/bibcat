@@ -5,10 +5,10 @@
 @prefix obi: <https://w3id.org/openbadges#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <https://schema.org/> .
+@prefix schema: <http://www.schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
-@prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> . 
 
 bc:InstanceForm a kds:FormClass;
@@ -91,7 +91,7 @@ bc:WorkForm a kds:FormClass;
             kds:formLayoutRow 1
         ] ;
     kds:hasProperty [
-        kds:propUri relator:aut;
+        kds:propUri relators:aut;
         kds:classUri bf:Work;
         kds:formFieldOrder 2;
         kds:formLayoutRow 1

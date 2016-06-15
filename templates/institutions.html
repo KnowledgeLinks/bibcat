@@ -1,0 +1,34 @@
+{% extends 'index.html' %}
+{% block view_title %}
+	App Definitions
+{% endblock %}
+{% block head_title %}Institutions{% endblock %}
+{% block more_css %}
+{% endblock %}
+{% block main %}
+{% if not debug %}{% set debug = False %}{% endif %}
+{% if not display_mode %}{% set display_mode = False %}{% endif %}
+
+<div class="container">
+	{% include 'snippets/navbar.html' %}
+	<div class="row">
+		<section class="col-md-12">
+			<div>
+				<h1>Select an institution below to browse held items.</h1>
+				<div lass="list-group">
+				{% for org in orgs %}
+					<a href="{{ org['link']['value'] }}" class="list-group-item"><h1>{{ org['name']['value'] }}</h1></a>
+				{% endfor %}
+				</div>	
+			</div>
+		</section>
+	</div>
+<div>
+
+{% endblock %}
+{% block more_js %}
+{% endblock %}
+
+
+
+
