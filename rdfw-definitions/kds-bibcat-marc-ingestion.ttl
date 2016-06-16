@@ -52,7 +52,7 @@ bc:m21-bf_dimensions a kds:PropertyLinker ;
 	kds:destPropUri bf:dimensions .
 
 bc:m21-bf_electronicLocation a kds:PropertyLinker ;
-	kds:srcPropUri m21:M856__a ;
+	kds:srcPropUri m21:M856__u ;
 	kds:destClassUri bf:Item ;
 	kds:destPropUri bf:electronicLocation. 
 
@@ -118,6 +118,13 @@ bc:m21-bf_identifiedByIsbn a kds:PropertyLinker ;
 	kds:destPropUri rdf:value ;
 	kds:linkedRange bf:identifiedBy ;
 	kds:linkedClass bf:Instance .
+
+bc:m21-bf_intendedAudience a kds:PropertyLinker ;
+        kds:srcPropUri m21:M385__a ;
+        kds:destClassUri bf:IntendedAudience ;
+        kds:destPropUri rdf:value ;
+        kds:linkedRange bf:intendedAudience ;
+        kds:linkedClass bf:Instance .
 
 bc:m21-bf_note_summary a kds:PropertyLinker ;
         kds:srcPropUri m21:M520__a ;

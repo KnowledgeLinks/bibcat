@@ -139,7 +139,7 @@ WHERE {{
 
 
 MARC2BIBFRAME = None
-TRIPLESTORE_URL = "http://localhost:8080/blazegraph/sparql"
+TRIPLESTORE_URL = "http://bibcat.org:8080/blazegraph/sparql"
 
 
 
