@@ -266,7 +266,7 @@ def replace_uris(graph, old_uri, new_uri, excludes=[]):
         if isinstance(obj, rdflib.BNode):
             remove_blank_nodes(graph, obj)
         graph.remove((old_uri, pred, obj))
-        if pred in excludes:
+        if not pred in excludes:
             graph.add((new_uri, pred, obj))
     
 
