@@ -9,7 +9,7 @@
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix m21: <http://knowledgelinks.io/ns/marc21/> .
 @prefix loc: <http://id.loc.gov/> .
-@prefix schema: <http://www.schema.org/> .
+@prefix schema: <http://schema.org/> .
 
 bc:m21-bf_carrier a kds:PropertyLinker;
     kds:srcPropUri m21:M338__a,
