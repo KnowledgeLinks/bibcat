@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.DEBUG)
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
 RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("http://www.schema.org/")
+SCHEMA = rdflib.Namespace("http://schema.org/")
 
 BIBCAT_URL = "http://bibcat.org/"
 
@@ -266,7 +266,7 @@ def replace_uris(graph, old_uri, new_uri, excludes=[]):
         if isinstance(obj, rdflib.BNode):
             remove_blank_nodes(graph, obj)
         graph.remove((old_uri, pred, obj))
-        if pred in excludes:
+        if not pred in excludes:
             graph.add((new_uri, pred, obj))
     
 
