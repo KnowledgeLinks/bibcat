@@ -24,6 +24,9 @@ class WorkGenerator(object):
         """
         Harvests all BIBFRAME Instances that do not have an isInstanceOf
         property.
+        
+        #! for performance considerations may need to run sparl query that
+        limits the batch size
         """
         pass
         
