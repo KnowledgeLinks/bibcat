@@ -17,10 +17,21 @@
 				<h1>Instance</h1>
 				<h2>{{title['bf_mainTitle']}}</h2>
 				<h3>{{title['bf_subtitle']}}</h3>
-				<pre>{{ instance }}</pre>
+                                
+				{#<pre>{{ instance }}</pre>#}
 			</div>
 		</section>
 	</div>
+        {% for key in instance.keys() %}
+            {% set entity = instance[entity] %}
+            {% set entity_class = entity.get("rdf_type") %}
+            {% if entity_class.startswith("bf_Item") %}:
+                {% include "item.html" %}
+            {% endif %}
+            {% if entity_class.startswith("bf_Instance") %}:
+                {% include "instance_detail.html" %}
+            {% endif %}
+        {% endfor %}
 <div>
 
 {% endblock %}

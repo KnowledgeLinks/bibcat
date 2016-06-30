@@ -97,7 +97,7 @@ def instance_path():
         if re.match(r'^t\d', key):
             del rtn_data[key]
     template = render_template("/instance.html",
-                               instance=json.dumps(rtn_data, indent=4),
+                               instance=rtn_data,
                                title=title)
     return template 
 

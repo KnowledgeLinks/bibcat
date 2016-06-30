@@ -1,0 +1,8 @@
+<div class="row">
+    <section class="col-md-8">
+        {% for author in entity.get("relators_aut") %}
+        <h3>{{ author.get("schema_alternativeName") }}</h3>
+        {% endfor %}
+
+    </section>
+</div>

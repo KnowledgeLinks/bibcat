@@ -17,7 +17,9 @@
 				<h1>Select an institution below to browse held items.</h1>
 				<div lass="list-group">
 				{% for org in orgs %}
+                                    {% if org %}
 					<a href="{{ org['link']['value'] }}" class="list-group-item"><h1>{{ org['name']['value'] }}</h1></a>
+                                    {% endif %}
 				{% endfor %}
 				</div>	
 			</div>
