@@ -12,7 +12,7 @@
 @prefix schema: <http://schema.org/> .
 
 bc:mods-title a kds:PropertyLinker;
-    kds:srcPropXpath "/titleInfo/title" ;
+    kds:srcPropXpath "mods:titleInfo/mods:title" ;
     kds:destPropUri bf:mainTitle;
     kds:destClassUri bf:InstanceTitle;
     kds:linkedRange bf:title;

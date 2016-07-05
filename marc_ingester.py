@@ -10,7 +10,9 @@ import rdflib
 import requests
 import click
 import uuid
-from ingester import add_admin_metadata, add_admin_metadata, new_graph 
+from ingester import Ingester, new_graph 
+from ingester import PREFIX, GET_DIRECT_PROPS, GET_LINKED_CLASSES
+from ingester import GET_SRC_PROP
 from collections import OrderedDict
 
 # get the current file name for logs and set logging level
@@ -26,20 +28,6 @@ SCHEMA = rdflib.Namespace("http://schema.org/")
 BIBCAT_URL = "http://bibcat.org/"
 
 # SPARQL query templates
-PREFIX  = """PREFIX bf: <{}>
-PREFIX kds: <{}>
-PREFIX rdf: <{}>
-PREFIX rdfs: <{}>
-PREFIX bc: <http://knowledgelinks.io/ns/bibcat/> 
-PREFIX m21: <http://knowledgelinks.io/ns/marc21/> 
-PREFIX relators: <{}>
-PREFIX schema: <{}>""".format(
-    BF,
-    KDS,
-    rdflib.RDF,
-    rdflib.RDFS,
-    RELATORS,
-    SCHEMA)
 
 #GET_ENTITY_MARC = PREFIX + """
 #SELECT ?prop ?marc
@@ -77,42 +65,13 @@ WHERE {{
     ?instance <{0}> ?subject .
 }}"""
 
-GET_LINKED_CLASSES = PREFIX + """
-SELECT ?dest_prop ?dest_class ?linked_range ?subj
-WHERE {{
-   ?subj kds:destClassUri ?dest_class .
-   ?subj kds:destPropUri ?dest_prop .
-   ?subj kds:linkedRange ?linked_range .
-   ?subj kds:linkedClass <{0}> .
-   ?subj rdf:type kds:PropertyLinker .
-}}"""
 
-GET_ORDERED_CLASSES = PREFIX + """
-SELECT ?dest_prop ?dest_class ?linked_range ?subj
-WHERE {{
-   ?subj kds:destClassUri ?dest_class .
-   ?subj kds:destPropUri ?dest_prop .
-   ?subj kds:linkedRange ?linked_range .
-   ?subj kds:linkedClass <{0}> .
-   ?subj rdf:type kds:OrderedPropertyLinker .
-BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
-KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
-RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("http://schema.org/")
-}}"""
+
 
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
 RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
 SCHEMA = rdflib.Namespace("http://schema.org/")
-
-GET_DIRECT_PROPS = PREFIX + """
-SELECT ?dest_prop ?marc
-WHERE {{
-    ?subj kds:destClassUri <{0}> .
-    ?subj kds:destPropUri ?dest_prop .
-    ?subj kds:srcPropUri ?marc .
-}}"""
 
 GET_IDENTIFIERS = PREFIX + """
 SELECT ?entity ?ident_value
@@ -130,15 +89,6 @@ WHERE {{
     ?subj kds:destClassUri <{0}> .
 }}"""
 
-GET_MARC = PREFIX + """
-SELECT ?marc
-WHERE {{
-    ?subj kds:srcPropUri ?marc .
-    ?subj kds:destClassUri <{0}> .
-    ?subj kds:destPropUri <{1}> .
-    ?subj kds:linkedClass <{2}> .
-    ?subj rdf:type <{3}> .
-}}"""
 
 HAS_MULTI_NODES = PREFIX + """
 SELECT DISTINCT ?is_multi_nodes
@@ -151,166 +101,132 @@ MARC2BIBFRAME = None
 TRIPLESTORE_URL = "http://localhost:8080/blazegraph/sparql"
 
 
-def deduplicate_instances(graph, identifiers=[BF.Isbn]):
-    """ Takes a BIBFRAME 2.0 graph and attempts to de-duplicate 
-        Instances.
+class MARCIngester(Ingester):
 
-    Args:
-        graph (rdflib.Graph): RDF Graph of transformed MARC to BIBFRAME
-        identifiers (list): List of BIBFRAME identifiers to run 
-    """
-    # setup log
-    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
-    lg.setLevel(MLOG_LVL)
-    for identifier in identifiers:
-        sparql = GET_IDENTIFIERS.format(BF.Instance, identifier) 
-        for row in graph.query(sparql):
-            instance_uri, ident_value = row
-            # get temp Instance URIs and 
-            sparql = DEDUP_ENTITIES.format(
-                BF.identifiedBy, 
-                identifier, 
-                ident_value)
-            result = requests.post(TRIPLESTORE_URL,
-                data={"query": sparql,
+    def __init__(self, record):
+        super(MARCIngester, self).__init__(
+            rules_ttl="kds-bibcat-marc-ingestion.ttl",
+            source=record)
+        self.logger = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
+        self.logger.setLevel(MLOG_LVL)
+
+    def __handle_linked_pattern__(self, **kwargs):
+        pass
+
+    def __handle_pattern__(self, **kwargs):
+        pass
+
+    def __handle_ordered__(self, **kwargs):
+        pass
+
+
+    def deduplicate_instances(self, identifiers=[BF.Isbn]):
+        """ Takes a BIBFRAME 2.0 graph and attempts to de-duplicate 
+            Instances.
+
+        Args:
+            identifiers (list): List of BIBFRAME identifiers to run 
+        """
+        for identifier in identifiers:
+            sparql = GET_IDENTIFIERS.format(BF.Instance, identifier) 
+            for row in self.graph.query(sparql):
+                instance_uri, ident_value = row
+                # get temp Instance URIs and 
+                sparql = DEDUP_ENTITIES.format(
+                    BF.identifiedBy, 
+                    identifier, 
+                    ident_value)
+                result = requests.post(TRIPLESTORE_URL,
+                    data={"query": sparql,
                       "format": "json"})
-            lg.debug("\nquery: %s", sparql)
-            if result.status_code > 399:
-                lg.warn("result.status_code: %s", result.status_code)
-                continue
-            bindings = result.json().get('results', dict()).get('bindings', [])
-            if len(bindings) < 1:
-                continue
-            #! Exits out of all for loops with the first match
-            existing_uri = rdflib.URIRef(
+                self.logger.debug("\nquery: %s", sparql)
+                if result.status_code > 399:
+                    self.logger.warn("result.status_code: %s", result.status_code)
+                    continue
+                bindings = result.json().get('results', dict()).get('bindings', [])
+                if len(bindings) < 1:
+                    continue
+                #! Exits out of all for loops with the first match
+                existing_uri = rdflib.URIRef(
                     bindings[0].get('entity',{}).get('value'))
-            replace_uris(graph, instance_uri, existing_uri, [BF.hasItem,])
+                replace_uris(graph, instance_uri, existing_uri, [BF.hasItem,])
+                
 
-def deduplicate_agents(graph, filter_class, agent_class):
-    """Deduplicates graph"""
-    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
-    lg.setLevel(MLOG_LVL)
-    sparql = PREFIX + """
+    def deduplicate_agents(self, filter_class, agent_class):
+        """Deduplicates graph"""
+        lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
+        lg.setLevel(MLOG_LVL)
+        sparql = PREFIX + """
         SELECT DISTINCT ?subject ?value
         WHERE {{
             ?subject rdf:type <{0}> .
             ?subject <{1}> ?value .
         }}""".format(agent_class, filter_class)
-    for row in graph.query(sparql):
-        agent_uri, value = row
-        sparql = DEDUP_AGENTS.format(
-            agent_class,
-            filter_class,
-            value)
-        result = requests.post(TRIPLESTORE_URL,
-            data={"query": sparql,
+        for row in graph.query(sparql):
+            agent_uri, value = row
+            sparql = DEDUP_AGENTS.format(
+                agent_class,
+                filter_class,
+                value)
+            result = requests.post(TRIPLESTORE_URL,
+                data={"query": sparql,
                   "format": "json"})
-        if result.status_code > 399:
-            lg.warn("result.status_code: %s", result.status_code)
-            continue
-        bindings = result.json().get('results', dict()).get('bindings', [])
-        if len(bindings) < 1:
-            # Agent doesn't exit in triplestore add new URI
-            new_agent_uri = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
-        else:
-            new_agent_uri = rdflib.URIRef(bindings[0].get("agent").get("value"))
-        for subject, pred in graph.subject_predicates(object=agent_uri):
-            graph.remove((subject, pred, agent_uri))
-            graph.add((subject, pred, new_agent_uri))
-        for pred, obj in graph.predicate_objects(subject=agent_uri):
-            graph.remove((agent_uri, pred, obj))
-            graph.add((new_agent_uri, pred, obj))
-        #graph.remove((agent_uri, 
-        #replace_uris(graph, agent_uri, new_agent_uri)
+            if result.status_code > 399:
+                lg.warn("result.status_code: %s", result.status_code)
+                continue
+            bindings = result.json().get('results', dict()).get('bindings', [])
+            if len(bindings) < 1:
+                # Agent doesn't exit in triplestore add new URI
+                new_agent_uri = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
+            else:
+                new_agent_uri = rdflib.URIRef(bindings[0].get("agent").get("value"))
+            for subject, pred in graph.subject_predicates(object=agent_uri):
+                self.graph.remove((subject, pred, agent_uri))
+                self.graph.add((subject, pred, new_agent_uri))
+            for pred, obj in self.graph.predicate_objects(subject=agent_uri):
+                self.graph.remove((agent_uri, pred, obj))
+                self.graph.add((new_agent_uri, pred, obj))
         
-
     
 
-def remove_blank_nodes(graph, bnode):
-    for pred, obj in graph.predicate_objects(subject=bnode):
-        graph.remove((bnode, pred, obj))
-        if isinstance(obj, rdflib.BNode):
-            remove_blank_nodes(graph, obj)
+    def match_marc(self, pattern):
+        """Takes a MARC21 and pattern extracted from the last element from a 
+        http://marc21rdf.info/ URI
 
-
-def replace_uris(graph, old_uri, new_uri, excludes=[]):
-    """Replaces all occurrences of an old uri with a new uri"""
-    #! SPARQL not working so looping graph manually :-(
-    for pred, obj in graph.predicate_objects(subject=old_uri):
-        if isinstance(obj, rdflib.BNode):
-            remove_blank_nodes(graph, obj)
-        graph.remove((old_uri, pred, obj))
-        if not pred in excludes:
-            graph.add((new_uri, pred, obj))
+        Args:
+            record:  MARC21 Record
+            pattern: Pattern to match
+        Returns:
+            list of subfield values
+        """
+        output = []
+        field_name = pattern[1:4]
+        indicators = pattern[4:6]
+        subfield = pattern[-1]
+        fields = record.get_fields(field_name)
     
-
-def match_marc(record, pattern):
-    """Takes a MARC21 and pattern extracted from the last element from a 
-    http://marc21rdf.info/ URI
-
-    Args:
-        record:  MARC21 Record
-        pattern: Pattern to match
-    Returns:
-        list of subfield values
-    """
-    
-    # setup log
-    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
-    lg.setLevel(MLOG_LVL)
-    
-    output = []
-    field_name = pattern[1:4]
-    indicators = pattern[4:6]
-    subfield = pattern[-1]
-    fields = record.get_fields(field_name)
-    
-    lg.debug("\nfield_name: %s\nindicators: %s\nsubfield:%s",
-             field_name,
-             indicators,
-             subfield)
+        self.logger.debug("\nfield_name: %s\nindicators: %s\nsubfield:%s",
+                 field_name,
+                indicators,
+                subfield)
              
-    for field in fields:
-        lg.debug("field: %s", field)
-        if field.is_control_field():
-            lg.debug("control field")
-            start, end = pattern[4:].split("-")
-            output.append(field.data[int(start):int(end)+1])
-            continue
-        indicator_key = "{}{}".format(
-            field.indicators[0].replace(" ", "_"),
-            field.indicators[1].replace(" ", "_"))
-        lg.debug("indicator_key: %s", indicator_key)
-        if indicator_key == indicators:
-            subfields = field.get_subfields(subfield)
-            lg.debug("subfields: %s", subfields)
-            output.extend(subfields)
-    lg.debug("\n**** output ****\n%s", output)
-    return output
-
-def new_existing_bnode(graph, bf_property, rule):
-    """Returns existing blank node or a new if it doesn't exist
-
-    Args:
-        graph (rdflib.Graph): RDF graph of new entity
-        bf_property (str): RDF property URI
-        rule (rdflib.URIRef): RDF subject of the map rule
-
-    Returns:
-        rdflib.BNode: Existing or New blank node
-    """
-    blank_node = None
-    for row in MARC2BIBFRAME.query(HAS_MULTI_NODES.format(rule)):
-        if str(row[0]).lower().startswith("true"):
-            return rdflib.BNode()
-    for subject in graph.query(GET_BLANK_NODE.format(bf_property)):
-        # set to first and exist loop
-        blank_node = subject[0]
-        break
-    if not blank_node:
-        blank_node = rdflib.BNode()
-    return blank_node
-
+        for field in fields:
+            self.logger.debug("field: %s", field)
+            if field.is_control_field():
+                lg.debug("control field")
+                start, end = pattern[4:].split("-")
+                output.append(field.data[int(start):int(end)+1])
+                continue
+            indicator_key = "{}{}".format(
+                field.indicators[0].replace(" ", "_"),
+                field.indicators[1].replace(" ", "_"))
+            self.logger.debug("indicator_key: %s", indicator_key)
+            if indicator_key == indicators:
+                subfields = field.get_subfields(subfield)
+                self.logger.debug("subfields: %s", subfields)
+                output.extend(subfields)
+        self.logger.debug("\n**** output ****\n%s", output)
+        return output
 
 @click.command()
 @click.argument("filepath")
@@ -339,16 +255,13 @@ def process(filepath):
             (end-start).seconds / 60.0)  
 
 def populate_entity(entity_class, graph, record):
-    # setup log
-    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
-    lg.setLevel(MLOG_LVL)
     
     entity = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
     graph.add((entity, rdflib.RDF.type, entity_class))
     update_linked_classes(entity_class, entity, graph, record)
     update_direct_properties(entity_class, entity, graph, record)
     update_ordered_linked_classes(entity_class, entity, graph, record)
-    add_admin_metadata(graph, entity)
+    add_admin_metadata(entity)
     return entity
 
 def update_direct_properties(entity_class, 
@@ -385,12 +298,8 @@ def update_linked_classes(entity_class,
     for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
         #! Should dedup dest_class here, return found URI or BNode
         for row in MARC2BIBFRAME.query(
-            GET_MARC.format(
+            GET_SRC_PROP.format(
                 dest_class, 
-BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
-KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
-RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("http://schema.org/")
                 dest_property,
                 entity_class, 
                 KDS.PropertyLinker)):
@@ -416,7 +325,7 @@ def update_ordered_linked_classes(entity_class,
     sparql = GET_ORDERED_CLASSES.format(entity_class)
     for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
         for row in MARC2BIBFRAME.query(
-            GET_MARC.format(dest_class,
+            GET_SRC_PROP.format(dest_class,
                             dest_property,
                             entity_class,
                             KDS.OrderedPropertyLinker)):
