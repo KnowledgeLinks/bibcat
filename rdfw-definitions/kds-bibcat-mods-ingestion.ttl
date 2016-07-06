@@ -11,6 +11,16 @@
 @prefix loc: <http://id.loc.gov/> .
 @prefix schema: <http://schema.org/> .
 
+bc:mods-adminNote a kds:PropertyLinker;
+    kds:srcPropXpath "mods:note[@type='admin']" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Note ;
+    kds:linkedRange bf:note ;
+    kds:hasIndividualNodes "true" ;
+    kds:destAdditionalPropUris [ bf:noteType "admin"@en ];
+    kds:linkedClass bf:Instance .
+
+
 bc:mods-title a kds:PropertyLinker;
     kds:srcPropXpath "mods:titleInfo/mods:title" ;
     kds:destPropUri bf:mainTitle;

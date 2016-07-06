@@ -7,16 +7,16 @@ import unittest
 import urllib.parse
 
 sys.path.append(os.path.abspath(os.path.curdir))
-import info_linker
+import linkers
 
 
 class TestLinker(unittest.TestCase):
 
     def setUp(self):
-        self.linker = info_linker.Linker()
+        self.linker = linkers.Linker()
 
     def test_init(self):
-        self.assertTrue(isinstance(self.linker, info_linker.Linker))
+        self.assertIsInstance(self.linker, linkers.Linker)
 
     def test_run(self):
         self.assertTrue(hasattr(self.linker, 'run'))
@@ -25,7 +25,7 @@ class TestLinker(unittest.TestCase):
 class TestDBPediaLinker(unittest.TestCase):
 
     def setUp(self):
-        self.linker = info_linker.DBPediaLinker()
+        self.linker = linkers.DBPediaLinker()
 
 
     def test_enhance_uri_default(self):
@@ -43,7 +43,7 @@ class TestDBPediaLinker(unittest.TestCase):
     def test_search_label_book(self):
         moby_dick_results = self.linker.search_label(
             "Moby Dick", 
-            [info_linker.DBO.Book,])
+            [linkers.DBO.Book,])
         self.assertEqual(
             moby_dick_results[0].get('value'),
             "http://dbpedia.org/resource/Moby-Dick")
@@ -51,9 +51,9 @@ class TestDBPediaLinker(unittest.TestCase):
     def test_search_label_film(self):
         moby_dick_results = self.linker.search_label(
             "Moby Dick", 
-            [info_linker.DBO.Film,])
+            [linkers.DBO.Film,])
         self.assertIn(
-            {"dbo:class": info_linker.DBO.Film,
+            {"dbo:class": linkers.DBO.Film,
              "type": "uri",
              "value": "http://dbpedia.org/resource/Moby_Dick_(1971_film)"},
             moby_dick_results)
@@ -61,16 +61,16 @@ class TestDBPediaLinker(unittest.TestCase):
     def test_search_label_musical_work(self):
         john_wesley_harding_results = self.linker.search_label(
             "John Wesley Harding",
-            [info_linker.DBO.MusicalWork,])
+            [linkers.DBO.MusicalWork,])
         self.assertIn(
-            {"dbo:class": info_linker.DBO.MusicalWork,
+            {"dbo:class": linkers.DBO.MusicalWork,
              "type": "uri",
              "value": "http://dbpedia.org/resource/John_Wesley_Harding_(album)"},
             john_wesley_harding_results)
 
 
     def test_default_init(self):
-        self.assertTrue(self.linker, info_linker.DBPediaLinker)
+        self.assertIsInstance(self.linker, linkers.DBPediaLinker)
         self.assertEqual(
             self.linker.SPARQL_ENDPOINT,
             "http://dbpedia.org/sparql")
@@ -78,10 +78,10 @@ class TestDBPediaLinker(unittest.TestCase):
 class TestLibraryOfCongressLinker(unittest.TestCase):
 
     def setUp(self):
-        self.linker = info_linker.LibraryOfCongressLinker()
+        self.linker = linkers.LibraryOfCongressLinker()
 
     def test_default_init(self):
-        self.assertTrue(self.linker, info_linker.LibraryOfCongressLinker)
+        self.assertTrue(self.linker, linkers.LibraryOfCongressLinker)
         self.assertEqual(
             self.linker.ID_LOC_URL,
             "http://id.loc.gov/")

@@ -10,92 +10,14 @@ import rdflib
 import requests
 import click
 import uuid
-from ingester import Ingester, new_graph 
-from ingester import PREFIX, GET_DIRECT_PROPS, GET_LINKED_CLASSES
-from ingester import GET_SRC_PROP
+from ingesters import Ingester, new_graph 
+from ingesters.sparql import *
 from collections import OrderedDict
 
 # get the current file name for logs and set logging level
 MNAME = inspect.stack()[0][1]
 MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
-
-BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
-KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
-RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("http://schema.org/")
-
-BIBCAT_URL = "http://bibcat.org/"
-
-# SPARQL query templates
-
-#GET_ENTITY_MARC = PREFIX + """
-#SELECT ?prop ?marc
-#WHERE {{
-#    ?prop rdfs:domain <{0}> .
-#    ?prop kds:marc2bibframe ?marc
-#}}
-#ORDER BY ?marc"""
-
-DEDUP_ENTITIES = PREFIX + """
-SELECT DISTINCT ?entity
-WHERE {{
-    ?entity <{0}> ?identifier .
-    ?identifier rdf:type <{1}> .
-    ?identifier rdf:value "{2}" .
-}}"""
-
-DEDUP_AGENTS = PREFIX + """
-SELECT DISTINCT ?agent
-WHERE {{
-    ?agent rdf:type <{0}> .
-    ?agent <{1}>  "{2}" .
-}}"""
-
-GET_ADDL_PROPS = PREFIX + """
-SELECT ?pred ?obj
-WHERE {{
-  <{0}> kds:destAdditionalPropUris ?subj .
-  ?subj ?pred ?obj .
-}}"""
-
-GET_BLANK_NODE = PREFIX + """
-SELECT ?subject 
-WHERE {{
-    ?instance <{0}> ?subject .
-}}"""
-
-
-
-
-BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
-KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
-RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("http://schema.org/")
-
-GET_IDENTIFIERS = PREFIX + """
-SELECT ?entity ?ident_value
-WHERE {{
-    ?entity rdf:type <{0}> .
-    ?entity bf:identifiedBy ?identifier .
-    ?identifier rdf:type <{1}> .
-    ?identifier rdf:value ?ident_value .
-}}"""
-
-GET_ORDERED_MARC_LIST = PREFIX + """
-SELECT ?marc
-WHERE {{
-    ?subj kds:srcOrderedPropUri/rdf:rest*/rdf:first ?marc .
-    ?subj kds:destClassUri <{0}> .
-}}"""
-
-
-HAS_MULTI_NODES = PREFIX + """
-SELECT DISTINCT ?is_multi_nodes
-WHERE {{
-    <{0}> kds:hasIndividualNodes ?is_multi_nodes .
-}}"""
-
 
 MARC2BIBFRAME = None
 TRIPLESTORE_URL = "http://localhost:8080/blazegraph/sparql"
@@ -162,7 +84,7 @@ class MARCIngester(Ingester):
             ?subject rdf:type <{0}> .
             ?subject <{1}> ?value .
         }}""".format(agent_class, filter_class)
-        for row in graph.query(sparql):
+        for row in self.graph.query(sparql):
             agent_uri, value = row
             sparql = DEDUP_AGENTS.format(
                 agent_class,
@@ -189,13 +111,13 @@ class MARCIngester(Ingester):
         
     
 
-    def match_marc(self, pattern):
+    def match_marc(self, pattern, record=None):
         """Takes a MARC21 and pattern extracted from the last element from a 
         http://marc21rdf.info/ URI
 
         Args:
-            record:  MARC21 Record
-            pattern: Pattern to match
+            pattern(str): Pattern to match
+            record(pymarc.Record): Optional MARC21 Record, default's to instance
         Returns:
             list of subfield values
         """
@@ -203,8 +125,10 @@ class MARCIngester(Ingester):
         field_name = pattern[1:4]
         indicators = pattern[4:6]
         subfield = pattern[-1]
-        fields = record.get_fields(field_name)
-    
+        if record is None:
+            fields = self.source.get_fields(field_name)
+        else:
+            fields = record.get_fields(field_name)
         self.logger.debug("\nfield_name: %s\nindicators: %s\nsubfield:%s",
                  field_name,
                 indicators,

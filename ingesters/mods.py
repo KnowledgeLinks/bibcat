@@ -16,9 +16,9 @@ import uuid
 import xml.etree.ElementTree as etree
 
 from collections import OrderedDict
-from ingester import Ingester, new_graph 
-from ingester import BF, KDS, RELATORS, PREFIX, SCHEMA
-from ingester import GET_LINKED_CLASSES
+from ingesters import Ingester, new_graph 
+from ingesters.sparql import *
+
 sys.path.append(
     os.path.split(os.path.abspath(os.path.dirname(__file__)))[0])
 try:
@@ -34,21 +34,11 @@ logging.basicConfig(level=logging.DEBUG)
 MODS = rdflib.Namespace("http://www.loc.gov/mods/v3")
 MODS2BIBFRAME = None
 
-GET_SRC_PROP = PREFIX + """
-SELECT ?prop
-WHERE {{
-    ?subj kds:destPropXpath ?prop .
-    ?subj kds:destClassUri <{0}> .
-    ?subj kds:destPropUri <{1}> .
-    ?subj kds:linkedClass <{2}> .
-    ?subj rdf:type <{3}> .
-}}"""
-
 
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""
 
-    def __init__(self, mods_xml):
+    def __init__(self, mods_xml=None):
         super(MODSIngester, self).__init__(
             rules_ttl="kds-bibcat-mods-ingestion.ttl",
             source=mods_xml)
@@ -70,6 +60,7 @@ class MODSIngester(Ingester):
         destination_property = kwargs.get("destination_property")
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
+        raw_xpath = str(rule)
         mods_xpath = raw_xpath.replace("mods:", "{{{0}}}".format(MODS))
         for element in self.source.findall(mods_xpath):
             value = element.text
@@ -84,7 +75,7 @@ class MODSIngester(Ingester):
                 destination_property, 
                 rdflib.Literal(value)))
             # Sets additional properties
-            for pred, obj in MARC2BIBFRAME.query(
+            for pred, obj in self.rules_graph.query(
                 GET_ADDL_PROPS.format(target_subject)):
                 self.graph.add((bf_class_bnode, pred, obj))
 
@@ -125,6 +116,18 @@ class MODSIngester(Ingester):
         destination_class = kwargs.get("destination_class")
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
+
+    def transform(self, mods_xml=None):
+        """Overrides parent class transform and adds MODS-specific 
+        transformations
+
+        Args:
+            mods_xml(xml.etree.ElementTree.XML): MODS XML or None
+        """
+        bf_instance, bf_item = super(MODSIngester, self).transform(mods_xml)
+        
+
+    
             
 
 @click.command()

@@ -7,7 +7,7 @@ import rdflib
 import requests
 import urllib.parse
 
-from marc_ingester import new_graph
+from ingesters import new_graph
 
 DBO = rdflib.Namespace("http://dbpedia.org/ontology/")
 DBP = rdflib.Namespace("http://dbpedia.org/property/")

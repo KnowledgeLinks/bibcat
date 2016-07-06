@@ -6,11 +6,15 @@ import inspect
 import logging
 import os
 import rdflib
+import requests
 import sys
 import uuid
 
-# get the current file name for logs and set logging level
-MNAME = inspect.stack()[0][1]
+# get the current file name for logs and set logging leve
+try:
+    MNAME = inspect.stack()[0][1]
+except:
+    MNAME = "ingesters"
 MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 
@@ -20,71 +24,6 @@ try:
     from instance import config
 except ImportError:
     pass
-
-BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
-KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
-RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("http://schema.org/")
-
-PREFIX  = """PREFIX bf: <{}>
-PREFIX kds: <{}>
-PREFIX rdf: <{}>
-PREFIX rdfs: <{}>
-PREFIX bc: <http://knowledgelinks.io/ns/bibcat/> 
-PREFIX m21: <http://knowledgelinks.io/ns/marc21/> 
-PREFIX relators: <{}>
-PREFIX schema: <{}>""".format(
-    BF,
-    KDS,
-    rdflib.RDF,
-    rdflib.RDFS,
-    RELATORS,
-    SCHEMA)
-
-GET_BLANK_NODE = PREFIX + """
-SELECT ?subject 
-WHERE {{
-    ?instance <{0}> ?subject .
-}}"""
-
-GET_DIRECT_PROPS = PREFIX + """
-SELECT ?dest_prop ?src_prop
-WHERE {{
-    ?subj kds:destClassUri <{0}> .
-    ?subj kds:destPropUri ?dest_prop .
-    ?subj kds:srcPropUri ?src_prop .
-}}"""
-
-GET_LINKED_CLASSES = PREFIX + """
-SELECT ?dest_prop ?dest_class ?linked_range ?subj
-WHERE {{
-   ?subj kds:destClassUri ?dest_class .
-   ?subj kds:destPropUri ?dest_prop .
-   ?subj kds:linkedRange ?linked_range .
-   ?subj kds:linkedClass <{0}> .
-   ?subj rdf:type kds:PropertyLinker .
-}}"""
-
-
-GET_ORDERED_CLASSES = PREFIX + """
-SELECT ?dest_prop ?dest_class ?linked_range ?subj
-WHERE {{
-   ?subj kds:destClassUri ?dest_class .
-   ?subj kds:destPropUri ?dest_prop .
-   ?subj kds:linkedRange ?linked_range .
-   ?subj kds:linkedClass <{0}> .
-   ?subj rdf:type kds:OrderedPropertyLinker .
-}}"""
-
-GET_SRC_PROP = PREFIX + """
-SELECT ?prop
-WHERE {{
-    ?subj kds:destPropUri ?prop .
-    ?subj kds:destClassUri <{0}> .
-    ?subj kds:destPropUri <{1}> .
-    ?subj kds:linkedClass <{2}> .
-    ?subj rdf:type <{3}> .
-}}"""
 
 
 class Ingester(object):
@@ -100,11 +39,13 @@ class Ingester(object):
         if not "rules_ttl" in kwargs:
             raise ValueError("Ingester Requires Rules Turtle file name")
         rules_filepath = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)),
+            os.path.abspath(
+                os.path.split(os.path.dirname(__file__))[0]),
                 "rdfw-definitions",
                 kwargs.get("rules_ttl"))
         self.rules_graph = new_graph()
-        self.rules_graph.parse(rules_filepath, format='turtle')
+        if os.path.exists(rules_filepath):
+            self.rules_graph.parse(rules_filepath, format='turtle')
         self.source = kwargs.get("source")
         self.triplestore_url = kwargs.get(
             "triplestore_url", 
@@ -128,12 +69,9 @@ class Ingester(object):
         self.graph.add((entity, BF.generationProcess, generation_process))
 
 
-    def add_to_triplestore(self, graph):
-       """Takes graph and sends POST to add to triplestore
-
-       Args:
-           graph(rdflib.Graph): Transformed and deduplicated RDF BIBFRAME Graph
-       """
+    def add_to_triplestore(self):
+       """Sends RDF graph via POST to add to triplestore
+      """
        add_result = requests.post(self.triplestore_url,
            data=self.graph.serialize(format='turtle'),
            headers={"Content-Type": "text/turtle"})
@@ -154,7 +92,7 @@ class Ingester(object):
            rdflib.BNode: Existing or New blank node
        """
        blank_node = None
-       for row in self.rule_graph.query(HAS_MULTI_NODES.format(rule)):
+       for row in self.rules_graph.query(HAS_MULTI_NODES.format(rule)):
            if str(row[0]).lower().startswith("true"):
                return rdflib.BNode()
        for subject in self.graph.query(GET_BLANK_NODE.format(bf_property)):
@@ -174,7 +112,12 @@ class Ingester(object):
         Returns:
            rdflib.URIRef: URI of new entity
         """
-        entity_uri = rdflib.URIRef("{}/{}".format(self.base_url, uuid.uuid1()))
+        uid = uuid.uuid1()
+        if self.base_url.endswith("/"):
+            pattern = "{0}{1}"
+        else:
+            pattern = "{0}/{1}"
+        entity_uri = rdflib.URIRef(pattern.format(self.base_url, uid))
         self.graph.add((entity_uri, rdflib.RDF.type, bf_class))
         self.update_linked_classes(bf_class, entity_uri)
         self.update_direct_properties(bf_class, entity_uri)
@@ -201,13 +144,29 @@ class Ingester(object):
             new_uri(rdflib.URIRef):
             excludes(list): 
         """
-        for pred, obj in graph.predicate_objects(subject=old_uri):
+        for pred, obj in self.graph.predicate_objects(subject=old_uri):
             if isinstance(obj, rdflib.BNode):
                 self.remove_blank_nodes(obj)
             self.graph.remove((old_uri, pred, obj))
             if not pred in excludes:
                 self.graph.add((new_uri, pred, obj))
 
+    def transform(self, source=None):
+        """Takes new source, sets new graph, and creates a BF.Instance and 
+        BF.Item entities
+
+        Args:
+            source: New source, could be URL, XML, or CSV row
+        Returns:
+            tuple: BIBFRAME Instance and Item
+        """
+        if not source is None:
+            self.source = source
+            self.graph = new_graph()
+        bf_instance = self.populate_entity(BF.Instance)
+        bf_item = self.populate_entity(BF.Item)
+        self.graph.add((bf_item, BF.itemOf, bf_instance))
+        return bf_instance, bf_item
 
     def update_direct_properties(self,
         entity_class, 
@@ -236,16 +195,17 @@ class Ingester(object):
         for dest_property, dest_class, prop, subj in \
             self.rules_graph.query(sparql):
             #! Should dedup dest_class here, return found URI or BNode
-            sparql = GET_SRC_PROP.format(
+            sparql_prop = GET_SRC_PROP.format(
                 dest_class, 
                 dest_property,
                 entity_class, 
                 KDS.PropertyLinker)
-            for row in self.rules_graph.query(sparql):
+            for row in self.rules_graph.query(sparql_prop):
                 self.__handle_linked_pattern__(
                     entity=entity, 
                     destination_class=dest_class,
                     destination_property=dest_property,
+                    rule=row[0],
                     target_property=prop,
                     target_subject=subj)
 
@@ -286,3 +246,5 @@ def new_graph():
     graph.namespace_manager.bind("relators", RELATORS)
     graph.namespace_manager.bind("schema", SCHEMA)
     return graph
+
+from .sparql import *
