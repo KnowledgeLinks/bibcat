@@ -70,7 +70,7 @@ class MODSIngester(Ingester):
             predicate=KDS.destClassProp)
         self.graph.add(
             (intermediate_bnode, rdflib.RDF.type, intermediate_bf_class))
-        xpath = self.graph.value(
+        xpath = self.rules_graph.value(
             subject=target_subject,
             predicate=KDS.srcPropXpath)
         for row in self.source.findall(str(xpath), NS):
