@@ -20,10 +20,15 @@ bc:mods-adminNote a kds:PropertyLinker;
     kds:destAdditionalPropUris [ bf:noteType "admin"@en ];
     kds:linkedClass bf:Instance .
 
-kds:mods-degreeGrantor a kds:PropertyLinker; 
+bc:mods-degreeName a kds:PropertyLinker;
+    kds:srcPropXpath "mods:note[@displayLabel='Degree Name']" ;
+    kds:destPropUri bf:degree ;
+    kds:destClassUri bf:Dissertation ;
+    kds:linkedRange bf:dissertation ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-degreeGrantor a kds:PropertyLinker; 
     kds:srcPropXpath "mods:name/mods:role[mods:roleTerm='degree grantor']/../mods:namePart" ;
-    #kds:destPropUri  rdf:label ; 
-    #kds:destClassUri bf:Organization ;
     kds:destPropUri [
         a bf:grantingInstitution ;
         kds:destClassUri bf:Organization ;
@@ -33,6 +38,13 @@ kds:mods-degreeGrantor a kds:PropertyLinker;
     kds:linkedRange bf:dissertation ;
     kds:linkedClass bf:Instance .
 
+bc:mods-genreForm a kds:PropertyLinker;
+    kds:srcPropXpath "mods:genre[@authority='marcgt']" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:GenreForm ;
+    kds:linkedRange bf:genreFrom ;
+    kds:linkedClass bf:Instance .
+
 bc:mods-title a kds:PropertyLinker;
     kds:srcPropXpath "mods:titleInfo/mods:title" ;
     kds:destPropUri bf:mainTitle;
@@ -40,4 +52,7 @@ bc:mods-title a kds:PropertyLinker;
     kds:linkedRange bf:title;
     kds:linkedClass bf:Instance .
 
-
+bc:mods-url a kds:PropertyLinker;
+    kds:srcPropXpath "mods:location/mods:url" ;
+    kds:destPropUri schema:url ;
+    kds:destPropClass bf:Item .

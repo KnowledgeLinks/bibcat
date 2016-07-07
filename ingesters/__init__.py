@@ -178,7 +178,8 @@ class Ingester(object):
            entity_class (url): URL of the entity's class
            entity (rdflib.URIRef): RDFlib Entity
         """
-        sparql = GET_DIRECT_PROPS.format(entity_class) 
+        sparql = GET_DIRECT_PROPS.format(entity_class)
+        print(sparql) 
         for dest_prop, rule in self.rules_graph.query(sparql):
             self.__handle_pattern__(entity, rule, dest_prop)
            

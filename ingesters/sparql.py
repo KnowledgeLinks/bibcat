@@ -31,7 +31,8 @@ SELECT ?dest_prop ?src_prop
 WHERE {{
     ?subj kds:destClassUri <{0}> .
     ?subj kds:destPropUri ?dest_prop .
-    ?subj kds:srcPropUri ?src_prop .
+    OPTIONAL {{ ?subj kds:srcPropUri ?src_prop }} .
+    OPTIONAL {{ ?subj kds:srcPropXpath ?src_prop }} .
 }}"""
 
 GET_LINKED_CLASSES = PREFIX + """

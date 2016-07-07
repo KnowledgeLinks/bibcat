@@ -67,7 +67,7 @@ class MODSIngester(Ingester):
             predicate=KDS.destClassUri)
         intermediate_bf_property = self.rules_graph.value(
             subject=bnode,
-            predicate=KDS.destClassProp)
+            predicate=KDS.destPropUri)
         self.graph.add(
             (intermediate_bnode, rdflib.RDF.type, intermediate_bf_class))
         xpath = self.rules_graph.value(
@@ -77,7 +77,7 @@ class MODSIngester(Ingester):
             self.graph.add(
                 (intermediate_bnode,
                  intermediate_bf_property,
-                 rdflib.Literal(row))
+                 rdflib.Literal(row.text))
             )
 
  
@@ -131,8 +131,15 @@ class MODSIngester(Ingester):
             str: Fully qualified XPath
         """
         mods_xpath = rule.text
+        print(mods_xpath, entity, dest_property)
         for element in self.source.findall(mods_xpath, NS):
-            self.graph.add((entity, dest_property, rdflib.Literal(element.text)))
+            raw_text = element.text
+            #! Quick and dirty method for converting urls to URIs
+            if raw_text.startswith("http"):
+                object_ = rdflib.URIRef(raw_text)
+            else:
+                object_ = rdflib.Literal(raw_text)
+            self.graph.add((entity, dest_property, object_))
 
     def __handle_ordered__(self, **kwargs):
         """Helper takes a BIBFRAME class, entity URI, destination property,
