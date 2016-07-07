@@ -195,6 +195,14 @@ class Ingester(object):
         for dest_property, dest_class, prop, subj in \
             self.rules_graph.query(sparql):
             #! Should dedup dest_class here, return found URI or BNode
+            if isinstance(dest_property, rdflib.BNode):
+                self.__handle_linked_bnode__(
+                    bnode=dest_property,
+                    entity=entity,
+                    destination_class=dest_class,
+                    target_property=prop,
+                    target_subject=subj)
+                continue
             sparql_prop = GET_SRC_PROP.format(
                 dest_class, 
                 dest_property,

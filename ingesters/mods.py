@@ -33,7 +33,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 MODS = rdflib.Namespace("http://www.loc.gov/mods/v3")
 MODS2BIBFRAME = None
-
+NS = {"mods": str(MODS)}
 
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""
@@ -42,6 +42,45 @@ class MODSIngester(Ingester):
         super(MODSIngester, self).__init__(
             rules_ttl="kds-bibcat-mods-ingestion.ttl",
             source=mods_xml)
+
+    def __handle_linked_bnode__(self, **kwargs):
+        """Helper takes an entity with a blank nodes as a linking property
+        to create children blank nodes with different classes."""
+        bnode = kwargs.get("bnode")
+        entity = kwargs.get("entity")
+        destination_class = kwargs.get("destination_class")
+        target_property = kwargs.get("target_property")
+        target_subject = kwargs.get("target_subject")
+        destination_property = self.rules_graph.value(
+            subject=bnode,
+            predicate=rdflib.RDF.type)
+        bf_class_bnode = self.new_existing_bnode(
+            target_property, 
+            target_subject)
+        self.graph.add((bf_class_bnode, rdflib.RDF.type, destination_class))
+        self.graph.add((entity, target_property, bf_class_bnode))
+        intermediate_bnode = rdflib.BNode()
+        self.graph.add(
+            (bf_class_bnode, destination_property, intermediate_bnode))
+        intermediate_bf_class = self.rules_graph.value(
+            subject=bnode,
+            predicate=KDS.destClassUri)
+        intermediate_bf_property = self.rules_graph.value(
+            subject=bnode,
+            predicate=KDS.destClassProp)
+        self.graph.add(
+            (intermediate_bnode, rdflib.RDF.type, intermediate_bf_class))
+        xpath = self.graph.value(
+            subject=target_subject,
+            predicate=KDS.srcPropXpath)
+        for row in self.source.findall(str(xpath), NS):
+            self.graph.add(
+                (intermediate_bnode,
+                 intermediate_bf_property,
+                 rdflib.Literal(row))
+            )
+
+ 
 
     def __handle_linked_pattern__(self, **kwargs):
         """Helper takes an entity, rule, BIBFRAME class, kds:srcPropXpath 
@@ -60,9 +99,8 @@ class MODSIngester(Ingester):
         destination_property = kwargs.get("destination_property")
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
-        raw_xpath = str(rule)
-        mods_xpath = raw_xpath.replace("mods:", "{{{0}}}".format(MODS))
-        for element in self.source.findall(mods_xpath):
+        mods_xpath = str(rule)
+        for element in self.source.findall(mods_xpath, NS):
             value = element.text
             if len(value) < 1:
                 continue
@@ -92,9 +130,8 @@ class MODSIngester(Ingester):
         Returns:
             str: Fully qualified XPath
         """
-        raw_xpath = rule.text
-        mods_xpath = raw_xpath.replace("mods:", "{{{0}}}".format(MODS)) 
-        for element in self.source.findall(mods_xpath):
+        mods_xpath = rule.text
+        for element in self.source.findall(mods_xpath, NS):
             self.graph.add((entity, dest_property, rdflib.Literal(element.text)))
 
     def __handle_ordered__(self, **kwargs):

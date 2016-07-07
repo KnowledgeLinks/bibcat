@@ -20,6 +20,18 @@ bc:mods-adminNote a kds:PropertyLinker;
     kds:destAdditionalPropUris [ bf:noteType "admin"@en ];
     kds:linkedClass bf:Instance .
 
+kds:mods-degreeGrantor a kds:PropertyLinker; 
+    kds:srcPropXpath "mods:name/mods:role[mods:roleTerm='degree grantor']/../mods:namePart" ;
+    #kds:destPropUri  rdf:label ; 
+    #kds:destClassUri bf:Organization ;
+    kds:destPropUri [
+        a bf:grantingInstitution ;
+        kds:destClassUri bf:Organization ;
+        kds:destPropUri rdf:label 
+    ];
+    kds:destClassUri bf:Dissertation ;
+    kds:linkedRange bf:dissertation ;
+    kds:linkedClass bf:Instance .
 
 bc:mods-title a kds:PropertyLinker;
     kds:srcPropXpath "mods:titleInfo/mods:title" ;
@@ -28,4 +40,4 @@ bc:mods-title a kds:PropertyLinker;
     kds:linkedRange bf:title;
     kds:linkedClass bf:Instance .
 
- 
+
