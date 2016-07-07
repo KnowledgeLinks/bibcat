@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE rdf:RDF SYSTEM "http://purl.org/dc/schemas/dcmes-xml-20000714.dtd">
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/">
+<rdf:Description about="http://cdm16079.contentdm.oclc.org:80/cdm/ref/collection/p15330coll22/id/0">
+    <dc:title>Wild West Show parade</dc:title>
+    <dc:creator></dc:creator>
+    <dc:subject>Wild west shows--1880-1920.; Bands--1900-1910.; Parades &amp; processions--1900-1910.; Buffalo Bill, 1846-1917.; Buffalo Bill's Wild West Show.</dc:subject>
+    <dc:description>Members of Buffalo Bill's Wild West Show band ride horses down a dirt street during a parade for the show. The men are playing their instruments while riding horses. Among the instruments being played is a trombone, a trumpet and the drums. A group of soldiers on horseback follows the band in the parade. The men are members of &quot;Buffalo Bill's Congress of Rough Riders of the World.&quot; A large crowd of spectators watches  the parade. The men in the crowd wear derby hats while the women wear hats  adorned with flowers. The young boys wear caps and knickers.
+&quot;Salsbury Collection Buffalo Bill's Wild West Show Rehearsal Pictures 1901&quot; typed on first page of album.; Photographer's stamp &quot;Photographed by John C. Hemment, 108 Fulton St., New York&quot; on back of photoprint; &quot;Parade&quot; and &quot;1901&quot; handwritten on back of print.; Photoprint has &quot;173&quot; handwritten in lower left side and on back.; Photoprint has orange discoloration and is faded.; Title supplied by cataloger.; Vintage photographic print.; R7001058501</dc:description>
+    <dc:publisher></dc:publisher>
+    <dc:contributor></dc:contributor>
+    <dc:date>[1901?]
+</dc:date>
+    <dc:type>Photographic prints.; Imaged.; Image</dc:type>
+    <dc:format>1 photoprint ; 15 x 24 cm. (5 3/4 x 9 1/2 in.)
+Photograph
+</dc:format>
+    <dc:identifier>NS-850
+
+00105850.tif</dc:identifier>
+    <dc:source></dc:source>
+    <dc:language>eng</dc:language>
+    <dc:relation>Salsbury collection, Buffalo Bill's Wild West Show.; Salsbury collection, Buffalo Bill's Wild West Show, album 8.
+Image File: ZZR700105850
+
+http://photoswest.org/cgi-bin/imager?00105850+NS-850</dc:relation>
+    <dc:coverage></dc:coverage>
+    <dc:rights>Restrictions applying to use or reproduction of this image available from the Western History/Genealogy Dept., Denver Public Library.</dc:rights>
+</rdf:Description>
+</rdf:RDF>

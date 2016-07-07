@@ -103,8 +103,8 @@ class Ingester(object):
            blank_node = rdflib.BNode()
        return blank_node
 
-    def populate_entity(self, bf_class):
-        """Takes a BIBFRAME graph and MODS XML, extracts XPATH for each
+    def populate_entity(self, bf_class, existing_uri=None):
+        """Takes a BIBFRAME graph and MODS XML, extracts info for each
         entity's property and adds to graph.
 
         Args:
@@ -113,11 +113,14 @@ class Ingester(object):
            rdflib.URIRef: URI of new entity
         """
         uid = uuid.uuid1()
-        if self.base_url.endswith("/"):
-            pattern = "{0}{1}"
+        if existing_uri:
+            entity_uri = existing_uri
         else:
-            pattern = "{0}/{1}"
-        entity_uri = rdflib.URIRef(pattern.format(self.base_url, uid))
+            if self.base_url.endswith("/"):
+                pattern = "{0}{1}"
+            else:
+                pattern = "{0}/{1}"
+            entity_uri = rdflib.URIRef(pattern.format(self.base_url, uid))
         self.graph.add((entity_uri, rdflib.RDF.type, bf_class))
         self.update_linked_classes(bf_class, entity_uri)
         self.update_direct_properties(bf_class, entity_uri)
@@ -151,20 +154,23 @@ class Ingester(object):
             if not pred in excludes:
                 self.graph.add((new_uri, pred, obj))
 
-    def transform(self, source=None):
+    def transform(self, source=None, instance_uri=None, item_uri=None):
         """Takes new source, sets new graph, and creates a BF.Instance and 
         BF.Item entities
 
         Args:
             source: New source, could be URL, XML, or CSV row
+            instance_uri(rdflib.URIRef): Existing Instance URI, defaults to None
+            item_uri(rdflib.URIRef): Existing Item URI, defaults to None
+
         Returns:
             tuple: BIBFRAME Instance and Item
         """
         if not source is None:
             self.source = source
             self.graph = new_graph()
-        bf_instance = self.populate_entity(BF.Instance)
-        bf_item = self.populate_entity(BF.Item)
+        bf_instance = self.populate_entity(BF.Instance, instance_uri)
+        bf_item = self.populate_entity(BF.Item,item_uri)
         self.graph.add((bf_item, BF.itemOf, bf_instance))
         return bf_instance, bf_item
 
@@ -179,7 +185,6 @@ class Ingester(object):
            entity (rdflib.URIRef): RDFlib Entity
         """
         sparql = GET_DIRECT_PROPS.format(entity_class)
-        print(sparql) 
         for dest_prop, rule in self.rules_graph.query(sparql):
             self.__handle_pattern__(entity, rule, dest_prop)
            

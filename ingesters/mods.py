@@ -6,7 +6,6 @@ import datetime
 import click
 import inspect
 import logging
-import pymarc
 import os
 import rdflib
 import requests

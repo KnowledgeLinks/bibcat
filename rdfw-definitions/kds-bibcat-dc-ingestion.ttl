@@ -1,0 +1,73 @@
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix dcr: <http://knowledgelinks.io/ns/dc/> .
+@prefix loc: <http://id.loc.gov/> .
+@prefix schema: <http://schema.org/> .
+
+bc:dc-date a kds:PropertyLinker;
+    kds:srcPropUri dc:date ;
+    kds:destPropUri bf:originDate ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+
+bc:dc-description a kds:PropertyLinker ;
+    kds:srcPropUri dc:description ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri rdf:Note ;
+    kds:linkedRange bf:note ;
+    kds:destAdditionalPropUris [ bf:noteType "abstract"@en ];
+    kds:linkedClass bf:Instance .
+
+bc:dc-identifier a kds:PropertyLinker;
+    kds:srcPropUri dc:identifier ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Local ;
+    kds:linkedRange bf:identifiedBy ;
+    kds:linkedClass bf:Instance .
+
+bc:dc-format a kds:PropertyLinker;
+    kds:srcPropUri dc:format ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Layout ;
+    kds:linkedRange bf:layout ;
+    kds:linkedClass bf:Instance .
+
+bc:dc-language a kds:PropertyLinker ;
+    kds:srcPropUri dc:language ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Language ;
+    kds:linkedRange bf:language ;
+    kds:linkedClass bf:Instance .
+
+bc:dc-rights a kds:PropertyLinker;
+    kds:srcPropUri dc:rights ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:UsePolicy ;
+    kds:linkedRange bf:usageAndAccessPolicy ;
+    kds:linkedClass bf:Item .
+
+bc:dc-subject a kds:PropertyLinker ;
+    kds:srcPropUri dc:subject ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Topic ; 
+    kds:delimiterProp ";" ;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+ 
+
+bc:dc-title a kds:PropertyLinker;
+    kds:srcPropUri dc:title ;
+    kds:destPropUri bf:mainTitle;
+    kds:destClassUri bf:InstanceTitle;
+    kds:linkedRange bf:title;
+    kds:linkedClass bf:Instance .
