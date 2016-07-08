@@ -19,7 +19,6 @@ MNAME = inspect.stack()[0][1]
 MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 
-MARC2BIBFRAME = None
 TRIPLESTORE_URL = "http://localhost:8080/blazegraph/sparql"
 
 
@@ -33,13 +32,117 @@ class MARCIngester(Ingester):
         self.logger.setLevel(MLOG_LVL)
 
     def __handle_linked_pattern__(self, **kwargs):
-        pass
+        """Helper takes an entity, rule, BIBFRAME class, kds:srcPropUri 
+        and extracts and saves the destination property to the destination
+        class.
+
+        Keyword args:
+            entity(rdflib.URIRef): Entity's URI
+            rule(rdflib.URIRef): MARC Rule
+            destination_class(rdflib.URIRef): Destination class
+            destination_property(rdflib.URIRef): Destination property
+        """
+        entity = kwargs.get("entity")
+        marc_rule = kwargs.get("rule")
+        destination_class = kwargs.get("destination_class")
+        destination_property = kwargs.get("destination_property")
+        target_property = kwargs.get("target_property")
+        target_subject = kwargs.get("target_subject")
+        pattern = str(marc_rule).split("/")[-1]
+        for value in self.match_marc(pattern):
+            if len(value.strip()) < 1:
+                continue
+            bf_class = self.new_existing_bnode(
+                target_property, 
+                target_subject)
+            self.graph.add((bf_class, rdflib.RDF.type, destination_class))
+            self.graph.add((entity, target_property, bf_class))
+            self.graph.add(
+                (bf_class, 
+                 destination_property, 
+                 rdflib.Literal(value)))
+            # Sets additional properties
+            for pred, obj in self.rules_graph.query(
+                GET_ADDL_PROPS.format(target_subject)):
+                self.graph.add((bf_class, pred, obj))
 
     def __handle_pattern__(self, **kwargs):
-        pass
+        """Helper takes an entity, rule, BIBFRAME class, kds:srcPropUri 
+        and extracts and saves the destination property to the destination
+        class.
+
+        Keyword args:
+            entity(rdflib.URIRef): Entity's URI
+            rule(rdflib.Literal): MARC21 Pattern
+            destination_class(rdflib.URIRef): Destination class
+            destination_property(rdflib.URIRef): Destination property
+            target_property(rdflib.URIRef): Target range in final class
+            target_subject(rdflib.URIRef): Rule subject URI in rules graph
+        """
+        entity = kwargs.get("entity")
+        rule = kwargs.get("rule")
+        destination_class = kwargs.get("destination_class")
+        destination_property = kwargs.get("destination_property")
+        target_property = kwargs.get("target_property")
+        target_subject = kwargs.get("target_subject")
+        pattern =  str(rule).split("/")[-1]
+        for value in self.match_marc(pattern):
+            self.graph.add((entity, 
+                destination_property, 
+                rdflib.Literal(value)))
+
 
     def __handle_ordered__(self, **kwargs):
-        pass
+        """Helper takes an entity, MARC21 rule, BIBFRAME class, kds:srcPropUri 
+        and extracts and saves the destination property to the destination
+        class in a defined order in the rule.
+
+        Keyword args:
+            entity(rdflib.URIRef): Entity's URI
+            rule(rdflib.Literal): MARC21 Pattern
+            destination_class(rdflib.URIRef): Destination class
+            destination_property(rdflib.URIRef): Destination property
+            target_property(rdflib.URIRef): Target range in final class
+            target_subject(rdflib.URIRef): Rule subject URI in rules graph
+        """
+        entity = kwargs.get("entity")
+        entity_class = kwargs.get("entity_class")
+        destination_property = kwargs.get("destination_property")
+        destination_class = kwargs.get("destination_class")
+        rule = kwargs.get("rule")
+        target_property = kwargs.get("target_property")
+        target_subject = kwargs.get("target_subject")
+        pattern =  str(rule).split("/")[-1]
+        field_name = pattern[1:4]
+        indicators = pattern[4:6]
+        subfields = pattern[6:]
+        fields = self.source.get_fields(field_name)
+        for field in fields:
+            bf_class = self.new_existing_bnode(prop, subj)
+            indicator_key = "{}{}".format(
+                field.indicators[0].replace(" ", "_"),
+                field.indicators[1].replace(" ", "_"))
+            if indicator_key != indicators:
+                continue
+            ordered_value = ''
+            for subfield in subfields:
+                ordered_value += ' '.join(
+                     field.get_subfields(subfield)) + " "
+            if len(ordered_value) > 0:
+                self.graph.add(
+                     (bf_class, 
+                      dest_property, 
+                      rdflib.Literal(ordered_value.strip())))
+                self.graph.add(
+                    (bf_class, 
+                     rdflib.RDF.type, 
+                     dest_class))
+                self.graph.add((entity, prop, bf_class))
+            # Sets additional properties
+            for pred, obj in self.rules_graph.query(
+                GET_ADDL_PROPS.format(target_subject)):
+                self.graph.add((bf_class, pred, obj))
+
 
 
     def deduplicate_instances(self, identifiers=[BF.Isbn]):
@@ -102,7 +205,7 @@ class MARCIngester(Ingester):
                 new_agent_uri = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
             else:
                 new_agent_uri = rdflib.URIRef(bindings[0].get("agent").get("value"))
-            for subject, pred in graph.subject_predicates(object=agent_uri):
+            for subject, pred in self.graph.subject_predicates(object=agent_uri):
                 self.graph.remove((subject, pred, agent_uri))
                 self.graph.add((subject, pred, new_agent_uri))
             for pred, obj in self.graph.predicate_objects(subject=agent_uri):
@@ -137,7 +240,7 @@ class MARCIngester(Ingester):
         for field in fields:
             self.logger.debug("field: %s", field)
             if field.is_control_field():
-                lg.debug("control field")
+                self.logger.debug("control field")
                 start, end = pattern[4:].split("-")
                 output.append(field.data[int(start):int(end)+1])
                 continue
@@ -151,6 +254,22 @@ class MARCIngester(Ingester):
                 output.extend(subfields)
         self.logger.debug("\n**** output ****\n%s", output)
         return output
+
+    def transform(self, record=None):
+        """Method transforms a MARC record (either instance source
+        or passed in MARC21 record) into BIBFRAME 2.0 
+
+        Args:
+            record(pymarc.Record): MARC21 Record
+        """
+        if record is not None:
+            if isinstance(record, pymarc.Record):
+                self.source = record
+                self.graph = self.new_graph()
+        bf_instance, bf_item = super(MARCIngester, self).transform()
+        # Run de-duplication methods
+        self.deduplicate_instances()
+        self.deduplicate_agents(SCHEMA.oclc, BF.Organization)
 
 @click.command()
 @click.argument("filepath")
@@ -178,151 +297,3 @@ def process(filepath):
             end,
             (end-start).seconds / 60.0)  
 
-def populate_entity(entity_class, graph, record):
-    
-    entity = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
-    graph.add((entity, rdflib.RDF.type, entity_class))
-    update_linked_classes(entity_class, entity, graph, record)
-    update_direct_properties(entity_class, entity, graph, record)
-    update_ordered_linked_classes(entity_class, entity, graph, record)
-    add_admin_metadata(entity)
-    return entity
-
-def update_direct_properties(entity_class, 
-                             entity,
-                             graph, 
-                             record):
-    """Update the graph by adding all direct literal properties of the entity 
-    in the graph.
-
-    Args:
-        entity_class (url): URL of the entity's class
-        entity (rdflib.URIRef): RDFlib Entity
-        graph (rdflib.Graph): RDFlib Graph
-        record (pymarc.Record): MARC21 Record
-    """
-    sparql = GET_DIRECT_PROPS.format(entity_class)
-    for dest_prop, marc in MARC2BIBFRAME.query(sparql):
-        for value in match_marc(record, str(marc).split("/")[-1]):
-            graph.add((entity, dest_prop, rdflib.Literal(value)))
-
-def update_linked_classes(entity_class,
-                          entity, 
-                          graph, 
-                          record):
-    """Updates RDF Graph of linked classes
-
-    Args:
-        entity_class (url): URL of the entity's class
-        entity (rdflib.URIRef): RDFlib Entity
-        graph (rdflib.Graph): RDFlib Graph
-        record (pymarc.Record): MARC21 Record
-    """
-    sparql = GET_LINKED_CLASSES.format(entity_class)
-    for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
-        #! Should dedup dest_class here, return found URI or BNode
-        for row in MARC2BIBFRAME.query(
-            GET_SRC_PROP.format(
-                dest_class, 
-                dest_property,
-                entity_class, 
-                KDS.PropertyLinker)):
-            marc = row[0]
-            pattern = str(marc).split("/")[-1]
-            for value in match_marc(record, pattern):
-                if len(value.strip()) < 1:
-                    continue
-                bf_class = new_existing_bnode(graph, prop, subj)
-                graph.add((bf_class, rdflib.RDF.type, dest_class))
-                graph.add((entity, prop, bf_class))
-                graph.add((bf_class, dest_property, rdflib.Literal(value)))
-                # Sets additional properties
-                for pred, obj in MARC2BIBFRAME.query(
-                        GET_ADDL_PROPS.format(subj)):
-                    graph.add((bf_class, pred, obj))
-
-
-def update_ordered_linked_classes(entity_class,
-                                  entity,
-                                  graph,
-                                  record):
-    sparql = GET_ORDERED_CLASSES.format(entity_class)
-    for dest_property, dest_class, prop, subj in MARC2BIBFRAME.query(sparql):
-        for row in MARC2BIBFRAME.query(
-            GET_SRC_PROP.format(dest_class,
-                            dest_property,
-                            entity_class,
-                            KDS.OrderedPropertyLinker)):
-            marc = row[0]
-            pattern =  str(marc).split("/")[-1]
-            field_name = pattern[1:4]
-            indicators = pattern[4:6]
-            subfields = pattern[6:]
-            fields = record.get_fields(field_name)
-            for field in fields:
-                bf_class = new_existing_bnode(graph, prop, subj)
-                indicator_key = "{}{}".format(
-                    field.indicators[0].replace(" ", "_"),
-                    field.indicators[1].replace(" ", "_"))
-                if indicator_key != indicators:
-                    continue
-                ordered_value = ''
-                for subfield in subfields:
-                    ordered_value += ' '.join(
-                        field.get_subfields(subfield)) + " "
-                if len(ordered_value) > 0:
-                    graph.add(
-                        (bf_class, dest_property, rdflib.Literal(ordered_value.strip())))
-                    graph.add((bf_class, rdflib.RDF.type, dest_class))
-                    graph.add((entity, prop, bf_class))
-                    # Retrieve and set additional properties 
-
-               
-            
-
-def setup():
-    # setup log
-    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
-    lg.setLevel(MLOG_LVL)
-    
-    global MARC2BIBFRAME
-    
-    MARC2BIBFRAME = new_graph()
-    marc2bf_filepath = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                    "rdfw-definitions",
-                                    "kds-bibcat-marc-ingestion.ttl")
-    lg.debug("MARC2BIBFRAME: %s\nmarc2bf_filepath: %s", 
-             MARC2BIBFRAME,
-             marc2bf_filepath)
-    MARC2BIBFRAME.parse(marc2bf_filepath, format="turtle")
- 
-def transform(record):
-    """Function takes a MARC21 record and extracts BIBFRAME entities and 
-    properties.
-
-    Args:
-        record:  MARC21 Record
-    """
-    # Assumes each MARC record will have at least 1 Work, Instance, and Item
-    
-    # setup log
-    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
-    lg.setLevel(MLOG_LVL)
-    
-    lg.debug("*** record ***\n&s", record)
-    if not MARC2BIBFRAME:
-        setup()
-    g = new_graph()
-    item = populate_entity(BF.Item, g, record)
-    instance = populate_entity(BF.Instance, g, record)
-    g.add((instance, BF.hasItem, item))
-    g.add((item, BF.itemOf, instance))
-    deduplicate_instances(g)
-    deduplicate_agents(g, SCHEMA.oclc, BF.Organization) 
-    add_to_triplestore(g)
-    return g
-                               
-if __name__ == "__main__":
-    if not MARC2BIBFRAME:
-        setup()
-    process()

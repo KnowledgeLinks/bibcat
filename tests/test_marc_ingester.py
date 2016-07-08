@@ -17,6 +17,22 @@ marc.MLOG_LVL = logging.CRITICAL
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
+class TestMARC__handle_linked_pattern__(unittest.TestCase):
+
+    def setUp(self):
+        self.ingester = marc.MARCIngester(pymarc.Record())
+
+    def test_exists(self):
+        self.assertTrue(hasattr(self.ingester, "__handle_linked_pattern__"))
+
+    def test_no_keywords(self):
+        self.assertIsNone(
+            self.ingester.__handle_linked_pattern__())
+
+    def tearDown(self):
+        self.ingester.graph.close()
+
+
 class TestDeduplicatingInstances(unittest.TestCase):
 
     def setUp(self):
@@ -59,6 +75,45 @@ class TestMatchMARC(unittest.TestCase):
         self.assertEqual(
             self.ingester.match_marc('M24510b'),
             ["and subtitle"])
+
+class TestMARCUpdateLinkedClasses(unittest.TestCase):
+
+    def setUp(self):
+        self.entity = rdflib.URIRef("http://test.org/entity/1")
+        self.ingester = marc.MARCIngester(pymarc.Record())
+
+    def test_default_method(self):
+        self.ingester.update_linked_classes(
+            ingesters.BF.Item,
+            self.entity)
+
+    def tearDown(self):
+        pass
+
+class TestMARCUpdateDirectProperties(unittest.TestCase):
+
+    def setUp(self):
+        self.entity = rdflib.URIRef("http://test.org/entity/1")
+        self.ingester = marc.MARCIngester(pymarc.Record())
+
+
+    def test_default_method(self):
+        self.ingester.update_direct_properties(
+            ingesters.BF.Instance,
+            self.entity)
+
+class TestMARCUpdateOrderedLinkedClasses(unittest.TestCase):
+
+    def setUp(self):
+        self.entity = rdflib.URIRef("http://test.org/entity/1")
+        self.ingester = marc.MARCIngester(pymarc.Record())
+       
+    def test_default_method(self):
+        self.ingester.update_ordered_linked_classes(
+            ingesters.BF.Item,
+            self.entity)
+
+
 
 if __name__ == '__main__':
     unittest.main()

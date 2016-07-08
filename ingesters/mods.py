@@ -130,7 +130,6 @@ class MODSIngester(Ingester):
             str: Fully qualified XPath
         """
         mods_xpath = rule.text
-        print(mods_xpath, entity, dest_property)
         for element in self.source.findall(mods_xpath, NS):
             raw_text = element.text
             #! Quick and dirty method for converting urls to URIs

@@ -13,6 +13,22 @@ ingesters.MLOG_LVL = logging.CRITICAL
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
+class TestMODS__handle_linked_pattern__(unittest.TestCase):
+
+    def setUp(self):
+        self.ingester = mods.MODSIngester()
+
+    def test_exists(self):
+        self.assertTrue(hasattr(self.ingester, "__handle_linked_pattern__"))
+
+    def test_no_keywords(self):
+        self.assertRaises(
+            AttributeError,
+            self.ingester.__handle_linked_pattern__)
+
+    def tearDown(self):
+        self.ingester.graph.close()
+
 class TestInitMODSIngester(unittest.TestCase):
 
     def setUp(self):

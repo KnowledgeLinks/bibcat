@@ -18,11 +18,13 @@ from ingesters import Ingester, new_graph
 from ingesters.sparql import *
 
 DC = rdflib.Namespace("http://purl.org/dc/elements/1.1/")
+DCTERM = rdflib.Namespace("http://purl.org/dc/terms/")
 
 class DCIngester(Ingester):
 
     def __init__(self, dc_xml=None):
-        if not isinstance(dc_xml, rdflib.Graph):
+        source = None
+        if not isinstance(dc_xml, rdflib.Graph) and dc_xml:
             source = rdflib.Graph()
             source.parse(data=dc_xml, format="xml")
         super(DCIngester, self).__init__(
