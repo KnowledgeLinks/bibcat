@@ -1,6 +1,6 @@
 {% extends 'index.html' %}
 {% block view_title %}
-	App Definitions
+	Held Items
 {% endblock %}
 {% block head_title %}Institutions{% endblock %}
 {% block more_css %}
@@ -23,7 +23,7 @@
 					</tr>
 				{% for item in helditems %}
 					<tr>
-						<td><a href="/instance?id={{ item['i']['value'] }}">{{ item['title']['value'] }}</a></td>
+						<td><a href="{{ url_for('bibcat.institution_helditem_path') }}?id={{ item['i']['value'] }}">{{ item['title']['value'] }}</a></td>
 						<td>{{ item['aut']['value'] }}</td>
 						<td>{{ item['isbn']['value'] }}</td>
 					</tr>

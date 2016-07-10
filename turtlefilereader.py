@@ -84,7 +84,7 @@ class LargeTurtleReader (object):
                 
     def _scan_linepos(self):
         """sets the seek offsets of the beginning of each line. This will 
-        allow for open and closing the file at appropriate loacations"""
+        allow for open and closing the file at appropriate locations"""
         
         linepos = []
         offset = 0
