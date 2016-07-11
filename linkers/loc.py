@@ -4,7 +4,6 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 from .linker import Linker
 
-
 class LibraryOfCongressLinker(Linker):
     """Library of Congress Linked Data Linker"""
     ID_LOC_URL = "http://id.loc.gov/"

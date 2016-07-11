@@ -81,7 +81,8 @@ DEDUP_AGENTS = PREFIX + """
 SELECT DISTINCT ?agent
 WHERE {{
     ?agent rdf:type <{0}> .
-    ?agent <{1}>  "{2}" .
+    ?agent <{1}> ?label .
+    filter contains("{2}", ?label)
 }}"""
 
 GET_ADDL_PROPS = PREFIX + """
@@ -103,13 +104,6 @@ WHERE {{
     ?entity <{0}> ?identifier .
     ?identifier rdf:type <{1}> .
     ?identifier rdf:value "{2}" .
-}}"""
-
-DEDUP_AGENTS = PREFIX + """
-SELECT DISTINCT ?agent
-WHERE {{
-    ?agent rdf:type <{0}> .
-    ?agent <{1}>  "{2}" .
 }}"""
 
 GET_ADDL_PROPS = PREFIX + """

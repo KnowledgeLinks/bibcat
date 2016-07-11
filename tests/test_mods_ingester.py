@@ -8,6 +8,7 @@ import unittest
 sys.path.append(os.path.abspath(os.path.curdir))
 import ingesters
 import ingesters.mods as mods
+from ingesters import NS_MGR
 
 ingesters.MLOG_LVL = logging.CRITICAL
 logging.getLogger("requests").setLevel(logging.CRITICAL)
@@ -57,7 +58,7 @@ class TestMODSUpdateDirectProperties(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_direct_properties(
-            self.ingester.ns.bf.Instance,
+            NS_MGR.bf.Instance,
             self.entity)
 
 class TestMODSUpdateLinkedClasses(unittest.TestCase):
@@ -68,7 +69,7 @@ class TestMODSUpdateLinkedClasses(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_linked_classes(
-            self.ingester.ns.bf.Item,
+            NS_MGR.bf.Item,
             self.entity)
 
 class TestMODSUpdateOrderedLinkedClasses(unittest.TestCase):
@@ -79,7 +80,7 @@ class TestMODSUpdateOrderedLinkedClasses(unittest.TestCase):
        
     def test_default_method(self):
         self.ingester.update_ordered_linked_classes(
-            self.ingester.ns.bf.Item,
+            NS_MGR.bf.Item,
             self.entity)
        
 if __name__ == '__main__':

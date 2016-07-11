@@ -14,7 +14,7 @@ import uuid
 
 import xml.etree.ElementTree as etree
 
-from ingesters import Ingester, new_graph 
+from ingesters import Ingester, new_graph, NS_MGR 
 from ingesters.sparql import *
 
 DC = rdflib.Namespace("http://purl.org/dc/elements/1.1/")
@@ -52,7 +52,7 @@ class DCIngester(Ingester):
         target_subject = kwargs.get("target_subject")
         delimiter = self.rules_graph.value(
             subject=target_subject, 
-            predicate=self.ns.kds.delimiterProp)
+            predicate=NS_MGR.kds.delimiterProp)
         for value in self.source.objects(predicate=rule):
             if len(str(value).strip()) < 1:
                 continue

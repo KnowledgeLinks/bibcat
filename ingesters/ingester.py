@@ -40,6 +40,7 @@ try:
 except:
      __version__ = "unknown"
 
+NS_MGR = RdfNsManager()
 
 class Ingester(object):
     """Base class for transforming various metadata format/vocabularies to 
@@ -47,7 +48,6 @@ class Ingester(object):
     
     # set the NameSpace Manager 
     #! Why does this need to be part of this class?
-    ns = RdfNsManager()
 
     def __init__(self, **kwargs):
         self.base_url = kwargs.get("base_url", "http://bibcat.org/")
@@ -65,29 +65,11 @@ class Ingester(object):
         self.rules_graph = new_graph()
         if os.path.exists(rules_filepath):
             self.rules_graph.parse(rules_filepath, format='turtle')
-            self.ns.load(rules_filepath)
+            NS_MGR.load(rules_filepath)
         self.source = kwargs.get("source")
         self.triplestore_url = kwargs.get(
             "triplestore_url", 
             "http://localhost:8080/blazegraph/sparql")
-        if not hasattr(Ingester.ns, 'bf'):
-            Ingester.ns.bind("bf", "http://id.loc.gov/ontologies/bibframe/")
-        if not hasattr(Ingester.ns, "kds"):
-            Ingester.ns.bind(
-                "kds", 
-                "http://knowledgelinks.io/ns/data-structures/")
-        if not hasattr(Ingester.ns, "owl"):
-            Ingester.ns.bind(
-                "owl",
-                rdflib.OWL)
-        if not hasattr(Ingester.ns, "relators"):
-            Ingester.ns.bind(
-                "relators",
-                "http://id.loc.gov/vocabulary/relators/")
-        if not hasattr(Ingester.ns, "schema"):
-            Ingester.ns.bind(
-                "schema",
-                "http://schema.org/")
 
 
     def add_admin_metadata(self, entity):
@@ -100,9 +82,9 @@ class Ingester(object):
         generation_process = rdflib.BNode()
         self.graph.add((generation_process, 
             rdflib.RDF.type, 
-            Ingester.ns.bf.GenerationProcess))
+            NS_MGR.bf.GenerationProcess))
         self.graph.add((generation_process, 
-            Ingester.ns.bf.generationDate, 
+            NS_MGR.bf.generationDate, 
             rdflib.Literal(datetime.datetime.utcnow().isoformat())))
         self.graph.add((generation_process,
             rdflib.RDF.value,
@@ -110,7 +92,7 @@ class Ingester(object):
                    lang="en")))
         #! Should add bibcat's current git MD5 commit 
         self.graph.add((entity, 
-            Ingester.ns.bf.generationProcess, 
+            NS_MGR.bf.generationProcess, 
             generation_process))
 
 
@@ -214,9 +196,9 @@ class Ingester(object):
         if not source is None:
             self.source = source
             self.graph = new_graph()
-        bf_instance = self.populate_entity(self.ns.bf.Instance, instance_uri)
-        bf_item = self.populate_entity(self.ns.bf.Item, item_uri)
-        self.graph.add((bf_item, self.ns.bf.itemOf, bf_instance))
+        bf_instance = self.populate_entity(NS_MGR.bf.Instance, instance_uri)
+        bf_item = self.populate_entity(NS_MGR.bf.Item, item_uri)
+        self.graph.add((bf_item, NS_MGR.bf.itemOf, bf_instance))
         return bf_instance, bf_item
 
     def update_direct_properties(self,
@@ -261,7 +243,7 @@ class Ingester(object):
                 dest_class, 
                 dest_property,
                 entity_class, 
-                self.ns.kds.PropertyLinker)
+                NS_MGR.kds.PropertyLinker)
             for row in self.rules_graph.query(sparql_prop):
                 self.__handle_linked_pattern__(
                     entity=entity, 
@@ -287,7 +269,7 @@ class Ingester(object):
                 GET_SRC_PROP.format(dest_class,
                     dest_property,
                     entity_class,
-                    KDS.OrderedPropertyLinker)):
+                    NS_MGR.kds.OrderedPropertyLinker)):
                 self.__handle_ordered__(entity_class=entity_class, 
                     entity=entity,
                     destination_property=dest_property,
@@ -299,7 +281,7 @@ def new_graph():
     # setup log
     lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
     lg.setLevel(MLOG_LVL)
-    graph = rdflib.Graph(namespace_manager=RdfNsManager())
+    graph = rdflib.Graph(namespace_manager=NS_MGR)
     return graph
 
 from .sparql import *

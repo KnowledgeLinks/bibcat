@@ -50,8 +50,8 @@ class TestDeduplicatingAgents(unittest.TestCase):
 
     def test_default_deduplicate_agents(self):
         self.ingester.deduplicate_agents(
-            self.ingester.ns.schema.oclc, 
-            self.ingester.ns.bf.Agent)
+            ingesters.NS_MGR.schema.oclc, 
+            ingesters.NS_MGR.bf.Agent)
 
 
 class TestMatchMARC(unittest.TestCase):
@@ -84,7 +84,7 @@ class TestMARCUpdateLinkedClasses(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_linked_classes(
-            self.ingester.ns.bf.Item,
+            ingesters.NS_MGR.bf.Item,
             self.entity)
 
     def tearDown(self):
@@ -99,7 +99,7 @@ class TestMARCUpdateDirectProperties(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_direct_properties(
-            self.ingester.ns.bf.Instance,
+            ingesters.NS_MGR.bf.Instance,
             self.entity)
 
 class TestMARCUpdateOrderedLinkedClasses(unittest.TestCase):
@@ -110,7 +110,7 @@ class TestMARCUpdateOrderedLinkedClasses(unittest.TestCase):
        
     def test_default_method(self):
         self.ingester.update_ordered_linked_classes(
-            self.ingester.ns.bf.Item,
+            ingesters.NS_MGR.bf.Item,
             self.entity)
 
 

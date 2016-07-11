@@ -10,14 +10,14 @@ import rdflib
 import requests
 import click
 import uuid
-from ingesters import Ingester, new_graph 
+from ingesters import config, Ingester, new_graph, NS_MGR 
 from ingesters.sparql import *
 from collections import OrderedDict
 
 # get the current file name for logs and set logging level
 MNAME = inspect.stack()[0][1]
-MLOG_LVL = logging.DEBUG
-logging.basicConfig(level=logging.DEBUG)
+MLOG_LVL = logging.CRITICAL
+logging.basicConfig(level=MLOG_LVL)
 
 class MARCIngester(Ingester):
 
@@ -52,7 +52,7 @@ class MARCIngester(Ingester):
             bf_class = self.new_existing_bnode(
                 target_property, 
                 target_subject)
-            self.graph.add((bf_class, self.ns.rdf.type, destination_class))
+            self.graph.add((bf_class, NS_MGR.rdf.type, destination_class))
             self.graph.add((entity, target_property, bf_class))
             self.graph.add(
                 (bf_class, 
@@ -150,17 +150,17 @@ class MARCIngester(Ingester):
             identifiers (list): List of BIBFRAME identifiers to run 
         """
         if len(identifiers) < 1:
-            identifiers = [self.ns.bf.Isbn,]
+            identifiers = [NS_MGR.bf.Isbn,]
         for identifier in identifiers:
-            sparql = GET_IDENTIFIERS.format(self.ns.bf.Instance, identifier) 
+            sparql = GET_IDENTIFIERS.format(NS_MGR.bf.Instance, identifier) 
             for row in self.graph.query(sparql):
                 instance_uri, ident_value = row
                 # get temp Instance URIs and 
                 sparql = DEDUP_ENTITIES.format(
-                    self.ns.bf.identifiedBy, 
+                    NS_MGR.bf.identifiedBy, 
                     identifier, 
                     ident_value)
-                result = requests.post(TRIPLESTORE_URL,
+                result = requests.post(config.TRIPLESTORE_URL,
                     data={"query": sparql,
                       "format": "json"})
                 self.logger.debug("\nquery: %s", sparql)
@@ -173,7 +173,7 @@ class MARCIngester(Ingester):
                 #! Exits out of all for loops with the first match
                 existing_uri = rdflib.URIRef(
                     bindings[0].get('entity',{}).get('value'))
-                replace_uris(graph, instance_uri, existing_uri, [self.ns.bf.hasItem,])
+                replace_uris(graph, instance_uri, existing_uri, [NS_MGR.bf.hasItem,])
                 
 
     def deduplicate_agents(self, filter_class, agent_class):
@@ -192,7 +192,7 @@ class MARCIngester(Ingester):
                 agent_class,
                 filter_class,
                 value)
-            result = requests.post(TRIPLESTORE_URL,
+            result = requests.post(config.TRIPLESTORE_URL,
                 data={"query": sparql,
                   "format": "json"})
             if result.status_code > 399:
@@ -264,11 +264,13 @@ class MARCIngester(Ingester):
         if record is not None:
             if isinstance(record, pymarc.Record):
                 self.source = record
-                self.graph = self.new_graph()
+                self.graph = new_graph()
         bf_instance, bf_item = super(MARCIngester, self).transform()
         # Run de-duplication methods
         self.deduplicate_instances()
-        self.deduplicate_agents(SCHEMA.oclc, self.ns.bf.Organization)
+        self.deduplicate_agents(
+            NS_MGR.schema.oclc, 
+            NS_MGR.bf.Organization)
 
 @click.command()
 @click.argument("filepath")

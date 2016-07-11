@@ -61,7 +61,7 @@ class TestDCUpdateLinkedClasses(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_linked_classes(
-            self.ingester.ns.bf.Item,
+            ingesters.NS_MGR.bf.Item,
             self.entity)
 
     def tearDown(self):
@@ -76,7 +76,7 @@ class TestDCUpdateDirectProperties(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_direct_properties(
-            self.ingester.ns.bf.Instance,
+            ingesters.NS_MGR.bf.Instance,
             self.entity)
 
 class TestDCUpdateOrderedLinkedClasses(unittest.TestCase):
@@ -87,7 +87,7 @@ class TestDCUpdateOrderedLinkedClasses(unittest.TestCase):
        
     def test_default_method(self):
         self.ingester.update_ordered_linked_classes(
-            self.ingester.ns.bf.Item,
+            ingesters.NS_MGR.bf.Item,
             self.entity)
 
 
