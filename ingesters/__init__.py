@@ -35,11 +35,14 @@ try:
 except:
      __version__ = "unknown"
 
-
+from rdfframework.utilities import RdfNsManager
 
 class Ingester(object):
     """Base class for transforming various metadata format/vocabularies to 
     BIBFRAME RDF Linked Data"""
+    
+    # set the NameSpace Controller
+    ns = RdfNsManager()
 
     def __init__(self, **kwargs):
         self.base_url = kwargs.get("base_url", "http://bibcat.org/")
@@ -57,6 +60,7 @@ class Ingester(object):
         self.rules_graph = new_graph()
         if os.path.exists(rules_filepath):
             self.rules_graph.parse(rules_filepath, format='turtle')
+            self.ns.load(rules_filepath)
         self.source = kwargs.get("source")
         self.triplestore_url = kwargs.get(
             "triplestore_url", 
@@ -267,14 +271,7 @@ def new_graph():
     # setup log
     lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
     lg.setLevel(MLOG_LVL)
-    graph = rdflib.Graph()
-    graph.namespace_manager.bind("bf", BF)
-    graph.namespace_manager.bind("kds", KDS)
-    graph.namespace_manager.bind("owl", rdflib.OWL)
-    graph.namespace_manager.bind("rdf", rdflib.RDF)
-    graph.namespace_manager.bind("rdfs", rdflib.RDFS)
-    graph.namespace_manager.bind("relators", RELATORS)
-    graph.namespace_manager.bind("schema", SCHEMA)
+    graph = rdflib.Graph(namespace_manager=RdfNsManager())
     return graph
 
 from .sparql import *

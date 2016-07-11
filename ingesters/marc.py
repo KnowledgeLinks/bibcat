@@ -55,7 +55,7 @@ class MARCIngester(Ingester):
             bf_class = self.new_existing_bnode(
                 target_property, 
                 target_subject)
-            self.graph.add((bf_class, rdflib.RDF.type, destination_class))
+            self.graph.add((bf_class, self.ns.rdf.type, destination_class))
             self.graph.add((entity, target_property, bf_class))
             self.graph.add(
                 (bf_class, 
@@ -135,7 +135,7 @@ class MARCIngester(Ingester):
                       rdflib.Literal(ordered_value.strip())))
                 self.graph.add(
                     (bf_class, 
-                     rdflib.RDF.type, 
+                     self.ns.rdf.type, 
                      dest_class))
                 self.graph.add((entity, prop, bf_class))
             # Sets additional properties
@@ -145,7 +145,7 @@ class MARCIngester(Ingester):
 
 
 
-    def deduplicate_instances(self, identifiers=[BF.Isbn]):
+    def deduplicate_instances(self, identifiers=[self.ns.bf.Isbn]):
         """ Takes a BIBFRAME 2.0 graph and attempts to de-duplicate 
             Instances.
 
@@ -153,12 +153,12 @@ class MARCIngester(Ingester):
             identifiers (list): List of BIBFRAME identifiers to run 
         """
         for identifier in identifiers:
-            sparql = GET_IDENTIFIERS.format(BF.Instance, identifier) 
+            sparql = GET_IDENTIFIERS.format(self.ns.bf.Instance, identifier) 
             for row in self.graph.query(sparql):
                 instance_uri, ident_value = row
                 # get temp Instance URIs and 
                 sparql = DEDUP_ENTITIES.format(
-                    BF.identifiedBy, 
+                    self.ns.bf.identifiedBy, 
                     identifier, 
                     ident_value)
                 result = requests.post(TRIPLESTORE_URL,
@@ -174,7 +174,7 @@ class MARCIngester(Ingester):
                 #! Exits out of all for loops with the first match
                 existing_uri = rdflib.URIRef(
                     bindings[0].get('entity',{}).get('value'))
-                replace_uris(graph, instance_uri, existing_uri, [BF.hasItem,])
+                replace_uris(graph, instance_uri, existing_uri, [self.ns.bf.hasItem,])
                 
 
     def deduplicate_agents(self, filter_class, agent_class):
@@ -269,7 +269,7 @@ class MARCIngester(Ingester):
         bf_instance, bf_item = super(MARCIngester, self).transform()
         # Run de-duplication methods
         self.deduplicate_instances()
-        self.deduplicate_agents(SCHEMA.oclc, BF.Organization)
+        self.deduplicate_agents(SCHEMA.oclc, self.ns.bf.Organization)
 
 @click.command()
 @click.argument("filepath")

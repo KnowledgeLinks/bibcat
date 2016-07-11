@@ -1,24 +1,7 @@
 import rdflib
+from rdfframework.utilities import RdfNsManager
 
-BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
-KDS = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
-RELATORS = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
-SCHEMA = rdflib.Namespace("http://schema.org/")
-
-PREFIX  = """PREFIX bf: <{}>
-PREFIX kds: <{}>
-PREFIX rdf: <{}>
-PREFIX rdfs: <{}>
-PREFIX bc: <http://knowledgelinks.io/ns/bibcat/> 
-PREFIX m21: <http://knowledgelinks.io/ns/marc21/> 
-PREFIX relators: <{}>
-PREFIX schema: <{}>""".format(
-    BF,
-    KDS,
-    rdflib.RDF,
-    rdflib.RDFS,
-    RELATORS,
-    SCHEMA)
+PREFIX  = NSM.get_prefix()
 
 GET_BLANK_NODE = PREFIX + """
 SELECT ?subject 

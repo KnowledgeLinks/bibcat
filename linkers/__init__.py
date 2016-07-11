@@ -8,22 +8,21 @@ import requests
 import urllib.parse
 
 from ingesters import new_graph
+from rdfframework import RdfNsManager
 
-DBO = rdflib.Namespace("http://dbpedia.org/ontology/")
-DBP = rdflib.Namespace("http://dbpedia.org/property/")
-DBR = rdflib.Namespace("http://dbpedia.org/resource/")
+NS = RdfNsManager()
+NS.bind("dbo", Namespace("http://dbpedia.org/ontology/"))
+NS.bind("dbp", Namespace("http://dbpedia.org/property/"))
+NS.bind("dbr", Namespace("http://dbpedia.org/resource/"))
 
 def create_graph():
-    graph = new_graph()
-    graph.namespace_manager.bind("dbo", DBO)
-    graph.namespace_manager.bind("dbp", DBP)
-    graph.namespace_manager.bind("dbr", DBR)
+    graph = new_graph(namespace_manager=NS)
     return graph
 
 
 class Linker(object):
     """Base Linker class for all other linker classes"""
-
+    ns = NS
     def __init__(self, **kwargs):
         pass
 
@@ -64,7 +63,7 @@ class DBPediaLinker(Linker):
                 namespace_filters.append(str(filter_))
                 filters.pop(filter_)
         uri_graph = create_graph()
-        uri_graph.add((uri, rdflib.OWL.sameAs, dbpedia_uri))
+        uri_graph.add((uri, self.ns.owl.sameAs, dbpedia_uri))
         for predicate, object_ in dbpedia_resource.predicate_objects(
                 subject=dbpedia_uri):
             if predicate in filters:
@@ -87,9 +86,9 @@ class DBPediaLinker(Linker):
             list: A list of resources that match the label
         """
         if types is None:
-            types = [DBO.Album,
-                     DBO.Book,
-                     DBO.Film]
+            types = [self.ns.dbo.Album,
+                     self.ns.dbo.Book,
+                     self.ns.dbo.Film]
         sparql = """SELECT DISTINCT ?resource
         WHERE {{
             ?resource rdfs:label ?label .

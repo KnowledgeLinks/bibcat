@@ -17,7 +17,7 @@ class LargeTurtleReader (object):
     """ Reads a large turtle file and provides options for returning the data
     as specified 
     
-    args:
+    Args:
         filepath: the name of the turtle file.
         batch_size: the number of triples to return in each set.
     """
