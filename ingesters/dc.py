@@ -30,6 +30,8 @@ class DCIngester(Ingester):
         super(DCIngester, self).__init__(
             rules_ttl = "kds-bibcat-dc-ingestion.ttl",
             source = source)
+        #if not hasattr(self.ns, "dc"):
+        #    self
 
     def __handle_linked_pattern__(self, **kwargs):
         """Helper takes an entity, rule, BIBFRAME class, kds:srcPropXpath 
@@ -50,7 +52,7 @@ class DCIngester(Ingester):
         target_subject = kwargs.get("target_subject")
         delimiter = self.rules_graph.value(
             subject=target_subject, 
-            predicate=KDS.delimiterProp)
+            predicate=self.ns.kds.delimiterProp)
         for value in self.source.objects(predicate=rule):
             if len(str(value).strip()) < 1:
                 continue

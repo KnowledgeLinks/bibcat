@@ -31,7 +31,7 @@ MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 
 MODS2BIBFRAME = None
-NS_MODS = {"mods": str(NS.mods)}
+NS_MODS = {"mods", "http://www.loc.gov/mods/v3"}
 
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""
@@ -40,7 +40,7 @@ class MODSIngester(Ingester):
         super(MODSIngester, self).__init__(
             rules_ttl="kds-bibcat-mods-ingestion.ttl",
             source=mods_xml)
-            self.ns.bind("mods", rdflib.Namespace("http://www.loc.gov/mods/v3"))
+        self.ns.bind("mods", rdflib.Namespace("http://www.loc.gov/mods/v3"))
 
     def __handle_linked_bnode__(self, **kwargs):
         """Helper takes an entity with a blank nodes as a linking property

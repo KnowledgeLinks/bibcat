@@ -7,9 +7,14 @@ import unittest
 
 import xml.etree.ElementTree as etree
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.abspath(os.path.curdir))
 import ingesters
 import ingesters.dc as dc
+
+ingesters.MLOG_LVL = logging.CRITICAL
+logging.getLogger("requests").setLevel(logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 with open(os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 
@@ -56,7 +61,7 @@ class TestDCUpdateLinkedClasses(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_linked_classes(
-            ingesters.BF.Item,
+            self.ingester.ns.bf.Item,
             self.entity)
 
     def tearDown(self):
@@ -71,7 +76,7 @@ class TestDCUpdateDirectProperties(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_direct_properties(
-            ingesters.BF.Instance,
+            self.ingester.ns.bf.Instance,
             self.entity)
 
 class TestDCUpdateOrderedLinkedClasses(unittest.TestCase):
@@ -82,7 +87,7 @@ class TestDCUpdateOrderedLinkedClasses(unittest.TestCase):
        
     def test_default_method(self):
         self.ingester.update_ordered_linked_classes(
-            ingesters.BF.Item,
+            self.ingester.ns.bf.Item,
             self.entity)
 
 

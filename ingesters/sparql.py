@@ -1,7 +1,20 @@
+import os
 import rdflib
+import sys
+
+from .ingester import PROJECT_BASE
+sys.path.append(PROJECT_BASE)
+try:
+    import rdfw as rdfframework
+except ImportError:
+    pass
 from rdfframework.utilities import RdfNsManager
 
-PREFIX  = NSM.get_prefix()
+NSM = RdfNsManager()
+
+PREFIX  = NSM.prefix()
+
+print(PREFIX)
 
 GET_BLANK_NODE = PREFIX + """
 SELECT ?subject 

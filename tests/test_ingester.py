@@ -35,7 +35,7 @@ WHERE {{
 }}"""
         self.ingester.add_admin_metadata(self.entity)
         results = [row for row in self.ingester.graph.query(
-            sparql.format(ingesters.BF.GenerationProcess))]
+            sparql.format(self.ingester.ns.bf.GenerationProcess))]
         self.assertEqual(len(results), 1)
         self.assertTrue(isinstance(results[0][0], rdflib.BNode))
 
@@ -43,7 +43,7 @@ WHERE {{
         sparql = """SELECT ?generationDate
 WHERE {{
     ?bnode <{0}> ?generationDate .
-}}""".format(ingesters.BF.generationDate)
+}}""".format(self.ingester.ns.bf.generationDate)
         self.ingester.add_admin_metadata(self.entity)
         results = [r for r in self.ingester.graph.query(sparql)]
         date_literal = results[0][0]
@@ -111,7 +111,7 @@ class TestNewExistingBNode(unittest.TestCase):
 
     def test_new_bnode(self):
         result = self.ingester.new_existing_bnode(
-            ingesters.SCHEMA.name,
+            self.ingester.ns.schema.name,
             "M24510a")
         self.assertTrue(isinstance(result, rdflib.BNode)) 
 
@@ -121,7 +121,8 @@ class TestNewGraph(unittest.TestCase):
         self.graph = ingesters.new_graph()
 
     def test_new_graph(self):
-        self.assertEqual(self.graph.serialize(format='turtle').decode(),
+        default_turtle = self.graph.serialize(format='turtle').decode()
+        self.assertEqual(default_turtle,
             """@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -142,18 +143,21 @@ class TestPopulateEntity(unittest.TestCase):
 
     def test_new_instance(self):
         entity = self.ingester.populate_entity(
-            ingesters.BF.Instance)
+            self.ingester.ns.bf.Instance)
         self.assertEqual(
             self.ingester.graph.value(subject=entity, 
                 predicate=rdflib.RDF.type),
-            ingesters.BF.Instance)
+            self.ingester.ns.bf.Instance)
 
 class TestRemoveBlankNodes(unittest.TestCase):
 
     def setUp(self):
         self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
         self.bnode = rdflib.BNode()
-        self.ingester.graph.add((self.bnode, rdflib.RDF.type, ingesters.BF.Isbn))
+        self.ingester.graph.add(
+            (self.bnode, 
+             rdflib.RDF.type, 
+             self.ingester.ns.bf.Isbn))
 
     def test_flat_remove_blank_nodes(self):
         self.assertTrue(
@@ -173,7 +177,7 @@ class TestReplaceURIs(unittest.TestCase):
             uuid.uuid1()))
         self.ingester.graph.add((
             self.old_uri, 
-            ingesters.BF.instanceOf, 
+            self.ingester.ns.bf.instanceOf, 
             self.work_uri))
         self.new_uri = rdflib.URIRef("http://new.bibcat.org/{}".format(
             uuid.uuid1()))
@@ -181,13 +185,13 @@ class TestReplaceURIs(unittest.TestCase):
     def test_simple_replace_uri(self):
         self.assertEqual(
             self.ingester.graph.value(
-                predicate=ingesters.BF.instanceOf,
+                predicate=self.ingester.ns.bf.instanceOf,
                 object=self.work_uri),
             self.old_uri)
         self.ingester.replace_uris(self.old_uri, self.new_uri)
         self.assertEqual(
             self.ingester.graph.value(
-                predicate=ingesters.BF.instanceOf,
+                predicate=self.ingester.ns.bf.instanceOf,
                 object=self.work_uri),
             self.new_uri)
 
@@ -212,7 +216,7 @@ class TestUpdateDirectProperties(unittest.TestCase):
     def test_default_method(self):
         self.assertIsNone(
             self.ingester.update_direct_properties(
-                ingesters.BF.Item, 
+                self.ingester.ns.bf.Item, 
                 self.entity))
 
     def test_basic_rule(self):
@@ -229,7 +233,7 @@ bc:m21-bf_copyrightDate a kds:PropertyLinker;
     kds:destPropUri bf:copyrightDate.""",
             format="turtle")
         self.ingester.update_direct_properties(
-                ingesters.BF.Item, 
+                self.ingester.ns.bf.Item, 
                 self.entity)
 
 
@@ -242,7 +246,7 @@ class TestUpdateLinkedClasses(unittest.TestCase):
     def test_default_method(self):
         self.assertIsNone(
             self.ingester.update_linked_classes(
-                ingesters.BF.Item, 
+                self.ingester.ns.bf.Item, 
                 self.entity))
 
 class TestUpdateOrderedLinkedClasses(unittest.TestCase):
@@ -254,7 +258,7 @@ class TestUpdateOrderedLinkedClasses(unittest.TestCase):
     def test_default_method(self):
         self.assertIsNone(
             self.ingester.update_ordered_linked_classes(
-                ingesters.BF.Item,
+                self.ingester.ns.bf.Item,
                 self.entity))
  
 

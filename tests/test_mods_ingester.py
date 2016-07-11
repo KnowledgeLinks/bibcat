@@ -57,7 +57,7 @@ class TestMODSUpdateDirectProperties(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_direct_properties(
-            ingesters.BF.Instance,
+            self.ingester.ns.bf.Instance,
             self.entity)
 
 class TestMODSUpdateLinkedClasses(unittest.TestCase):
@@ -68,7 +68,7 @@ class TestMODSUpdateLinkedClasses(unittest.TestCase):
 
     def test_default_method(self):
         self.ingester.update_linked_classes(
-            ingesters.BF.Item,
+            self.ingester.ns.bf.Item,
             self.entity)
 
 class TestMODSUpdateOrderedLinkedClasses(unittest.TestCase):
@@ -79,7 +79,7 @@ class TestMODSUpdateOrderedLinkedClasses(unittest.TestCase):
        
     def test_default_method(self):
         self.ingester.update_ordered_linked_classes(
-            ingesters.BF.Item,
+            self.ingester.ns.bf.Item,
             self.entity)
        
 if __name__ == '__main__':

@@ -19,9 +19,6 @@ MNAME = inspect.stack()[0][1]
 MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 
-TRIPLESTORE_URL = "http://localhost:8080/blazegraph/sparql"
-
-
 class MARCIngester(Ingester):
 
     def __init__(self, record):
@@ -145,13 +142,15 @@ class MARCIngester(Ingester):
 
 
 
-    def deduplicate_instances(self, identifiers=[self.ns.bf.Isbn]):
+    def deduplicate_instances(self, identifiers=[]):
         """ Takes a BIBFRAME 2.0 graph and attempts to de-duplicate 
             Instances.
 
         Args:
             identifiers (list): List of BIBFRAME identifiers to run 
         """
+        if len(identifiers) < 1:
+            identifiers = [self.ns.bf.Isbn,]
         for identifier in identifiers:
             sparql = GET_IDENTIFIERS.format(self.ns.bf.Instance, identifier) 
             for row in self.graph.query(sparql):
