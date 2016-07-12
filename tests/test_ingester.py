@@ -78,8 +78,25 @@ class TestAddingToTriplestore(unittest.TestCase):
         self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
 
     def test_add_to_triplestore(self):
+        print(self.ingester.graph.serialize(format="turtle").decode())
         self.ingester.add_to_triplestore()
    
+class TestGenerateURI(unittest.TestCase):
+
+    def setUp(self):
+        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+
+    def test_default(self):
+        self.assertTrue(
+            str(self.ingester.__generate_uri__()).startswith(
+                "http://bibcat.org/"))
+
+    def test_custom_base_url(self):
+        ingester = ingesters.Ingester(base_url="http://test.edu", 
+            rules_ttl="test.ttl")
+        self.assertTrue(
+            str(ingester.__generate_uri__()).startswith(
+                "http://test.edu/"))
 
 class TestInitIngester(unittest.TestCase):
 

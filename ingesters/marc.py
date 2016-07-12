@@ -173,11 +173,19 @@ class MARCIngester(Ingester):
                 #! Exits out of all for loops with the first match
                 existing_uri = rdflib.URIRef(
                     bindings[0].get('entity',{}).get('value'))
-                replace_uris(graph, instance_uri, existing_uri, [NS_MGR.bf.hasItem,])
+                self.replace_uris(instance_uri, existing_uri, [NS_MGR.bf.hasItem,])
                 
 
-    def deduplicate_agents(self, filter_class, agent_class):
-        """Deduplicates graph"""
+    def deduplicate_agents(self, filter_class, agent_class, calculate_uri=None):
+        """Deduplicates graph
+
+        Args:
+            filter_class(rdflib.URIRef): Filter class URI
+            agent_class(rdflib.URIRef): Agent BF class
+            calculate_uri(rdflib.URIRef): Function for calculating a default URI 
+                                          if agent_class is not found, default 
+                                          is None.
+        """
         lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
         lg.setLevel(MLOG_LVL)
         sparql = PREFIX + """
@@ -200,8 +208,13 @@ class MARCIngester(Ingester):
                 continue
             bindings = result.json().get('results', dict()).get('bindings', [])
             if len(bindings) < 1:
-                # Agent doesn't exit in triplestore add new URI
-                new_agent_uri = rdflib.URIRef("http://bibcat.org/{}".format(uuid.uuid1()))
+                # Agent doesn't exit in triplestore, calls custom function to 
+                # generate new_agent_uri 
+                if calculate_uri is not None:
+                    new_agent_uri = calculate_uri(self.source)
+                else:
+                    # Add new URI with defaults
+                    new_agent_uri = self.__generate_uri__()    
             else:
                 new_agent_uri = rdflib.URIRef(bindings[0].get("agent").get("value"))
             for subject, pred in self.graph.subject_predicates(object=agent_uri):
@@ -254,12 +267,14 @@ class MARCIngester(Ingester):
         self.logger.debug("\n**** output ****\n%s", output)
         return output
 
-    def transform(self, record=None):
+    def transform(self, record=None, calculate_default=None):
         """Method transforms a MARC record (either instance source
         or passed in MARC21 record) into BIBFRAME 2.0 
 
         Args:
             record(pymarc.Record): MARC21 Record
+            calculate_default(function): Function to generate org
+                for bf:heldBy, default is None 
         """
         if record is not None:
             if isinstance(record, pymarc.Record):
@@ -270,7 +285,8 @@ class MARCIngester(Ingester):
         self.deduplicate_instances()
         self.deduplicate_agents(
             NS_MGR.schema.oclc, 
-            NS_MGR.bf.Organization)
+            NS_MGR.bf.Organization,
+            calculate_default)
 
 @click.command()
 @click.argument("filepath")

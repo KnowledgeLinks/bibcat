@@ -24,7 +24,6 @@ bc:dc-description a kds:PropertyLinker ;
     kds:destPropUri rdf:value ;
     kds:destClassUri rdf:Note ;
     kds:linkedRange bf:note ;
-    kds:destAdditionalPropUris [ bf:noteType "abstract"@en ];
     kds:linkedClass bf:Instance .
 
 bc:dc-identifier a kds:PropertyLinker;
@@ -46,6 +45,13 @@ bc:dc-language a kds:PropertyLinker ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Language ;
     kds:linkedRange bf:language ;
+    kds:linkedClass bf:Instance .
+
+bc:dc-relation a kds:PropertyLinker ;
+    kds:srcPropUri dc:relation ;
+    kds:destPropUri rdfs:label ;
+    kds:destClassUri rdf:Resource, rdfs:Container ;
+    kds:linkedRange bf:partOf ;
     kds:linkedClass bf:Instance .
 
 bc:dc-rights a kds:PropertyLinker;

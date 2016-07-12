@@ -11,8 +11,9 @@ import xml.etree.ElementTree as etree
 sys.path.append(os.path.abspath(os.path.curdir))
 import ingesters
 import ingesters.dc as dc
-
+dc.NS_MGR.log_level = logging.CRITICAL
 ingesters.MLOG_LVL = logging.CRITICAL
+dc.MLOG_LVL = logging.CRITICAL
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 

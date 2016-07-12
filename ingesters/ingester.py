@@ -29,8 +29,9 @@ try:
     import rdfw as rdfframework
     from rdfframework.utilities import RdfNsManager
 except ImportError:
+    
     logging.error("Error importing {}".format(PROJECT_BASE))
-    pass
+    #pass
 try:
     version_path = os.path.join(
         BIBCAT_BASE,
@@ -72,6 +73,16 @@ class Ingester(object):
             "http://localhost:8080/blazegraph/sparql")
 
 
+    def __generate_uri__(self):
+        """Method generates an URI based on the base_url"""
+        uid = uuid.uuid1()
+        if self.base_url.endswith("/"):
+            pattern = "{0}{1}"
+        else:
+            pattern = "{0}/{1}"
+        return rdflib.URIRef(pattern.format(self.base_url, uid))
+
+
     def add_admin_metadata(self, entity):
         """Takes a graph and adds the AdminMetadata for the entity
 
@@ -103,7 +114,7 @@ class Ingester(object):
            data=self.graph.serialize(format='turtle'),
            headers={"Content-Type": "text/turtle"})
        if add_result.status_code > 399:
-           lg.error("Could not add graph to {}, status={}".format(
+           logging.error("Could not add graph to {}, status={}".format(
                self.triplestore_url,
                add_result.status_code))
 
@@ -139,15 +150,10 @@ class Ingester(object):
         Returns:
            rdflib.URIRef: URI of new entity
         """
-        uid = uuid.uuid1()
         if existing_uri:
             entity_uri = existing_uri
         else:
-            if self.base_url.endswith("/"):
-                pattern = "{0}{1}"
-            else:
-                pattern = "{0}/{1}"
-            entity_uri = rdflib.URIRef(pattern.format(self.base_url, uid))
+            entity_uri = self.__generate_uri__()
         self.graph.add((entity_uri, rdflib.RDF.type, bf_class))
         self.update_linked_classes(bf_class, entity_uri)
         self.update_direct_properties(bf_class, entity_uri)

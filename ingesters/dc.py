@@ -17,6 +17,10 @@ import xml.etree.ElementTree as etree
 from ingesters import Ingester, new_graph, NS_MGR 
 from ingesters.sparql import *
 
+import ingesters
+MLOG_LVL = logging.DEBUG
+logging.basicConfig(level=logging.DEBUG)
+
 DC = rdflib.Namespace("http://purl.org/dc/elements/1.1/")
 DCTERM = rdflib.Namespace("http://purl.org/dc/terms/")
 
@@ -109,9 +113,51 @@ class DCIngester(Ingester):
             xml(string): Dublin Core XML String, default None
         """ 
         if xml:
-            self.source = rdflib.Graph()
+            self.source = new_graph()
             self.source.parse(data=xml, format="xml")
         item_uri = next(self.source.subjects())
         super(DCIngester, self).transform(item_uri=item_uri)
+        return item_uri
 
+@click.command()
+@click.option("--filepath", help="Full path to Dublin Core")
+@click.option("--input_format", help="format should be XML or CSV", default="xml")
+def handler(filepath, input_format):
+    if input_format.startswith("xml"):
+        iterate_xml(filepath)
+
+def iterate_xml(filepath):
+    logging.getLogger("requests").setLevel(logging.CRITICAL)
+    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+    ingester = DCIngester()
+    count = 0
+    start = datetime.datetime.utcnow()
+    print("Starting DC XML at {} for records at {}".format(
+        start,
+        filepath))
+    count = 0
+    for event, elem in etree.iterparse(filepath):
+        if elem.tag.endswith("Description"):
+            ingester.transform(etree.tostring(elem))
+            ingester.add_to_triplestore()
+            if not count%10 and count > 0:
+                print(".", end="")
+            if not count%100:
+                print(count, end="")
+            count += 1
+    end = datetime.datetime.utcnow()
+    print("Finished DC ingestion at {} total time of {} mins for {}".format(
+        end,
+        (end-start).seconds / 60.0,
+        count))
         
+    
+            
+            
+            
+        
+  
+    
+
+if __name__ == '__main__':
+    iterate_xml()
