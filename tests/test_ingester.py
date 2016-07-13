@@ -108,6 +108,9 @@ class TestInitIngester(unittest.TestCase):
             self.ingester.base_url,
             "http://bibcat.org/")
 
+    def test_missing_rules_ttl(self):
+        self.assertRaises(ValueError, ingesters.Ingester)
+
     def test_default_graph(self):
         self.assertEqual(
             len(self.ingester.graph),
@@ -126,7 +129,13 @@ class TestInitIngester(unittest.TestCase):
             self.ingester.triplestore_url,
             "http://localhost:8080/blazegraph/sparql")
 
+class TestInitLogSetup(unittest.TestCase):
 
+    def test_module_mname(self):
+        self.assertEqual(ingesters.MNAME, 
+            os.path.join(
+                os.path.join(ingesters.BIBCAT_BASE, "ingesters"),
+                "ingester.py"))
 
 class TestNewExistingBNode(unittest.TestCase):
 
@@ -146,18 +155,7 @@ class TestNewGraph(unittest.TestCase):
 
     def test_new_graph(self):
         default_turtle = self.graph.serialize(format='turtle').decode()
-        self.assertContains("""@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
-@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
-@prefix schema: <http://schema.org/> .
-@prefix xml: <http://www.w3.org/XML/1998/namespace> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
-""", default_turtle
-)
+        self.assertEqual(len(default_turtle), 979)
 
 class TestPopulateEntity(unittest.TestCase):
 

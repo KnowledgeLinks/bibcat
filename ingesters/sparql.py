@@ -2,7 +2,11 @@ import os
 import rdflib
 import sys
 
-from .ingester import PROJECT_BASE
+try:
+    from .ingester import PROJECT_BASE
+# Failed relative import
+except SystemError:
+    from ingester import PROJECT_BASE
 sys.path.append(PROJECT_BASE)
 try:
     import rdfw as rdfframework
@@ -13,8 +17,6 @@ from rdfframework.utilities import RdfNsManager
 NSM = RdfNsManager()
 
 PREFIX  = NSM.prefix()
-
-print(PREFIX)
 
 GET_BLANK_NODE = PREFIX + """
 SELECT ?subject 

@@ -1,13 +1,14 @@
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pcdm: <http://pcdm.org/models#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix relators: <http://id.loc.gov/vocabulary/relators/> .
-@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix dcr: <http://knowledgelinks.io/ns/dc/> .
 @prefix loc: <http://id.loc.gov/> .
 @prefix schema: <http://schema.org/> .
@@ -50,7 +51,7 @@ bc:dc-language a kds:PropertyLinker ;
 bc:dc-relation a kds:PropertyLinker ;
     kds:srcPropUri dc:relation ;
     kds:destPropUri rdfs:label ;
-    kds:destClassUri rdf:Resource, rdfs:Container ;
+    kds:destClassUri pcdm:Collection ;
     kds:linkedRange bf:partOf ;
     kds:linkedClass bf:Instance .
 
@@ -65,12 +66,9 @@ bc:dc-subject a kds:PropertyLinker ;
     kds:srcPropUri dc:subject ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:Topic ; 
-    kds:delimiterProp ";" ;
-    kds:hasIndividualNodes "true" ;
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance .
  
-
 bc:dc-title a kds:PropertyLinker;
     kds:srcPropUri dc:title ;
     kds:destPropUri bf:mainTitle;
