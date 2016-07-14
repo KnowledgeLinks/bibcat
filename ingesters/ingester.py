@@ -164,6 +164,7 @@ class Ingester(object):
             entity_uri = self.__generate_uri__()
         self.graph.add((entity_uri, rdflib.RDF.type, bf_class))
         self.update_linked_classes(bf_class, entity_uri)
+        print("POPULATE ENTITY {}".format(bf_class, entity_uri))
         self.update_direct_properties(bf_class, entity_uri)
         self.update_ordered_linked_classes(bf_class, entity_uri)
         self.add_admin_metadata(entity_uri)
@@ -207,7 +208,7 @@ class Ingester(object):
         Returns:
             tuple: BIBFRAME Instance and Item
         """
-        if not source is None:
+        if source is not None:
             self.source = source
             self.graph = new_graph()
         bf_instance = self.populate_entity(NS_MGR.bf.Instance, instance_uri)
@@ -225,6 +226,7 @@ class Ingester(object):
            entity_class (url): URL of the entity's class
            entity (rdflib.URIRef): RDFlib Entity
         """
+        print("ENTITY CLASS {} {}".format(entity_class, entity))
         sparql = GET_DIRECT_PROPS.format(entity_class)
         for dest_prop, rule in self.rules_graph.query(sparql):
             self.__handle_pattern__(

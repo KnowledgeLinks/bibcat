@@ -122,7 +122,7 @@ class MODSIngester(Ingester):
                 self.graph.add((bf_class_bnode, pred, obj))
 
 
-    def __handle_pattern__(self, entity, rule, dest_property):
+    def __handle_pattern__(self, entity, rule, destination_property):
         """Helper takes an kds:srcPropXpath element, extracts and returns
         xpath from the element's text
 
@@ -134,6 +134,11 @@ class MODSIngester(Ingester):
         Returns:
             str: Fully qualified XPath
         """
+        if isinstance(destination_property, rdflib.BNode):
+            for pred, obj in self.rules_graph.predicate_objects(
+                subject=destination_property):
+                self.graph.add((entity, pred, obj))
+            return
         mods_xpath = rule.text
         for element in self.source.findall(mods_xpath, NS):
             raw_text = element.text
