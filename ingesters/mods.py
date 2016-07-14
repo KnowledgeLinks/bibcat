@@ -15,7 +15,7 @@ import uuid
 import xml.etree.ElementTree as etree
 
 from collections import OrderedDict
-from ingesters import Ingester, new_graph, NS_MGR
+from ingesters.ingester import Ingester, new_graph, NS_MGR
 from ingesters.sparql import *
 
 sys.path.append(
@@ -31,7 +31,7 @@ MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 
 MODS2BIBFRAME = None
-NS_MODS = {"mods", "http://www.loc.gov/mods/v3"}
+NS_MODS = {"mods": "http://www.loc.gov/mods/v3"}
 
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""
@@ -62,15 +62,15 @@ class MODSIngester(Ingester):
             (bf_class_bnode, destination_property, intermediate_bnode))
         intermediate_bf_class = self.rules_graph.value(
             subject=bnode,
-            predicate=KDS.destClassUri)
+            predicate=NS_MGR.kds.destClassUri)
         intermediate_bf_property = self.rules_graph.value(
             subject=bnode,
-            predicate=KDS.destPropUri)
+            predicate=NS_MGR.kds.destPropUri)
         self.graph.add(
             (intermediate_bnode, rdflib.RDF.type, intermediate_bf_class))
         xpath = self.rules_graph.value(
             subject=target_subject,
-            predicate=KDS.srcPropXpath)
+            predicate=NS_MGR.kds.srcPropXpath)
         for row in self.source.findall(str(xpath), NS_MODS):
             self.graph.add(
                 (intermediate_bnode,
@@ -98,7 +98,8 @@ class MODSIngester(Ingester):
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
         mods_xpath = str(rule)
-        for element in self.source.findall(mods_xpath, NS):
+        print(mods_xpath, NS_MODS)
+        for element in self.source.findall(mods_xpath, NS_MODS):
             value = element.text
             if len(value) < 1:
                 continue
