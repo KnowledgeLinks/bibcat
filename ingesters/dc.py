@@ -6,7 +6,7 @@ import xml.etree.ElementTree as etree
 import click
 import rdflib
 
-from ingesters import Ingester, new_graph, NS_MGR
+from ingesters.ingester import Ingester, new_graph, NS_MGR
 from ingesters.sparql import GET_ADDL_PROPS
 
 import ingesters
