@@ -45,6 +45,13 @@ bc:mods-genreForm a kds:PropertyLinker;
     kds:linkedRange bf:genreFrom ;
     kds:linkedClass bf:Instance .
 
+bc:mods-abstract a kds:PropertyLinker;
+    kds:srcPropXpath "mods:abstract" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Summary ;
+    kds:linkedRange bf:summary ;
+    kds:linkedClass bf:Instance .
+
 bc:mods-title a kds:PropertyLinker;
     kds:srcPropXpath "mods:titleInfo/mods:title" ;
     kds:destPropUri bf:mainTitle;
