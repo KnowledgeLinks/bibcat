@@ -36,9 +36,14 @@ NS_MODS = {"mods": "http://www.loc.gov/mods/v3"}
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""
 
-    def __init__(self, mods_xml=None):
+    def __init__(self, mods_xml=None,  custom=None):
+        rules = ["kds-bibcat-mods-ingestion.ttl",]
+        if isinstance(custom, str):
+            rules.append(custom)
+        if isinstance(custom, list):
+            rules.extend(custom)
         super(MODSIngester, self).__init__(
-            rules_ttl="kds-bibcat-mods-ingestion.ttl",
+            rules_ttl=rules,
             source=mods_xml)
 
     def __handle_linked_bnode__(self, **kwargs):
@@ -166,7 +171,9 @@ class MODSIngester(Ingester):
         Args:
             mods_xml(xml.etree.ElementTree.XML): MODS XML or None
         """
-        bf_instance, bf_item = super(MODSIngester, self).transform(mods_xml)
+        if not mods_xml:
+            mods_xml = self.source
+        bf_instance, bf_item = super(MODSIngester, self).transform(source=mods_xml)
         
 
     
