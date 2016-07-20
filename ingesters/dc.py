@@ -158,6 +158,7 @@ class DCIngester(Ingester):
         if xml:
             self.source = new_graph()
             self.source.parse(data=xml, format="xml")
+            self.graph = new_graph()
         item_uri = next(self.source.subjects())
         super(DCIngester, self).transform(item_uri=item_uri)
         return item_uri

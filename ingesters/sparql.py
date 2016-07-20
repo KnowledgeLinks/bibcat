@@ -31,6 +31,7 @@ WHERE {{
     ?subj kds:destPropUri ?dest_prop .
     OPTIONAL {{ ?subj kds:srcPropUri ?src_prop }} .
     OPTIONAL {{ ?subj kds:srcPropXpath ?src_prop }} .
+    OPTIONAL {{ ?subj kds:srcPropKey ?src_prop }} .
 }}"""
 
 GET_LINKED_CLASSES = PREFIX + """
@@ -63,6 +64,7 @@ WHERE {{
     ?subj rdf:type <{3}> .
     OPTIONAL {{ ?subj kds:srcPropUri ?prop }} .
     OPTIONAL {{ ?subj kds:srcPropXpath ?prop }} .
+    OPTIONAL {{ ?subj kds:srcPropKey ?src_prop }} .
 }}"""
 
 HAS_MULTI_NODES = PREFIX + """
