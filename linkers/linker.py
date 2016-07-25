@@ -7,7 +7,7 @@ import rdflib
 import sys
 
 
-from ingesters import new_graph, PROJECT_BASE
+from ingesters.ingester import new_graph, PROJECT_BASE
 sys.path.append(PROJECT_BASE)
 try:
     import rdfw as rdfframework

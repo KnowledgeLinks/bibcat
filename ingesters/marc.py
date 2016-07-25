@@ -10,7 +10,7 @@ import rdflib
 import requests
 import click
 import uuid
-from ingesters import config, Ingester, new_graph, NS_MGR 
+from ingesters.ingester import config, Ingester, new_graph, NS_MGR
 from ingesters.sparql import *
 from collections import OrderedDict
 

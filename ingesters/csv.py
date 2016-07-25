@@ -18,7 +18,7 @@ class RowIngester(Ingester):
     the first row is assumed to be the column names""" 
 
     def __init__(self, source=None, custom=None):
-        rules = []
+        rules = ['kds-bibcat-csv-ingestion.ttl',]
         if isinstance(custom, str):
             rules.append(custom)
         elif isinstance(custom, list):

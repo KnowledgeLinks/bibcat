@@ -1,3 +1,4 @@
+from test_csv_row_ingester import *
 from test_dbpedia_linker import *
 from test_dc_ingester import *
 from test_info_linker import *

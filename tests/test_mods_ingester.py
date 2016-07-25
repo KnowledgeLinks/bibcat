@@ -8,9 +8,9 @@ import unittest
 sys.path.append(os.path.abspath(os.path.curdir))
 import ingesters
 import ingesters.mods as mods
-from ingesters import NS_MGR
+from ingesters.ingester import NS_MGR
 
-ingesters.MLOG_LVL = logging.CRITICAL
+ingesters.ingester.MLOG_LVL = logging.CRITICAL
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 

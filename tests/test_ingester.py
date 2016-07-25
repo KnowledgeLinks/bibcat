@@ -1,3 +1,4 @@
+__author__ = "Jeremy Nelson, Mike Stabile"
 import datetime
 import logging
 import os
@@ -10,7 +11,7 @@ import uuid
 
 sys.path.append(os.path.abspath(os.path.curdir))
 import ingesters
-from ingesters.ingester import NS_MGR
+from ingesters.ingester import Ingester, new_graph, MNAME, NS_MGR
 
 NS_MGR.bind("bf", "http://id.loc.gov/ontologies/bibframe/")
 NS_MGR.bind("kds", "http://knowledgelinks.io/ns/data-structures/")
@@ -26,7 +27,7 @@ class TestAddingAdminData(unittest.TestCase):
 
     def setUp(self):
         self.entity = rdflib.URIRef("http://test/resource")
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
         
         
     def test_add_admin_metadata(self):
@@ -75,7 +76,7 @@ WHERE {
 class TestAddingToTriplestore(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
 
     def test_add_to_triplestore(self):
         print(self.ingester.graph.serialize(format="turtle").decode())
@@ -84,7 +85,7 @@ class TestAddingToTriplestore(unittest.TestCase):
 class TestGenerateURI(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
 
     def test_default(self):
         self.assertTrue(
@@ -92,7 +93,7 @@ class TestGenerateURI(unittest.TestCase):
                 "http://bibcat.org/"))
 
     def test_custom_base_url(self):
-        ingester = ingesters.Ingester(base_url="http://test.edu", 
+        ingester = Ingester(base_url="http://test.edu", 
             rules_ttl="test.ttl")
         self.assertTrue(
             str(ingester.__generate_uri__()).startswith(
@@ -101,7 +102,7 @@ class TestGenerateURI(unittest.TestCase):
 class TestInitIngester(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
 
     def test_default_base_url(self):
         self.assertEqual(
@@ -109,7 +110,7 @@ class TestInitIngester(unittest.TestCase):
             "http://bibcat.org/")
 
     def test_missing_rules_ttl(self):
-        self.assertRaises(ValueError, ingesters.Ingester)
+        self.assertRaises(ValueError, Ingester)
 
     def test_default_graph(self):
         self.assertEqual(
@@ -132,15 +133,15 @@ class TestInitIngester(unittest.TestCase):
 class TestInitLogSetup(unittest.TestCase):
 
     def test_module_mname(self):
-        self.assertEqual(ingesters.MNAME, 
+        self.assertEqual(MNAME, 
             os.path.join(
-                os.path.join(ingesters.BIBCAT_BASE, "ingesters"),
+                os.path.join(ingesters.ingester.BIBCAT_BASE, "ingesters"),
                 "ingester.py"))
 
 class TestNewExistingBNode(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
 
     def test_new_bnode(self):
         result = self.ingester.new_existing_bnode(
@@ -151,16 +152,16 @@ class TestNewExistingBNode(unittest.TestCase):
 class TestNewGraph(unittest.TestCase):
 
     def setUp(self):
-        self.graph = ingesters.new_graph()
+        self.graph = new_graph()
 
     def test_new_graph(self):
         default_turtle = self.graph.serialize(format='turtle').decode()
-        self.assertEqual(len(default_turtle), 979)
+        self.assert_(len(default_turtle) > 400)
 
 class TestPopulateEntity(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
 
 
     def test_new_instance(self):
@@ -174,7 +175,7 @@ class TestPopulateEntity(unittest.TestCase):
 class TestRemoveBlankNodes(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
         self.bnode = rdflib.BNode()
         self.ingester.graph.add(
             (self.bnode, 
@@ -192,7 +193,7 @@ class TestRemoveBlankNodes(unittest.TestCase):
 class TestReplaceURIs(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
         self.old_uri = rdflib.URIRef("http://old.bibcat.org/{}".format(
             uuid.uuid1()))
         self.work_uri = rdflib.URIRef("http://bibcat.org/{}".format(
@@ -221,7 +222,7 @@ class TestReplaceURIs(unittest.TestCase):
 class TestTransform(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
 
     def test_default_transform(self):
         bf_instance, bf_item = self.ingester.transform()
@@ -232,7 +233,7 @@ class TestTransform(unittest.TestCase):
 class TestUpdateDirectProperties(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
         self.entity = rdflib.URIRef("http://example.org/test")
 
     def test_default_method(self):
@@ -262,7 +263,7 @@ bc:m21-bf_copyrightDate a kds:PropertyLinker;
 class TestUpdateLinkedClasses(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
         self.entity = rdflib.URIRef("http://example.org/test")
 
     def test_default_method(self):
@@ -274,7 +275,7 @@ class TestUpdateLinkedClasses(unittest.TestCase):
 class TestUpdateOrderedLinkedClasses(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = ingesters.Ingester(rules_ttl="test.ttl")
+        self.ingester = Ingester(rules_ttl="test.ttl")
         self.entity = rdflib.URIRef("http://example.org/test")
 
     def test_default_method(self):
