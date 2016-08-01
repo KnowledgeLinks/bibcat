@@ -20,6 +20,22 @@ bc:mods-adminNote a kds:PropertyLinker;
     kds:destAdditionalPropUris [ bf:noteType "admin"@en ];
     kds:linkedClass bf:Instance .
 
+bc:mods-creator a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri schema:alternativeName;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:cre;
+    kds:linkedClass bf:Instance .
+
+bc:mods-contributor a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='contributor']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri schema:alternativeName;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:contributor;
+    kds:linkedClass bf:Instance .
+
 bc:mods-degreeName a kds:PropertyLinker;
     kds:srcPropXpath "mods:note[@displayLabel='Degree Name']" ;
     kds:destPropUri bf:degree ;

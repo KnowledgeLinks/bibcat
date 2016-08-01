@@ -103,10 +103,9 @@ class MODSIngester(Ingester):
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
         mods_xpath = str(rule)
-        print(mods_xpath, NS_MODS)
         for element in self.source.findall(mods_xpath, NS_MODS):
             value = element.text
-            if len(value) < 1:
+            if not value or len(value) < 1:
                 continue
             bf_class_bnode = self.new_existing_bnode(
                 target_property, 
