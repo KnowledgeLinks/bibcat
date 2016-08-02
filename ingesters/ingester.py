@@ -256,7 +256,8 @@ class Ingester(object):
             sparql_prop = GET_SRC_PROP.format(
                 dest_class, 
                 dest_property,
-                entity_class, 
+                entity_class,
+                prop, 
                 NS_MGR.kds.PropertyLinker)
             for row in self.rules_graph.query(sparql_prop):
                 self.__handle_linked_pattern__(

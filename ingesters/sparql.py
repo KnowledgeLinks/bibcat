@@ -61,7 +61,8 @@ WHERE {{
     ?subj kds:destClassUri <{0}> .
     ?subj kds:destPropUri <{1}> .
     ?subj kds:linkedClass <{2}> .
-    ?subj rdf:type <{3}> .
+    ?subj kds:linkedRange <{3}> .
+    ?subj rdf:type <{4}> .
     OPTIONAL {{ ?subj kds:srcPropUri ?prop }} .
     OPTIONAL {{ ?subj kds:srcPropXpath ?prop }} .
     OPTIONAL {{ ?subj kds:srcPropKey ?src_prop }} .

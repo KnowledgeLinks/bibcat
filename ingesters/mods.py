@@ -95,7 +95,11 @@ class MODSIngester(Ingester):
             rule(rdflib.Literal): XPath Literal
             destination_class(rdflib.URIRef): Destination class
             destination_property(rdflib.URIRef): Destination property
+            target_property(rdflib.URIRef): Target property
+            target_subject((rdflib.URIRef): Target subjec uri
         """
+        if len(kwargs) != 6:
+            raise AttributeError("__handle_linked_pattern__ missing attributes")
         entity = kwargs.get("entity")
         rule = kwargs.get("rule")
         destination_class = kwargs.get("destination_class")
