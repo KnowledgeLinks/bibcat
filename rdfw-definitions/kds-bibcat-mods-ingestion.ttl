@@ -58,6 +58,7 @@ bc:mods-genreForm a kds:PropertyLinker;
     kds:srcPropXpath "mods:genre[@authority='marcgt']" ;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:GenreForm ;
+    kds:hasIndividualNodes "true";
     kds:linkedRange bf:genreFrom ;
     kds:linkedClass bf:Instance .
 

@@ -156,7 +156,7 @@ class TestNewGraph(unittest.TestCase):
 
     def test_new_graph(self):
         default_turtle = self.graph.serialize(format='turtle').decode()
-        self.assert_(len(default_turtle) > 400)
+        self.assertTrue(len(default_turtle) > 400)
 
 class TestPopulateEntity(unittest.TestCase):
 

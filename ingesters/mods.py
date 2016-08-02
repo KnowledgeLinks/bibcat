@@ -98,8 +98,6 @@ class MODSIngester(Ingester):
             target_property(rdflib.URIRef): Target property
             target_subject((rdflib.URIRef): Target subjec uri
         """
-        if len(kwargs) != 6:
-            raise AttributeError("__handle_linked_pattern__ missing attributes")
         entity = kwargs.get("entity")
         rule = kwargs.get("rule")
         destination_class = kwargs.get("destination_class")
@@ -132,7 +130,7 @@ class MODSIngester(Ingester):
         Args:
             entity(rdflib.URIRef): Entity's URI
             rule(rdflib.Literal): XPath Literal
-            dest_property(rdflib.URIRef): Destination property
+            destination_property(rdflib.URIRef): Destination property
 
         Returns:
             str: Fully qualified XPath
@@ -142,15 +140,15 @@ class MODSIngester(Ingester):
                 subject=destination_property):
                 self.graph.add((entity, pred, obj))
             return
-        mods_xpath = rule.text
-        for element in self.source.findall(mods_xpath, NS):
+        mods_xpath = rule.value
+        for element in self.source.findall(mods_xpath, NS_MODS):
             raw_text = element.text
             #! Quick and dirty method for converting urls to URIs
             if raw_text.startswith("http"):
                 object_ = rdflib.URIRef(raw_text)
             else:
                 object_ = rdflib.Literal(raw_text)
-            self.graph.add((entity, dest_property, object_))
+            self.graph.add((entity, destination_property, object_))
 
     def __handle_ordered__(self, **kwargs):
         """Helper takes a BIBFRAME class, entity URI, destination property,
@@ -179,8 +177,8 @@ class MODSIngester(Ingester):
         Args:
             mods_xml(xml.etree.ElementTree.XML): MODS XML or None
         """
-        if not mods_xml:
-            mods_xml = self.source
+        if mods_xml is None:
+            mods_xml = self.source 
         bf_instance, bf_item = super(MODSIngester, self).transform(source=mods_xml)
         
 
