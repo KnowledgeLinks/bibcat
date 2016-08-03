@@ -219,7 +219,6 @@ class Test__handle_pattern__(unittest.TestCase):
                 predicate=NS_MGR.bf.heldBy),
             self.cc)
 
-
     def test_no_args(self):
         self.assertRaises(
             TypeError,
@@ -246,7 +245,7 @@ class TestInitMODSIngester(unittest.TestCase):
         self.assertIsNone(self.ingester.source)
         self.assertEqual(
             self.ingester.triplestore_url,
-            "http://localhost:8080/blazegraph/sparql")
+            "http://localhost:9999/blazegraph/sparql")
 
     def tearDown(self):
         self.ingester.graph.close()
@@ -297,6 +296,25 @@ class TestMODSUpdateOrderedLinkedClasses(unittest.TestCase):
     def tearDown(self):
         self.ingester.graph.close()
 
-       
+
+class TestDeduplicateAgents(unittest.TestCase):
+
+    def setUp(self):
+        self.ingester = mods.MODSIngester(SAMPLE_MODS)
+        self.entity =  self.ingester.__generate_uri__()
+
+    def test_defaults_no_transform(self):
+        self.assertEqual(len(self.ingester.graph), 0)
+        self.ingester.deduplicate_agents(None, None)
+        self.assertEqual(len(self.ingester.graph), 0)
+
+    #! NEED to mock triplestore 
+    def test_defaults_transform(self):
+        self.ingester.transform()
+        
+
+    def tearDown(self):
+        self.ingester.rules_graph.close()
+
 if __name__ == '__main__':
     unittest.main()

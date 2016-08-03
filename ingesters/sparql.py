@@ -1,5 +1,5 @@
-import os
-import rdflib
+"""Module contains SPARQL templates for managing a BIBCAT instance"""
+__author__ = "Jeremy Nelson, Mike Stabile"
 import sys
 
 try:
@@ -10,13 +10,14 @@ except SystemError:
 sys.path.append(PROJECT_BASE)
 try:
     import rdfw as rdfframework
+    from rdfframework.utilities import RdfNsManager
 except ImportError:
     pass
-from rdfframework.utilities import RdfNsManager
+
 
 NSM = RdfNsManager()
 
-PREFIX  = NSM.prefix()
+PREFIX = NSM.prefix()
 
 GET_BLANK_NODE = PREFIX + """
 SELECT ?subject 
@@ -90,11 +91,28 @@ WHERE {{
     filter contains("{2}", ?label)
 }}"""
 
+DEDUP_PERSON_ORG = PREFIX + """
+SELECT DISTINCT ?agent ?label ?type
+WHERE {
+    ?agent a ?type .
+    OPTIONAL { ?agent a bf:Person } .
+    OPTIONAL { ?agent a bf:Organization } .
+    OPTIONAL { ?agent rdfs:label ?label } .
+    OPTIONAL { ?agent schema:alternativeName ?label } .
+}"""
+
 GET_ADDL_PROPS = PREFIX + """
 SELECT ?pred ?obj
 WHERE {{
   <{0}> kds:destAdditionalPropUris ?subj .
   ?subj ?pred ?obj .
+}}"""
+
+GET_AGENTS = PREFIX + """
+SELECT DISTINCT ?subject ?value
+WHERE {{
+    ?subject rdf:type <{0}> .
+    ?subject <{1}> ?value .
 }}"""
 
 GET_BLANK_NODE = PREFIX + """

@@ -2,7 +2,6 @@
 __author__ = "Jeremy Nelson, Mike Stabile"
 
 
-import datetime
 import click
 import inspect
 import logging
@@ -10,13 +9,11 @@ import os
 import rdflib
 import requests
 import sys
-import uuid
 
 import xml.etree.ElementTree as etree
 
-from collections import OrderedDict
-from ingesters.ingester import Ingester, new_graph, NS_MGR
-from ingesters.sparql import *
+from ingesters.ingester import Ingester, NS_MGR
+from ingesters.sparql import GET_ADDL_PROPS
 
 sys.path.append(
     os.path.split(os.path.abspath(os.path.dirname(__file__)))[0])
@@ -36,7 +33,7 @@ NS_MODS = {"mods": "http://www.loc.gov/mods/v3"}
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""
 
-    def __init__(self, mods_xml=None,  custom=None):
+    def __init__(self, mods_xml=None, custom=None):
         rules = ["kds-bibcat-mods-ingestion.ttl",]
         if isinstance(custom, str):
             rules.append(custom)
@@ -48,7 +45,15 @@ class MODSIngester(Ingester):
 
     def __handle_linked_bnode__(self, **kwargs):
         """Helper takes an entity with a blank nodes as a linking property
-        to create children blank nodes with different classes."""
+        to create children blank nodes with different classes.
+
+        Keyword args:
+            bnode(rdflib.BNode): Blank Node for Entity's property
+            entity(rdflib.URIRef): Entity's URI
+            destination_class(rdflib.URIRef): Destination class
+            target_property(rdflib.URIRef): Target property
+            target_subject((rdflib.URIRef): Target subject uri
+        """
         bnode = kwargs.get("bnode")
         entity = kwargs.get("entity")
         destination_class = kwargs.get("destination_class")
@@ -58,7 +63,7 @@ class MODSIngester(Ingester):
             subject=bnode,
             predicate=rdflib.RDF.type)
         bf_class_bnode = self.new_existing_bnode(
-            target_property, 
+            target_property,
             target_subject)
         self.graph.add((bf_class_bnode, rdflib.RDF.type, destination_class))
         self.graph.add((entity, target_property, bf_class_bnode))
@@ -83,10 +88,10 @@ class MODSIngester(Ingester):
                  rdflib.Literal(row.text))
             )
 
- 
+
 
     def __handle_linked_pattern__(self, **kwargs):
-        """Helper takes an entity, rule, BIBFRAME class, kds:srcPropXpath 
+        """Helper takes an entity, rule, BIBFRAME class, kds:srcPropXpath
         and extracts and saves the destination property to the destination
         class.
 
@@ -96,7 +101,7 @@ class MODSIngester(Ingester):
             destination_class(rdflib.URIRef): Destination class
             destination_property(rdflib.URIRef): Destination property
             target_property(rdflib.URIRef): Target property
-            target_subject((rdflib.URIRef): Target subjec uri
+            target_subject((rdflib.URIRef): Target subject uri
         """
         entity = kwargs.get("entity")
         rule = kwargs.get("rule")
@@ -110,16 +115,16 @@ class MODSIngester(Ingester):
             if not value or len(value) < 1:
                 continue
             bf_class_bnode = self.new_existing_bnode(
-                target_property, 
+                target_property,
                 target_subject)
             self.graph.add((bf_class_bnode, rdflib.RDF.type, destination_class))
             self.graph.add((entity, target_property, bf_class_bnode))
-            self.graph.add((bf_class_bnode, 
-                destination_property, 
-                rdflib.Literal(value)))
+            self.graph.add((bf_class_bnode,
+                            destination_property,
+                            rdflib.Literal(value)))
             # Sets additional properties
             for pred, obj in self.rules_graph.query(
-                GET_ADDL_PROPS.format(target_subject)):
+                    GET_ADDL_PROPS.format(target_subject)):
                 self.graph.add((bf_class_bnode, pred, obj))
 
 
@@ -137,7 +142,7 @@ class MODSIngester(Ingester):
         """
         if isinstance(destination_property, rdflib.BNode):
             for pred, obj in self.rules_graph.predicate_objects(
-                subject=destination_property):
+                    subject=destination_property):
                 self.graph.add((entity, pred, obj))
             return
         mods_xpath = rule.value
@@ -169,59 +174,51 @@ class MODSIngester(Ingester):
         destination_class = kwargs.get("destination_class")
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
+        for obj in self.rules_graph.objects(subject=entity):
+            continue
+
 
     def transform(self, mods_xml=None):
-        """Overrides parent class transform and adds MODS-specific 
+        """Overrides parent class transform and adds MODS-specific
         transformations
 
         Args:
             mods_xml(xml.etree.ElementTree.XML): MODS XML or None
         """
         if mods_xml is None:
-            mods_xml = self.source 
-        bf_instance, bf_item = super(MODSIngester, self).transform(source=mods_xml)
-        
+            mods_xml = self.source
+        super(MODSIngester, self).transform(source=mods_xml)
+        self.deduplicate_agents(
+            NS_MGR.schema.alternativeName,
+            NS_MGR.bf.Person,
+            None)
 
-    
-            
 
 @click.command()
 @click.option("--url", default=None)
 @click.option("--filepath", default=None)
-def process(url, filepath):
+@click.option("--rules", default=[])
+def process(url, filepath, rules):
+    """Function takes url or filepath and an optional list of custom turtle
+    rule files, creates an MODS ingester, and transforms it into BIBFRAME 2.0
+
+    Args:
+        url: Optional URL to MODS XML
+        filepath: Optional filepath to MODS XML
+        rules: file names of custom MODS to BIBFRAME RDF rules in turtle format
+    """
     if not url is None:
         http_result = requests.get(url)
         if http_result.status_code > 399:
-            raise ValueError("HTTP Error %s".format(http_result.status_code))
+            raise ValueError("HTTP Error {0}".format(http_result.status_code))
         raw_xml = http_result.text
     elif not filepath is None:
         with open(filepath) as xml_file:
             raw_xml = xml_file.read()
     mods_doc = etree.XML(raw_xml)
-    bf_graph = new_graph()
-    instance_uri = populate_entity(BF.Instance, bf_graph, mods_doc)
-    item_uri = populate_entity(BF.Item, bf_graph, mods_doc)
-    bf_graph.add((instance_uri, BF.hasItem, item_uri)) 
-    return bf_graph.serialize(format='turtle').decode()
-    
-
-def setup():
-    # setup log
-    lg = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
-    lg.setLevel(MLOG_LVL)
-    
-    global MODS2BIBFRAME
-    
-    MODS2BIBFRAME = new_graph()
-    mods2bf_filepath = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                    "rdfw-definitions",
-                                    "kds-bibcat-mods-ingestion.ttl")
-    lg.debug("MODS2BIBFRAME: %s\nmarc2bf_filepath: %s", 
-             MODS2BIBFRAME,
-             mods2bf_filepath)
-    MODS2BIBFRAME.parse(mods2bf_filepath, format="turtle")
+    ingester = MODSIngester(mods_doc, custom=rules)
+    ingester.transform()
+    return ingester.graph.serialize(format='turtle').decode()
 
 if __name__ == "__main__":
-    if not MODS2BIBFRAME:
-        setup()
     process()

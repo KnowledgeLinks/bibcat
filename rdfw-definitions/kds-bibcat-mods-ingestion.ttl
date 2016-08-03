@@ -54,6 +54,13 @@ bc:mods-degreeGrantor a kds:PropertyLinker;
     kds:linkedRange bf:dissertation ;
     kds:linkedClass bf:Instance .
 
+bc:mods-extent a kds:PropertyLinker;
+    kds:srcPropXpath "mods:physicalDescription/mods:extent";
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Extent ;
+    kds:linkedRange bf:extent ;
+    kds:linkedClass bf:Instance .
+
 bc:mods-genreForm a kds:PropertyLinker;
     kds:srcPropXpath "mods:genre[@authority='marcgt']" ;
     kds:destPropUri rdf:value ;
@@ -76,7 +83,22 @@ bc:mods-title a kds:PropertyLinker;
     kds:linkedRange bf:title;
     kds:linkedClass bf:Instance .
 
+bc:mods-thesis-advisor a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name/mods:role[mods:roleTerm='thesis advisor']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri schema:alternativeName;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:ths;
+    kds:linkedClass bf:Instance .
+
 bc:mods-url a kds:PropertyLinker;
     kds:srcPropXpath "mods:location/mods:url" ;
-    kds:destPropUri schema:url ;
-    kds:destPropClass bf:Item .
+    kds:destPropUri bf:electronicLocation ;
+    kds:destClassUri bf:Item .
+
+bc:mods-work-text a kds:PropertyLinker;
+    kds:srcPropXpath "[mods:typeOfResource='text']";
+    kds:destPropUri rdf:type;
+    kds:destClassUri bf:Text ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .

@@ -34,7 +34,7 @@ class TestRowIngester(unittest.TestCase):
         self.assertIsNone(self.ingester.source)
         self.assertEqual(
             self.ingester.triplestore_url,
-            "http://localhost:8080/blazegraph/sparql")
+            "http://localhost:9999/blazegraph/sparql")
 
 
 if __name__ == "__main__":

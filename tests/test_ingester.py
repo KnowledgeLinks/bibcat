@@ -128,7 +128,7 @@ class TestInitIngester(unittest.TestCase):
     def test_default_triplestore_url(self):
         self.assertEqual(
             self.ingester.triplestore_url,
-            "http://localhost:8080/blazegraph/sparql")
+            "http://localhost:9999/blazegraph/sparql")
 
 class TestInitLogSetup(unittest.TestCase):
 
