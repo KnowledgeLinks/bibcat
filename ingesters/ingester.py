@@ -1,7 +1,6 @@
 """BIBFRAME 2.0 ingester class helper functions"""
 __author__ = "Jeremy Nelson, Mike Stabile"
 
-
 import datetime
 import inspect
 import logging
@@ -28,6 +27,7 @@ try:
     from instance import config
     import rdfw as rdfframework
     from rdfframework.utilities import RdfNsManager
+    RdfNsManager.log_level = logging.CRITICAL
 except ImportError:
     logging.error("Error importing {}".format(PROJECT_BASE))
 try:

@@ -82,10 +82,13 @@ class MODSIngester(Ingester):
             subject=target_subject,
             predicate=NS_MGR.kds.srcPropXpath)
         for row in self.source.findall(str(xpath), NS_MODS):
+            raw_value = row.text.strip()
+            if len(raw_value) < 1:
+                continue
             self.graph.add(
                 (intermediate_bnode,
                  intermediate_bf_property,
-                 rdflib.Literal(row.text))
+                 rdflib.Literal(raw_value))
             )
 
 
@@ -112,7 +115,7 @@ class MODSIngester(Ingester):
         mods_xpath = str(rule)
         for element in self.source.findall(mods_xpath, NS_MODS):
             value = element.text
-            if not value or len(value) < 1:
+            if not value or len(value.strip()) < 1:
                 continue
             bf_class_bnode = self.new_existing_bnode(
                 target_property,
@@ -147,7 +150,9 @@ class MODSIngester(Ingester):
             return
         mods_xpath = rule.value
         for element in self.source.findall(mods_xpath, NS_MODS):
-            raw_text = element.text
+            raw_text = element.text.strip()
+            if len(raw_text) < 1:
+                continue
             #! Quick and dirty method for converting urls to URIs
             if raw_text.startswith("http"):
                 object_ = rdflib.URIRef(raw_text)
@@ -191,6 +196,10 @@ class MODSIngester(Ingester):
         self.deduplicate_agents(
             NS_MGR.schema.alternativeName,
             NS_MGR.bf.Person,
+            None)
+        self.deduplicate_agents(
+            NS_MGR.rdfs.label,
+            NS_MGR.bf.Organization,
             None)
 
 

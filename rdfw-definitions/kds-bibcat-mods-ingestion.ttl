@@ -48,7 +48,7 @@ bc:mods-degreeGrantor a kds:PropertyLinker;
     kds:destPropUri [
         a bf:grantingInstitution ;
         kds:destClassUri bf:Organization ;
-        kds:destPropUri rdf:label 
+        kds:destPropUri rdfs:label 
     ];
     kds:destClassUri bf:Dissertation ;
     kds:linkedRange bf:dissertation ;

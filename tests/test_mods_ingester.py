@@ -68,7 +68,7 @@ SELECT_ORG_LABEL = NS_MGR.prefix() + """
 SELECT ?label 
 WHERE {
     ?subj rdf:type bf:Organization .
-    ?subj rdf:label ?label .
+    ?subj rdfs:label ?label .
 }"""
 
 class TestMODS__handle_linked_pattern__(unittest.TestCase):
