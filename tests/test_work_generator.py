@@ -1,12 +1,29 @@
 import os
+import requests
+import rdflib
 import sys
 import unittest
+
+from unittest.mock import MagicMock
+
 sys.path.append(os.path.abspath(os.path.curdir))
 from generators.work import WorkGenerator
 
-class TestWorkGenerator(unittest.TestCase):
+class MockResponse(object):
+
+    def __init__(self):
+        self.status_code = 200
+        self.output = {"results": {"bindings": []}}
+
+    def json(self):
+        return self.output
+
+
+
+class TestEmptyWorkGenerator(unittest.TestCase):
 
     def setUp(self):
+        requests.post = MagicMock(return_value=MockResponse())
         self.work_generator = WorkGenerator()
         self.instance_uri = self.work_generator.__generate_uri__()
 
@@ -19,24 +36,61 @@ class TestWorkGenerator(unittest.TestCase):
         self.assertEqual(self.work_generator.triplestore_url,
                          "http://localhost:9999/blazegraph/sparql")
 
+
+    def test__copy_instance_to_work__(self):
+        self.work_generator.__copy_instance_to_work__(self.instance_uri, None)
+
     def test__generate_work__(self):
         self.assertIsNotNone(
             self.work_generator.__generate_work__(
-                str(self.instance_uri)))
+                self.instance_uri))
+
+    def test__similiar_creators__(self):
+        self.work_generator.__similiar_creators__(
+            str(self.instance_uri))
+        self.assertEqual(
+            self.work_generator.matched_works,
+            [])
+
 
     def test__similiar_titles__(self):
+        self.work_generator.__similiar_titles__(str(self.instance_uri))
         self.assertEqual(
-            self.work_generator.__similiar_titles__(str(self.instance_uri)),
+            self.work_generator.matched_works,
             [])
+
+
 
     def test_harvest_instances(self):
         self.work_generator.harvest_instances()
+        self.assertEqual(
+            self.work_generator.matched_works,
+            [])
+
 
     def test_run(self):
         self.work_generator.run()
+        self.assertEqual(
+            self.work_generator.matched_works,
+            [])
 
+class TestSuccessWorkGenerator(unittest.TestCase):
+
+    def setUp(self):
+        self.found_work = rdflib.URIRef("http://bibcat.org/TestWork-1234")
+        self.work_generator = WorkGenerator()
+
+    def test_run(self):
+        found_response = MockResponse()
+        found_response.output['results']['bindings'].append(
+            {"instance": {"value": None}})
+        requests.post = MagicMock(return_value=found_response)
+        self.work_generator.run()
+
+        self.assertEqual(
+            self.work_generator.matched_works,
+            [self.found_work,])
         
-
 
 
 if __name__ == '__main__':

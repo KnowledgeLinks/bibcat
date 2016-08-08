@@ -97,7 +97,7 @@ bc:mods-url a kds:PropertyLinker;
     kds:destClassUri bf:Item .
 
 bc:mods-work-text a kds:PropertyLinker;
-    kds:srcPropXpath "[mods:typeOfResource='text']";
+    kds:srcPropXpath "[mods:typeOfResource='text']/mods:typeOfResource";
     kds:destPropUri rdf:type;
     kds:destClassUri bf:Text ;
     kds:linkedRange bf:instanceOf ;

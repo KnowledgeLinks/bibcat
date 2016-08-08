@@ -6,6 +6,16 @@ except SystemError:
     from generator import NS_MGR
 PREFIX = NS_MGR.prefix()
 
+DELETE_WORK_BNODE = PREFIX + """
+DELETE {{
+  ?work_bnode ?pred ?obj .
+}}
+WHERE  {{
+    <{0}> bf:instanceOf ?work_bnode .
+    ?work_bnode ?pred ?obj .
+    filter(isblank(?work))
+}}"""
+
 GET_AVAILABLE_INSTANCES = PREFIX + """
 SELECT ?instance 
 WHERE {
@@ -14,6 +24,18 @@ WHERE {
     filter(isblank(?work))
 }"""
 
+
+GET_INSTANCE_CREATOR = PREFIX + """
+SELECT ?name 
+WHERE {{
+    <{0}> relators:cre ?creator .
+    ?creator rdfs:label ?name .
+    OPTIONAL {{ <{0}> relators:aut  ?creator }}
+    OPTIONAL {{ <{0}> relators:aus ?creator }}
+    OPTIONAL {{ ?creator schema:name ?name }}
+    OPTIONAL {{ ?creator schema:alternativeName ?name }}
+}}"""
+
 GET_INSTANCE_TITLE = PREFIX + """
 SELECT ?mainTitle ?subTitle
 WHERE {{
@@ -21,6 +43,27 @@ WHERE {{
     ?title a bf:InstanceTitle .
     ?title bf:mainTitle ?mainTitle .
     OPTIONAL {{ ?title bf:subtitle ?subTitle }}
+}}"""
+
+GET_INSTANCE_WORK_BNODE_PROPS = PREFIX + """
+SELECT ?pred ?obj
+WHERE {{
+    <{0}> bf:instanceOf ?work .
+    ?work ?pred ?obj .
+    filter(isblank(?work))
+}}"""
+
+
+FILTER_WORK_CREATOR = PREFIX + """
+SELECT ?work
+WHERE {{
+    ?work rdf:ty;e Work .
+    ?work relators:cre ?creator .
+    ?creator rdfs:label ?name .
+    OPTIONAL {{ ?creator schema:name ?name }}
+    OPTIONAL {{ ?creator schema:alternativeName ?name }}
+    FILTER(isuri(?work))
+    FILTER CONTAINS("{0}", ?name)
 }}"""
 
 FILTER_WORK_TITLE = PREFIX + """
