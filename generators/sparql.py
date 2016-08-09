@@ -8,12 +8,11 @@ PREFIX = NS_MGR.prefix()
 
 DELETE_WORK_BNODE = PREFIX + """
 DELETE {{
-  ?work_bnode ?pred ?obj .
-}}
-WHERE  {{
-    <{0}> bf:instanceOf ?work_bnode .
-    ?work_bnode ?pred ?obj .
-    filter(isblank(?work))
+    ?work ?p ?o 
+}} WHERE {{
+    <{0}> bf:instanceOf ?work .
+    ?work ?p ?o
+    filter isBlank(?work)
 }}"""
 
 GET_AVAILABLE_INSTANCES = PREFIX + """
@@ -29,9 +28,9 @@ GET_INSTANCE_CREATOR = PREFIX + """
 SELECT ?name 
 WHERE {{
     <{0}> relators:cre ?creator .
-    ?creator rdfs:label ?name .
     OPTIONAL {{ <{0}> relators:aut  ?creator }}
     OPTIONAL {{ <{0}> relators:aus ?creator }}
+    OPTIONAL {{ ?creator rdfs:label ?name }} 
     OPTIONAL {{ ?creator schema:name ?name }}
     OPTIONAL {{ ?creator schema:alternativeName ?name }}
 }}"""
@@ -57,9 +56,8 @@ WHERE {{
 FILTER_WORK_CREATOR = PREFIX + """
 SELECT ?work
 WHERE {{
-    ?work rdf:ty;e Work .
+    ?work rdf:type bf:Work .
     ?work relators:cre ?creator .
-    ?creator rdfs:label ?name .
     OPTIONAL {{ ?creator schema:name ?name }}
     OPTIONAL {{ ?creator schema:alternativeName ?name }}
     FILTER(isuri(?work))
@@ -69,7 +67,7 @@ WHERE {{
 FILTER_WORK_TITLE = PREFIX + """
 SELECT ?work
 WHERE {{
-    ?work rdf:type ?Work .
+    ?work rdf:type bf:Work .
     ?work bf:title ?title .
     ?title bf:mainTitle ?mainTitle .
     FILTER(isuri(?work)) 

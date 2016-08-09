@@ -7,16 +7,16 @@ import requests
 try:
     from .generator import Generator, new_graph, NS_MGR
     from .sparql import DELETE_WORK_BNODE 
-    from .sparql import  FILTER_WORK_TITLE, GET_AVAILABLE_INSTANCES
-    from .sparql import GET_INSTANCE_CREATOR, GET_INSTANCE_TITLE
-    from .sparql import GET_INSTANCE_WORK_BNODE_PROPS
+    from .sparql import FILTER_WORK_CREATOR, FILTER_WORK_TITLE 
+    from .sparql import GET_AVAILABLE_INSTANCES, GET_INSTANCE_CREATOR 
+    from .sparql import GET_INSTANCE_TITLE, GET_INSTANCE_WORK_BNODE_PROPS
 except SystemError:
     try:
         from generator import Generator, new_graph, NS_MGR
         from sparql import DELETE_WORK_BNODE 
-        from sparql import FILTER_WORK_TITLE, GET_AVAILABLE_INSTANCES
-        from sparql import GET_INSTANCE_CREATOR, GET_INSTANCE_TITLE
-        from sparql import GET_INSTANCE_WORK_BNODE_PROPS
+        from sparql import FILTER_WORK_CREATOR, FILTER_WORK_TITLE 
+        from sparql import GET_AVAILABLE_INSTANCES, GET_INSTANCE_CREATOR
+        from sparql import GET_INSTANCE_TITLE, GET_INSTANCE_WORK_BNODE_PROPS
     except ImportError:
         pass
 
@@ -40,8 +40,50 @@ class WorkGenerator(Generator):
         """
         self.rules = rdflib.Graph()
         self.matched_works = []
-        self.processed = []
+        self.processed = {}
         super(WorkGenerator, self).__init__(**kwargs)
+
+    def __add_creators__(self, work_graph, work_uri, instance_uri):
+        """Method takes a new work graph and instance uri, queries for
+        relators:creators of instance uri and adds values to work graph
+        
+         Args:
+            work_graph(rdflib.Graph): RDF Graph of new BF Work
+            instance_uri(rdflib.URIRef): URI of BF Instance
+        """
+        pass
+       
+
+
+    def __add_work_title__(self, work_graph, work_uri, instance_uri):
+        """Method takes a new work graph and instance uri, queries for
+        bf:InstanceTitle of instance uri and adds values to work graph
+
+        Args:
+            work_graph(rdflib.Graph): RDF Graph of new BF Work
+            instance_uri(rdflib.URIRef): URI of BF Instance
+        """
+        if instance_uri in self.processed and\
+        "title" in self.processed[instance_uri]:
+            work_title_bnode = rdflib.BNode()
+            work_graph.add((work_uri,  NS_MGR.bf.title, work_title_bnode))
+            work_graph.add((work_title_bnode, 
+                            NS_MGR.rdf.type, 
+                            NS_MGR.bf.WorkTitle))
+            for row in self.processed[instance_uri]["title"]:
+                main_title, subtitle = row["mainTitle"], row["subtitle"]
+                work_graph.add((work_title_bnode,
+                                NS_MGR.bf.mainTitle,
+                                rdflib.Literal(main_title)))
+                if subtitle:
+                    work_graph.add((work_title_bnode,
+                                    NS_MGR.bf.subtitle,
+                                    rdflib.Literal(subtitle)))
+                
+            
+
+ 
+        
 
     def __copy_instance_to_work__(self, instance_uri, work_uri):
         """Method takes an instance_uri and work_uri, copies all of the 
@@ -53,6 +95,10 @@ class WorkGenerator(Generator):
             instance_uri(rdflib.URIRef): URI of Instance
             work_uri(rdflib.URIRef): URI of Work
         """
+        if instance_uri == work_uri:
+            raise ValueError(
+                "Instance and Work URIs cannot match uri={}".format(
+                    instance_uri))
         work_properties_result = requests.post(
             self.triplestore_url,
             data={"query": GET_INSTANCE_WORK_BNODE_PROPS.format(instance_uri),
@@ -60,25 +106,33 @@ class WorkGenerator(Generator):
         work_properties_bindings = work_properties_result.json()\
              .get("results").get("bindings")
         work_graph = new_graph()
+        work_graph.add((instance_uri, NS_MGR.bf.instanceOf, work_uri))
         for row in work_properties_bindings:
             predicate = rdflib.URIRef(row.get("pred").get("value"))
-            
             obj_type = row.get("obj").get("type")
             obj_raw_val = row.get("obj").get("value")
             if obj_type.startswith("literal"):
+                if predicate == rdflib.RDF.type:
+                    # Skip all literals 
+                    continue
                 obj_ = rdflib.Literal(obj_raw_val)
             else:
                 obj_ = rdflib.URIRef(obj_raw_val)
-            work_graph.add((work_uri, predicate, obj))
+            work_graph.add((work_uri, predicate, obj_))
+        self.__add_work_title__(work_graph, work_uri, instance_uri)
+        self.__add_creators__(work_graph, work_uri, instance_uri)
         update_result = requests.post(
             self.triplestore_url,
-            data={"query": work_graph.serialize(format='turtle')},
+            data=work_graph.serialize(format='turtle'),
             headers={"Content-Type": "text/turtle"})
         # Now remove existing BNode's properties from the BF Instance
         delete_result = requests.post(
             self.triplestore_url,
-            data={"query": DELETE_WORK_BNODE.format(instance_uri),
-                  "format": "json"})
+            data=DELETE_WORK_BNODE.format(instance_uri),
+            headers={"Content-Type": "application/sparql-update"})
+        if delete_result.status_code > 399:
+            raise ValueError("Cannot Delete Work blank nodes for {}\n{}".format(
+                instance_uri, delete_result.text))
                  
             
 
@@ -103,6 +157,8 @@ class WorkGenerator(Generator):
             work_uri = self.__generate_uri__()
             work_graph = new_graph()
             work_graph.add((work_uri, NS_MGR.rdf.type, NS_MGR.bf.Work))
+        elif len(candidate_works) == 1:
+            work_uri = rdflib.URIRef(candidate_works[0])
         return work_uri
 
 
@@ -152,6 +208,13 @@ class WorkGenerator(Generator):
             main_title, subtitle = row.get("mainTitle").get("value"), None
             if "subtitle" in row:
                 subtitle = row.get("subtitle").get("value")
+            if uri in self.processed and "title" in self.processed[uri]:
+                self.processed[uri]["title"].append(
+                    {"mainTitle": main_title,
+                     "subtitle": subtitle})
+            else:
+                self.processed[uri]["title"] = [{"mainTitle": main_title,
+                     "subtitle": subtitle}]
             work_title_result = requests.post(
                 self.triplestore_url,
                 #! Need to add subtitle to SPARQL query

@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import MagicMock
 
 sys.path.append(os.path.abspath(os.path.curdir))
+from generators.generator  import new_graph
 from generators.work import WorkGenerator
 
 class MockResponse(object):
@@ -36,9 +37,24 @@ class TestEmptyWorkGenerator(unittest.TestCase):
         self.assertEqual(self.work_generator.triplestore_url,
                          "http://localhost:9999/blazegraph/sparql")
 
+    def test__add_creators__(self):
+        self.work_generator.__add_creators__(new_graph(), None, self.instance_uri)
 
-    def test__copy_instance_to_work__(self):
-        self.work_generator.__copy_instance_to_work__(self.instance_uri, None)
+    def test__add_creators__
+
+    def test__work_title__(self):
+        self.work_generator.__add_work_title__(new_graph(), None, self.instance_uri)
+
+    def test__raise_assert_error_copy_instance_to_work__(self):
+        with self.assertRaises(AssertionError):
+            self.work_generator.__copy_instance_to_work__(self.instance_uri, 
+                None)
+
+    def test__raise_error_copy_instance_to_work__(self):
+        with self.assertRaises(ValueError):
+            self.work_generator.__copy_instance_to_work__(
+                self.instance_uri, 
+                self.instance_uri)
 
     def test__generate_work__(self):
         self.assertIsNotNone(
