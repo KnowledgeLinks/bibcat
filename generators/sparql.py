@@ -8,8 +8,11 @@ PREFIX = NS_MGR.prefix()
 
 DELETE_WORK_BNODE = PREFIX + """
 DELETE {{
-    ?work ?p ?o 
-}} WHERE {{
+    ?work ?p ?o .
+    <{0}> bf:instanceOf ?work
+}} 
+INSERT {{ }}
+WHERE {{
     <{0}> bf:instanceOf ?work .
     ?work ?p ?o
     filter isBlank(?work)

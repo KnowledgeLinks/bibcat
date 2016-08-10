@@ -63,14 +63,15 @@ class WorkGenerator(Generator):
             work_graph(rdflib.Graph): RDF Graph of new BF Work
             instance_uri(rdflib.URIRef): URI of BF Instance
         """
-        if instance_uri in self.processed and\
-        "title" in self.processed[instance_uri]:
+        instance_key = str(instance_uri)
+        if instance_key in self.processed and\
+        "title" in self.processed[instance_key]:
             work_title_bnode = rdflib.BNode()
             work_graph.add((work_uri,  NS_MGR.bf.title, work_title_bnode))
             work_graph.add((work_title_bnode, 
                             NS_MGR.rdf.type, 
                             NS_MGR.bf.WorkTitle))
-            for row in self.processed[instance_uri]["title"]:
+            for row in self.processed[instance_key]["title"]:
                 main_title, subtitle = row["mainTitle"], row["subtitle"]
                 work_graph.add((work_title_bnode,
                                 NS_MGR.bf.mainTitle,
@@ -121,6 +122,7 @@ class WorkGenerator(Generator):
             work_graph.add((work_uri, predicate, obj_))
         self.__add_work_title__(work_graph, work_uri, instance_uri)
         self.__add_creators__(work_graph, work_uri, instance_uri)
+        print(work_graph.serialize(format='turtle').decode())
         update_result = requests.post(
             self.triplestore_url,
             data=work_graph.serialize(format='turtle'),
@@ -213,8 +215,8 @@ class WorkGenerator(Generator):
                     {"mainTitle": main_title,
                      "subtitle": subtitle})
             else:
-                self.processed[uri]["title"] = [{"mainTitle": main_title,
-                     "subtitle": subtitle}]
+                self.processed[uri] = {"title": [{"mainTitle": main_title,
+                                                  "subtitle": subtitle}]}
             work_title_result = requests.post(
                 self.triplestore_url,
                 #! Need to add subtitle to SPARQL query
