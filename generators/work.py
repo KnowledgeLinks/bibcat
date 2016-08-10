@@ -41,6 +41,9 @@ class WorkGenerator(Generator):
         self.rules = rdflib.Graph()
         self.matched_works = []
         self.processed = {}
+        self.creator_codes = kwargs.get(
+            'creator_codes', 
+            ['aus', 'aut', 'cre'])
         super(WorkGenerator, self).__init__(**kwargs)
 
     def __add_creators__(self, work_graph, work_uri, instance_uri):
@@ -51,8 +54,16 @@ class WorkGenerator(Generator):
             work_graph(rdflib.Graph): RDF Graph of new BF Work
             instance_uri(rdflib.URIRef): URI of BF Instance
         """
-        pass
-       
+        instance_key = str(instance_uri)
+        if instance_key in self.processed: 
+            for code in self.creator_codes:
+                if not code in self.processed[instance_key]:
+                    continue
+                relator = getattr(NS_MGR.relators, code)
+                for agent_uri in self.processed[instance_key][code]:
+                    work_graph.add((work_uri, 
+                                    relator, 
+                                    agent_uri))
 
 
     def __add_work_title__(self, work_graph, work_uri, instance_uri):
@@ -81,10 +92,7 @@ class WorkGenerator(Generator):
                                     NS_MGR.bf.subtitle,
                                     rdflib.Literal(subtitle)))
                 
-            
-
- 
-        
+       
 
     def __copy_instance_to_work__(self, instance_uri, work_uri):
         """Method takes an instance_uri and work_uri, copies all of the 
@@ -135,10 +143,7 @@ class WorkGenerator(Generator):
         if delete_result.status_code > 399:
             raise ValueError("Cannot Delete Work blank nodes for {}\n{}".format(
                 instance_uri, delete_result.text))
-                 
-            
-
-       
+      
 
 
     def __generate_work__(self, instance_uri):
@@ -172,24 +177,42 @@ class WorkGenerator(Generator):
             uri(str): URI of BIBFRAME Instance
 
         """
-        instance_creator_result = requests.post(
-            self.triplestore_url,
-            data={"query": GET_INSTANCE_CREATOR.format(uri),
-                  "format": "json"})
-        instance_creator_bindings = instance_creator_result.json()\
-            .get("results").get("bindings")
-        for row in instance_creator_bindings:
-            creator_name = row.get("name").get("value")
-            work_creator_result = requests.post(
+        for code in self.creator_codes:
+            sparql = GET_INSTANCE_CREATOR.format(
+                        uri,
+                        getattr(NS_MGR.relators, code))
+            instance_creator_result = requests.post(
                 self.triplestore_url,
-                data={"query": FILTER_WORK_CREATOR.format(creator_name),
+                data={"query": sparql,
                       "format": "json"})
-            work_creator_bindings = work_creator_result.json()\
+            instance_creator_bindings = instance_creator_result.json()\
                 .get("results").get("bindings")
-            if len(work_creator_bindings) < 1:
-                continue
-            for work_row in work_creator_bindings:
-                self.matched_works.append(work_row.get("work").get("value"))
+            for row in instance_creator_bindings:
+                creator_name = row.get("name").get("value")
+                creator_uri = rdflib.URIRef(row.get("creator").get("value"))
+                instance_key = str(uri)
+                if instance_key in self.processed:
+                    if code in self.processed[instance_key]:
+                        self.processed[instance_key][code].append(
+                            creator_uri)
+                    else:
+                        self.processed[instance_key][code] = [
+                            creator_uri,]
+                else:
+                    self.processed[instance_key] = {code: [
+                            creator_uri,]}
+                     
+                work_creator_result = requests.post(
+                    self.triplestore_url,
+                    data={"query": FILTER_WORK_CREATOR.format(creator_name),
+                          "format": "json"})
+                work_creator_bindings = work_creator_result.json()\
+                .get("results").get("bindings")
+                if len(work_creator_bindings) < 1:
+                    continue
+                for work_row in work_creator_bindings:
+                    self.matched_works.append(
+                        work_row.get("work").get("value"))
 
 
 

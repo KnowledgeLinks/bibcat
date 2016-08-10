@@ -28,11 +28,9 @@ WHERE {
 
 
 GET_INSTANCE_CREATOR = PREFIX + """
-SELECT ?name 
+SELECT ?name ?creator
 WHERE {{
-    <{0}> relators:cre ?creator .
-    OPTIONAL {{ <{0}> relators:aut  ?creator }}
-    OPTIONAL {{ <{0}> relators:aus ?creator }}
+    <{0}> <{1}> ?creator .
     OPTIONAL {{ ?creator rdfs:label ?name }} 
     OPTIONAL {{ ?creator schema:name ?name }}
     OPTIONAL {{ ?creator schema:alternativeName ?name }}

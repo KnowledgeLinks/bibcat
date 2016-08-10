@@ -150,9 +150,10 @@ class MODSIngester(Ingester):
             return
         mods_xpath = rule.value
         for element in self.source.findall(mods_xpath, NS_MODS):
-            raw_text = element.text.strip()
-            if len(raw_text) < 1:
+            raw_text = element.text
+            if not raw_text or len(raw_text.strip()) < 1:
                 continue
+            raw_text = raw_text.strip()
             #! Quick and dirty method for converting urls to URIs
             if raw_text.startswith("http"):
                 object_ = rdflib.URIRef(raw_text)
