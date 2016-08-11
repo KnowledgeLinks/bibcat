@@ -323,14 +323,25 @@ class Ingester(object):
         sparql = GET_ORDERED_CLASSES.format(entity_class)
         for dest_property, dest_class, prop, subj in \
             self.rules_graph.query(sparql):
-            for row in self.rules_graph.query(
-                GET_SRC_PROP.format(
+            self.logger.debug("""Entity: class={} uri={}
+Destination Property={} Destination Class={} 
+Target Property={} Target_Class={}""".format(
+                entity_class,
+                entity,
+                dest_property, 
+                dest_class, 
+                prop, 
+                subj))
+            prop_sparql = GET_SRC_PROP.format(
                     dest_class,
                     dest_property,
                     entity_class,
-                    NS_MGR.kds.OrderedPropertyLinker)):
+                    prop,
+                    NS_MGR.kds.OrderedPropertyLinker)
+            for row in self.rules_graph.query(prop_sparql):
                 self.__handle_ordered__(entity_class=entity_class,
                     entity=entity,
+                    rule=row[0],
                     destination_property=dest_property,
                     destination_class = dest_class,
                     target_property=prop,

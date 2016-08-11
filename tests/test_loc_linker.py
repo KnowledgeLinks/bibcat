@@ -7,7 +7,7 @@ import unittest
 import urllib.parse
 
 sys.path.append(os.path.abspath(os.path.curdir))
-from linkers import NS
+from linkers import NS_MGR
 import linkers.loc as loc
 
 class TestLibraryOfCongressLinker(unittest.TestCase):

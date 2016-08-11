@@ -100,19 +100,27 @@ class MARCIngester(Ingester):
             target_subject(rdflib.URIRef): Rule subject URI in rules graph
         """
         entity = kwargs.get("entity")
-        #entity_class = kwargs.get("entity_class")
-        #destination_property = kwargs.get("destination_property")
-        #destination_class = kwargs.get("destination_class")
+        entity_class = kwargs.get("entity_class")
+        destination_property = kwargs.get("destination_property")
+        destination_class = kwargs.get("destination_class")
         rule = kwargs.get("rule")
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
+        self.logger.debug(
+            "entity:%s\nrule:%s\ntarget_property:%s\ntarget_subject:%s",
+            entity,
+            rule,
+            target_property,
+            target_subject)
         pattern = str(rule).split("/")[-1]
         field_name = pattern[1:4]
         indicators = pattern[4:6]
         subfields = pattern[6:]
         fields = self.source.get_fields(field_name)
         for field in fields:
-            bf_class = self.new_existing_bnode(prop, subj)
+            bf_class = self.new_existing_bnode(
+                target_property,
+                target_subject)
             indicator_key = "{}{}".format(
                 field.indicators[0].replace(" ", "_"),
                 field.indicators[1].replace(" ", "_"))
@@ -125,13 +133,16 @@ class MARCIngester(Ingester):
             if len(ordered_value) > 0:
                 self.graph.add(
                     (bf_class,
-                     dest_property,
+                     destination_property,
                      rdflib.Literal(ordered_value.strip())))
                 self.graph.add(
                     (bf_class,
-                     self.ns.rdf.type,
-                     dest_class))
-                self.graph.add((entity, prop, bf_class))
+                     NS_MGR.rdf.type,
+                     destination_class))
+                self.graph.add(
+                    (entity, 
+                     target_property, 
+                     bf_class))
             # Sets additional properties
             for pred, obj in self.rules_graph.query(
                     GET_ADDL_PROPS.format(target_subject)):
@@ -157,7 +168,7 @@ class MARCIngester(Ingester):
                     NS_MGR.bf.identifiedBy,
                     identifier,
                     ident_value)
-                result = requests.post(config.TRIPLESTORE_URL,
+                result = requests.post(self.triplestore_url,
                                        data={"query": sparql,
                                              "format": "json"})
                 self.logger.debug("\nquery: %s", sparql)
@@ -229,6 +240,9 @@ class MARCIngester(Ingester):
         bf_instance, bf_item = super(MARCIngester, self).transform()
         # Run de-duplication methods
         self.deduplicate_instances()
+        self.deduplicate_agents(
+            NS_MGR.schema.alternativeName,
+            NS_MGR.bf.Person)
         self.deduplicate_agents(
             NS_MGR.schema.oclc,
             NS_MGR.bf.Organization,

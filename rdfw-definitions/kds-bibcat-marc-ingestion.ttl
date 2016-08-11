@@ -138,8 +138,10 @@ bc:m21-bf_note_summary a kds:PropertyLinker ;
 bc:m21-bf_originDate a kds:PropertyLinker ;
 	kds:srcPropUri m21:M00807-10,
 				   m21:M2602_c;
-	kds:destClassUri bf:Instance;
-	kds:destPropUri bf:originDate .
+        kds:destPropUri bf:originDate ;
+        kds:destClassUri bf:Work ;
+        kds:linkedRange bf:instanceOf ;
+        kds:linkedClass bf:Instance .
 
 bc:m21-bf_publisher_name a kds:PropertyLinker ;
         kds:srcPropUri m21:M260__b;
@@ -168,7 +170,7 @@ bc:m21-bf_subject_Person_locSh a kds:OrderedPropertyLinker;
 
 
 bc:m21-bf_subject_Topic_locSh a kds:OrderedPropertyLinker;
-    kds:srcPropUri m21:M650_0azv ;
+    kds:srcPropUri m21:M650_0azv;
     kds:destPropUri rdf:value ;
     kds:hasIndividualNodes "true" ;
     kds:destClassUri bf:Topic ;

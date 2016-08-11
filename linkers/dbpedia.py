@@ -5,7 +5,7 @@ import rdflib
 import requests
 import urllib.parse
 
-from .linker import Linker, NS
+from .linker import Linker, NS_MGR
 
 class DBPediaLinker(Linker):
     SPARQL_ENDPOINT = "http://dbpedia.org/sparql"
