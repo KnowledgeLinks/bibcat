@@ -47,7 +47,7 @@ class RowIngester(Ingester):
         delimiter = self.rules_graph.value(
             subject=target_subject,
             predicate=NS_MGR.kds.delimiterProp)
-        value = self.current_row.get(rule)
+        value = self.source.get(str(rule))
         if len(str(value).strip()) < 1:
             return
         if delimiter is not None:
@@ -55,6 +55,10 @@ class RowIngester(Ingester):
                 bnode_class = self.new_existing_bnode(
                     target_property,
                     target_subject)
+                self.graph.add(
+                    (entity,
+                     target_property,
+                     bnode_class))
                 self.graph.add(
                     (bnode_class,
                      rdflib.RDF.type,
@@ -71,13 +75,17 @@ class RowIngester(Ingester):
                  target_property,
                  target_subject)
             self.graph.add(
+                    (entity,
+                     target_property,
+                     bnode_class))
+            self.graph.add(
                 (bnode_class,
                  rdflib.RDF.type,
                  destination_class))
             self.graph.add(
                 (bnode_class,
                  destination_property,
-                 rdflib.Literal(row)))
+                 rdflib.Literal(value)))
             for pred, obj in self.rules_graph.query(
                     GET_ADDL_PROPS.format(target_subject)):
                 self.graph.add((bnode_class, pred, obj))

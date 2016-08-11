@@ -40,7 +40,7 @@ class TestEmptyWorkGenerator(unittest.TestCase):
     def test__add_creators__(self):
         self.work_generator.__add_creators__(new_graph(), None, self.instance_uri)
 
-    def test__add_creators__
+    #def test__add_creators__
 
     def test__work_title__(self):
         self.work_generator.__add_work_title__(new_graph(), None, self.instance_uri)
