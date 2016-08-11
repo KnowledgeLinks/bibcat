@@ -66,7 +66,7 @@ WHERE {{
     ?subj rdf:type <{4}> .
     OPTIONAL {{ ?subj kds:srcPropUri ?prop }} .
     OPTIONAL {{ ?subj kds:srcPropXpath ?prop }} .
-    OPTIONAL {{ ?subj kds:srcPropKey ?src_prop }} .
+    OPTIONAL {{ ?subj kds:srcPropKey ?prop }} .
 }}"""
 
 HAS_MULTI_NODES = PREFIX + """
