@@ -18,6 +18,18 @@ WHERE {{
     filter isBlank(?work)
 }}"""
 
+GET_AVAILABLE_COLLECTIONS = PREFIX + """
+SELECT ?instance ?org ?item ?label
+WHERE {
+    ?instance rdf:type bf:Instance .
+    ?instance bf:partOf ?collection .
+    ?collection rdf:type pcdm:Collection .
+    ?collection rdfs:label ?label .
+    ?item bf:itemOf ?instance .
+    ?item bf:heldBy ?org
+    filter(isblank(?collection)
+}"""
+
 GET_AVAILABLE_INSTANCES = PREFIX + """
 SELECT ?instance 
 WHERE {
@@ -25,6 +37,7 @@ WHERE {
     ?instance bf:instanceOf ?work .
     filter(isblank(?work))
 }"""
+
 
 
 GET_INSTANCE_CREATOR = PREFIX + """
@@ -53,6 +66,18 @@ WHERE {{
     filter(isblank(?work))
 }}"""
 
+FILTER_COLLECTION = PREFIX + """
+SELECT ?collection ?instance
+WHERE {{
+    ?collection rdf:type bf:Work .
+    ?collection rdf:type pcdm:Collection .
+    ?collection rdfs:label ?label .
+    ?collection bf:hasPart ?instance .
+    <{0}> bf:itemOf ?instance .
+    <{0}> bf:heldBy <{1}> 
+    FILTER(isiri(?collection))
+    FILTER CONTAINS("{2}", ?label)
+}}"""
 
 FILTER_WORK_CREATOR = PREFIX + """
 SELECT ?work

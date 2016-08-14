@@ -10,18 +10,145 @@ try:
     from .sparql import FILTER_WORK_CREATOR, FILTER_WORK_TITLE 
     from .sparql import GET_AVAILABLE_INSTANCES, GET_INSTANCE_CREATOR 
     from .sparql import GET_INSTANCE_TITLE, GET_INSTANCE_WORK_BNODE_PROPS
+    from .sparql import GET_AVAILABLE_COLLECTIONS
 except SystemError:
     try:
         from generator import Generator, new_graph, NS_MGR
         from sparql import DELETE_WORK_BNODE 
-        from sparql import FILTER_WORK_CREATOR, FILTER_WORK_TITLE 
+        from sparql import FILTER_WORK_CREATOR, FILTER_WORK_TITLE  
         from sparql import GET_AVAILABLE_INSTANCES, GET_INSTANCE_CREATOR
         from sparql import GET_INSTANCE_TITLE, GET_INSTANCE_WORK_BNODE_PROPS
+        from sparql import GET_AVAILABLE_COLLECTIONS
     except ImportError:
         pass
 
 
 __author__ = "Jeremy Nelson, Mike Stabile"
+
+
+class WorkError(Exception):
+
+    def __init__(self, reason):
+        self.reason = reason
+
+    def __str__(self):
+        return str(self.reason)
+
+class CollectionGenerator(Generator):
+    """Queries triplestore for BIBFRAME 2.0 Instances that are related to
+    collections that are blank nodes. Generator reifies Collection as a bf:Work
+    with the rdfs:label triple and triples for each bf:Instance."""
+
+    def __init__(self, **kwargs):
+        super(CollectionGenerator, self).__init__(**kwargs)
+
+    def __generate_collection__(self, **kwargs):
+        
+        """Generates new Collection for the Instance in the triplestore
+
+        Keyword args:
+           instance(rdflib.URIRef): URI of Instance
+           label(rdflib.Literal): Literal string of RDF label
+        """
+        instance = kwargs.get('instance')
+        label = kwargs.get('label')
+        if instance is None or label is None:
+            raise WorkError("Generate Collection both instance and label")
+        collection_uri = self.__generate_uri__()
+        collection_graph = new_graph()
+        for type_of in [NS_MGR.pcdm.Collection, NS_MGR.bf.Work]:
+            collection_graph.add((collection_uri, 
+                NS_MGR.rdf.type,
+                type_of))
+        collection_graph.add((collection_uri,
+            NS_MGR.rdfs.label,
+            label))
+        collection_graph.add((collection_uri,
+            NS_MGR.bf.hasPart,
+            instance))
+        result = requests.post(
+            self.triplestore_url,
+            data=collection_graph.serialize(format='turtle'),
+            headers={"Content-Type": "text/turtle"})
+        if result.status_code > 399:
+            raise WorkError("Failed to add {} to triplestore".format(
+                collection_uri))
+        return collection_uri
+
+
+
+    def __handle_collections__(self, **kwargs):
+        """Queries triplestore for collections to match
+        existing organizations with collections matching a label or
+        other identification.
+        
+        Keyword args:
+            instance(rdflib.URIRef): URI of Instance
+            organization(rdflib.URIRef): URI of Organization
+            item(rdflib.URIRef): URI of Item
+            rdfs_label(rdflib.Literal): Literal string of RDFS label
+
+        Returns:
+            list: List of Collection URIs
+        """
+        instance = kwargs.get('instance')
+        org = kwargs.get('organization')
+        item = kwargs.get('item')
+        label = kwargs.get('rdfs_label')
+        query = FILTER_COLLECTION.format(item, org, label)
+        result = requests.post(self.triplestore_url,
+                data={"query": query,
+                      "format": "json"})
+        if result.status_code > 399:
+            raise WorkError("Failed to run {}".format(query))
+        bindings = result.json().get('results').get('bindings')
+        if len(bindings) < 1:
+            return [self.__generate_collection__(
+                instance=instance,
+                label=label),]
+        else:
+            collections = []
+            for row in bindings:
+                collection_uri = rdflib.URIRef(
+                    row.get('collection').get('value'))
+                existing_instance = rdflib.URIRef(
+                    row.get('instance').get('value'))
+                if existing_instance == instance:
+                    continue
+                collections.append(collection_uri)
+                update_graph = new_graph()
+                new_graph.add((collection_uri,
+                    NS_MGR.bf.hasPart,
+                    instance))
+                result = requsts.post(
+                    self.triplestore_url,
+                    data=new_graph.serialize(format='turtle'),
+                    headers={"Content-Type": "text/turtle"})
+            return collections
+
+    def run(self):
+        """Runs Collection Generator"""
+        result = requests.post(self.triplestore_url,
+                data={"query": GET_AVAILABLE_COLLECTIONS,
+                      "format": "json"})
+        if result.status_code > 399:
+            raise WorkError("Failed to run sparql query")
+
+        bindings = result.json().get('results').get('bindings')
+        for row in bindings:
+            instance_uri = rdflib.URIRef(row.get('instance').get('value'))
+            org_uri = rdflib.URIRef(row.get('org').get('value'))
+            item_uri = rdflib.URIRef(row.get('item').get('value'))
+            label = rdflib.Literal(row.get('label').get('value'))
+            #! Should check for language in label
+            collections = self.__handle_collections__(
+                instance=instance_uri, 
+                item=item_uri,
+                organization=org_uri, 
+                rdfs_label=label)
+
+
+
 
 
 class WorkGenerator(Generator):
@@ -34,7 +161,7 @@ class WorkGenerator(Generator):
     def __init__(self, **kwargs):
         """
 
-        Keywords:
+        Keyword args:
             url (str):  URL for the triplestore, defaults to localhost
                         Blazegraph instance
         """
@@ -255,10 +382,10 @@ class WorkGenerator(Generator):
 
     def harvest_instances(self):
         """
-        Harvests all BIBFRAME Instances that do not have an isInstanceOf
-        property.
-
-        #! for performance considerations may need to run sparl query that
+        Harvests all BIBFRAME Instances that have an Blank Node for the
+        isInstanceOf property.
+        
+        #! for performance considerations may need to run sparql query that
         limits the batch size
         """
         result = requests.post(
@@ -266,7 +393,7 @@ class WorkGenerator(Generator):
             data={"query": GET_AVAILABLE_INSTANCES,
                   "format": "json"})
         if result.status_code > 399:
-            raise ValueError("WorkGenerator failed to query {}".format(
+            raise WorkError("WorkGenerator failed to query {}".format(
                 self.triplestore_url))
         bindings = result.json().get('results').get('bindings')
         for row in bindings:
@@ -277,7 +404,10 @@ class WorkGenerator(Generator):
                 work_uri)
             
 
+
     def run(self):
         """Runs work generator on triplestore"""
 
         self.harvest_instances()
+
+

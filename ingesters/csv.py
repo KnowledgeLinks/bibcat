@@ -129,11 +129,25 @@ class RowIngester(Ingester):
                  rdflib.Literal(value)))
 
     def transform(self, row=None):
+        """Method calls Ingester.transform method from parent on either
+        the current instance's source or on a passed in row from CSV
+        Row reader.
+
+        Args:
+            row(dict): Row, default is None
+        """
         if row is not None:
             self.source = row
             self.graph = new_graph()
         super(RowIngester, self).transform()
-
+        self.deduplicate_agents(
+            NS_MGR.schema.alternativeName,
+            NS_MGR.bf.Person,
+            None)
+        self.deduplicate_agents(
+            NS_MGR.rdfs.label,
+            NS_MGR.bf.Organization,
+            None)
         
 
 
