@@ -78,6 +78,7 @@ class Ingester(object):
         self.triplestore_url = kwargs.get(
             "triplestore_url",
             "http://localhost:9999/blazegraph/sparql")
+        self.__additional_entities__()
 
 
     def __generate_uri__(self):
@@ -116,6 +117,23 @@ class Ingester(object):
              generation_process)
         )
 
+    def __additional_entities__(self):
+        """Queries Rules graph for entities to add to triplestore as 
+        constants"""
+        constants = new_graph()
+        for subject in self.rules_graph.subjects(
+            object=NS_MGR.kds.AddEntity):
+            for predicate, object_ in self.rules_graph.predicate_objects(
+                subject=subject):
+                if object_ != NS_MGR.kds.AddEntity:
+                    constants.add((subject, predicate, object_))
+        result = requests.post(self.triplestore_url,
+            data=constants.serialize(format='turtle'),
+            headers={"Content-Type": "text/turtle"})
+        if result.status_code > 399:
+            raise ValueError("Could add entities to triplestore")
+            
+            
 
     def add_to_triplestore(self):
         "Sends RDF graph via POST to add to triplestore"
@@ -142,7 +160,6 @@ class Ingester(object):
         for row in self.graph.query(sparql):
             agent_uri, value = row
             sparql = DEDUP_AGENTS.format(
-                agent_class,
                 filter_class,
                 value)
             result = requests.post(
@@ -150,7 +167,7 @@ class Ingester(object):
                 data={"query": sparql,
                       "format": "json"})
             if result.status_code > 399:
-                continue
+                raise ValueError("Could not deduplicate {}".format(agent_class))
             bindings = result.json().get('results', dict()).get('bindings', [])
             if len(bindings) < 1:
                 # Agent doesn't exit in triplestore, calls custom function to

@@ -3,19 +3,21 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import sys
 
 try:
-    from .ingester import PROJECT_BASE
+    from .ingester import PROJECT_BASE, NS_MGR
 # Failed relative import
 except SystemError:
-    from ingester import PROJECT_BASE
+    from ingester import PROJECT_BASE, NS_MGR
 sys.path.append(PROJECT_BASE)
 try:
     import rdfw as rdfframework
-    from rdfframework.utilities import RdfNsManager
 except ImportError:
     pass
 
 
-NSM = RdfNsManager()
+NSM = NS_MGR
+
+NSM.bind("bf", "http://id.loc.gov/ontologies/bibframe/")
+
 
 PREFIX = NSM.prefix()
 
@@ -84,11 +86,13 @@ WHERE {{
 }}"""
 
 DEDUP_AGENTS = PREFIX + """
-SELECT DISTINCT ?agent
+SELECT DISTINCT ?agent ?type
 WHERE {{
-    ?agent rdf:type <{0}> .
-    ?agent <{1}> ?label .
-    filter contains("{2}", ?label)
+    ?agent rdf:type ?type .
+    ?agent <{0}> ?label .
+    OPTIONAL {{ ?agent a bf:Person }} 
+    OPTIONAL {{ ?agent a bf:Organization }} 
+    filter contains("{1}", ?label)
 }}"""
 
 DEDUP_PERSON_ORG = PREFIX + """

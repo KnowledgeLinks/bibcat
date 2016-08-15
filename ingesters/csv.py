@@ -52,6 +52,7 @@ class RowIngester(Ingester):
             return
         if delimiter is not None:
             for row in value.split(str(delimiter)):
+                filtered_value = row.strip()
                 bnode_class = self.new_existing_bnode(
                     target_property,
                     target_subject)
@@ -66,7 +67,7 @@ class RowIngester(Ingester):
                 self.graph.add(
                     (bnode_class,
                      destination_property,
-                     rdflib.Literal(row)))
+                     rdflib.Literal(filtered_value)))
                 for pred, obj in self.rules_graph.query(
                         GET_ADDL_PROPS.format(target_subject)):
                     self.graph.add((bnode_class, pred, obj))
@@ -85,13 +86,11 @@ class RowIngester(Ingester):
             self.graph.add(
                 (bnode_class,
                  destination_property,
-                 rdflib.Literal(value)))
+                 rdflib.Literal(value.strip())))
             for pred, obj in self.rules_graph.query(
                     GET_ADDL_PROPS.format(target_subject)):
                 self.graph.add((bnode_class, pred, obj))
            
-                    
-            
 
     def __handle_pattern__(self, **kwargs):
         """Helper takes an entity, rule, BIBFRAME class, rdfs:label 
@@ -141,13 +140,6 @@ class RowIngester(Ingester):
             self.graph = new_graph()
         super(RowIngester, self).transform()
         self.deduplicate_agents(
-            NS_MGR.schema.alternativeName,
-            NS_MGR.bf.Person,
+            NS_MGR.schema.name,
+            NS_MGR.bf.Agent,
             None)
-        self.deduplicate_agents(
-            NS_MGR.rdfs.label,
-            NS_MGR.bf.Organization,
-            None)
-        
-
-

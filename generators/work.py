@@ -10,6 +10,7 @@ try:
     from .sparql import FILTER_WORK_CREATOR, FILTER_WORK_TITLE 
     from .sparql import GET_AVAILABLE_INSTANCES, GET_INSTANCE_CREATOR 
     from .sparql import GET_INSTANCE_TITLE, GET_INSTANCE_WORK_BNODE_PROPS
+    from .sparql import DELETE_COLLECTION_BNODE, FILTER_COLLECTION
     from .sparql import GET_AVAILABLE_COLLECTIONS
 except SystemError:
     try:
@@ -18,6 +19,7 @@ except SystemError:
         from sparql import FILTER_WORK_CREATOR, FILTER_WORK_TITLE  
         from sparql import GET_AVAILABLE_INSTANCES, GET_INSTANCE_CREATOR
         from sparql import GET_INSTANCE_TITLE, GET_INSTANCE_WORK_BNODE_PROPS
+        from sparql import DELETE_COLLECTION_BNODE, FILTER_COLLECTION 
         from sparql import GET_AVAILABLE_COLLECTIONS
     except ImportError:
         pass
@@ -146,6 +148,14 @@ class CollectionGenerator(Generator):
                 item=item_uri,
                 organization=org_uri, 
                 rdfs_label=label)
+            # Now remove existing BNode's properties from the BF Instance
+            delete_result = requests.post(
+                self.triplestore_url,
+                data=DELETE_COLLECTION_BNODE.format(instance_uri),
+                headers={"Content-Type": "application/sparql-update"})
+            if delete_result.status_code > 399:
+                raise WorkError("Cannot Delete Collection blank nodes for {}\n{}".format(
+                    instance_uri, delete_result.text))
 
 
 

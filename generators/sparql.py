@@ -4,7 +4,22 @@ try:
 # Failed relative import
 except SystemError:
     from generator import NS_MGR
+
+NS_MGR.bind("bf", "http://id.loc.gov/ontologies/bibframe/")
 PREFIX = NS_MGR.prefix()
+
+DELETE_COLLECTION_BNODE = PREFIX + """
+DELETE {{
+    ?collection ?p ?o .
+    <{0}> bf:partOf ?collection
+}} 
+INSERT {{ }}
+WHERE {{
+    <{0}> bf:partOf ?collection .
+    ?collection ?p ?o
+    filter isBlank(?collection)
+}}"""
+
 
 DELETE_WORK_BNODE = PREFIX + """
 DELETE {{
@@ -27,7 +42,7 @@ WHERE {
     ?collection rdfs:label ?label .
     ?item bf:itemOf ?instance .
     ?item bf:heldBy ?org
-    filter(isblank(?collection)
+    filter(isblank(?collection))
 }"""
 
 GET_AVAILABLE_INSTANCES = PREFIX + """
