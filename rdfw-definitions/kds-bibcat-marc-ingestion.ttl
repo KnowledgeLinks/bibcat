@@ -190,11 +190,11 @@ bc:m21-author a kds:PropertyLinker ;
 			        m21:M1001_a,
 			        m21:M1003_a;
 	kds:destClassUri bf:Person;
-	kds:destPropUri schema:alternativeName;
+	kds:destPropUri schema:name;
 	kds:linkedRange relators:aut;
 	kds:linkedClass bf:Instance ;
 	kds:lookupClassUri schema:Person;
-	kds:lookupPropUri schema:alternativeName;
+	kds:lookupPropUri schema:name;
 	kds:lookupSource "viaf" .
 
 

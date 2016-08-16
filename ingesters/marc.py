@@ -18,9 +18,14 @@ logging.basicConfig(level=MLOG_LVL)
 class MARCIngester(Ingester):
     """Extends BIBFRAME 2.0 Ingester for MARC21 records"""
 
-    def __init__(self, record):
+    def __init__(self, record, custom=None):
+        rules = ["kds-bibcat-marc-ingestion.ttl",]
+        if isinstance(custom, str):
+            rules.append(custom)
+        elif isinstance(custom, list):
+            rules.extend(custom)
         super(MARCIngester, self).__init__(
-            rules_ttl="kds-bibcat-marc-ingestion.ttl",
+            rules_ttl=rules,
             source=record)
         self.logger = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
         self.logger.setLevel(MLOG_LVL)
