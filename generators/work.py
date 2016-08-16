@@ -4,6 +4,7 @@
 """
 import rdflib
 import requests
+from tqdm import tqdm
 try:
     from .generator import Generator, new_graph, NS_MGR
     from .sparql import DELETE_WORK_BNODE 
@@ -254,6 +255,8 @@ class WorkGenerator(Generator):
         work_graph = new_graph()
         work_graph.add((instance_uri, NS_MGR.bf.instanceOf, work_uri))
         for row in work_properties_bindings:
+            if 'pred' not in row or 'obj' not in row:
+                continue
             predicate = rdflib.URIRef(row.get("pred").get("value"))
             obj_type = row.get("obj").get("type")
             obj_raw_val = row.get("obj").get("value")
@@ -267,7 +270,6 @@ class WorkGenerator(Generator):
             work_graph.add((work_uri, predicate, obj_))
         self.__add_work_title__(work_graph, work_uri, instance_uri)
         self.__add_creators__(work_graph, work_uri, instance_uri)
-        print(work_graph.serialize(format='turtle').decode())
         update_result = requests.post(
             self.triplestore_url,
             data=work_graph.serialize(format='turtle'),
@@ -294,8 +296,8 @@ class WorkGenerator(Generator):
         """
         work_uri = None
         self.matched_works = []
-        self.__similiar_titles__(instance_uri)
-        self.__similiar_creators__(instance_uri)
+        self.__similar_titles__(instance_uri)
+        self.__similar_creators__(instance_uri)
         candidate_works = list(set(self.matched_works))
         if len(candidate_works) < 1:
             work_uri = self.__generate_uri__()
@@ -306,7 +308,7 @@ class WorkGenerator(Generator):
         return work_uri
 
 
-    def __similiar_creators__(self, uri):
+    def __similar_creators__(self, uri):
         """Takes an BF Instance URI, extracts creator info and then
         queries triplestore for similar works with the same creator
 
@@ -353,7 +355,7 @@ class WorkGenerator(Generator):
 
 
 
-    def __similiar_titles__(self, uri):
+    def __similar_titles__(self, uri):
         """Takes an BF Instance URI, extracts titles info and then
         queries triplestore for similar works with the same title
 
@@ -377,13 +379,18 @@ class WorkGenerator(Generator):
             else:
                 self.processed[uri] = {"title": [{"mainTitle": main_title,
                                                   "subtitle": subtitle}]}
+            escaped_title = main_title.replace('"', '\"')
+            query = FILTER_WORK_TITLE.format(escaped_title)
+            print(query)
             work_title_result = requests.post(
                 self.triplestore_url,
                 #! Need to add subtitle to SPARQL query
-                data={"query": FILTER_WORK_TITLE.format(main_title, subtitle),
+                data={"query": query,
                       "format": "json"})
+            if work_title_result.status_code > 399:
+                print("Error with similar title {}".format(main_title))
             work_title_bindings = work_title_result.json()\
-                .get("results").get("bindings")
+               .get("results").get("bindings")
             if len(work_title_bindings) < 1:
                 continue
             for work_row in work_title_bindings:
@@ -406,7 +413,7 @@ class WorkGenerator(Generator):
             raise WorkError("WorkGenerator failed to query {}".format(
                 self.triplestore_url))
         bindings = result.json().get('results').get('bindings')
-        for row in bindings:
+        for row in tqdm(bindings):
             instance_url =  row.get('instance').get('value')
             work_uri = self.__generate_work__(instance_url)
             self.__copy_instance_to_work__(
