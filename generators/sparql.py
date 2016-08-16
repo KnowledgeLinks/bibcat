@@ -112,6 +112,6 @@ WHERE {{
     ?work bf:title ?title .
     ?title bf:mainTitle ?mainTitle .
     FILTER(isuri(?work)) 
-    FILTER CONTAINS(""" + '"""{0}""", ?mainTitle)' + "\n}}"
+    FILTER CONTAINS(""" + '"""{0} """, ?mainTitle)' + "\n}}"
 
 

@@ -2,9 +2,9 @@
 
 
 """
+import datetime
 import rdflib
 import requests
-from tqdm import tqdm
 try:
     from .generator import Generator, new_graph, NS_MGR
     from .sparql import DELETE_WORK_BNODE 
@@ -303,7 +303,8 @@ class WorkGenerator(Generator):
             work_uri = self.__generate_uri__()
             work_graph = new_graph()
             work_graph.add((work_uri, NS_MGR.rdf.type, NS_MGR.bf.Work))
-        elif len(candidate_works) == 1:
+        else:
+            # Takes the top match
             work_uri = rdflib.URIRef(candidate_works[0])
         return work_uri
 
@@ -381,7 +382,6 @@ class WorkGenerator(Generator):
                                                   "subtitle": subtitle}]}
             escaped_title = main_title.replace('"', '\"')
             query = FILTER_WORK_TITLE.format(escaped_title)
-            print(query)
             work_title_result = requests.post(
                 self.triplestore_url,
                 #! Need to add subtitle to SPARQL query
@@ -413,12 +413,24 @@ class WorkGenerator(Generator):
             raise WorkError("WorkGenerator failed to query {}".format(
                 self.triplestore_url))
         bindings = result.json().get('results').get('bindings')
-        for row in tqdm(bindings):
+        start = datetime.datetime.utcnow()
+        print("Started Processing at {} for {} Instances".format(
+            start,
+            len(bindings)))
+        for i, row in enumerate(bindings):
             instance_url =  row.get('instance').get('value')
             work_uri = self.__generate_work__(instance_url)
             self.__copy_instance_to_work__(
                 rdflib.URIRef(instance_url), 
                 work_uri)
+            if not i%10 and i > 0:
+                print(".", end="")
+            if not i%100:
+                print(i, end="")
+        end = datetime.datetime.utcnow()
+        print("Finished Processing at {}, total time={} mins".format(
+            end,
+            (end-start).seconds / 60.0))
             
 
 
