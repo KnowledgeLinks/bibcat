@@ -67,22 +67,39 @@ def institution_helditem_path():
                                helditems=helditems,
                                org=clean_iri(institution))
     return template 
+
+@bibcat.route("/instances")
+def instances_path():
+    """ Displays a list of insitutions with a link to their catalog """
+    instances = run_sparql_query(INSTANCES_SPARQL)   
+    template = render_template("/instances.html",
+                               instances=instances)
+    return template 
  
-@bibcat.route("/instance")
+@bibcat.route("/item")
 def instance_path():
     """ Displays the turtle grpah of an instance """
-    instance = request.args.get("id")
-    if instance is None:
+    item_id = clean_iri(request.args.get("id"))
+    if item_id is None:
         return redirect(url_for("bibcat.institution_list_path"))
-    instance_data = run_sparql_query(INSTANCE_SPARQL.format(iri(instance)))
-    cdata = convert_spo_to_dict(instance_data)
+    item_data = run_sparql_query(INSTANCE_SPARQL.format(iri(item_id)))
+    cdata = convert_spo_to_dict(item_data)
     nsdata = convert_obj_to_rdf_namespace(cdata)
     rtn_data = copy.deepcopy(nsdata)
     title = {}
+    item_type = None
     for key, value in nsdata.items():
+        item_data = False
+        if key == item_id:
+            item_data = True
         for subkey, val2 in value.items():
-            if subkey == "bf_title":
-                title = dict.copy(nsdata[val2])
+            if subkey == "bf_title" and item_data:
+                title_key = val2
+                if isinstance(val2, list):
+                    title_key = val2[0]
+                title = dict.copy(nsdata[title_key])
+            elif subkey == "rdf_type" and item_data:
+                item_type = val2.replace("bf_", "")
             if re.match(r'^t\d', str(val2)):
                 rtn_data[key][subkey] = dict.copy(nsdata[val2])
             elif isinstance(val2, list):
@@ -96,17 +113,17 @@ def instance_path():
     for key, value in nsdata.items():
         if re.match(r'^t\d', key):
             del rtn_data[key]
-    template = render_template("/instance.html",
-                               instance=rtn_data,
-                               title=title)
+    template = render_template("/item.html",
+                               item=rtn_data,
+                               title=title,
+                               item_type=item_type)
     return template 
 
 ORGS_SPARQL = """  
-SELECT ?name ?link {
-  ?s a bf:Organization .
-  BIND(str(?s) as ?name) .
-  BIND(encode_for_uri(concat("<",?name,">")) as ?id)
-  bind(concat("/helditems?institution=",?id,"") as ?link)
+SELECT ?name ?id {
+  ?id a schema:Organization .
+  ?id schema:name ?name
+  bind(concat("/helditems?institution=",str(?id),"") as ?link)
 }
 ORDER BY ?name"""
 
@@ -134,6 +151,52 @@ SELECT ?i ?title ?aut (group_concat(?isbn1; SEPARATOR=", ") as ?isbn)
 }}
 GROUP BY ?i ?title ?aut"""
 
+WORKS_SPARQL = """
+SELECT ?i ?title ?aut (group_concat(?isbn1; SEPARATOR=", ") as ?isbn)
+{{
+  SELECT DISTINCT ?i ?title ?aut ?isbn1
+  {{
+    ?i bf:title ?bn_t .
+    ?bn_t bf:mainTitle ?title .
+
+    optional {{
+          ?i relators:aut ?bn_aut .
+          ?bn_aut schema:alternativeName ?aut
+       }} .
+    optional {{
+      ?i bf:identifiedBy ?bn_id .
+      ?bn_id a bf:Isbn .
+      ?bn_id rdf:value ?isbn1 }} .
+  }}
+  ORDER BY ?title ?isbn
+
+}}
+GROUP BY ?i ?title ?aut"""
+
+INSTANCES_SPARQL = """
+SELECT ?s ?title ?aut (group_concat(?isbn1; SEPARATOR=", ") as ?identifiers)
+{{
+  SELECT DISTINCT ?s ?title ?aut ?isbn1
+  {{
+    ?s a bf:Instance .
+    ?s bf:title ?bn_t .
+    ?bn_t bf:mainTitle ?title .
+
+    optional {{
+          ?s relators:aut ?bn_aut .
+          ?bn_aut schema:alternativeName ?aut
+       }} .
+    optional {{
+      ?s bf:identifiedBy ?bn_id .
+      #?bn_id a bf:Isbn .
+      ?bn_id rdf:value ?isbn1 }} .
+  }}
+  #ORDER BY ?title ?isbn
+
+}}
+GROUP BY ?s ?title ?aut
+limit 25
+"""
 INSTANCE_SPARQL = """
 SELECT
   ?s ?p ?o
@@ -157,3 +220,43 @@ WHERE
     filter(isblank(?s))
   }}
 }}"""
+INSTANCE_SPARQL_new = """
+SELECT DISTINCT
+  ?s ?p ?o
+WHERE
+{{
+  {{
+    BIND({0} as ?s) .
+    ?s ?p ?o
+  }} union {{
+    BIND({0} as ?s1) .
+    ?s1 ?p1 ?s .
+    ?s ?p ?o
+    filter(isBlank(?s)||isiri(?s))
+    filter(?p1!=rdf:type)
+  }} union {{
+    BIND({0} as ?s1) .
+    ?s1 ?p1 ?s2 .
+    ?s2 ?p2 ?s .
+    ?s ?p ?o .
+    filter(isiri(?s2))
+    filter(isblank(?s))
+  }} union {{
+    BIND({0} as ?o) .
+    ?s ?p ?o .
+  }} union {{
+    BIND({0} as ?o1) .
+    ?s ?p1 ?o1 .
+    ?s ?p ?o
+    filter(isBlank(?s)||isiri(?s))
+    filter(?p1!=rdf:type)
+  }} union {{
+    BIND({0} as ?o1) .
+    ?s2 ?p1 ?o1 .
+    ?s2 ?p2 ?s .
+    ?s ?p ?o .
+    filter(isiri(?s2))
+    filter(isblank(?s))
+  }}
+}}
+"""

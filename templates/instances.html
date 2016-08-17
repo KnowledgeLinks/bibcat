@@ -1,6 +1,6 @@
 {% extends 'index.html' %}
 {% block view_title %}
-	App Definitions
+	Instances
 {% endblock %}
 {% block head_title %}Institutions{% endblock %}
 {% block more_css %}
@@ -14,14 +14,20 @@
 	<div class="row">
 		<section class="col-md-12">
 			<div>
-				<h1>Select an institution below to browse held items.</h1>
-				<div lass="list-group">
-				{% for org in orgs %}
-                                    {% if org %}
-					<a href="{{ url_for('bibcat.institution_helditem_path') }}?institution={{ org['id']['value'] }}" class="list-group-item"><h1>{{ org['name']['value'] }}</h1></a>
-                                    {% endif %}
+				<h1>Instances</h1>
+				<table class="table table-striped">
+					<tr>
+						<th>Title</th>
+						<th>Identifiers</th>
+					</tr>
+				{% for item in instances %}
+					<tr>
+						<td><a href="{{ url_for('bibcat.instance_path') }}?id={{ item['s']['value'] }}">{{ item['title']['value'] }}</a></td>
+						<td>{{ item['identifiers']['value'] }}</td>
+					</tr>
 				{% endfor %}
-				</div>	
+
+				</table>
 			</div>
 		</section>
 	</div>
