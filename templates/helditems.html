@@ -18,14 +18,23 @@
 				<table class="table table-striped">
 					<tr>
 						<th>Title</th>
-						<th>Author</th>
+						<th>Author/Creator</th>
 						<th>ISBN</th>
 					</tr>
 				{% for item in helditems %}
 					<tr>
-						<td><a href="{{ url_for('bibcat.institution_helditem_path') }}?id={{ item['i']['value'] }}">{{ item['title']['value'] }}</a></td>
-						<td>{{ item['aut']['value'] }}</td>
+						<td><a href="{{ url_for('bibcat.instance_path') }}?id={{ item['i']['value'] }}">{{ item['title']['value'] }}</a></td>
+						<td>
+                                                    {% for code in ['aut', 'cre'] %}
+                                                    {% if code in item %}
+                                                        {{ item[code]['value'] }}
+                                                        {% if not loop.last %},{% endif %}
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                                {% if 'isbn' in item %}
 						<td>{{ item['isbn']['value'] }}</td>
+                                                {% endif %}
 					</tr>
 				{% endfor %}
 

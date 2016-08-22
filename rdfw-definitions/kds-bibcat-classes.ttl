@@ -37,7 +37,7 @@ bf:WorkTitle a kds:ControlledClass ;
 	kds:storageType "object" .
 	
 bf:InstanceTitle a kds:ControlledClass ;
-	rdfs:comment "Work title" ;
+	rdfs:comment "Instance title" ;
 	rdfs:label "Title or form of title chosen to identify the work, such as a preferred title, preferred title with additions, uniform title, etc." ;
 	kds:storageType "object" .
 

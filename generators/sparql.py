@@ -111,7 +111,6 @@ WHERE {{
     ?work rdf:type bf:Work .
     ?work bf:title ?title .
     ?title bf:mainTitle ?mainTitle .
+    ?mainTitle """{0} """ .
     FILTER(isuri(?work)) 
-    FILTER CONTAINS(""" + '"""{0} """, ?mainTitle)' + "\n}}"
-
-
+}}

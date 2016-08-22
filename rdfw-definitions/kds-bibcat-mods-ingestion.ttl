@@ -80,6 +80,7 @@ bc:mods-subjecTopic a kds:PropertyLinker ;
     kds:srcPropXpath "mods:subject/mods:topic";
     kds:destClassUri bf:Topic;
     kds:destPropUri rdf:value ;
+    kds:hasIndividualNodes "true";
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance .
 

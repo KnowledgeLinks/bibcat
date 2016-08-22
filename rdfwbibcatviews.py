@@ -56,6 +56,13 @@ def institution_list_path():
                                orgs=orgs)
     return template
 
+@bibcat.route("/collections")
+def collections_path():
+    collections = run_sparql_query(COLLECTIONS_SPARQL)
+    template = render_template("/collections.html",
+        collections=collections)
+    return template
+
 @bibcat.route("/helditems")
 def institution_helditem_path():
     """ Displays a list of insitutions with a link to their catalog """
@@ -78,7 +85,7 @@ def instances_path():
  
 @bibcat.route("/item")
 def instance_path():
-    """ Displays the turtle grpah of an instance """
+    """ Displays the turtle graph of an instance """
     item_id = clean_iri(request.args.get("id"))
     if item_id is None:
         return redirect(url_for("bibcat.institution_list_path"))
@@ -118,6 +125,16 @@ def instance_path():
                                title=title,
                                item_type=item_type)
     return template 
+
+COLLECTIONS_SPARQL = """PREFIX pcdm: <http://pcdm.org/models#> 
+PREFIX bf: <http://id.loc.gov/ontologies/bibframe/>
+
+SELECT ?collection ?label {
+    ?collection a pcdm:Collection .
+    ?collection bf:title ?title .
+    ?title bf:mainTitle ?label
+} ORDER BY ?label"""
+
 
 ORGS_SPARQL = """  
 SELECT ?name ?id {

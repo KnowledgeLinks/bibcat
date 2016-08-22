@@ -47,10 +47,17 @@ bc:InstanceForm a kds:FormClass;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1
 	] ;
+        kds:hasProperty [
+                kds:propUri relators:cre;
+                kds:classUri bf:Instance;
+                kds:formFieldOrder 2;
+                kds:formLayoutRow 1
+
+        ] ;
 	kds:hasProperty [
 		kds:propUri bf:identifiedBy;
 		kds:classUri bf:Instance;
-		kds:formFieldOrder 2;
+		kds:formFieldOrder 3;
 		kds:formLayoutRow 1
 	] .
 
