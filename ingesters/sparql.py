@@ -92,7 +92,7 @@ WHERE {{
     ?agent <{0}> ?label .
     OPTIONAL {{ ?agent a bf:Person }} 
     OPTIONAL {{ ?agent a bf:Organization }} 
-    filter contains("{1}", ?label)
+    filter regex(?label, "{1}")
 }}"""
 
 DEDUP_PERSON_ORG = PREFIX + """

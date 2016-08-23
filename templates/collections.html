@@ -16,8 +16,8 @@
 			<div>
 				<h1>Select a collection below to browse held items.</h1>
 				<div class="list-group">
-                                {% for collection in collections %}
-                                {{ collection }}
+                                {% for row in collections %}
+                                <a href="{{ url_for('bibcat.collection_instances') }}?id={{ row.collection.value }}">{{ row.label.value }}</a>
 
                                 {% endfor %}    
 				{# for org in orgs %}

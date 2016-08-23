@@ -63,6 +63,18 @@ def collections_path():
         collections=collections)
     return template
 
+@bibcat.route("/collection")
+def collection_instances():
+    """Displays all Instances in a Collection"""
+    collection_url = request.args.get("id")
+    if collection_url is None:
+        return redirect(url_for("bibcat.collections_path"))
+    instances = run_sparql_query(
+        COLLECTION_INSTANCES_SPARQL.format(iri(collection_url)))
+    return render_template("/collection_detail.html",
+        instances=instances,
+        collection=collection_url)
+
 @bibcat.route("/helditems")
 def institution_helditem_path():
     """ Displays a list of insitutions with a link to their catalog """
@@ -126,8 +138,20 @@ def instance_path():
                                item_type=item_type)
     return template 
 
-COLLECTIONS_SPARQL = """PREFIX pcdm: <http://pcdm.org/models#> 
-PREFIX bf: <http://id.loc.gov/ontologies/bibframe/>
+# Template Filters
+@bibcat.app_template_filter('get_creators')
+def get_creators_filter(uid):
+    output = ""
+    agents = run_sparql_query(
+        CREATOR_FILTER_SPARQL.format(iri(uid)))
+    for row in agents:
+        output += "{} ".format(row['name']["value"])
+    return output
+    
+
+# SPARQL Templates
+COLLECTIONS_SPARQL = """
+PREFIX pcdm: <http://pcdm.org/models#> 
 
 SELECT ?collection ?label {
     ?collection a pcdm:Collection .
@@ -135,6 +159,23 @@ SELECT ?collection ?label {
     ?title bf:mainTitle ?label
 } ORDER BY ?label"""
 
+COLLECTION_INSTANCES_SPARQL = """
+PREFIX pcdm: <http://pcdm.org/models#> 
+
+SELECT ?instance ?label ?name {{
+    {0} bf:hasPart ?instance .
+    ?instance bf:title ?title .
+    ?title bf:mainTitle ?label .
+}} ORDER BY ?label"""
+
+CREATOR_FILTER_SPARQL = """
+SELECT ?name 
+WHERE {{
+    BIND({0} as ?instance) .
+    ?instance relators:cre ?agent .
+    ?agent schema:alternativeName ?name .
+    #OPTIONAL {{  relators:aut ?agent }}
+}}"""
 
 ORGS_SPARQL = """  
 SELECT ?name ?id {
