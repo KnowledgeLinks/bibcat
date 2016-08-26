@@ -29,7 +29,10 @@ class Linker(object):
     NS = NS_MGR
 
     def __init__(self, **kwargs):
-        pass
+        self.triplestore_url = kwargs.get(
+            "triplestore_url",
+            "http://localhost:9999/blazegraph/sparql")
+
 
     def run(self):
         pass

@@ -18,7 +18,7 @@
 					<li>
 						<a href="{{ url_for('bibcat.instance_path') }}?id={{ item['instance']['value'] }}">
                                                     {{ item['label']['value'] }}
-                                                </a> by {{ item['instance']['value']|get_creators|safe }}
+                                                </a> by {# item['instance']['value']|get_creators|safe #}
 					</li>
 				{% endfor %}
                         </ul>
