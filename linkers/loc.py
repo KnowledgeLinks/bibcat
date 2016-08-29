@@ -76,12 +76,17 @@ class LibraryOfCongressLinker(Linker):
 
 FIND_LCSH = Linker.NS.prefix() + """
 
-SELECT ?subject_uri ?label 
-WHERE {{
-    ?subject_uri bf:subject ?bnode .
-    ?bnode rdf:value ?label .
-    FILTER(CONTAINS(?label, "{0}"))
-}}"""
+SELECT *
+{{
+  OPTIONAL {{
+     ?1 rdfs:label "{0}"@en
+   }}
+   OPTIONAL {{
+     ?2 rdfs:label ?lab
+     filter(CONTAINS(?lab, "{0}"))
+   }}
+}}
+"""
 
 SUBJECT_BNODES = Linker.NS.prefix() + """
 
