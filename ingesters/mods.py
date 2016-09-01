@@ -12,8 +12,6 @@ import sys
 
 import xml.etree.ElementTree as etree
 
-from ingesters.ingester import Ingester, NS_MGR
-from ingesters.sparql import GET_ADDL_PROPS
 
 sys.path.append(
     os.path.split(os.path.abspath(os.path.dirname(__file__)))[0])
@@ -21,6 +19,12 @@ try:
     from instance import config
 except ImportError:
     pass
+try:
+    from ingesters.ingester import Ingester, NS_MGR, new_graph
+    from ingesters.sparql import GET_ADDL_PROPS
+except ImportError:
+    from .ingester import Ingester, NS_MGR, new_graph
+    from .sparql import GET_ADDL_PROPS
 
 # get the current file name for logs and set logging level
 MNAME = inspect.stack()[0][1]
@@ -33,15 +37,16 @@ NS_MODS = {"mods": "http://www.loc.gov/mods/v3"}
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""
 
-    def __init__(self, mods_xml=None, custom=None):
-        rules = ["kds-bibcat-mods-ingestion.ttl",]
-        if isinstance(custom, str):
-            rules.append(custom)
-        if isinstance(custom, list):
-            rules.extend(custom)
+    def __init__(self, **kwargs):
+        mods_rules = ["kds-bibcat-mods-ingestion.ttl",]
+        rules = kwargs.get("rules_ttl")
+        if isinstance(rules, str):
+            mods_rules.append(rules)
+        if isinstance(rules, list):
+            mods_rules.extend(rules)
+        kwargs["rules_ttl"] = mods_rules
         super(MODSIngester, self).__init__(
-            rules_ttl=rules,
-            source=mods_xml)
+            **kwargs)
 
     def __handle_linked_bnode__(self, **kwargs):
         """Helper takes an entity with a blank nodes as a linking property
