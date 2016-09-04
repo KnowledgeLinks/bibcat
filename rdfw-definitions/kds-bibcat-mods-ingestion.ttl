@@ -66,7 +66,7 @@ bc:mods-genreForm a kds:PropertyLinker;
     kds:destPropUri rdf:value ;
     kds:destClassUri bf:GenreForm ;
     kds:hasIndividualNodes "true";
-    kds:linkedRange bf:genreFrom ;
+    kds:linkedRange bf:genreForm ;
     kds:linkedClass bf:Instance .
 
 bc:mods-abstract a kds:PropertyLinker;
