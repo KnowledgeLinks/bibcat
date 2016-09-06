@@ -27,18 +27,17 @@ class DCIngester(Ingester):
     >> ingester.graph # BIBFRAME 2.0 Graphs
     """
 
-    def __init__(self, dc_xml=None, custom=None):
-        rules, source = ["kds-bibcat-dc-ingestion.ttl", ], None
+    def __init__(self, **kwargs):
+        rules = kwargs.get("rules_ttl", [])
+        if not isinstance(rules, list):
+            rules = [rules,]
+        rules.append("kds-bibcat-dc-ingestion.ttl")
+        dc_xml = kwargs.get("source")
         if not isinstance(dc_xml, rdflib.Graph) and dc_xml:
             source = rdflib.Graph()
             source.parse(data=dc_xml, format="xml")
-        if isinstance(custom, str):
-            rules.append(custom)
-        if isinstance(custom, list):
-            rules.extend(custom)
-        super(DCIngester, self).__init__(
-            rules_ttl=rules,
-            source=source)
+        kwargs["source"] = source
+        super(DCIngester, self).__init__(**kwargs)
 
     def __handle_linked_pattern__(self, **kwargs):
         """Helper takes an entity, rule, BIBFRAME class, kds:srcPropXpath
