@@ -67,6 +67,12 @@ class MODSIngester(Ingester):
         destination_property = self.rules_graph.value(
             subject=bnode,
             predicate=rdflib.RDF.type)
+        xpath = self.rules_graph.value(
+            subject=target_subject,
+            predicate=NS_MGR.kds.srcPropXpath)
+        matched_elements = self.source.findall(str(xpath), NS_MODS)
+        if len(matched_elements) < 1:
+            return
         bf_class_bnode = self.new_existing_bnode(
             target_property,
             target_subject)
@@ -81,12 +87,7 @@ class MODSIngester(Ingester):
         intermediate_bf_property = self.rules_graph.value(
             subject=bnode,
             predicate=NS_MGR.kds.destPropUri)
-        self.graph.add(
-            (intermediate_bnode, rdflib.RDF.type, intermediate_bf_class))
-        xpath = self.rules_graph.value(
-            subject=target_subject,
-            predicate=NS_MGR.kds.srcPropXpath)
-        for row in self.source.findall(str(xpath), NS_MODS):
+        for row in matched_elements:
             raw_value = row.text.strip()
             if len(raw_value) < 1:
                 continue
@@ -95,6 +96,9 @@ class MODSIngester(Ingester):
                  intermediate_bf_property,
                  rdflib.Literal(raw_value))
             )
+        self.graph.add(
+            (intermediate_bnode, rdflib.RDF.type, intermediate_bf_class))
+
 
 
 
@@ -120,16 +124,15 @@ class MODSIngester(Ingester):
         mods_xpath = str(rule)
         for element in self.source.findall(mods_xpath, NS_MODS):
             value = element.text
-            if not value or len(value.strip()) < 1:
-                continue
             bf_class_bnode = self.new_existing_bnode(
                 target_property,
                 target_subject)
             self.graph.add((bf_class_bnode, rdflib.RDF.type, destination_class))
             self.graph.add((entity, target_property, bf_class_bnode))
-            self.graph.add((bf_class_bnode,
-                            destination_property,
-                            rdflib.Literal(value)))
+            if value and len(value.strip()) > 1:
+                self.graph.add((bf_class_bnode,
+                                destination_property,
+                                rdflib.Literal(value)))
             # Sets additional properties
             for pred, obj in self.rules_graph.query(
                     GET_ADDL_PROPS.format(target_subject)):
