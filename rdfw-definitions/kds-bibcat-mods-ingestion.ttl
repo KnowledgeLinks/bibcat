@@ -11,6 +11,13 @@
 @prefix loc: <http://id.loc.gov/> .
 @prefix schema: <http://schema.org/> .
 
+bc:mods-abstract a kds:PropertyLinker;
+    kds:srcPropXpath "mods:abstract" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Summary ;
+    kds:linkedRange bf:summary ;
+    kds:linkedClass bf:Instance .
+
 bc:mods-adminNote a kds:PropertyLinker;
     kds:srcPropXpath "mods:note[@type='admin']" ;
     kds:destPropUri rdf:value ;
@@ -69,14 +76,45 @@ bc:mods-genreForm a kds:PropertyLinker;
     kds:linkedRange bf:genreForm ;
     kds:linkedClass bf:Instance .
 
-bc:mods-abstract a kds:PropertyLinker;
-    kds:srcPropXpath "mods:abstract" ;
-    kds:destPropUri rdf:value ;
-    kds:destClassUri bf:Summary ;
-    kds:linkedRange bf:summary ;
+bc:mods-geographicTopic a kds:PropertyLinker ;
+    kds:srcPropXpath "mods:subject/mods:geographic";
+    kds:destPropUri bf:geographicCoverage ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
     kds:linkedClass bf:Instance .
 
-bc:mods-subjecTopic a kds:PropertyLinker ;
+bf:mods-language a kds:PropertyLinker ;
+    kds:srcPropXpath "mods:language/mods:languageTerm" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Language ;
+    kds:linkedRange bf:language ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-organizationTopic a kds:PropertyLinker; 
+    kds:srcPropXpath "mods:subject/mods:name[@type='corporate']/mods:namePart" ;
+    kds:destPropUri rdfs:label ;
+    kds:destClassUri bf:Organization;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-personTopic a kds:PropertyLinker; 
+    kds:srcPropXpath "mods:subject/mods:name[@type='personal']/mods:namePart" ;
+    kds:destPropUri schema:alternativeName ;
+    kds:destClassUri bf:Person ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-temporalTopic a kds:PropertyLinker ;
+    kds:srcPropXpath "mods:subject/mods:temporal";
+    kds:destClassUri bf:Temporal;
+    kds:destPropUri rdf:value ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-subjectTopic a kds:PropertyLinker ;
     kds:srcPropXpath "mods:subject/mods:topic";
     kds:destClassUri bf:Topic;
     kds:destPropUri rdf:value ;
