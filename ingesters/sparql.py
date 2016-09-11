@@ -16,9 +16,6 @@ except ImportError:
 
 NSM = NS_MGR
 
-NSM.bind("bf", "http://id.loc.gov/ontologies/bibframe/")
-
-
 PREFIX = NSM.prefix()
 
 GET_BLANK_NODE = PREFIX + """

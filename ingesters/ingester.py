@@ -39,7 +39,7 @@ try:
 except:
     __version__ = "unknown"
 
-NS_MGR = RdfNsManager()
+NS_MGR = RdfNsManager(config=config)
 
 class Ingester(object):
     """Base class for transforming various metadata format/vocabularies to

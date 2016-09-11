@@ -12,5 +12,6 @@ dist*
 *egg-info*
 __pycache__
 application.cfg
-*DS_Store
+*ds_store
 /rdfframework/rdfframework/json-definitions/*.json
+local_data/

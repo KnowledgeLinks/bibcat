@@ -200,7 +200,7 @@ bc:m21-author a kds:PropertyLinker ;
 
 
 kds:PersonIdentifier a kds:Deduplicator;
-    kds:exactMatch rdfs:value;
+    kds:exactMatch rdf:value;
     rdfs:domain bf:Person .
 
 kds:WorkIdentifier a kds:Deduplicator;

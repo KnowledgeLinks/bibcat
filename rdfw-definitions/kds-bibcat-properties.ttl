@@ -17,6 +17,7 @@ bf:absorbed a rdf:Property ;
     rdfs:comment "Resource that has been incorporated into another resource." ;
     rdfs:domain bf:Instance;
 	rdfs:range bf:Instance;
+	kds:esIndexType "nested";
 	kds:formDefault [
 		kds:formFieldName "absorbtion";
 		kds:formLabelName "Absorption of";
@@ -67,6 +68,7 @@ bf:mainTitle a rdf:Property ;
     rdfs:range xsd:string;
     kds:requiredByDomain bf:Title, bf:InstanceTitle, bf:WorkTitle;
     kds:formDefault [
+    	kds:classUri bf:Title, bf:InstanceTitle, bf:WorkTitle;
 		kds:formFieldName "mainTitle";
 		kds:formLabelName "Title";
 		kds:formFieldHelp "Enter the title being addressed.";
@@ -81,6 +83,8 @@ bf:subTitle a rdf:Property ;
     rdfs:domain bf:Title, bf:InstanceTitle, bf:WorkTitle;
     rdfs:range xsd:string;
     kds:formDefault [
+    	kds:classUri bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    	
 		kds:formFieldName "subTitle";
 		kds:formLabelName "Subtitle";
 		kds:formFieldHelp "Word, character, or group of words and/or characters that contains the remainder of the title after the main title. Possible title component.";
@@ -126,6 +130,7 @@ bf:partNumber a rdf:Property ;
 bf:identifiedBy a rdf:property ;
 	rdfs:domain bf:Instance, bf:Work;
 	rdfs:range bf:Identifier ;
+	kds:esIndexType "nested";
 	kds:formDefault [
 		kds:formFieldName "identifiedBy";
 		kds:formLabelName "Identifiers";
@@ -141,8 +146,13 @@ bf:identifiedBy a rdf:property ;
 	
 rdf:type a rdf:Property ;
 	rdfs:domain bf:Identifier;
-	rdfs:range bf:Identifier;
+	rdfs:range [
+		kds:classUri bf:Identifier;
+		a bf:Identifier;
+		kds:esIndexType "not_analyzed"
+	];
 	kds:formDefault [
+	    kds:classUri bf:Identifier;
 		kds:formFieldName "identifierType";
 		kds:formLabelName "Identifier Type";
 		kds:formFieldHelp "Select the type of identifier";
@@ -167,8 +177,15 @@ rdf:type a rdf:Property ;
 
 rdf:value a rdf:Property ;
 	rdfs:domain bf:Identifier ;
-	rdfs:range xsd:string ;
+	rdfs:range [
+		kds:classUri bf:Identifier;
+		a xsd:string ;
+		kds:esIndexType "standard";
+		kds:esIndexType "raw";
+		kds:esIndexType "lower"
+	];
 	kds:formDefault [
+		kds:classUri bf:Identifier;
 		kds:formFieldName "rdfvalue";
 		kds:formLabelName "Value";
 		kds:formFieldHelp "Enter the identifier value";
