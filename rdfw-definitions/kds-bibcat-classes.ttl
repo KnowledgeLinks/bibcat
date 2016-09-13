@@ -10,7 +10,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
-@prefix dcterm: <"http://purl.org/dc/terms/"> .
+@prefix dcterm: <http://purl.org/dc/terms/> .
 
 bf:Item a kds:ControlledClass ;
     rdfs:comment "Single example of an Instance." ;
