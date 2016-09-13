@@ -32,7 +32,7 @@ MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 
 MODS2BIBFRAME = None
-NS_MODS = {"mods": "http://www.loc.gov/mods/v3"}
+NS_MODS = {"mods": "{}".format(NS_MGR.mods) }
 
 class MODSIngester(Ingester):
     """MODSIngester class extends base Ingester class"""

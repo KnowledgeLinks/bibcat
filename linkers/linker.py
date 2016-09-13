@@ -19,11 +19,6 @@ except ImportError:
     pass
 from rdfframework.utilities import RdfNsManager
 
-NS_MGR.bind("dbo", rdflib.Namespace("http://dbpedia.org/ontology/"))
-NS_MGR.bind("dbp", rdflib.Namespace("http://dbpedia.org/property/"))
-NS_MGR.bind("dbr", rdflib.Namespace("http://dbpedia.org/resource/"))
-
-
 class Linker(object):
     """Base Linker class for all other linker classes"""
     NS = NS_MGR
