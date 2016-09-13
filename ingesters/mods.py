@@ -124,19 +124,48 @@ class MODSIngester(Ingester):
         mods_xpath = str(rule)
         for element in self.source.findall(mods_xpath, NS_MODS):
             value = element.text
+            if not value or len(value.strip()) < 1:
+                continue
             bf_class_bnode = self.new_existing_bnode(
                 target_property,
                 target_subject)
             self.graph.add((bf_class_bnode, rdflib.RDF.type, destination_class))
             self.graph.add((entity, target_property, bf_class_bnode))
-            if value and len(value.strip()) > 1:
-                self.graph.add((bf_class_bnode,
-                                destination_property,
-                                rdflib.Literal(value)))
+            self.graph.add((bf_class_bnode,
+                            destination_property,
+                            rdflib.Literal(value)))
             # Sets additional properties
             for pred, obj in self.rules_graph.query(
                     GET_ADDL_PROPS.format(target_subject)):
                 self.graph.add((bf_class_bnode, pred, obj))
+             
+    def __handle_subclasses__(self, **kwargs):
+        """Helper takes an entity, rule, BIBFRAME class, kds:srcPropXpath
+        and matches a value from source and then adds as either a 
+        BIBFRAME Work or Instance sub class.
+ 
+        Keyword args:
+            entity(rdflib.URIRef): Entity's URI
+            rule(rdflib.Literal): XPath Literal
+            destination_class(rdflib.URIRef): Destination class
+            destination_property(rdflib.URIRef): Destination property
+            target_property(rdflib.URIRef): Target property
+            target_subject((rdflib.URIRef): Target subject uri
+        """
+        entity = kwargs.get("entity")
+        rule = kwargs.get("rule")
+        destination_class = kwargs.get("destination_class")
+        destination_property = kwargs.get("destination_property")
+        target_property = kwargs.get("target_property")
+        target_subject = kwargs.get("target_subject")
+        mods_xpath = str(rule)
+        for element in self.source.findall(mods_xpath, NS_MODS):
+            bf_class_bnode = self.new_existing_bnode(
+                target_property,
+                target_subject)
+            self.graph.add((bf_class_bnode, rdflib.RDF.type, destination_class))
+            self.graph.add((entity, target_property, bf_class_bnode))
+            
 
 
     def __handle_pattern__(self, entity, rule, destination_property):
