@@ -32,11 +32,12 @@ class DCIngester(Ingester):
         if not isinstance(rules, list):
             rules = [rules,]
         rules.append("kds-bibcat-dc-ingestion.ttl")
+        kwargs["rules_ttl"] = rules
         dc_xml = kwargs.get("source")
         if not isinstance(dc_xml, rdflib.Graph) and dc_xml:
             source = rdflib.Graph()
             source.parse(data=dc_xml, format="xml")
-        kwargs["source"] = source
+            kwargs["source"] = source
         super(DCIngester, self).__init__(**kwargs)
 
     def __handle_linked_pattern__(self, **kwargs):
