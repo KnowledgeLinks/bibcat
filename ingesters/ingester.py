@@ -331,6 +331,26 @@ class Ingester(object):
                     rule=row[0],
                     target_property=prop,
                     target_subject=subj)
+            # Identifies Work and Instance subclasses
+            if not hasattr(self, "__handle_subclasses__"):
+                continue
+            identifier_sparql = GET_SRC_PROP.format(
+                dest_class,
+                dest_property,
+                entity_class,
+                prop,
+                NS_MGR.kds.ClassIdentifierLinker)
+            for row in self.rules_graph.query(identifier_sparql):
+                self.__handle_subclasses__(
+                    entity=entity,
+                    destination_class=dest_class,
+                    destination_property=dest_property,
+                    rule=row[0],
+                    target_property=prop,
+                    target_subject=subj)
+                
+            
+ 
 
     def update_ordered_linked_classes(self,
                                       entity_class,

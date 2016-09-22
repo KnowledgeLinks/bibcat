@@ -58,9 +58,9 @@ class DBPediaLinker(Linker):
             list: A list of resources that match the label
         """
         if types is None:
-            types = [self.ns.dbo.Album,
-                     self.ns.dbo.Book,
-                     self.ns.dbo.Film]
+            types = [NS_MGR.dbo.Album,
+                     NS_MGR.dbo.Book,
+                     NS_MGR.dbo.Film]
         sparql = """SELECT DISTINCT ?resource
         WHERE {{
             ?resource rdfs:label ?label .

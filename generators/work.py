@@ -309,7 +309,7 @@ class WorkGenerator(Generator):
         return work_uri
 
 
-    def __similar_creators__(self, uri):
+    def __similar_creators__(self, uri): 
         """Takes an BF Instance URI, extracts creator info and then
         queries triplestore for similar works with the same creator
 

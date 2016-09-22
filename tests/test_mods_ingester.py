@@ -74,7 +74,7 @@ WHERE {
 class TestMODS__handle_linked_pattern__(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = mods.MODSIngester(SAMPLE_MODS)
+        self.ingester = mods.MODSIngester(source=SAMPLE_MODS)
         self.entity = self.ingester.__generate_uri__()
 
     def test_exists(self):
@@ -131,7 +131,7 @@ class TestMODS__handle_linked_pattern__(unittest.TestCase):
 class Test__handle_linked_bnode__(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = mods.MODSIngester(SAMPLE_MODS_THESIS)
+        self.ingester = mods.MODSIngester(source=SAMPLE_MODS_THESIS)
         self.entity = self.ingester.__generate_uri__()
 
     def test_exists(self):
@@ -167,7 +167,7 @@ class Test__handle_linked_bnode__(unittest.TestCase):
 class Test__handle_pattern__(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = mods.MODSIngester(SAMPLE_MODS)
+        self.ingester = mods.MODSIngester(source=SAMPLE_MODS)
         self.entity = self.ingester.__generate_uri__()
         self.cc = rdflib.URIRef("http://coloradocollege.edu/")
         bc_org = getattr(NS_MGR.kds, "bf-Organization")
@@ -300,7 +300,7 @@ class TestMODSUpdateOrderedLinkedClasses(unittest.TestCase):
 class TestDeduplicateAgents(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = mods.MODSIngester(SAMPLE_MODS)
+        self.ingester = mods.MODSIngester(source=SAMPLE_MODS)
         self.entity =  self.ingester.__generate_uri__()
 
     def test_defaults_no_transform(self):

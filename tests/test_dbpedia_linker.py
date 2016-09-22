@@ -32,7 +32,7 @@ class TestDBPediaLinker(unittest.TestCase):
     def test_search_label_book(self):
         moby_dick_results = self.linker.search_label(
             "Moby Dick", 
-            [NS.dbo.Book,])
+            [NS_MGR.dbo.Book,])
         self.assertEqual(
             moby_dick_results[0].get('value'),
             "http://dbpedia.org/resource/Moby-Dick")
@@ -40,9 +40,9 @@ class TestDBPediaLinker(unittest.TestCase):
     def test_search_label_film(self):
         moby_dick_results = self.linker.search_label(
             "Moby Dick", 
-            [NS.dbo.Film,])
+            [NS_MGR.dbo.Film,])
         self.assertIn(
-            {"dbo:class": NS.dbo.Film,
+            {"dbo:class": NS_MGR.dbo.Film,
              "type": "uri",
              "value": "http://dbpedia.org/resource/Moby_Dick_(1971_film)"},
             moby_dick_results)
@@ -50,9 +50,9 @@ class TestDBPediaLinker(unittest.TestCase):
     def test_search_label_musical_work(self):
         john_wesley_harding_results = self.linker.search_label(
             "John Wesley Harding",
-            [NS.dbo.MusicalWork,])
+            [NS_MGR.dbo.MusicalWork,])
         self.assertIn(
-            {"dbo:class": NS.dbo.MusicalWork,
+            {"dbo:class": NS_MGR.dbo.MusicalWork,
              "type": "uri",
              "value": "http://dbpedia.org/resource/John_Wesley_Harding_(album)"},
             john_wesley_harding_results)

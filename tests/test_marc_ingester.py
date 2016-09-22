@@ -20,7 +20,7 @@ logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 class TestMARC__handle_linked_pattern__(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = marc.MARCIngester(pymarc.Record())
+        self.ingester = marc.MARCIngester(record=pymarc.Record())
 
     def test_exists(self):
         self.assertTrue(hasattr(self.ingester, "__handle_linked_pattern__"))
@@ -36,7 +36,7 @@ class TestMARC__handle_linked_pattern__(unittest.TestCase):
 class TestDeduplicatingInstances(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = marc.MARCIngester(pymarc.Record())
+        self.ingester = marc.MARCIngester(record=pymarc.Record())
 
 
     def test_default_deduplicate_instances(self):
@@ -46,7 +46,7 @@ class TestDeduplicatingInstances(unittest.TestCase):
 class TestDeduplicatingAgents(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = marc.MARCIngester(pymarc.Record())
+        self.ingester = marc.MARCIngester(record=pymarc.Record())
 
     def test_default_deduplicate_agents(self):
         self.ingester.deduplicate_agents(
@@ -63,7 +63,7 @@ class TestMatchMARC(unittest.TestCase):
                 ['1', '0'],
                 ['a', 'This is a test:',
                  'b', 'and subtitle']))
-        self.ingester = marc.MARCIngester(self.marc_record)
+        self.ingester = marc.MARCIngester(record=self.marc_record)
 
 
     def test_match_245_mainTitle(self):
@@ -80,7 +80,7 @@ class TestMARCUpdateLinkedClasses(unittest.TestCase):
 
     def setUp(self):
         self.entity = rdflib.URIRef("http://test.org/entity/1")
-        self.ingester = marc.MARCIngester(pymarc.Record())
+        self.ingester = marc.MARCIngester(record=pymarc.Record())
 
     def test_default_method(self):
         self.ingester.update_linked_classes(
@@ -94,7 +94,7 @@ class TestMARCUpdateDirectProperties(unittest.TestCase):
 
     def setUp(self):
         self.entity = rdflib.URIRef("http://test.org/entity/1")
-        self.ingester = marc.MARCIngester(pymarc.Record())
+        self.ingester = marc.MARCIngester(record=pymarc.Record())
 
 
     def test_default_method(self):
@@ -106,7 +106,7 @@ class TestMARCUpdateOrderedLinkedClasses(unittest.TestCase):
 
     def setUp(self):
         self.entity = rdflib.URIRef("http://test.org/entity/1")
-        self.ingester = marc.MARCIngester(pymarc.Record())
+        self.ingester = marc.MARCIngester(record=pymarc.Record())
        
     def test_default_method(self):
         self.ingester.update_ordered_linked_classes(

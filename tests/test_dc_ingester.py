@@ -32,7 +32,7 @@ class TestInitDCIngester(unittest.TestCase):
             dc.DCIngester)
 
     def test_dc_xml(self):
-        ingester = dc.DCIngester(dc_fixure)
+        ingester = dc.DCIngester(source=dc_fixure)
         self.assertIsInstance(ingester,
             dc.DCIngester)
 
@@ -40,7 +40,7 @@ class TestInitDCIngester(unittest.TestCase):
 class TestDC__handle_linked_pattern__(unittest.TestCase):
 
     def setUp(self):
-        self.ingester = dc.DCIngester(dc_fixure)
+        self.ingester = dc.DCIngester(source=dc_fixure)
 
     def test_exists(self):
         self.assertTrue(hasattr(self.ingester, "__handle_linked_pattern__"))
@@ -58,7 +58,7 @@ class TestDCUpdateLinkedClasses(unittest.TestCase):
 
     def setUp(self):
         self.entity = rdflib.URIRef("http://test.org/entity/1")
-        self.ingester = dc.DCIngester(dc_fixure)
+        self.ingester = dc.DCIngester(source=dc_fixure)
 
     def test_default_method(self):
         self.ingester.update_linked_classes(
@@ -84,7 +84,7 @@ class TestDCUpdateOrderedLinkedClasses(unittest.TestCase):
 
     def setUp(self):
         self.entity = rdflib.URIRef("http://test.org/entity/1")
-        self.ingester = dc.DCIngester(dc_fixure)
+        self.ingester = dc.DCIngester(source=dc_fixure)
        
     def test_default_method(self):
         self.ingester.update_ordered_linked_classes(

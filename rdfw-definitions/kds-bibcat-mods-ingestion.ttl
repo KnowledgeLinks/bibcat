@@ -106,6 +106,14 @@ bc:mods-personTopic a kds:PropertyLinker;
     kds:linkedRange bf:subject ;
     kds:linkedClass bf:Instance .
 
+bc:mods-placeTerm a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:place/mods:placeTerm" ;
+    kds:destPropUri bf:originPlace ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+    
+
 bc:mods-temporalTopic a kds:PropertyLinker ;
     kds:srcPropXpath "mods:subject/mods:temporal";
     kds:destClassUri bf:Temporal;

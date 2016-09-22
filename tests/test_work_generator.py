@@ -62,7 +62,7 @@ class TestEmptyWorkGenerator(unittest.TestCase):
                 self.instance_uri))
 
     def test__similiar_creators__(self):
-        self.work_generator.__similiar_creators__(
+        self.work_generator.__similar_creators__(
             str(self.instance_uri))
         self.assertEqual(
             self.work_generator.matched_works,
@@ -70,7 +70,7 @@ class TestEmptyWorkGenerator(unittest.TestCase):
 
 
     def test__similiar_titles__(self):
-        self.work_generator.__similiar_titles__(str(self.instance_uri))
+        self.work_generator.__similar_titles__(str(self.instance_uri))
         self.assertEqual(
             self.work_generator.matched_works,
             [])
