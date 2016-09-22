@@ -46,7 +46,11 @@ class Ingester(object):
     BIBFRAME RDF Linked Data"""
 
     def __init__(self, **kwargs):
-        self.base_url = kwargs.get("base_url", "http://bibcat.org/")
+        self.base_url = kwargs.get("base_url")
+        if not self.base_url: 
+            self.base_url = config.BASE_URL
+            if not self.base_url:
+                self.base_url = "http://bibcat.org/"
         if "graph" in kwargs:
             self.graph = kwargs.get("graph")
         else:

@@ -70,6 +70,14 @@ bc:m21-bf_heldBy a kds:PropertyLinker ;
         kds:linkedRange bf:heldBy ;
         kds:linkedClass bf:Item .
 
+bc:m21-bf_geographicCoverage a kds:PropertyLinker ;
+    kds:srcPropUri m21:M651_0a ;
+    kds:destPropUri bf:geographicCoverage ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+
+
 bc:m21-bf_illustrativeContent a kds:PropertyLinker ;
 	kds:srcPropUri m21:M300_b;
 	kds:destClassUri bf:Illustration;
@@ -78,7 +86,8 @@ bc:m21-bf_illustrativeContent a kds:PropertyLinker ;
 	kds:linkedClass bf:Instance.
 
 bc:m21-bf_InstanceTitle_mainTitle a kds:PropertyLinker ;
-	kds:srcPropUri    m21:M24510a, 
+	kds:srcPropUri    m21:M24500a,
+                          m21:M24510a, 
 					m21:M24511a,
 					m21:M24512a,
 					m21:M24513a,
@@ -93,6 +102,8 @@ bc:m21-bf_InstanceTitle_mainTitle a kds:PropertyLinker ;
 	kds:destClassUri bf:InstanceTitle;
 	kds:linkedRange bf:title;
 	kds:linkedClass	bf:Instance .
+
+
 
 bc:m21-bf_InstanceTitle_subtitle a kds:PropertyLinker ;
 	kds:srcPropUri    m21:M24510b, 
@@ -197,6 +208,14 @@ bc:m21-author a kds:PropertyLinker ;
 	kds:lookupPropUri schema:name;
 	kds:lookupSource "viaf" .
 
+bc:m21-bf_VarientTitle_mainTitle a kds:PropertyLinker ;
+    kds:srcPropUri m21:M2461_a,
+                   m21:M2463_a ;
+    kds:destPropUri bf:mainTitle;
+    kds:destClassUri bf:VarientTitle;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange bf:title;
+    kds:linkedClass bf:Instance .
 
 
 kds:PersonIdentifier a kds:Deduplicator;
