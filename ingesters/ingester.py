@@ -139,8 +139,8 @@ class Ingester(object):
         "Sends RDF graph via POST to add to triplestore"
         add_result = requests.post(
             self.triplestore_url,
-            data=self.graph.serialize(format='turtle'),
-            headers={"Content-Type": "text/turtle"})
+            data=self.graph.serialize(format='xml'),
+            headers={"Content-Type": "application/rdf+xml"})
         if add_result.status_code > 399:
             logging.error("Could not add graph to {}, status={}".format(
                 self.triplestore_url,
