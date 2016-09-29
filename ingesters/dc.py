@@ -6,10 +6,9 @@ import xml.etree.ElementTree as etree
 import click
 import rdflib
 
-from ingesters.ingester import Ingester, new_graph, NS_MGR
-from ingesters.sparql import GET_ADDL_PROPS
+from .ingester import Ingester, new_graph, NS_MGR
+from .sparql import GET_ADDL_PROPS
 
-import ingesters
 MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 

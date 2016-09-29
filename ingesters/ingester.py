@@ -47,9 +47,10 @@ class Ingester(object):
 
     def __init__(self, **kwargs):
         self.base_url = kwargs.get("base_url")
-        if not self.base_url: 
-            self.base_url = config.BASE_URL
-            if not self.base_url:
+        if not self.base_url:
+            if hasattr(config, "BASE_URL"): 
+                self.base_url = config.BASE_URL
+            else:
                 self.base_url = "http://bibcat.org/"
         if "graph" in kwargs:
             self.graph = kwargs.get("graph")
