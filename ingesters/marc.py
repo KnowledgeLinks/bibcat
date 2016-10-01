@@ -231,20 +231,23 @@ class MARCIngester(Ingester):
         self.logger.debug("\n**** output ****\n%s", output)
         return output
 
-    def transform(self, record=None, calculate_default=None):
+    def transform(self, **kwargs):
         """Method transforms a MARC record (either instance source
         or passed in MARC21 record) into BIBFRAME 2.0
 
         Args:
             record(pymarc.Record): MARC21 Record
-            calculate_default(function): Function to generate org
-                for bf:heldBy, default is None
         """
+        record=kwargs.pop("record")
+        if "calculate_default" in kwargs:
+            calculate_default = kwargs.pop("calculate_default")
+        else:
+            calculate_default = None
         if record is not None:
             if isinstance(record, pymarc.Record):
                 self.source = record
                 self.graph = new_graph()
-        bf_instance, bf_item = super(MARCIngester, self).transform()
+        bf_instance, bf_item = super(MARCIngester, self).transform(**kwargs)
         # Run de-duplication methods
         self.deduplicate_instances()
         self.deduplicate_agents(
