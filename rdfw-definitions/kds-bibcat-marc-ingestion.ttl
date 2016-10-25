@@ -63,12 +63,12 @@ bc:m21-bf_extent a kds:PropertyLinker ;
 	kds:linkedRange bf:extent ;
 	kds:linkedClass bf:Instance.
 
-bc:m21-bf_heldBy a kds:PropertyLinker ;
-        kds:srcPropUri m21:M049__a ;
-        kds:destClassUri bf:Organization ;
-        kds:destPropUri schema:oclc ;
-        kds:linkedRange bf:heldBy ;
-        kds:linkedClass bf:Item .
+#bc:m21-bf_heldBy a kds:PropertyLinker ;
+#        kds:srcPropUri m21:M049__a ;
+#        kds:destClassUri bf:Organization ;
+#        kds:destPropUri schema:oclc ;
+#        kds:linkedRange bf:heldBy ;
+#        kds:linkedClass bf:Item .
 
 bc:m21-bf_geographicCoverage a kds:PropertyLinker ;
     kds:srcPropUri m21:M651_0a ;
@@ -167,6 +167,14 @@ bc:m21-bf_publisher_name a kds:PropertyLinker ;
 #        kds:destPropUri  schema:place ;
 #        kds:linkedRange bf:provisionActivity ;
 #        kds:linkedClass bf:Instance .
+
+bc:m21-bf_shelfMark a kds:OrderedPropertyLinker;
+    kds:srcPropUri m21:m05000a, 
+        m21:m05000b;
+    kds:destPropUri rdf:value ;
+    kds:destPropClass bf:ShelfMarkLcc ;
+    kds:linkedRange bf:shelfMark ;
+    kds:linkedClass bf:Item .
 
 bc:m21-bf_subject_Person_locSh a kds:OrderedPropertyLinker;
     kds:srcPropUri m21:M60000adx,
