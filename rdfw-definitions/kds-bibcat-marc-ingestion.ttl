@@ -87,6 +87,7 @@ bc:m21-bf_illustrativeContent a kds:PropertyLinker ;
 
 bc:m21-bf_InstanceTitle_mainTitle a kds:PropertyLinker ;
 	kds:srcPropUri    m21:M24500a,
+                          m21:M24504a,
                           m21:M24510a, 
 					m21:M24511a,
 					m21:M24512a,
@@ -106,7 +107,8 @@ bc:m21-bf_InstanceTitle_mainTitle a kds:PropertyLinker ;
 
 
 bc:m21-bf_InstanceTitle_subtitle a kds:PropertyLinker ;
-	kds:srcPropUri    m21:M24510b, 
+	kds:srcPropUri    m21:M24504c,
+                                        m21:M24510b, 
 					m21:M24511b,
 					m21:M24512b,
 					m21:M24513b,
