@@ -184,6 +184,7 @@
 	<http://www.w3.org/2004/02/skos/core#definition> "Identification number of a technical report that is not a Standard Technical Report Number." ;
 	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
 
+
 <http://id.loc.gov/ontologies/bibframe/ShelfMark> a owl:Class ;
 	rdfs:label "Shelf location" ;
 	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;

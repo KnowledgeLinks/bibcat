@@ -24,6 +24,7 @@ import time
 import queue
 import threading
 import json
+import socket
 
 from os.path import expanduser
 HOME = expanduser("~")
@@ -127,8 +128,20 @@ class LocSubjectConverter(object):
         lg.setLevel(self.log_level)
         lg.debug("checking for new subjects file")
         # get the file info from the loc web site
-        loc_web = urllib.request.urlopen(self.web_subj_url)
-        loc_file_date = date_parse(loc_web.info()['Last-Modified'])
+        try:
+            loc_web = urllib.request.urlopen(self.web_subj_url)
+            loc_file_date = date_parse(loc_web.info()['Last-Modified'])
+        # if not connected to the internt of internet file not available
+        # set the date to far in the past
+        except:
+            loc_file_date = datetime.datetime(2000, 
+                                              1, 
+                                              1, 
+                                              1, 
+                                              1, 
+                                              tzinfo=datetime.timezone.utc)
+
+
         # verify a local data path exits
         if not os.path.isdir(self.local_data_path):
             os.makedirs(self.local_data_path)
@@ -265,5 +278,9 @@ class LocSubjectConverter(object):
         #self.es_worker.save(data=new_item, id_field="id")
         #print("Thread %s, count %s" % (num, self.count))
 
-
-
+from rdfframework.sparql import get_class_def_item_data as gd
+import rdfframework.utilities as ut
+df = gd("bf:Topic", namespace="deftest")
+d0 = ut.convert_spo_def(df, "bf:Topic")
+print(json.dumps(ut.convert_obj_to_rdf_namespace(d0),indent=4))
+pdb.set_trace()

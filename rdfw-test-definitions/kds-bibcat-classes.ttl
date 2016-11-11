@@ -101,18 +101,18 @@ dcterm:created rdfs:domain bf:Topic ;
 		kds:esIndexType es:Date 
 	] .
 
-skos:altLabel rdfs:domain bf:Identifier ;
+skos:altLabel rdfs:domain bf:Topic ;
 	rdfs:range [
-		kds:classUri bf:Identifier;
+		kds:classUri bf:Topic;
 		a xsd:string ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
 		kds:esIndexType es:Lower
 	] .
 
-skos:notation rdfs:domain bf:Identifier ;
+skos:notation rdfs:domain bf:Topic ;
 	rdfs:range [
-		kds:classUri bf:Identifier;
+		kds:classUri bf:Topic ;
 		a xsd:string ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
@@ -120,9 +120,9 @@ skos:notation rdfs:domain bf:Identifier ;
 	] .
 
 
-skos:prefLabel rdfs:domain bf:Identifier ;
+skos:prefLabel rdfs:domain bf:Topic ;
 	rdfs:range [
-		kds:classUri bf:Identifier;
+		kds:classUri bf:Topic;
 		a xsd:string ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
@@ -136,9 +136,9 @@ dcterm:modified rdfs:domain bf:Topic ;
 		kds:esIndexType es:Date 
 	] .
 
-rdfs:type rdfs:domain bf:Topic ;
+rdf:type rdfs:domain bf:Topic ;
 	rdfs:range [
-		kds:classUri bf:Topic;
+		kds:classUri bf:Topic ;
 		a xsd:string ;
 		kds:esIndexType es:Not_analyzed;
 	] .
@@ -146,22 +146,44 @@ rdfs:type rdfs:domain bf:Topic ;
 bf:identifiedBy rdfs:domain bf:Topic ;
 	rdfs:range [
 		kds:classUri bf:Topic ;
-		a bf:Topic ;
+		a bf:Identifier ;
 		kds:esIndexType es:Nested
 	] .
 
-skos:note rdfs:domain bf:Identifier ;
+skos:note rdfs:domain bf:Topic ;
 	rdfs:range [
-		kds:classUri bf:Identifier;
+		kds:classUri bf:Topic ;
 		a xsd:string ;
 		kds:esIndexType es:Standard;
 	] .
 
-skos:example rdfs:domain bf:Identifier ;
+skos:example rdfs:domain bf:Topic ;
 	rdfs:range [
-		kds:classUri bf:Identifier;
+		kds:classUri bf:Topic;
 		a xsd:string ;
 		kds:esIndexType es:Standard;
+	] ;
+	rdfs:comment "email address.";
+	kds:requiredByDomain skos:example;
+	kds:propertyProcessing [
+		kds:classUri bf:Topic;
+		a kdr:EmailVerificationProcessor
+	];                   
+	kds:propertyValidation [
+		kds:classUri kdr:AllClasses;
+		a kdr:EmailValidator
+	];
+	kds:propertySecurity [
+		kds:classUri kdr:AllClasses;
+		acl:agent kdr:self-sg;
+		acl:mode acl:Read, acl:Write
+	] ;
+	kds:formDefault [
+		kds:classUri kdr:AllClasses;
+		kds:formFieldName "emailaddr";
+		kds:formLabelName "Email Address";
+		kds:formFieldHelp "Enter a valid email address.";
+		kds:fieldType [
+			a	kdr:TextField
+		]
 	] .
-
-
