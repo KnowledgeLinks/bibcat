@@ -23,7 +23,7 @@ bc:dc-date a kds:PropertyLinker;
 bc:dc-description a kds:PropertyLinker ;
     kds:srcPropUri dc:description ;
     kds:destPropUri rdf:value ;
-    kds:destClassUri rdf:Note ;
+    kds:destClassUri bf:Note ;
     kds:linkedRange bf:note ;
     kds:linkedClass bf:Instance .
 

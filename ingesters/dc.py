@@ -27,7 +27,7 @@ class DCIngester(Ingester):
     """
 
     def __init__(self, **kwargs):
-        rules = kwargs.get("rules_ttl", [])
+        rules = kwargs.get("custom", [])
         if not isinstance(rules, list):
             rules = [rules,]
         rules.append("kds-bibcat-dc-ingestion.ttl")
