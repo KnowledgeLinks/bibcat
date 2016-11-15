@@ -88,13 +88,13 @@ class MODSIngester(Ingester):
             subject=bnode,
             predicate=NS_MGR.kds.destPropUri)
         for row in matched_elements:
-            raw_value = row.text.strip()
-            if len(raw_value) < 1:
+            raw_value = row.text
+            if raw_text is None or len(raw_value.strip()) < 1:
                 continue
             self.graph.add(
                 (intermediate_bnode,
                  intermediate_bf_property,
-                 rdflib.Literal(raw_value))
+                 rdflib.Literal(raw_value.strip()))
             )
         self.graph.add(
             (intermediate_bnode, rdflib.RDF.type, intermediate_bf_class))
