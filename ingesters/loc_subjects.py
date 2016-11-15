@@ -24,6 +24,7 @@ import time
 import queue
 import threading
 import json
+import socket
 
 from os.path import expanduser
 HOME = expanduser("~")
@@ -52,7 +53,7 @@ from rdfframework.utilities import mod_git_ignore, DataStatus, iri, pp, \
         convert_spo_to_dict, convert_obj_to_rdf_namespace, convert_spo_nested
 from rdfframework.sparql import run_sparql_query, get_all_item_data
 from rdfframework.search import EsBase
-logging.basicConfig(level=logging.CRITICAL)
+logging.basicConfig(level=logging.DEBUG)
 PREFIX = NSM.prefix
 
 ADD_TOPIC_TYPE_LOC_SUBJECTS = """
@@ -127,8 +128,20 @@ class LocSubjectConverter(object):
         lg.setLevel(self.log_level)
         lg.debug("checking for new subjects file")
         # get the file info from the loc web site
-        loc_web = urllib.request.urlopen(self.web_subj_url)
-        loc_file_date = date_parse(loc_web.info()['Last-Modified'])
+        try:
+            loc_web = urllib.request.urlopen(self.web_subj_url)
+            loc_file_date = date_parse(loc_web.info()['Last-Modified'])
+        # if not connected to the internt of internet file not available
+        # set the date to far in the past
+        except:
+            loc_file_date = datetime.datetime(2000, 
+                                              1, 
+                                              1, 
+                                              1, 
+                                              1, 
+                                              tzinfo=datetime.timezone.utc)
+
+
         # verify a local data path exits
         if not os.path.isdir(self.local_data_path):
             os.makedirs(self.local_data_path)
@@ -265,5 +278,17 @@ class LocSubjectConverter(object):
         #self.es_worker.save(data=new_item, id_field="id")
         #print("Thread %s, count %s" % (num, self.count))
 
+from rdfframework.sparql import get_class_def_item_data as gd, get_linker_def_item_data as gl
+import rdfframework.utilities as ut
+df = gd("schema:Muscian")
+ld = gl()
+d1 = ut.convert_spo_to_dict(ld)
+#print(json.dumps(ut.convert_obj_to_rdf_namespace(d1), indent=4))
+spolg = logging.getLogger("spo")
+spolg.setLevel(logging.DEBUG)
+spolg.addHandler(logging.FileHandler(filename="spo.log", mode="w"))
+spolg.debug("******\n%s",json.dumps(ut.convert_obj_to_rdf_namespace(d1),indent=4))
+#d0 = ut.convert_spo_def(df, "bf:Topic")
+d0 = ut.convert_ispo_to_dict(df, base="schema:Muscian")
 
-
+pdb.set_trace()
