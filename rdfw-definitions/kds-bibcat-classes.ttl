@@ -47,9 +47,7 @@ bf:InstanceTitle a kds:ControlledClass ;
 bf:Identifier a kds:ControlledClass ;
     kds:storageType "blanknode" .
 
-bf:LCSH a kds:ControlledClass ;
-	kds:storageType "blanknode" ;
-	rdfs:subClassOf bf:Identifier .
+bf:LCSH rdfs:subClassOf bf:Identifier .
 
 rdf:value rdfs:domain bf:Identifier ;
 	rdfs:range [
