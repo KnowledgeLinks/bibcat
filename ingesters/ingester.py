@@ -9,6 +9,7 @@ import rdflib
 import requests
 import sys
 import uuid
+import json
 
 # get the current file name for logs and set logging levels
 try:
@@ -22,12 +23,12 @@ BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
 PROJECT_BASE = os.path.split(BIBCAT_BASE)[0]
-sys.path.append(PROJECT_BASE)
+sys.path.append(os.path.join(PROJECT_BASE,""))
+sys.path.append(os.path.join(PROJECT_BASE,"rdfw"))
 try:
     from instance import config
-    import rdfw as rdfframework
-    from rdfframework.utilities import RdfNsManager
-    RdfNsManager.log_level = logging.CRITICAL
+    from rdfframework import get_framework as rdfw
+    print("Ingester import successful")
 except ImportError:
     logging.error("Error importing {}".format(PROJECT_BASE))
 try:
@@ -38,8 +39,11 @@ try:
         __version__ = version.read().strip()
 except:
     __version__ = "unknown"
+FW = rdfw(config=config, root_file_path=BIBCAT_BASE)
+FW.ns_obj.log_level = logging.CRITICAL
+NS_MGR = FW.ns_obj
 
-NS_MGR = RdfNsManager(config=config)
+print(json.dumps(FW.rdf_linker_dict,indent=4))
 
 class Ingester(object):
     """Base class for transforming various metadata format/vocabularies to
