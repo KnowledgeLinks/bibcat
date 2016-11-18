@@ -22,9 +22,13 @@ logging.basicConfig(level=logging.DEBUG)
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
+print("BIBCAT_BASE: ", BIBCAT_BASE)
 PROJECT_BASE = os.path.split(BIBCAT_BASE)[0]
-sys.path.append(os.path.join(PROJECT_BASE,""))
-sys.path.append(os.path.join(PROJECT_BASE,"rdfw"))
+print("PROJECT_BASE: ", PROJECT_BASE)
+sys.path.append(os.path.join(PROJECT_BASE))
+sys.path.append(os.path.join(PROJECT_BASE,"rdfw",))
+hide_lg = logging.getLogger("requests")
+hide_lg.setLevel(logging.CRITICAL)
 try:
     from instance import config
     from rdfframework import get_framework as rdfw
@@ -39,11 +43,11 @@ try:
         __version__ = version.read().strip()
 except:
     __version__ = "unknown"
-FW = rdfw(config=config, root_file_path=BIBCAT_BASE)
+FW = rdfw(config=config, reset=True, root_file_path=PROJECT_BASE)
 FW.ns_obj.log_level = logging.CRITICAL
 NS_MGR = FW.ns_obj
 
-print(json.dumps(FW.rdf_linker_dict,indent=4))
+#print(json.dumps(FW.rdf_linker_dict,indent=4))
 
 class Ingester(object):
     """Base class for transforming various metadata format/vocabularies to
