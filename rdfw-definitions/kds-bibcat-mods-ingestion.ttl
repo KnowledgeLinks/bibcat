@@ -8,7 +8,6 @@
 @prefix relators: <http://id.loc.gov/vocabulary/relators/> .
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix modsr: <http://knowledgelinks.io/ns/mods/> .
-@prefix loc: <http://id.loc.gov/> .
 @prefix schema: <http://schema.org/> .
 
 bc:mods-abstract a kds:PropertyLinker;
