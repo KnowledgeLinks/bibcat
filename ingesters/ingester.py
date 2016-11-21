@@ -32,6 +32,7 @@ hide_lg.setLevel(logging.CRITICAL)
 try:
     from instance import config
     from rdfframework import get_framework as rdfw
+    from rdfframework.utilities import DictClass, make_class
     print("Ingester import successful")
 except ImportError:
     logging.error("Error importing {}".format(PROJECT_BASE))
@@ -46,6 +47,7 @@ except:
 FW = rdfw(config=config, reset=True, root_file_path=PROJECT_BASE)
 FW.ns_obj.log_level = logging.CRITICAL
 NS_MGR = FW.ns_obj
+config = DictClass(config.__dict__)
 
 #print(json.dumps(FW.rdf_linker_dict,indent=4))
 
@@ -56,7 +58,7 @@ class Ingester(object):
     def __init__(self, **kwargs):
         self.base_url = kwargs.get("base_url")
         if not self.base_url:
-            if hasattr(config, "BASE_URL"): 
+            if config.BASE_URL: 
                 self.base_url = config.BASE_URL
             else:
                 self.base_url = "http://bibcat.org/"
