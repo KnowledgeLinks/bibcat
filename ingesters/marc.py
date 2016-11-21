@@ -7,8 +7,13 @@ import inspect
 import pymarc
 import rdflib
 import requests
-from ingesters.ingester import config, Ingester, new_graph, NS_MGR
-from ingesters.sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+try:
+    from ingesters.ingester import config, Ingester, new_graph, NS_MGR, FW
+    from ingesters.sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+except ImportError:
+    from .ingester import config, Ingester, new_graph, NS_MGR, FW
+    from .sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+
 
 # get the current file name for logs and set logging level
 MNAME = inspect.stack()[0][1]
@@ -16,6 +21,18 @@ MLOG_LVL = logging.CRITICAL
 logging.basicConfig(level=MLOG_LVL)
 
 class MARCIngester(Ingester):
+    """Extends BIBFRAME 2.0 Ingester for MARC21 records"""
+
+    def __init__(self, **kwargs):
+        self.rules = []
+        for key in sorted(FW.rdf_linker_dict.keys()):
+            if key.startswith("m21_"):
+                key_rules = FW.rdf_linker_dict.get(key)
+                for url, value in key_rules.items():
+                    pass
+    
+
+class OldMARCIngester(Ingester):
     """Extends BIBFRAME 2.0 Ingester for MARC21 records"""
 
     def __init__(self, **kwargs):
