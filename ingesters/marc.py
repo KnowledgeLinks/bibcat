@@ -7,8 +7,13 @@ import inspect
 import pymarc
 import rdflib
 import requests
-from ingesters.ingester import config, Ingester, new_graph, NS_MGR
-from ingesters.sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+try:
+    from ingesters.ingester import config, Ingester, new_graph, NS_MGR, FW
+    from ingesters.sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+except ImportError:
+    from .ingester import config, Ingester, new_graph, NS_MGR, FW
+    from .sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+
 
 # get the current file name for logs and set logging level
 MNAME = inspect.stack()[0][1]
@@ -16,6 +21,69 @@ MLOG_LVL = logging.CRITICAL
 logging.basicConfig(level=MLOG_LVL)
 
 class MARCIngester(Ingester):
+    """Extends BIBFRAME 2.0 Ingester for MARC21 records"""
+
+    def __init__(self, **kwargs):
+        self.rules = []
+        for key in sorted(FW.rdf_linker_dict.keys()):
+            if key.startswith("m21_"):
+                marc_pattern = key.split("_")[-1]
+                self.rules[marc_pattern] = {}
+                key_rules = FW.rdf_linker_dict.get(key)
+                for iri, value in key_rules.items():
+                    self.rules[marc_pattern][self.__setup_rule__(iri)] =\
+                     self.__setup_rule__(value)
+                    
+    def __setup_rule__(self, dict_str):
+        """Helper function takes a string in the format of 
+        {namespace_property} and returns a RDF URIRef.
+
+        Args:
+            dict_str: A string in the format of {namespace_property}
+
+        Returns:
+            rdflib.URIRef
+        """
+        prefix, prop = dict_str.split("_")
+        namespace = getattr(NS_MGR, prefix)
+        iri = getattr(namespace, prop)
+        return iri
+
+    def transform(self, marc_record):
+        """Takes a pymarc.Record, iterates through all of the fields, and
+        matches keys in the rules.
+
+        Args:
+            pymarc.Record: MARC 21 Record
+
+        """
+        for field in marc_record.get_fields():
+            if field.control_field():
+                continue
+            marc_pattern = field.tag
+            marc_pattern += ''.join([i for i in field.indicators])
+            for subfield, value in field.subfields:
+                marc_key = marc_pattern + subfield
+                if marc_key in self.rules:
+                    linked_class = self.rules[marc_key][NS_MGR.kds.linkedClass]
+                    linked_range = self.rules]marc_key][NS_MGR.kds.linkedRange]
+                    dest_class = self.rules[marc_key][NS_MGR.kds.destClassUri]
+                    dest_bnode = self.graph.value(predicate=NS_MGR.rdf.type,
+                        object=dest_class)
+                    dest_property = self.rules[marc_key][NS_MGR.kds.destPropUri]
+                    if linked_class is NS_MGR.bf.Instance:
+                        subject = instance_iri
+                    elif linked_class is NS_MGR.bf.Item:
+                        subject = item_iri
+                    if dest_bnode is None :
+                        dest_bnode = rdflib.BNode()
+                        self.graph.add((subject, linked_range, dest_bnode))
+                    self.graph.add((dest_bnode, 
+                        dest_property, 
+                        rdflib.Literal(value))
+    
+
+class OldMARCIngester(Ingester):
     """Extends BIBFRAME 2.0 Ingester for MARC21 records"""
 
     def __init__(self, **kwargs):
