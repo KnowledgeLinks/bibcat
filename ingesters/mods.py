@@ -221,16 +221,23 @@ class MODSIngester(Ingester):
             continue
 
 
-    def transform(self, mods_xml=None):
+    def transform(self, mods_xml=None, instance_uri=None, item_uri=None):
         """Overrides parent class transform and adds MODS-specific
         transformations
 
         Args:
             mods_xml(xml.etree.ElementTree.XML): MODS XML or None
+            instance_uri: URIRef for instance or None
+            item_uri: URIREf for item or None
         """
         if mods_xml is None:
             mods_xml = self.source
-        super(MODSIngester, self).transform(source=mods_xml)
+        if isinstance(mods_xml, str):
+            mods_xml = etree.XML(mods_xml)
+        super(MODSIngester, self).transform(
+            source=mods_xml,
+            instance_uri=instance_uri,
+            item_uri=item_uri)
         self.deduplicate_agents(
             NS_MGR.schema.alternativeName,
             NS_MGR.bf.Person,
