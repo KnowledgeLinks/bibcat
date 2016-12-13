@@ -111,7 +111,16 @@ bc:mods-placeTerm a kds:PropertyLinker;
     kds:destClassUri bf:Work ;
     kds:linkedRange bf:instanceOf ;
     kds:linkedClass bf:Instance .
-    
+   
+bc:mods-publisher a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:publisher";
+    kds:destPropUri [
+        a bf:Publisher ;
+        kds:destClassUri bf:Organization ;
+        kds:destPropUri rdfs:label 
+    ];
+    kds:linkedRange bf:provisionActivity;
+    kds:linkedClass bf:Instance .
 
 bc:mods-temporalTopic a kds:PropertyLinker ;
     kds:srcPropXpath "mods:subject/mods:temporal";
