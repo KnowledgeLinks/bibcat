@@ -1,0 +1,35 @@
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix modsr: <http://knowledgelinks.io/ns/mods/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pcdm: <http://pcdm.org/models#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix dcr: <http://knowledgelinks.io/ns/dc/> .
+@prefix schema: <http://schema.org/> .
+
+bc:xml-title a kds:PropertyLinker;
+    kds:srcPropXpath "title" ;
+    kds:destPropUri bf:mainTitle;
+    kds:destClassUri bf:InstanceTitle;
+    kds:linkedRange bf:title;
+    kds:linkedClass bf:Instance .
+
+bc:xml-creator a kds:PropertyLinker;
+    kds:srcPropXpath "aw_keywords/aw_field[@name='browse13']";
+    kds:destClassUri bf:Agent;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:cre;
+    kds:linkedClass bf:Instance .
+
+bc:xml-originDate a kds:PropertyLinker;
+    kds:srcPropXpath "aw_keywords/aw_field[@name='browse3']";
+    kds:destPropUri bf:originDate ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance . 
