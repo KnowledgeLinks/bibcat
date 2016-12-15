@@ -34,6 +34,15 @@ bc:mods-creator a kds:PropertyLinker;
     kds:linkedRange relators:cre;
     kds:linkedClass bf:Instance .
 
+bc:mods-corporate-creator a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='corporate']/mods:role[mods:roleTerm='creator']/../mods:namePart";
+    kds:destClassUri bf:Organization;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:cre;
+    kds:linkedClass bf:Instance .
+
+
 bc:mods-contributor a kds:PropertyLinker;
     kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='contributor']/../mods:namePart";
     kds:destClassUri bf:Person;
@@ -41,6 +50,15 @@ bc:mods-contributor a kds:PropertyLinker;
     kds:hasIndividualNodes "true";
     kds:linkedRange bf:contributor;
     kds:linkedClass bf:Instance .
+
+bc:mods-corporate-contributor a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='corporate']/mods:role[mods:roleTerm='contributor']/../mods:namePart";
+    kds:destClassUri bf:Organization;
+    kds:destPropUri rdfs:label ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:contributor;
+    kds:linkedClass bf:Instance .
+
 
 bc:mods-degreeName a kds:PropertyLinker;
     kds:srcPropXpath "mods:note[@displayLabel='Degree Name']" ;
@@ -58,6 +76,13 @@ bc:mods-degreeGrantor a kds:PropertyLinker;
     ];
     kds:destClassUri bf:Dissertation ;
     kds:linkedRange bf:dissertation ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-InstanceElectronic a kds:PropertyLinker;
+    kds:srcPropXpath "mods:physicalDescription/[mods:form='electronic resource']";
+    kds:destClassUri bf:Electronic ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange rdf:type ;
     kds:linkedClass bf:Instance .
 
 bc:mods-extent a kds:PropertyLinker;

@@ -5,11 +5,11 @@ import datetime
 import inspect
 import logging
 import os
-import rdflib
-import requests
 import sys
 import uuid
-import json
+import rdflib
+import requests
+
 
 # get the current file name for logs and set logging levels
 try:
@@ -22,13 +22,11 @@ logging.basicConfig(level=logging.DEBUG)
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
-print("BIBCAT_BASE: ", BIBCAT_BASE)
 PROJECT_BASE = os.path.split(BIBCAT_BASE)[0]
-print("PROJECT_BASE: ", PROJECT_BASE)
 sys.path.append(os.path.join(PROJECT_BASE))
-sys.path.append(os.path.join(PROJECT_BASE,"rdfw",))
-hide_lg = logging.getLogger("requests")
-hide_lg.setLevel(logging.CRITICAL)
+sys.path.append(os.path.join(PROJECT_BASE, "rdfw",))
+HIDE_LG = logging.getLogger("requests")
+HIDE_LG.setLevel(logging.CRITICAL)
 try:
     from instance import config
     from rdfframework import get_framework as rdfw
@@ -37,10 +35,10 @@ try:
 except ImportError:
     logging.error("Error importing {}".format(PROJECT_BASE))
 try:
-    version_path = os.path.join(
+    VERSION_PATH = os.path.join(
         BIBCAT_BASE,
         "VERSION")
-    with open(version_path) as version:
+    with open(VERSION_PATH) as version:
         __version__ = version.read().strip()
 except:
     __version__ = "unknown"
@@ -58,7 +56,7 @@ class Ingester(object):
     def __init__(self, **kwargs):
         self.base_url = kwargs.get("base_url")
         if not self.base_url:
-            if config.BASE_URL: 
+            if config.BASE_URL:
                 self.base_url = config.BASE_URL
             else:
                 self.base_url = "http://bibcat.org/"
@@ -133,22 +131,22 @@ class Ingester(object):
         )
 
     def __additional_entities__(self):
-        """Queries Rules graph for entities to add to triplestore as 
+        """Queries Rules graph for entities to add to triplestore as
         constants"""
         constants = new_graph()
         for subject in self.rules_graph.subjects(
-            object=NS_MGR.kds.AddEntity):
+                object=NS_MGR.kds.AddEntity):
             for predicate, object_ in self.rules_graph.predicate_objects(
-                subject=subject):
+                    subject=subject):
                 if object_ != NS_MGR.kds.AddEntity:
                     constants.add((subject, predicate, object_))
         result = requests.post(self.triplestore_url,
-            data=constants.serialize(format='turtle'),
-            headers={"Content-Type": "text/turtle"})
+                               data=constants.serialize(format='turtle'),
+                               headers={"Content-Type": "text/turtle"})
         if result.status_code > 399:
             raise ValueError("Could add entities to triplestore")
-            
-            
+
+
 
     def add_to_triplestore(self):
         "Sends RDF graph via POST to add to triplestore"
@@ -359,9 +357,9 @@ class Ingester(object):
                     rule=row[0],
                     target_property=prop,
                     target_subject=subj)
-                
-            
- 
+
+
+
 
     def update_ordered_linked_classes(self,
                                       entity_class,
@@ -378,27 +376,27 @@ class Ingester(object):
             self.logger.debug("""Entity: class={} uri={}
 Destination Property={} Destination Class={} 
 Target Property={} Target_Class={}""".format(
-                entity_class,
-                entity,
-                dest_property, 
-                dest_class, 
-                prop, 
-                subj))
+    entity_class,
+    entity,
+    dest_property,
+    dest_class,
+    prop,
+    subj))
             prop_sparql = GET_SRC_PROP.format(
-                    dest_class,
-                    dest_property,
-                    entity_class,
-                    prop,
-                    NS_MGR.kds.OrderedPropertyLinker)
+                dest_class,
+                dest_property,
+                entity_class,
+                prop,
+                NS_MGR.kds.OrderedPropertyLinker)
             for row in self.rules_graph.query(prop_sparql):
                 self.__handle_ordered__(entity_class=entity_class,
-                    entity=entity,
-                    rule=row[0],
-                    destination_property=dest_property,
-                    destination_class = dest_class,
-                    target_property=prop,
-                    target_subject=subj)
-                
+                                        entity=entity,
+                                        rule=row[0],
+                                        destination_property=dest_property,
+                                        destination_class=dest_class,
+                                        target_property=prop,
+                                        target_subject=subj)
+
 def new_graph():
     """Function creates a new graph with RDF Framework namespace
     Manager"""
@@ -409,7 +407,13 @@ def new_graph():
     return graph
 
 try:
-    from .sparql import *
+    from .sparql import GET_ORDERED_CLASSES, GET_SRC_PROP, GET_LINKED_CLASSES,\
+        GET_AGENTS, GET_DIRECT_PROPS, DEDUP_AGENTS, GET_BLANK_NODE,\
+        HAS_MULTI_NODES
+    
 # Relative import failed
 except SystemError:
-    from sparql import *
+    from sparql import GET_ORDERED_CLASSES, GET_SRC_PROP, GET_LINKED_CLASSES,\
+        GET_AGENTS, GET_DIRECT_PROPS, DEDUP_AGENTS, GET_BLANK_NODE,\
+        HAS_MULTI_NODES
+

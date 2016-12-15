@@ -1,12 +1,10 @@
 """Progressive Technology Federal Systems, Inc XML to BIBFRAME 2.0 Ingester"""
 __author__ = "Jeremy Nelson"
 
-import logging
-import xml.etree.ElementTree as etree
-
-from ingesters.ingester import new_graph, NS_MGR
-from ingesters.xml import XMLIngester
-from ingesters.sparql import GET_ADDL_PROPS
+try:
+    from ingesters.xml import XMLIngester
+except ImportError:
+    from .xml import XMLIngester
 
 class PTFSIngester(XMLIngester):
     """PTFS XML to BIBFRAME 2.0 Ingester"""
@@ -21,3 +19,17 @@ class PTFSIngester(XMLIngester):
         kwargs["rules_ttl"] = xml_rules
         super(PTFSIngester, self).__init__(
             **kwargs)
+
+    def transform(self, xml=None, instance_uri=None, item_uri=None):
+        """Overrides parent class transform and adds XML-specific
+        transformations
+
+        Args:
+            xml(xml.etree.ElementTree.XML): XML or None
+            instance_uri: URIRef for instance or None
+            item_uri: URIREf for item or None
+        """
+        super(PTFSIngester, self).transform(
+            xml=xml,
+            instance_uri=instance_uri,
+            item_uri=item_uri)
