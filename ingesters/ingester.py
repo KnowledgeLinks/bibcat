@@ -182,12 +182,15 @@ class Ingester(object):
             if result.status_code > 399:
                 raise ValueError("Could not deduplicate {}".format(agent_class))
             bindings = result.json().get('results', dict()).get('bindings', [])
+            # Agent doesn't exit in triplestore 
             if len(bindings) < 1:
-                # Agent doesn't exit in triplestore, calls custom function to
-                # generate new_agent_uri
+                # Checks rules_ttl for any defined agents that match filter_class
+                new_agent_uri = self.rules_graph.value(predicate=filter_class,
+                    object=rdflib.Literal(value))
+                # Calls custom function to generate new_agent_uri
                 if calculate_uri is not None:
                     new_agent_uri = calculate_uri(self.source)
-                else:
+                elif new_agent_uri is None:
                     # Add new URI with defaults
                     new_agent_uri = self.__generate_uri__()
             else:
@@ -241,6 +244,11 @@ class Ingester(object):
         self.update_ordered_linked_classes(bf_class, entity_uri)
         self.add_admin_metadata(entity_uri)
         return entity_uri
+
+    def reify_agents(self):
+        """Searches existing graph for matching rules, substituting existing IRI
+        for new Agent IRI"""
+        pass
 
     def remove_blank_nodes(self, bnode):
         """Recursively removes all blank nodes
