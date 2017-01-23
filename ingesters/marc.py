@@ -66,7 +66,7 @@ class MARCIngester(Ingester):
                 marc_key = marc_pattern + subfield
                 if marc_key in self.rules:
                     linked_class = self.rules[marc_key][NS_MGR.kds.linkedClass]
-                    linked_range = self.rules]marc_key][NS_MGR.kds.linkedRange]
+                    linked_range = self.rules[marc_key][NS_MGR.kds.linkedRange]
                     dest_class = self.rules[marc_key][NS_MGR.kds.destClassUri]
                     dest_bnode = self.graph.value(predicate=NS_MGR.rdf.type,
                         object=dest_class)
