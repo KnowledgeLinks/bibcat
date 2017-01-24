@@ -74,6 +74,31 @@ class MODSIngester(XMLIngester):
             NS_MGR.bf.Organization,
             None)
 
+    def deduplicate_agents(self, filter_class, agent_class, calculate_uri=None):
+        """Overrides default just checks for duplicates in internal BF Graph
+        before calling"""
+        super(MODSIngester, self).deduplicate_agents(filter_class, agent_class, None)
+        agent_values = dict()
+        agents = list(set([s for s in self.graph.subjects(
+                                     predicate=NS_MGR.rdf.type,
+                                     object=agent_class)]))
+        for iri in agents:
+            filter_value = self.graph.value(subject=iri, 
+                                            predicate=filter_class)
+            if filter_value in agent_values:
+                existing_iri = agent_values.get(filter_value)
+                for pred, obj in self.graph.predicate_objects(subject=iri):
+                    self.graph.remove((iri, pred, obj))
+                    self.graph.add((existing_iri, pred, obj))
+                for subj, pred in self.graph.subject_predicates(object=iri):
+                    self.graph.remove((subj, pred, iri))
+                    self.graph.add((subj, pred, existing_iri))
+            else:
+                agent_values[filter_value] = iri
+                
+            
+        
+
 
 @click.command()
 @click.option("--url", default=None)

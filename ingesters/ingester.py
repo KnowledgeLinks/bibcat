@@ -31,7 +31,7 @@ try:
     from instance import config
     from rdfframework import get_framework as rdfw
     from rdfframework.utilities import DictClass, make_class
-    print("Ingester import successful")
+    from rdfframework.utilities.uriconvertor import RdfNsManager
 except ImportError:
     logging.error("Error importing {}".format(PROJECT_BASE))
 try:
@@ -42,9 +42,10 @@ try:
         __version__ = version.read().strip()
 except:
     __version__ = "unknown"
-FW = rdfw(config=config, reset=True, root_file_path=PROJECT_BASE)
-FW.ns_obj.log_level = logging.CRITICAL
-NS_MGR = FW.ns_obj
+#FW = rdfw(config=config, reset=True, root_file_path=PROJECT_BASE)
+#FW.ns_obj.log_level = logging.CRITICAL
+#NS_MGR = FW.ns_obj
+NS_MGR = RdfNsManager()
 config = DictClass(config.__dict__)
 
 #print(json.dumps(FW.rdf_linker_dict,indent=4))
