@@ -102,6 +102,16 @@ WHERE {
     OPTIONAL { ?agent schema:alternativeName ?label } .
 }"""
 
+ENTITY_IRI_PATTERN = PREFIX + """
+SELECT ?iri_pattern ?srcSelection ?srcFilter
+WHERE {{
+    ?subj rdf:type kds:IRIPattern .
+    ?subj kds:destClassUri <{0}> .
+    ?subj kds:iriPattern ?iri_pattern .
+    ?subj <{1}> ?srcSelection .
+    ?subj <{2}> ?srcFilter .
+}}"""
+
 GET_ADDL_PROPS = PREFIX + """
 SELECT ?pred ?obj
 WHERE {{
@@ -158,3 +168,5 @@ WHERE {{
     ?subj kds:srcOrderedPropUri/rdf:rest*/rdf:first ?marc .
     ?subj kds:destClassUri <{0}> .
 }}"""
+
+

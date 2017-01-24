@@ -26,6 +26,14 @@ bc:mods-adminNote a kds:PropertyLinker;
     kds:destAdditionalPropUris [ bf:noteType "admin"@en ];
     kds:linkedClass bf:Instance .
 
+bc:mods-alt-title a kds:PropertyLinker;
+    kds:srcPropXpath "mods:titleInfo[@type='alternative']/mods:title" ;
+    kds:destPropUri bf:mainTitle;
+    kds:destClassUri bf:VarientTitle;
+    kds:linkedRange bf:title;
+    kds:hasIndividualNodes "true";
+    kds:linkedClass bf:Instance .
+
 bc:mods-creator a kds:PropertyLinker;
     kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']/../mods:namePart";
     kds:destClassUri bf:Person;
@@ -59,6 +67,12 @@ bc:mods-corporate-contributor a kds:PropertyLinker;
     kds:linkedRange bf:contributor;
     kds:linkedClass bf:Instance .
 
+bc:mods-dateIssued a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:dateIssued";
+    kds:destPropUri bf:originDate ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
 
 bc:mods-degreeName a kds:PropertyLinker;
     kds:srcPropXpath "mods:note[@displayLabel='Degree Name']" ;
@@ -107,6 +121,29 @@ bc:mods-geographicTopic a kds:PropertyLinker ;
     kds:linkedRange bf:instanceOf ;
     kds:linkedClass bf:Instance .
 
+bc:mods-interviewee a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='interviewee']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:ive;
+    kds:linkedClass bf:Instance .
+
+bc:mods-interviewer a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='interviewer']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:ivr;
+    kds:linkedClass bf:Instance .
+
+bc:mods-issuance a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:issuance";
+    kds:destPropUri rdf:value;
+    kds:destClassUri bf:Issuance;
+    kds:linkedRange bf:issuance ;
+    kds:linkedClass bf:Instance .
+
 bf:mods-language a kds:PropertyLinker ;
     kds:srcPropXpath "mods:language/mods:languageTerm" ;
     kds:destPropUri rdf:value ;
@@ -144,6 +181,7 @@ bc:mods-publisher a kds:PropertyLinker;
         kds:destClassUri bf:Organization ;
         kds:destPropUri rdfs:label 
     ];
+    kds:destClassUri bf:Publication;
     kds:linkedRange bf:provisionActivity;
     kds:linkedClass bf:Instance .
 
@@ -168,7 +206,9 @@ bc:mods-title a kds:PropertyLinker;
     kds:destPropUri bf:mainTitle;
     kds:destClassUri bf:InstanceTitle;
     kds:linkedRange bf:title;
+    kds:hasIndividualNodes "true";
     kds:linkedClass bf:Instance .
+
 
 bc:mods-subTitle a kds:PropertyLinker;
     kds:srcPropXpath "mods:titleInfo/mods:subTitle" ;

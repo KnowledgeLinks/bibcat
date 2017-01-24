@@ -7,6 +7,7 @@ import inspect
 import logging
 import os
 import rdflib
+import re
 import requests
 import sys
 
@@ -21,11 +22,11 @@ except ImportError:
     pass
 try:
     from ingesters.ingester import NS_MGR, new_graph
-    from ingesters.sparql import GET_ADDL_PROPS
+    from ingesters.sparql import GET_ADDL_PROPS, ENTITY_IRI_PATTERN
     from ingesters.xml import XMLIngester
 except ImportError:
     from .ingester import NS_MGR, new_graph
-    from .sparql import GET_ADDL_PROPS
+    from .sparql import GET_ADDL_PROPS, ENTITY_IRI_PATTERN
     from .xml import XMLIngester
 
 # get the current file name for logs and set logging level
@@ -50,6 +51,30 @@ class MODSIngester(XMLIngester):
         kwargs["xpath_ns"] = NS_MODS
         super(MODSIngester, self).__init__(
             **kwargs)
+
+    def __pattern_uri__(self, entity_class):
+        """Overriden method for generating a IRI based on a rule for an
+        entity class.
+
+        Args:
+            entity_class (rdflib.URIRef): Entity Class
+        """
+        sparql = ENTITY_IRI_PATTERN.format(entity_class,
+            NS_MGR.kds.srcPropXpath,
+            NS_MGR.kds.srcPropRegex)
+        for row in self.rules_graph.query(sparql):
+            iri_pattern = row[0]
+            src_selector = row[1]
+            src_filter = row[2]
+            source_value = self.source.find(src_selector, self.xpath_ns)
+            if source_value is None:
+                continue
+            print(src_selector, source_value)
+            re_result = re.search(str(src_filter), source_value.text)
+            if re_result is not None:
+                path = re_result[0]
+                iri = str(iri_pattern).format(path)
+                return rdflib.URIRef(iri)
 
 
     def transform(self, xml=None, instance_uri=None, item_uri=None):

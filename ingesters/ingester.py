@@ -104,6 +104,15 @@ class Ingester(object):
             pattern = "{0}/{1}"
         return rdflib.URIRef(pattern.format(self.base_url, uid))
 
+    def __pattern_uri__(self, entity_class):
+        """Method checks for URI Pattern rule and returns an IRI
+        if present, should be overridden by child ingesters.
+
+        Args:
+            entity_class (rdflib.URIRef): Entity Class to search
+        """
+        pass
+        
 
     def add_admin_metadata(self, entity):
         """Takes a graph and adds the AdminMetadata for the entity
@@ -238,7 +247,11 @@ class Ingester(object):
         if existing_uri:
             entity_uri = existing_uri
         else:
-            entity_uri = self.__generate_uri__()
+            # Check for custom IRIPattern
+            entity_uri = self.__pattern_uri__(bf_class)
+            # Finally generate an IRI from the default patterns
+            if not entity_uri:
+                entity_uri = self.__generate_uri__()
         self.graph.add((entity_uri, rdflib.RDF.type, bf_class))
         self.update_linked_classes(bf_class, entity_uri)
         self.update_direct_properties(bf_class, entity_uri)

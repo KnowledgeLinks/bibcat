@@ -72,7 +72,7 @@ class XMLIngester(Ingester):
             predicate=NS_MGR.kds.destPropUri)
         for row in matched_elements:
             raw_value = row.text
-            if raw_text is None or len(raw_value.strip()) < 1:
+            if raw_value is None or len(raw_value.strip()) < 1:
                 continue
             self.graph.add(
                 (intermediate_bnode,
