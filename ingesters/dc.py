@@ -27,7 +27,7 @@ class DCIngester(Ingester):
     """
 
     def __init__(self, **kwargs):
-        rules = kwargs.get("custom", [])
+        rules = kwargs.get("rules_ttl", [])
         if not isinstance(rules, list):
             rules = [rules,]
         rules.append("kds-bibcat-dc-ingestion.ttl")
@@ -175,13 +175,13 @@ def handler(filepath, input_format):
     if input_format.startswith("xml"):
         iterate_xml(filepath)
 
-def iterate_xml(filepath, custom=[]):
+def iterate_xml(filepath, rules_ttl=[]):
     """Function takes an XML filepath and iterates through the document,
     and extracts dublin core RDF.
 
     Args:
         filepath(str): Filepath to XML document
-        custom(list): List of TTL file names for custom rules
+        rules_ttl(list): List of TTL file names for custom rules
     """
     logging.getLogger("requests").setLevel(logging.CRITICAL)
     logging.getLogger("urllib3").setLevel(logging.CRITICAL)

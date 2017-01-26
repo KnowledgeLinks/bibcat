@@ -92,7 +92,7 @@ class Ingester(object):
         self.triplestore_url = kwargs.get(
             "triplestore_url",
             "http://localhost:9999/blazegraph/sparql")
-        self.__additional_entities__()
+        #self.__additional_entities__()
 
 
     def __generate_uri__(self):
@@ -168,6 +168,14 @@ class Ingester(object):
             logging.error("Could not add graph to {}, status={}".format(
                 self.triplestore_url,
                 add_result.status_code))
+
+    def clean_rdf_types(self):
+        """Removes all Literal and Blank Nodes set as object to rdf:type"""
+        for subj, obj in self.graph.subject_objects(
+            predicate=NS_MGR.rdf.type):
+            if not isinstance(obj, rdflib.URIRef):
+                self.graph.remove((subj, NS_MGR.rdf.type, obj))
+            
 
     def deduplicate_agents(self, filter_class, agent_class, calculate_uri=None):
         """Deduplicates graph
@@ -257,6 +265,7 @@ class Ingester(object):
         self.update_direct_properties(bf_class, entity_uri)
         self.update_ordered_linked_classes(bf_class, entity_uri)
         self.add_admin_metadata(entity_uri)
+        self.clean_rdf_types()
         return entity_uri
 
     def reify_agents(self):
