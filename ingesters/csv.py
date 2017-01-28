@@ -6,10 +6,13 @@ import csv
 import logging
 import rdflib
 
-from ingesters.ingester import Ingester, new_graph, NS_MGR
-from ingesters.sparql import GET_ADDL_PROPS
+try:
+    from ingesters.ingester import Ingester, new_graph, NS_MGR
+    from ingesters.sparql import GET_ADDL_PROPS
+except ImportError:
+    from .ingester import Ingester, new_graph, NS_MGR
+    from .sparql import GET_ADDL_PROPS
 
-import ingesters
 MLOG_LVL = logging.DEBUG
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,12 +20,12 @@ class RowIngester(Ingester):
     """Comma-separated Value Class takes a filepath to a CSV file where the
     the first row is assumed to be the column names""" 
 
-    def __init__(self, source=None, custom=None):
+    def __init__(self, source=None, rules_ttl=None):
         rules = ['kds-bibcat-csv-ingestion.ttl',]
-        if isinstance(custom, str):
-            rules.append(custom)
-        elif isinstance(custom, list):
-            rules.extend(custom) 
+        if isinstance(rules_ttl, str):
+            rules.append(rules_ttl)
+        elif isinstance(rules_ttl, list):
+            rules.extend(rules_ttl) 
         super(RowIngester, self).__init__(
             rules_ttl=rules,
             source=source)
