@@ -69,7 +69,6 @@ class MODSIngester(XMLIngester):
             source_value = self.source.find(src_selector, self.xpath_ns)
             if source_value is None:
                 continue
-            print(src_selector, source_value)
             re_result = re.search(str(src_filter), source_value.text)
             if re_result is not None:
                 path = re_result[0]

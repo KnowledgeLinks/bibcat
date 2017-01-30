@@ -170,8 +170,14 @@ bc:m21-bf_publisher_name a kds:PropertyLinker ;
 #        kds:linkedRange bf:provisionActivity ;
 #        kds:linkedClass bf:Instance .
 
+
+bc:m21-bf_seriesStatement a kds:PropertyLinker ;
+    kds:srcPropUri m21:M4900_a, m21:M4901_a;
+    kds:destPropUri bf:seriesStatement ;
+    kds:destClassUri bf:Instance .
+
 bc:m21-bf_shelfMark a kds:OrderedPropertyLinker;
-    kds:srcPropUri m21:m05000a, 
+    kds:srcPropUri m21:M05000a, 
         m21:m05000b;
     kds:destPropUri rdf:value ;
     kds:destPropClass bf:ShelfMarkLcc ;
@@ -199,6 +205,14 @@ bc:m21-bf_subject_Topic_locSh a kds:OrderedPropertyLinker;
     kds:linkedClass bf:Instance ; 
     kds:lookupClassUri loc:Subject .
 
+bc:m21_bf_supplementaryContent a kds:PropertyLinker ;
+    kds:srcPropUri m21:M504__a;
+    kds:destClassUri bf:SupplementaryContent ;
+    kds:destPropUri rdf:value ;
+    kds:linkedRange bf:supplementaryContent ;
+    kds:linkedClass bf:Instance .
+
+
 bc:m21_bf_tableOfContents a kds:PropertyLinker ;    
         kds:srcPropUri m21:M5050_a;
         kds:destClassUri bf:TableOfContents;
@@ -217,6 +231,16 @@ bc:m21-author a kds:PropertyLinker ;
 	kds:lookupClassUri schema:Person;
 	kds:lookupPropUri schema:name;
 	kds:lookupSource "viaf" .
+
+bc:m21-bf_UnitVolume a kds:PropertyLinker ;
+    kds:srcPropUri m21:M4900_v, m21:M4901_v,
+        m21:M830_0v, m21:M830_1v ;
+    kds:destClassUri bf:Unit ;
+    kds:destPropUri rdf:value ;
+    kds:linkedRange bf:unit ;
+    kds:hasIndividualNodes "true" ;
+    kds:destAdditionalPropUris [ rdfs:label "Volume" ] ;
+    kds:linkedClass bf:Instance .
 
 bc:m21-bf_VarientTitle_mainTitle a kds:PropertyLinker ;
     kds:srcPropUri m21:M2461_a,

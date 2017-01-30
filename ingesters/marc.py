@@ -1,18 +1,22 @@
 """MARC21 to BIBFRAME 2.0 command-line ingester"""
 __author__ = "Jeremy Nelson, Mike Stabile"
+
 import click
 import datetime
 import logging
 import inspect
 import pymarc
 import rdflib
+import re
 import requests
 try:
-    from ingesters.ingester import config, Ingester, new_graph, NS_MGR, FW
-    from ingesters.sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+    from ingesters.ingester import config, Ingester, new_graph, NS_MGR#, FW
+    from ingesters.sparql import DEDUP_ENTITIES, GET_ADDL_PROPS
+    from ingesters.sparql import GET_IDENTIFIERS, ENTITY_IRI_PATTERN
 except ImportError:
-    from .ingester import config, Ingester, new_graph, NS_MGR, FW
+    from .ingester import config, Ingester, new_graph, NS_MGR#, FW
     from .sparql import DEDUP_ENTITIES, GET_ADDL_PROPS, GET_IDENTIFIERS
+    from .sparql import ENTITY_IRI_PATTERN
 
 
 # get the current file name for logs and set logging level
@@ -80,7 +84,7 @@ class MARCIngester(Ingester):
                         self.graph.add((subject, linked_range, dest_bnode))
                     self.graph.add((dest_bnode, 
                         dest_property, 
-                        rdflib.Literal(value))
+                        rdflib.Literal(value)))
     
 
 class OldMARCIngester(Ingester):
@@ -96,7 +100,7 @@ class OldMARCIngester(Ingester):
             rules.extend(custom)
         kwargs['rules_ttl'] = rules
         kwargs['source'] =  record
-        super(MARCIngester, self).__init__(**kwargs)
+        super(OldMARCIngester, self).__init__(**kwargs)
         self.logger = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
         self.logger.setLevel(MLOG_LVL)
 
@@ -154,6 +158,11 @@ class OldMARCIngester(Ingester):
         destination_property = kwargs.get("destination_property")
         target_property = kwargs.get("target_property")
         target_subject = kwargs.get("target_subject")
+        if isinstance(destination_property, rdflib.BNode):
+            for pred, obj in self.rules_graph.predicate_objects(
+               subject=destination_property):
+                self.graph.add((entity, pred, obj))
+            return
         pattern = str(rule).split("/")[-1]
         for value in self.match_marc(pattern):
             self.graph.add((entity,
@@ -223,7 +232,24 @@ class OldMARCIngester(Ingester):
                     GET_ADDL_PROPS.format(target_subject)):
                 self.graph.add((bf_class, pred, obj))
 
-
+    def __pattern_uri__(self, entity_class):
+        sparql = ENTITY_IRI_PATTERN.format(entity_class,
+            NS_MGR.kds.srcPropUri,
+            NS_MGR.kds.srcPropRegex)
+        for row in self.rules_graph.query(sparql):
+            iri_pattern = row[0]
+            src_selector = row[1]
+            src_filter = row[2]
+            raw_value = self.match_marc(src_selector)
+            if raw_value is None:
+                continue
+            re_result = re.search(str(src_filter), raw_value)
+            if re_result is not None:
+                path = re_result[0]
+                iri = str(iri_pattern).format(path)
+                return rdflib.URIRef(iri)
+                
+ 
 
     def deduplicate_instances(self, identifiers=[]):
         """ Takes a BIBFRAME 2.0 graph and attempts to de-duplicate
@@ -285,8 +311,11 @@ class OldMARCIngester(Ingester):
             self.logger.debug("field: %s", field)
             if field.is_control_field():
                 self.logger.debug("control field")
-                start, end = pattern[4:].split("-")
-                output.append(field.data[int(start):int(end)+1])
+                if len(pattern) > 6:
+                    start, end = pattern[4:].split("-")
+                    output.append(field.data[int(start):int(end)+1])
+                else: # Add all of the control field data
+                    output.append(field.data)
                 continue
             indicator_key = "{}{}".format(
                 field.indicators[0].replace(" ", "_"),
@@ -315,7 +344,7 @@ class OldMARCIngester(Ingester):
             if isinstance(record, pymarc.Record):
                 self.source = record
                 self.graph = new_graph()
-        bf_instance, bf_item = super(MARCIngester, self).transform(**kwargs)
+        bf_instance, bf_item = super(OldMARCIngester, self).transform(**kwargs)
         # Run de-duplication methods
         self.deduplicate_instances()
         self.deduplicate_agents(
