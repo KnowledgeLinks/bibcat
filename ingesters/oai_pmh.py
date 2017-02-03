@@ -45,9 +45,9 @@ class OAIPMHIngester(object):
                 self.oai_pmh_url,
                 initial_result.text))
         initial_doc = etree.XML(initial_result.text)
-        resume_token = initial_doc.find(OAIPMHIngester.TOKEN_XPATH)
+        resume_token = initial_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
         self.identifiers.extend(
-            [r.text for r in initial_doc.findall(OAIPMHIngester.IDENT_XPATH)])
+            [r.text for r in initial_doc.findall(OAIPMHIngester.IDENT_XPATH, NS)])
         total_size = int(resume_token.attrib.get("completeListSize", 0))
         while len(self.identifiers) <= total_size:
             continue_url = "{0}?verb=ListIdentifiers&resumptionToken={1}".format(
@@ -55,13 +55,10 @@ class OAIPMHIngester(object):
                 resume_token)
             result = requests.get(continue_url)
             shard_doc = etree.XML(result.text)
-            resume_token = shard_doc.find(OAIPMHIngester.TOKEN_XPATH)
+            resume_token = shard_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
             shard_idents = [r.text for r in initial_doc.findall(
-                                OAIPMHIngester.IDENT_XPATH)]
+                                OAIPMHIngester.IDENT_XPATH, NS)]
             self.identifiers.extend(shard_idents)
 
 
-
-            
-             
-        
+    def 
