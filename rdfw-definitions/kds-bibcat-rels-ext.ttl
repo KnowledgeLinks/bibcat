@@ -16,8 +16,13 @@ bc:imageInstance a kds:PropertyLinker;
     kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_basic_image> ];
     kds:destClassUri bf:Image ;
     kds:destPropUri rdf:type ;
-    kds:linkedRange rdf:type ;
+    kds:linkedRange bf:instanceOf ;
     kds:linkedClass bf:Instance .
 
-    
 
+bc:videoInstance a kds:PropertyLinker;
+    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_videoCModel> ];
+    kds:destClassUri bf:MovingImage ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
