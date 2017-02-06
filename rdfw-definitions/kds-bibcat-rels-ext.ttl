@@ -13,7 +13,11 @@
 @prefix islandora: <http://islandora.ca/ontology/relsext#> .
 
 bc:imageInstance a kds:PropertyLinker;
-    kds:srcPropUri fedora-model:hasModel;
-    kds:destClassUri <info:fedora/islandora:sp_basic_image> .
+    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_basic_image> ];
+    kds:destClassUri bf:Image ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange rdf:type ;
+    kds:linkedClass bf:Instance .
+
     
 
