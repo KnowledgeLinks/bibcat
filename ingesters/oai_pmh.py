@@ -1,33 +1,41 @@
 """OAI-PMH to BIBFRAME 2.0 command-line ingester"""
 __author__ = "Jeremy Nelson, Mike Stabile"
+
+import click
 import datetime
 import logging
 import xml.etree.ElementTree as etree
 import rdflib
 import requests
+import urllib.parse
 
-
+from .ingester import new_graph, NS_MGR
 from .dc import DCIngester
 from .mods import MODSIngester
+from .rels_ext import RELSEXTIngester
 
 NS = {"oai_pmh": "http://www.openarchives.org/OAI/2.0/"}
 
+NS_MGR.bind('fedora', 'info:fedora/fedora-system:def/relations-external#')
+NS_MGR.bind('fedora-model', 'info:fedora/fedora-system:def/model#')
+
 class OAIPMHIngester(object):
     IDENT_XPATH = "oai_pmh:ListIdentifiers/oai_pmh:header/oai_pmh:identifier"
+    MODS_XPATH = "oai_pmh:ListMetadataFormats/oai_pmh:metadataFormat[oai_pmh:metadataPrefix='mods']"
     TOKEN_XPATH = "oai_pmh:ListIdentifiers/oai_pmh:resumptionToken"
 
     def __init__(self, **kwargs):
-        self.oai_pmh_url = kwargs.get("oai_pmh")
+        self.repository_url = kwargs.get("repository")
+        self.oai_pmh_url = urllib.parse.urljoin(self.repository_url, "oai2")
         rules_ttl = kwargs.get("rules_ttl")
-        self.identifiers = []
+        self.identifiers = dict()
         self.metadataPrefix = "oai_dc"
-        metadata_result = requests.get("{}?verb=ListMetadataFormats".format(self.oai_pmh_url))
-        
+        metadata_result = requests.get("{}?verb=ListMetadataFormats".format(
+            self.oai_pmh_url))
         #ident_result = "oai_pmh:Identify/oai_pmh:description/oai_ident:oai-identifier/oai_ident:repositoryIdentifier"
         metadata_doc = etree.XML(metadata_result.text)
         # 
-        if metadata_doc.find(
-            "oai_pmh:ListMetadataFormats/oai_pmh:metadataFormat[oai_pmh:metadataPrefix='mods']", NS):
+        if metadata_doc.find(OAIPMHIngester.MODS_XPATH, NS):
             self.metadata_ingester = MODSIngester(rules_ttl=rules_ttl)
             self.metadataPrefix = "mods"
         else:
@@ -46,19 +54,101 @@ class OAIPMHIngester(object):
                 initial_result.text))
         initial_doc = etree.XML(initial_result.text)
         resume_token = initial_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
-        self.identifiers.extend(
-            [r.text for r in initial_doc.findall(OAIPMHIngester.IDENT_XPATH, NS)])
+        for r in initial_doc.findall(OAIPMHIngester.IDENT_XPATH, NS):
+            ident = r.text
+            if not ident in self.identifiers:
+                self.identifiers[ident] = 1
         total_size = int(resume_token.attrib.get("completeListSize", 0))
-        while len(self.identifiers) <= total_size:
+        start = datetime.datetime.utcnow()
+        msg = "Started Retrieval of {} Identifiers {}".format(total_size, start)
+        click.echo(msg)
+        while len(self.identifiers) < total_size:
             continue_url = "{0}?verb=ListIdentifiers&resumptionToken={1}".format(
                 self.oai_pmh_url,
-                resume_token)
+                resume_token.text)
             result = requests.get(continue_url)
             shard_doc = etree.XML(result.text)
             resume_token = shard_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
-            shard_idents = [r.text for r in initial_doc.findall(
-                                OAIPMHIngester.IDENT_XPATH, NS)]
-            self.identifiers.extend(shard_idents)
+            for r in shard_doc.findall(OAIPMHIngester.IDENT_XPATH, NS):
+                if not r.text in self.identifiers:
+                    self.identifiers[r.text] = 1
+            #print(".", end="")
+            click.echo(".", nl=False)
+        end = datetime.datetime.utcnow()
+        msg = "\nFinished at {}, total time {} minutes".format(
+            end,
+            (end-start).seconds / 60.0)
+        print(msg)
 
 
-    def 
+class IslandoraIngester(OAIPMHIngester):
+    """Islandora Ingester brings together multiple ingesters to deal with MODS and 
+    RELS-EXT Metadata in order to generate BIBFRAME RDF"""
+
+    def __init__(self, **kwargs):
+        super(IslandoraIngester, self).__init__(**kwargs)
+        self.repo_graph = new_graph()
+
+    def harvest(self, **kwargs):
+        """Overloaded harvest method takes optional RELS-EXT ttl file"""
+        start = datetime.datetime.utcnow()
+        msg = "Starting OAI-PMH harvest of PIDS from Islandora at {}".format(
+            start)
+        print(msg)
+        #click.echo()
+        super(IslandoraIngester, self).harvest()
+        for i,row in enumerate(self.identifiers.keys()):
+            if not i%10 and i > 0:
+                #print(".", end="")
+                click.echo(".", nl=False)
+            if not i%100:
+                #print(i, end="")
+                click.echo(i, nl=False)
+            pid = row.split(":")[-1].replace("_", ":")
+            item_url = urllib.parse.urljoin(self.repository_url,
+                "islandora/object/{0}/".format(pid))
+            item_uri = rdflib.URIRef(item_url)
+            rels_ext_url = urllib.parse.urljoin(item_url,
+                "datastream/RELS-EXT")
+            rels_ext_result = requests.get(rels_ext_url)
+            if rels_ext_result.status_code > 399:
+                error = "{} RELS-EXT not found".format(pid)
+                click.echo(error, nl=False)
+                continue
+            rels_ext = RELSEXTIngester(
+                rules_ttl=kwargs.get('rules_rels_ext'),
+                source=rels_ext_result.text)
+            # Skips if object is part of a Compound Object
+            try:
+                next(rels_ext.source.objects(
+                    predicate=NS_MGR.fedora.isConstituentOf))
+                continue
+            except StopIteration:
+                pass
+            mods_url = urllib.parse.urljoin(item_url,
+                "datastream/MODS")
+            mods_result = requests.get(mods_url)
+            self.metadata_ingester.transform(
+                item_uri=item_uri,
+                xml=mods_result.text)
+            instance_uri = self.metadata_ingester.graph.value(
+                subject=item_uri,
+                predicate=NS_MGR.bf.itemOf)
+            rels_ext.transform(instance_uri=instance_uri,
+                item_uri=item_uri)
+            self.metadata_ingester.graph += rels_ext.graph
+            self.repo_graph += self.metadata_ingester.graph
+        #! Hack for dedup Agents
+        self.metadata_ingester.graph = self.repo_graph
+        click.echo("Running Deduplication on Agents")
+        self.metadata_ingester.deduplicate_agents(
+            NS_MGR.rdfs.label,
+            NS_MGR.bf.Person)
+        self.metadata_ingester.deduplicate_agents(
+            NS_MGR.rdfs.label,
+            NS_MGR.bf.Organization)
+        end = datetime.datetime.utcnow()
+        msg = "\nIslandora OAI-PMH harvested at {}, total time {} mins".format(
+            end,
+            (end-start).seconds / 60.0)
+        click.echo(msg)

@@ -29,7 +29,7 @@ HIDE_LG = logging.getLogger("requests")
 HIDE_LG.setLevel(logging.CRITICAL)
 try:
     from instance import config
-    from rdfframework import get_framework as rdfw
+    from rdfframework import getframework as rdfw
     from rdfframework.utilities import DictClass, make_class
     from rdfframework.utilities.uriconvertor import RdfNsManager
 except ImportError:
@@ -42,10 +42,10 @@ try:
         __version__ = version.read().strip()
 except:
     __version__ = "unknown"
-#FW = rdfw(config=config, reset=True, root_file_path=PROJECT_BASE)
+#FW = rdfw.get_framework(config=config, reset=True, root_file_path=PROJECT_BASE)
 #FW.ns_obj.log_level = logging.CRITICAL
 #NS_MGR = FW.ns_obj
-NS_MGR = RdfNsManager()
+NS_MGR = RdfNsManager(config=config)
 config = DictClass(config.__dict__)
 
 #print(json.dumps(FW.rdf_linker_dict,indent=4))

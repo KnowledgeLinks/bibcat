@@ -12,15 +12,22 @@
 @prefix fedora-model: <info:fedora/fedora-system:def/model#> .
 @prefix islandora: <http://islandora.ca/ontology/relsext#> .
 
-bc:imageInstance a kds:PropertyLinker;
-    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_basic_image> ];
+bc:bf_Audio a kds:PropertyLinker;
+    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp-audioCModel> ];
+    kds:destClassUri bf:Audio ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+
+bc:bf_Image a kds:PropertyLinker;
+    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_basic_image>,
+                     <info:fedora/islandora:sp_large_image_cmodel> ];
     kds:destClassUri bf:Image ;
     kds:destPropUri rdf:type ;
     kds:linkedRange bf:instanceOf ;
     kds:linkedClass bf:Instance .
 
-
-bc:videoInstance a kds:PropertyLinker;
+bc:bf_Video a kds:PropertyLinker;
     kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_videoCModel> ];
     kds:destClassUri bf:MovingImage ;
     kds:destPropUri rdf:type ;

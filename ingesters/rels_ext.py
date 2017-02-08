@@ -11,7 +11,7 @@ import rdflib
 import requests
 
 
-from .ingester import Ingester
+from .ingester import Ingester, NS_MGR
 
 
 
@@ -43,8 +43,9 @@ class RELSEXTIngester(Ingester):
         if isinstance(rule, rdflib.BNode):
             for pred, obj in self.rules_graph.predicate_objects(subject=rule):
                 if self.source.value(predicate=pred, object=obj) is not None:
-                    print("Adding {} dest_prop={} dest_class={}".format(entity, destination_property, destination_class))
-                    self.graph.add((entity, destination_property, destination_class))
+                    self.graph.add((entity, 
+                                    destination_property, 
+                                    destination_class))
 
     def transform(self, xml=None, instance_uri=None, item_uri=None):
         """Overrides parent class transform and adds XML-specific
@@ -59,10 +60,10 @@ class RELSEXTIngester(Ingester):
             if isinstance(xml, str):
                 source = rdflib.ConjunctiveGraph()
                 source.parse(data=xml)
-        super(RELSEXTIngester, self).transform(
-            source=xml,
-            instance_uri=instance_uri,
-            item_uri=item_uri)
+                self.source = source
+        self.update_linked_classes(NS_MGR.bf.Instance, instance_uri)
+        self.update_linked_classes(NS_MGR.bf.Item, item_uri)
+
 
                 
 
