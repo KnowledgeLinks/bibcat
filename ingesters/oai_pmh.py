@@ -72,7 +72,6 @@ class OAIPMHIngester(object):
             for r in shard_doc.findall(OAIPMHIngester.IDENT_XPATH, NS):
                 if not r.text in self.identifiers:
                     self.identifiers[r.text] = 1
-            #print(".", end="")
             click.echo(".", nl=False)
         end = datetime.datetime.utcnow()
         msg = "\nFinished at {}, total time {} minutes".format(
@@ -94,15 +93,12 @@ class IslandoraIngester(OAIPMHIngester):
         start = datetime.datetime.utcnow()
         msg = "Starting OAI-PMH harvest of PIDS from Islandora at {}".format(
             start)
-        print(msg)
-        #click.echo()
+        click.echo(msg)
         super(IslandoraIngester, self).harvest()
         for i,row in enumerate(self.identifiers.keys()):
             if not i%10 and i > 0:
-                #print(".", end="")
                 click.echo(".", nl=False)
             if not i%100:
-                #print(i, end="")
                 click.echo(i, nl=False)
             pid = row.split(":")[-1].replace("_", ":")
             item_url = urllib.parse.urljoin(self.repository_url,
@@ -128,25 +124,26 @@ class IslandoraIngester(OAIPMHIngester):
             mods_url = urllib.parse.urljoin(item_url,
                 "datastream/MODS")
             mods_result = requests.get(mods_url)
-            self.metadata_ingester.transform(
-                item_uri=item_uri,
-                xml=mods_result.text)
+            try:
+                self.metadata_ingester.transform(
+                    item_uri=item_uri,
+                    xml=mods_result.text)
+            except:
+                print("\nError with {}".format(item_uri))
+                continue
             instance_uri = self.metadata_ingester.graph.value(
                 subject=item_uri,
                 predicate=NS_MGR.bf.itemOf)
             rels_ext.transform(instance_uri=instance_uri,
                 item_uri=item_uri)
             self.metadata_ingester.graph += rels_ext.graph
-            self.repo_graph += self.metadata_ingester.graph
-        #! Hack for dedup Agents
-        self.metadata_ingester.graph = self.repo_graph
-        click.echo("Running Deduplication on Agents")
-        self.metadata_ingester.deduplicate_agents(
-            NS_MGR.rdfs.label,
-            NS_MGR.bf.Person)
-        self.metadata_ingester.deduplicate_agents(
-            NS_MGR.rdfs.label,
-            NS_MGR.bf.Organization)
+            if 'out_file' in kwargs:
+                self.repo_graph += self.metadata_ingester.graph
+            else:
+                self.metadata_ingester.add_to_triplestore()
+        if 'out_file' in kwargs:
+            with open(kwargs.get('out_file'), 'wb+') as fo:
+                fo.write(self.repo_graph.serialize(format='turtle'))
         end = datetime.datetime.utcnow()
         msg = "\nIslandora OAI-PMH harvested at {}, total time {} mins".format(
             end,

@@ -101,7 +101,6 @@ class MODSIngester(XMLIngester):
     def deduplicate_agents(self, filter_class, agent_class, calculate_uri=None):
         """Overrides default just checks for duplicates in internal BF Graph
         before calling"""
-        super(MODSIngester, self).deduplicate_agents(filter_class, agent_class, None)
         agent_values = dict()
         agents = list(set([s for s in self.graph.subjects(
                                      predicate=NS_MGR.rdf.type,
@@ -109,6 +108,7 @@ class MODSIngester(XMLIngester):
         for iri in agents:
             filter_value = self.graph.value(subject=iri, 
                                             predicate=filter_class)
+            
             if filter_value in agent_values:
                 existing_iri = agent_values.get(filter_value)
                 for pred, obj in self.graph.predicate_objects(subject=iri):
@@ -119,36 +119,4 @@ class MODSIngester(XMLIngester):
                     self.graph.add((subj, pred, existing_iri))
             else:
                 agent_values[filter_value] = iri
-                
-            
-        
-
-
-@click.command()
-@click.option("--url", default=None)
-@click.option("--filepath", default=None)
-@click.option("--rules", default=[])
-def process(url, filepath, rules):
-    """Function takes url or filepath and an optional list of custom turtle
-    rule files, creates an MODS ingester, and transforms it into BIBFRAME 2.0
-
-    Args:
-        url: Optional URL to MODS XML
-        filepath: Optional filepath to MODS XML
-        rules: file names of custom MODS to BIBFRAME RDF rules in turtle format
-    """
-    if not url is None:
-        http_result = requests.get(url)
-        if http_result.status_code > 399:
-            raise ValueError("HTTP Error {0}".format(http_result.status_code))
-        raw_xml = http_result.text
-    elif not filepath is None:
-        with open(filepath) as xml_file:
-            raw_xml = xml_file.read()
-    mods_doc = etree.XML(raw_xml)
-    ingester = MODSIngester(mods_doc, custom=rules)
-    ingester.transform()
-    return ingester.graph.serialize(format='turtle').decode()
-
-if __name__ == "__main__":
-    process()
+        super(MODSIngester, self).deduplicate_agents(filter_class, agent_class, None)

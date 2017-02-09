@@ -92,6 +92,7 @@ class Ingester(object):
         self.triplestore_url = kwargs.get(
             "triplestore_url",
             "http://localhost:9999/blazegraph/sparql")
+        self.__queries__ = dict()
         #self.__additional_entities__()
 
 
@@ -187,8 +188,15 @@ class Ingester(object):
                                           if agent_class is not found, default
                                           is None.
         """
-        sparql = GET_AGENTS.format(agent_class, filter_class)
-        for row in self.graph.query(sparql):
+        results = []
+        query_key = "{}{}".format(filter_class, agent_class)
+        if query_key in self.__queries__:
+            results = self.__queries__[query_key]
+        else:
+            sparql = GET_AGENTS.format(agent_class, filter_class)
+            results = [r for r in self.graph.query(sparql)]
+            self.__queries__[query_key] = results 
+        for row in results:
             agent_uri, value = row
             sparql = DEDUP_AGENTS.format(
                 filter_class,
@@ -345,9 +353,14 @@ class Ingester(object):
            entity_class (url): URL of the entity's class
            entity (rdflib.URIRef): RDFlib Entity
         """
-        sparql = GET_LINKED_CLASSES.format(entity_class)
-        for dest_property, dest_class, prop, subj in \
-            self.rules_graph.query(sparql):
+        query_key = "linked_{}".format(entity_class)
+        if query_key in self.__queries__:
+            results = self.__queries__[query_key]
+        else:
+            sparql = GET_LINKED_CLASSES.format(entity_class)
+            results = [r for r in self.rules_graph.query(sparql)]
+            self.__queries__[query_key] = results
+        for dest_property, dest_class, prop, subj in results:
             #! Should dedup dest_class here, return found URI or BNode
             if isinstance(dest_property, rdflib.BNode):
                 self.__handle_linked_bnode__(
@@ -357,13 +370,23 @@ class Ingester(object):
                     target_property=prop,
                     target_subject=subj)
                 continue
-            sparql_prop = GET_SRC_PROP.format(
+            query_prop_key = "prop_{0}{1}{2}{3}".format(
                 dest_class,
                 dest_property,
                 entity_class,
-                prop,
-                NS_MGR.kds.PropertyLinker)
-            for row in self.rules_graph.query(sparql_prop):
+                prop)
+            if query_prop_key in self.__queries__:
+                props_result = self.__queries__[query_prop_key]
+            else: 
+                sparql_prop = GET_SRC_PROP.format(
+                    dest_class,
+                    dest_property,
+                    entity_class,
+                    prop,
+                    NS_MGR.kds.PropertyLinker)
+                props_result = [r for r in self.rules_graph.query(sparql_prop)]
+                self.__queries__[query_prop_key] = props_result
+            for row in props_result:
                 self.__handle_linked_pattern__(
                     entity=entity,
                     destination_class=dest_class,
@@ -374,13 +397,24 @@ class Ingester(object):
             # Identifies Work and Instance subclasses
             if not hasattr(self, "__handle_subclasses__"):
                 continue
-            identifier_sparql = GET_SRC_PROP.format(
+            ident_key = "ident_{0}{1}{2}{3}".format(
                 dest_class,
                 dest_property,
                 entity_class,
-                prop,
-                NS_MGR.kds.ClassIdentifierLinker)
-            for row in self.rules_graph.query(identifier_sparql):
+                prop)
+            if ident_key in self.__queries__:
+                ident_results = self.__queries__[ident_key]
+            else:
+                identifier_sparql = GET_SRC_PROP.format(
+                    dest_class,
+                    dest_property,
+                    entity_class,
+                    prop,
+                    NS_MGR.kds.ClassIdentifierLinker)
+                ident_results = [r for r in self.rules_graph.query(
+                    identifier_sparql)]
+                self.__queries__[ident_key] = ident_results
+            for row in ident_results:
                 self.__handle_subclasses__(
                     entity=entity,
                     destination_class=dest_class,
@@ -401,9 +435,13 @@ class Ingester(object):
            entity_class (url): URL of the entity's class
            entity (rdflib.URIRef): RDFlib Entity
         """
-        sparql = GET_ORDERED_CLASSES.format(entity_class)
-        for dest_property, dest_class, prop, subj in \
-            self.rules_graph.query(sparql):
+        query_key = "ordered_{}".format(entity_class)
+        if query_key in self.__queries__:
+            results = self.__queries__[query_key]
+        else:
+            sparql = GET_ORDERED_CLASSES.format(entity_class)
+            results = [r for r in self.rules_graph.query(sparql)]
+        for dest_property, dest_class, prop, subj in results:
             self.logger.debug("""Entity: class={} uri={}
 Destination Property={} Destination Class={} 
 Target Property={} Target_Class={}""".format(
@@ -412,14 +450,24 @@ Target Property={} Target_Class={}""".format(
     dest_property,
     dest_class,
     prop,
-    subj))
-            prop_sparql = GET_SRC_PROP.format(
+    subj))  
+            prop_key = "ordered-prop_{0}{1}{2}{3}".format(
                 dest_class,
                 dest_property,
                 entity_class,
-                prop,
-                NS_MGR.kds.OrderedPropertyLinker)
-            for row in self.rules_graph.query(prop_sparql):
+                prop)
+            if prop_key in self.__queries__:
+                prop_results = self.__queries__[prop_key]
+            else:
+                prop_sparql = GET_SRC_PROP.format(
+                    dest_class,
+                    dest_property,
+                    entity_class,
+                    prop,
+                    NS_MGR.kds.OrderedPropertyLinker)
+                prop_results = [r for r in self.rules_graph.query(prop_sparql)]
+                self.__queries__[prop_key] = prop_results
+            for row in prop_results:
                 self.__handle_ordered__(entity_class=entity_class,
                                         entity=entity,
                                         rule=row[0],
