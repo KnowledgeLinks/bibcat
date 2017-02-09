@@ -129,7 +129,9 @@ class IslandoraIngester(OAIPMHIngester):
                     item_uri=item_uri,
                     xml=mods_result.text)
             except:
-                print("\nError with {}".format(item_uri))
+                logging.error("{} Error with {}".format(
+                    sys.exc_info()[-1],
+                    item_uri))
                 continue
             instance_uri = self.metadata_ingester.graph.value(
                 subject=item_uri,
