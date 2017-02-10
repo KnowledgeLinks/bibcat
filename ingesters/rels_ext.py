@@ -38,14 +38,20 @@ class RELSEXTIngester(Ingester):
         entity = kwargs.get("entity")
         destination_class = kwargs.get("destination_class")
         destination_property = kwargs.get("destination_property")
+        target_subject = kwargs.get("target_subject")
         target_property = kwargs.get("target_property")
         rule = kwargs.get("rule")
         if isinstance(rule, rdflib.BNode):
             for pred, obj in self.rules_graph.predicate_objects(subject=rule):
                 if self.source.value(predicate=pred, object=obj) is not None:
-                    self.graph.add((entity, 
-                                    destination_property, 
-                                    destination_class))
+                    bf_class_bnode = self.new_existing_bnode(
+                        target_property,
+                        target_subject)
+                    self.graph.add((entity, target_property, bf_class_bnode))
+                    self.graph.add((bf_class_bnode,
+                        destination_property,
+                        destination_class))
+
 
     def transform(self, xml=None, instance_uri=None, item_uri=None):
         """Overrides parent class transform and adds XML-specific

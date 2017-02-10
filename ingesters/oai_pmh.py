@@ -7,6 +7,7 @@ import logging
 import xml.etree.ElementTree as etree
 import rdflib
 import requests
+import sys
 import urllib.parse
 
 from .ingester import new_graph, NS_MGR
