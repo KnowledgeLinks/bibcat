@@ -43,7 +43,7 @@ class OAIPMHIngester(object):
             self.metadata_ingester = DCIngester(rules_ttl=rules_ttl)
 
     
-    def harvest(self):
+    def harvest(self, sample_size=None):
         """Method harvests all identifiers using ListIdentifiers"""
         initial_url = "{0}?verb=ListIdentifiers&metadataPrefix={1}".format(
             self.oai_pmh_url,
@@ -60,6 +60,7 @@ class OAIPMHIngester(object):
             if not ident in self.identifiers:
                 self.identifiers[ident] = 1
         total_size = int(resume_token.attrib.get("completeListSize", 0))
+        
         start = datetime.datetime.utcnow()
         msg = "Started Retrieval of {} Identifiers {}".format(total_size, start)
         click.echo(msg)
@@ -74,6 +75,16 @@ class OAIPMHIngester(object):
                 if not r.text in self.identifiers:
                     self.identifiers[r.text] = 1
             click.echo(".", nl=False)
+        # Creates a random sample of identifiers of sample_size length
+        if sample_size is not None:
+            import random
+            rand_keys = []
+            for i in range(int(sample_size)):
+                rand_keys.append(random.randint(0, total_size))
+            for i, key in enumerate(list(self.identifiers.keys())):
+                if not i in rand_keys:
+                    self.identifiers.pop(key)
+        print("Sample size {} identifiers size {}".format(sample_size, len(self.identifiers)))        
         end = datetime.datetime.utcnow()
         msg = "\nFinished at {}, total time {} minutes".format(
             end,
@@ -95,7 +106,7 @@ class IslandoraIngester(OAIPMHIngester):
         msg = "Starting OAI-PMH harvest of PIDS from Islandora at {}".format(
             start)
         click.echo(msg)
-        super(IslandoraIngester, self).harvest()
+        super(IslandoraIngester, self).harvest(**kwargs)
         for i,row in enumerate(self.identifiers.keys()):
             if not i%10 and i > 0:
                 click.echo(".", nl=False)
