@@ -5,6 +5,7 @@
 *.log
 *.bak
 *.pyc
+*eggs*
 *coverage
 data*
 build*
