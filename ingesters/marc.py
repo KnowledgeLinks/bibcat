@@ -24,7 +24,7 @@ MNAME = inspect.stack()[0][1]
 MLOG_LVL = logging.CRITICAL
 logging.basicConfig(level=MLOG_LVL)
 
-class MARCIngester(Ingester):
+class NewMARCIngester(Ingester):
     """Extends BIBFRAME 2.0 Ingester for MARC21 records"""
 
     def __init__(self, **kwargs):
@@ -87,7 +87,7 @@ class MARCIngester(Ingester):
                         rdflib.Literal(value)))
     
 
-class OldMARCIngester(Ingester):
+class MARCIngester(Ingester):
     """Extends BIBFRAME 2.0 Ingester for MARC21 records"""
 
     def __init__(self, **kwargs):
@@ -100,7 +100,7 @@ class OldMARCIngester(Ingester):
             rules.extend(custom)
         kwargs['rules_ttl'] = rules
         kwargs['source'] =  record
-        super(OldMARCIngester, self).__init__(**kwargs)
+        super(MARCIngester, self).__init__(**kwargs)
         self.logger = logging.getLogger("%s-%s" % (MNAME, inspect.stack()[0][3]))
         self.logger.setLevel(MLOG_LVL)
 

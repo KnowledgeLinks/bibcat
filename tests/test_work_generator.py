@@ -99,13 +99,13 @@ class TestSuccessWorkGenerator(unittest.TestCase):
     def test_run(self):
         found_response = MockResponse()
         found_response.output['results']['bindings'].append(
-            {"instance": {"value": None}})
+            {"instance": {"value": str(self.found_work)}})
         requests.post = MagicMock(return_value=found_response)
         self.work_generator.run()
 
         self.assertEqual(
             self.work_generator.matched_works,
-            [self.found_work,])
+            [])
         
 
 

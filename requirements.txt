@@ -1,0 +1,15 @@
+click
+elasticsearch
+elasticsearch-dsl
+Flask
+Flask-Login
+Flask-SQLAlchemy
+Flask-WTF
+isodate
+Markdown
+passlib
+rdflib
+requests
+dateutils
+pymarc
+-e git+git@github.com:KnowledgeLinks/rdfframework.git#egg=master

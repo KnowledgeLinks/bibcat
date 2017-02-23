@@ -45,7 +45,7 @@ class TestDBPediaLinker(unittest.TestCase):
             {"dbo:class": NS_MGR.dbo.Film,
              "type": "uri",
              "value": "http://dbpedia.org/resource/Moby_Dick_(1971_film)"},
-            moby_dick_results)
+            moby_dick_results[0])
 
     def test_search_label_musical_work(self):
         john_wesley_harding_results = self.linker.search_label(

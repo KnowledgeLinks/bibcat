@@ -328,8 +328,11 @@ class WorkGenerator(Generator):
             instance_creator_bindings = instance_creator_result.json()\
                 .get("results").get("bindings")
             for row in instance_creator_bindings:
-                creator_name = row.get("name").get("value")
-                creator_uri = rdflib.URIRef(row.get("creator").get("value"))
+                creator_name = row.get("name", {}).get("value")
+                creator_url = row.get("creator", {}).get("value")
+                if creator_name is None or creator_url is None:
+                    continue
+                creator_uri = rdflib.URIRef(creator_url)
                 instance_key = str(uri)
                 if instance_key in self.processed:
                     if code in self.processed[instance_key]:
@@ -370,7 +373,9 @@ class WorkGenerator(Generator):
         instance_title_bindings = instance_title_result.json()\
             .get("results").get("bindings")
         for row in instance_title_bindings:
-            main_title, subtitle = row.get("mainTitle").get("value"), None
+            main_title, subtitle = row.get("mainTitle", {}).get("value"), None
+            if main_title is None:
+                continue
             if "subtitle" in row:
                 subtitle = row.get("subtitle").get("value")
             if uri in self.processed and "title" in self.processed[uri]:
