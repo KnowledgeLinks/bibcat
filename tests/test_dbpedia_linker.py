@@ -44,8 +44,8 @@ class TestDBPediaLinker(unittest.TestCase):
         self.assertIn(
             {"dbo:class": NS_MGR.dbo.Film,
              "type": "uri",
-             "value": "http://dbpedia.org/resource/Moby_Dick_(1971_film)"},
-            moby_dick_results[0])
+             "value": "http://dbpedia.org/resource/Moby_Dick_(1978_film)"},
+            moby_dick_results)
 
     def test_search_label_musical_work(self):
         john_wesley_harding_results = self.linker.search_label(

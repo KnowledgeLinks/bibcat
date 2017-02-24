@@ -39,18 +39,20 @@ class TestRowIngester(unittest.TestCase):
         self.assertIsInstance(self.ingester, RowIngester)
 
     def test_defaults(self):
-        self.assertEqual(
-            self.ingester.base_url,
-            config.BASE_URL)
+        if hasattr(config, 'BASE_URL'):
+            self.assertEqual(
+                self.ingester.base_url,
+                config.BASE_URL)
         self.assertEqual(
             len(self.ingester.graph),
             0)
         self.assertTrue(
             len(self.ingester.rules_graph) < 1)
         self.assertIsNone(self.ingester.source)
-        self.assertEqual(
+        self.assertIn(
             self.ingester.triplestore_url,
-            config.TRIPLESTORE_URL)
+            ['http://localhost:9999/blazegraph/sparql',
+             config.TRIPLESTORE_URL])
 
 
 if __name__ == "__main__":
