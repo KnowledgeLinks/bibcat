@@ -344,7 +344,7 @@ class MARCIngester(Ingester):
             if isinstance(record, pymarc.Record):
                 self.source = record
                 self.graph = new_graph()
-        bf_instance, bf_item = super(OldMARCIngester, self).transform(**kwargs)
+        bf_instance, bf_item = super(MARCIngester, self).transform(**kwargs)
         # Run de-duplication methods
         self.deduplicate_instances()
         self.deduplicate_agents(
