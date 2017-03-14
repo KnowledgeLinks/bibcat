@@ -1,0 +1,121 @@
+@prefix adms:   <http://www.w3.org/ns/adms#>.
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix locn:   <http://www.w3.org/ns/locn#>.
+@prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
+@prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr:     <http://www.w3.org/ns/r2rml#>.
+@prefix schema: <http://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+
+<#MODS2BIBFRAME_Item> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:referenceFormulation ql:XPath ;
+        rml:iterator "$"
+
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{repository_iri}" ;
+        rr:class bf:Item 
+    ]; 
+
+    rr:predicateObjectMap [
+        rr:predicate bf:heldBy ;
+        rr:objectMap [
+            rr:constant "{instituion_iri}" 
+        ]
+    ] .
+
+<#MODS2BIBFRAME_Instance> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:referenceFormulation ql:XPath ;
+        rml:iterator "."
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{base_url}/{id}" ;
+        rr:class bf:Instance 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate relators:aut ;
+        rr:objectMap [
+           rr:parentTriplesMap <#MARC2BIBFRAME_InstanceAuthor> ; 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:copyrightDate ;
+        rr:objectMap [
+            rr:reference "" ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:title ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MARC2BIBFRAME_InstanceTitle> ;
+       ] 
+    ] .
+
+<#MODS2BIBFRAME_InstanceAuthor> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "datafield[@tag='100']" 
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{base_url}/{id}" ;
+        rr:class bf:Person ;
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:name ;
+        rr:objectMap [
+            rr:reference "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']/../mods:namePart" ;
+            rr:datatype xsd:string 
+        ] 
+    ] .
+
+
+<#MODS2BIBFRAME_InstanceTitle> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:titleInfo" 
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:InstanceTitle ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:mainTitle ;
+        rr:objectMap [
+            rml:reference "mods:title" ;
+            rr:datatype xsd:string 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subTitle ;
+        rr:objectMap [
+            rml:reference "mods:subtitle" ;
+            rr:datatype xsd:string 
+        ]
+    ] .
