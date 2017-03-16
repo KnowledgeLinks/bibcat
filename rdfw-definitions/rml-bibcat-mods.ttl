@@ -1,4 +1,5 @@
 @prefix adms:   <http://www.w3.org/ns/adms#>.
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix locn:   <http://www.w3.org/ns/locn#>.
@@ -20,19 +21,27 @@
     rml:logicalSource [
         rml:source "{mods_record}" ;
         rml:referenceFormulation ql:XPath ;
-        rml:iterator "$"
+        rml:iterator "."
 
     ] ;
 
     rr:subjectMap [
-        rr:template "{repository_iri}" ;
+        rr:template "{item_iri}" ;
         rr:class bf:Item 
+    ]; 
+
+    rr:predicateObjectMap [
+        rr:predicate bf:generationProcess ;
+        rr:objectMap [
+            rr:parentTriplesMap bc:adminMetadata
+        ]
     ]; 
 
     rr:predicateObjectMap [
         rr:predicate bf:heldBy ;
         rr:objectMap [
-            rr:constant "{instituion_iri}" 
+            rr:template "{institution_iri}";
+            rr:datatype xsd:anyURI
         ]
     ] .
 
@@ -52,21 +61,29 @@
     rr:predicateObjectMap [
         rr:predicate relators:aut ;
         rr:objectMap [
-           rr:parentTriplesMap <#MARC2BIBFRAME_InstanceAuthor> ; 
+           rr:parentTriplesMap <#MODS2BIBFRAME_InstanceAuthor> ; 
         ]
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate relators:aut ;
+        rr:objectMap [
+           rr:parentTriplesMap <#MODS2BIBFRAME_InstanceAuthorOrg> ; 
+        ]
+    ] ;
+
+
+    rr:predicateObjectMap [
         rr:predicate bf:copyrightDate ;
         rr:objectMap [
-            rr:reference "" ;
+            rr:reference "mods:originInfo/mods:copyrightDate" ;
         ]
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
-            rr:parentTriplesMap <#MARC2BIBFRAME_InstanceTitle> ;
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceTitle> ;
        ] 
     ] .
 
@@ -74,7 +91,7 @@
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "datafield[@tag='100']" 
+        rml:iterator "mods:name[@type='personal']" 
     ] ;
 
     rr:subjectMap [
@@ -86,7 +103,28 @@
     rr:predicateObjectMap [
         rr:predicate schema:name ;
         rr:objectMap [
-            rr:reference "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']/../mods:namePart" ;
+            rr:reference "mods:role[mods:roleTerm='creator']/../mods:namePart" ;
+            rr:datatype xsd:string 
+        ] 
+    ] .
+
+<#MODS2BIBFRAME_InstanceAuthorOrg> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:name[@type='corporate']" 
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{base_url}/{id}" ;
+        rr:class bf:Organization ;
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:name ;
+        rr:objectMap [
+            rr:reference "mods:role[mods:roleTerm='creator']/../mods:namePart" ;
             rr:datatype xsd:string 
         ] 
     ] .
@@ -107,7 +145,7 @@
     rr:predicateObjectMap [
         rr:predicate bf:mainTitle ;
         rr:objectMap [
-            rml:reference "mods:title" ;
+            rr:reference "mods:title" ;
             rr:datatype xsd:string 
         ]
     ] ;
@@ -115,7 +153,7 @@
     rr:predicateObjectMap [
         rr:predicate bf:subTitle ;
         rr:objectMap [
-            rml:reference "mods:subtitle" ;
+            rr:reference "mods:subtitle" ;
             rr:datatype xsd:string 
         ]
     ] .
