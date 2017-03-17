@@ -8,11 +8,11 @@ import uuid
 from types import SimpleNamespace
 
 NS_MGR = SimpleNamespace()
-NS_MGR.rdf = rdflib.RDF
-NS_MGR.rdfs = rdflib.RDFS
-NS_MGR.rml = rdflib.Namespace("http://semweb.mmlab.be/ns/rml#")
-NS_MGR.rr = rdflib.Namespace("http://www.w3.org/ns/r2rml#")
-NS_MGR.xsd = rdflib.XSD
+#NS_MGR.rdf = rdflib.RDF
+#NS_MGR.rdfs = rdflib.RDFS
+#NS_MGR.rml = rdflib.Namespace("http://semweb.mmlab.be/ns/rml#")
+#NS_MGR.rr = rdflib.Namespace("http://www.w3.org/ns/r2rml#")
+#NS_MGR.xsd = rdflib.XSD
 
     
 BIBCAT_BASE = os.path.abspath(
@@ -35,14 +35,17 @@ except ImportError:
 class Processor(object):
 
     def __init__(self, rml_rules):
+        global NS_MGR
         self.rml = rdflib.Graph()
         self.rml.parse(rml_rules, format='turtle')
         # Parse BIBCAT RML Base
         self.rml.parse(os.path.join(BIBCAT_BASE, 
             os.path.join("rdfw-definitions", "rml-bibcat-base.ttl")),
             format='turtle')
-        self.output = None
-        self.source = None
+        # Populate Namespaces Manager 
+        for prefix, namespace in self.rml.namespaces():
+            setattr(NS_MGR, prefix, rdflib.Namespace(namespace))
+        self.output, self.source = None, None
         self.parents = set()
         self.constants = dict(version=__version__)
         self.triple_maps = dict()
@@ -56,6 +59,27 @@ class Processor(object):
                 self.__subject_map__(triple_map_iri)
             self.triple_maps[map_key].predicateObjectMap = \
                 self.__predicate_object_map__(triple_map_iri)
+
+    def __deduplicate__(self, subject_map, subject_iri, value):
+        """Simple de-duplication of the subject based on the value
+        and class of the subject_iri.
+
+        Args:
+            subject_map: Triple Map's Subject Map 
+            subject_iri(rdflib.URIRef): Current Subject IRI
+            value(rdflib.Literal): Value from Triple Map 
+        """
+        predicate = subject_map.deduplicate
+        for existing_subject in set([s for s in self.output.subjects(predicate=predicate,
+             object=value)]):
+            if subject_map.class_ in set([str(obj) for obj in self.output.objects(
+                subject=existing_subject,
+                predicate=NS_MGR.rdf.type)]):
+                # Matched Class and Property Value
+                return existing_subject
+        return subject_iri
+                
+
 
     def __graph__(self):
         """Method returns a new graph with all of the namespaces in
@@ -99,6 +123,9 @@ class Processor(object):
         subject_map.termType = self.rml.value(
             subject=subject_map_bnode,
             predicate=NS_MGR.rr.termType)
+        subject_map.deduplicate = self.rml.value(
+            subject=subject_map_bnode,
+            predicate=NS_MGR.kds.deduplicate)
         return subject_map
 
     def __predicate_object_map__(self, map_iri):
@@ -131,7 +158,7 @@ class Processor(object):
                 predicate=NS_MGR.rr.reference)
             pred_obj_map.datatype = self.rml.value(
                 subject=obj_map_bnode,
-                predicate=NS_MGR.rr.datetype)
+                predicate=NS_MGR.rr.datatype)
             pred_obj_maps.append(pred_obj_map)
         return pred_obj_maps
 
@@ -155,9 +182,6 @@ class Processor(object):
             return rdflib.Literal(raw_value, 
                 datatype=term_map.datatype)
             
-
-        
-
     def execute(self, triple_map, **kwargs):
         """Placeholder method should be overridden by child classes"""
         pass
@@ -191,14 +215,13 @@ class XMLProcessor(Processor):
             triple_map(SimpleNamespace): Triple Map
             
         """
-        subject = self.generate_term(term_map=triple_map.subjectMap, 
-            **kwargs)
-        if subject is None:
-            return
-        start = len(self.output)
+        subjects = []
         for element in self.source.findall(
             str(triple_map.logicalSource.iterator),
             self.xml_ns):
+            subject = self.generate_term(term_map=triple_map.subjectMap, 
+                **kwargs)
+            start = len(self.output)
             for row in triple_map.predicateObjectMap:
                 predicate = row.predicate
                 if row.template is not None:
@@ -207,20 +230,22 @@ class XMLProcessor(Processor):
                         predicate,
                         self.generate_term(term_map=row, **kwargs)))
                 if row.parentTriplesMap is not None:
-                    parent_obj = self.execute(
+                    parent_objects = self.execute(
                         self.triple_maps[str(row.parentTriplesMap)],
                         **kwargs)
-                    if parent_obj is not None:
+                    for parent_obj in parent_objects:
+                        
                         self.output.add((
                             subject,
                             predicate,
                             parent_obj))
                 if row.reference is not None:
-                    for found_elem in element.findall(
-                        str(row.reference),
-                        self.xml_ns):
-                        if len(found_elem.text) < 1:
+                    found_elements = element.findall(str(row.reference), 
+                                        self.xml_ns)
+                    for i, found_elem in enumerate(found_elements):
+                        if found_elem.text is None or len(found_elem.text) < 1:
                             continue
+
                         if hasattr(row, 'datatype') and \
                            row.datatype is not None:
                             if row.datatype == NS_MGR.xsd.anyURI:
@@ -231,6 +256,14 @@ class XMLProcessor(Processor):
                                     datatype=row.datatype)
                         else:
                             ref_obj = rdflib.Literal(found_elem.text)
+                        if triple_map.subjectMap.deduplicate == predicate:
+                            existing_subject = self.__deduplicate__(triple_map.subjectMap,
+                                subject,
+                                ref_obj)
+                            if existing_subject is not None:
+                                subject = existing_subject
+                        if subject is None:
+                            print(predicate, ref_obj)
                         self.output.add((subject, 
                                          predicate, 
                                          ref_obj))
@@ -238,12 +271,13 @@ class XMLProcessor(Processor):
                     self.output.add((subject,
                                      predicate,
                                      row.constant))
-        if start < len(self.output): 
-            if triple_map.subjectMap.class_ is not None:
-                self.output.add((subject, 
+            if start < len(self.output): 
+                if triple_map.subjectMap.class_ is not None:
+                    self.output.add((subject, 
                                  NS_MGR.rdf.type, 
                                  triple_map.subjectMap.class_))
-            return subject 
+                subjects.append(subject)
+        return subjects
 
                     
 
@@ -258,11 +292,13 @@ class XMLProcessor(Processor):
         
 PREFIX = ""
 for r in dir(NS_MGR):
-    if r.startswith("__"):
+    if r.startswith("__") or r is not None:
         continue
     PREFIX += "PREFIX {0}: <{1}>\n".format(r, getattr(NS_MGR, r))
+
+
 GET_TRIPLE_MAPS = PREFIX + """
 SELECT DISTINCT ?map
 WHERE {
     ?map rdf:type rr:TriplesMap .
-}"""    
+}"""

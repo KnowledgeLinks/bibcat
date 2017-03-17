@@ -2,6 +2,7 @@
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix locn:   <http://www.w3.org/ns/locn#>.
 @prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
 @prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
@@ -59,6 +60,14 @@
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate bf:generationProcess ;
+        rr:objectMap [
+            rr:parentTriplesMap bc:adminMetadata
+        ]
+    ]; 
+
+
+    rr:predicateObjectMap [
         rr:predicate relators:aut ;
         rr:objectMap [
            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceAuthor> ; 
@@ -72,6 +81,12 @@
         ]
     ] ;
 
+     rr:predicateObjectMap [
+        rr:predicate bf:contribution ;
+        rr:objectMap [
+           rr:parentTriplesMap <#MODS2BIBFRAME_InstanceContribution> ;
+        ]
+    ] ;    
 
     rr:predicateObjectMap [
         rr:predicate bf:copyrightDate ;
@@ -81,29 +96,137 @@
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate bf:extent;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceExtent> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:genreForm;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceGenre> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:language;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceLanguage> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:note;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceAdminNote> ;
+        ]
+    ] ;
+
+
+    rr:predicateObjectMap [
+        rr:predicate bf:provisionActivity ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceProvisionActivityPublishing> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectOrg> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectPerson> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectTemporal> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectTopic> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:summary ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSummary>;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
             rr:parentTriplesMap <#MODS2BIBFRAME_InstanceTitle> ;
        ] 
+    ] ;
+
+     rr:predicateObjectMap [
+        rr:predicate bf:title ;
+        rr:objectMap [
+            rr:parentTriplesMap<#MODS2BIBFRAME_InstanceVarientTitle> ;
+        ]
     ] .
+
+<#MODS2BIBFRAME_InstanceAdminNote> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:note[@type='admin']" 
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Note ;
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:noteType ;
+        rr:objectMap [
+            rr:constant "admin"@en ;
+            rr:datatype xsd:string  ;
+        ] 
+    ] ; 
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string 
+        ] 
+    ] .
+
 
 <#MODS2BIBFRAME_InstanceAuthor> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:name[@type='personal']" 
+        rml:iterator "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']" 
     ] ;
 
     rr:subjectMap [
         rr:template "{base_url}/{id}" ;
         rr:class bf:Person ;
-
+        kds:deduplicate schema:name;
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate schema:name ;
         rr:objectMap [
-            rr:reference "mods:role[mods:roleTerm='creator']/../mods:namePart" ;
+            rr:reference "../mods:namePart" ;
             rr:datatype xsd:string 
         ] 
     ] .
@@ -112,21 +235,226 @@
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:name[@type='corporate']" 
+        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='creator']" 
     ] ;
 
     rr:subjectMap [
         rr:template "{base_url}/{id}" ;
         rr:class bf:Organization ;
+        kds:deduplicate schema:name;
 
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate schema:name ;
         rr:objectMap [
-            rr:reference "mods:role[mods:roleTerm='creator']/../mods:namePart" ;
+            rr:reference "../mods:namePart" ;
             rr:datatype xsd:string 
         ] 
+    ] .
+
+<#MODS2BIBFRAME_InstanceContribution> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:name[@type='personal']/mods:role[mods:roleTerm='contributor']"
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{base_url}/{id}" ;
+        rr:class bf:Person ;
+        kds:deduplicate schema:name;
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:name ;
+        rr:objectMap [
+            rr:reference "../mods:namePart" ;
+            rr:datatype xsd:string 
+        ] 
+    ] .
+
+<#MODS2BIBFRAME_InstanceExtent> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:physicalDescription/mods:extent" 
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Extent ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string 
+        ]
+    ] .
+
+<#MODS2BIBFRAME_InstanceGenre> a rr:TriplesMap;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:genre[@authority='marcgt']"
+    ] ;
+
+     rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:GenreForm ;
+    ] ;
+
+     rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string 
+        ]
+    ] .
+   
+<#MODS2BIBFRAME_InstanceLanguage> a rr:TriplesMap;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:language/mods:languageTerm"
+    ] ;
+
+     rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Language ;
+    ] ;
+
+     rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string 
+        ]
+    ] .
+
+<#MODS2BIBFRAME_InstanceProvisionActivityPublishing> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "." ;
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Publication ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate  relators:pbl ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_Publisher> ;
+        ]
+    ] .
+
+
+<#MODS2BIBFRAME_InstanceSubjectOrg> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:subject/mods:name[@type='corporate']" 
+    ] ;
+
+     rr:subjectMap [
+        rr:template "{base_url}/{id}" ;
+        rr:class bf:Organization ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:name ;
+        rr:objectMap [
+            rr:reference "mods:namePart" ;
+            rr:datatype xsd:string
+        ]
+    ] .
+
+<#MODS2BIBFRAME_InstanceSubjectPerson> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:subject/mods:name[@type='personal']" 
+    ] ;
+
+     rr:subjectMap [
+        rr:template "{base_url}/{id}" ;
+        rr:class bf:Person ;
+        kds:deduplicate schema:name;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:name ;
+        rr:objectMap [
+            rr:reference "mods:namePart" ;
+            rr:datatype xsd:string
+        ]
+    ] .
+
+<#MODS2BIBFRAME_InstanceSubjectTemporal> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:subject/mods:temporal" 
+    ] ;
+
+     rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Temporal ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string
+        ]
+    ] .
+
+<#MODS2BIBFRAME_InstanceSubjectTopic> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:subject/mods:topic" 
+    ] ;
+
+     rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Topic ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string
+        ]
+    ] .
+
+
+<#MODS2BIBFRAME_InstanceSummary> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:abstract" 
+    ] ;
+
+     rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Summary ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string
+        ]
     ] .
 
 
@@ -154,6 +482,54 @@
         rr:predicate bf:subTitle ;
         rr:objectMap [
             rr:reference "mods:subtitle" ;
+            rr:datatype xsd:string 
+        ]
+    ] .
+
+<#MODS2BIBFRAME_InstanceVarientTitle> a rr:TriplesMap;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:titleInfo[@type='alternative']" 
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:VarientTitle ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:mainTitle ;
+        rr:objectMap [
+            rr:reference "mods:title" ;
+            rr:datatype xsd:string 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subTitle ;
+        rr:objectMap [
+            rr:reference "mods:subtitle" ;
+            rr:datatype xsd:string 
+        ]
+    ] .
+
+<#MODS2BIBFRAME_Publisher> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:originInfo/mods:publisher" 
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{base_url}/{id}" ;
+        rr:class bf:Organization ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rr:reference "." ;
             rr:datatype xsd:string 
         ]
     ] .
