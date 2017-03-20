@@ -8,12 +8,6 @@ import uuid
 from types import SimpleNamespace
 
 NS_MGR = SimpleNamespace()
-#NS_MGR.rdf = rdflib.RDF
-#NS_MGR.rdfs = rdflib.RDFS
-#NS_MGR.rml = rdflib.Namespace("http://semweb.mmlab.be/ns/rml#")
-#NS_MGR.rr = rdflib.Namespace("http://www.w3.org/ns/r2rml#")
-#NS_MGR.xsd = rdflib.XSD
-
     
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
