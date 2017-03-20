@@ -54,25 +54,56 @@ class Processor(object):
             self.triple_maps[map_key].predicateObjectMap = \
                 self.__predicate_object_map__(triple_map_iri)
 
-    def __deduplicate__(self, subject_map, subject_iri, value):
+    def __deduplicate__(self):
         """Simple de-duplication of the subject based on the value
         and class of the subject_iri.
 
-        Args:
-            subject_map: Triple Map's Subject Map 
-            subject_iri(rdflib.URIRef): Current Subject IRI
-            value(rdflib.Literal): Value from Triple Map 
         """
-        predicate = subject_map.deduplicate
-        for existing_subject in set([s for s in self.output.subjects(predicate=predicate,
-             object=value)]):
-            if subject_map.class_ in set([str(obj) for obj in self.output.objects(
-                subject=existing_subject,
-                predicate=NS_MGR.rdf.type)]):
-                # Matched Class and Property Value
-                return existing_subject
-        return subject_iri
+        existing_iri = dict()
+        for row in self.rml.query(DEDUP_RULE):
+            class_, filter_pred = row
+            for subj_iri in self.output.subjects(
+                predicate=NS_MGR.rdf.type,
+                object=class_):
+                value = self.output.value(subject=subj_iri,
+                    predicate=filter_pred)
+                if value is existing_iri:
+                    self.__replace_iri__(subj_iri, value)
+                else:
+                    existing_iri[value] = subj_iri
+                # Now deduplicate if existing triplestore
+                if self.triplestore_url is None:
+                    continue
+                query = DEDUP_TRIPLESTORE.format(
+                    class_,
+                    filter_pred,
+                    value)
+                dedup_result = requests.post(self.triplestore_url,
+                    data={"query": query,
+                          "format": "json"})
+                if dedup_result.status_code > 399:
+                    continue
+                bindings = dedup_result.json().get('results').get('bindings')
+                if len(bindings) > 0:
+                    new_iri = rdflib.URIRef(
+                        bindings[0].get('subj').get('value'))
+                    self.__replace_iri__(existing_iri[value],
+                                         new_iri)
                 
+            
+        
+                
+
+    def __replace_iri__(self, src_iri, new_iri):
+	# Replace predicate and objects
+	for pred, obj in self.output.predicate_objects(subject=src_iri):
+		graph.remove((src_iri, pred, obj))
+		graph.add((new_iri, pred, obj))
+	# Replace subject and predicates
+	for subj, pred in self.output.subject_predicates(object=src_iri):
+		graph.remove((subj, pred, src_iri))
+		graph.add((subj, pred, new_iri))
+        
 
 
     def __graph__(self):
@@ -186,6 +217,8 @@ class Processor(object):
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs) 
+        # Post-processing
+        self.__deduplicate__()
 
 class XMLProcessor(Processor):
     """XML RDF Mapping Processor"""
@@ -248,14 +281,6 @@ class XMLProcessor(Processor):
                                     datatype=row.datatype)
                         else:
                             ref_obj = rdflib.Literal(found_elem.text)
-                        if triple_map.subjectMap.deduplicate == predicate:
-                            existing_subject = self.__deduplicate__(triple_map.subjectMap,
-                                subject,
-                                ref_obj)
-                            if existing_subject is not None:
-                                subject = existing_subject
-                        if subject is None:
-                            print(predicate, ref_obj)
                         self.output.add((subject, 
                                          predicate, 
                                          ref_obj))
@@ -287,6 +312,23 @@ for r in dir(NS_MGR):
     if r.startswith("__") or r is not None:
         continue
     PREFIX += "PREFIX {0}: <{1}>\n".format(r, getattr(NS_MGR, r))
+
+DEDUP_RULE = PREFIX + """
+SELECT DISTINCT ?class ?bf_match
+WHERE {
+   ?map rr:subjectMap ?sub_map .
+   ?sub_map rr:class ?class .
+   ?sub_map kds:deduplicate ?bf_match
+}"""
+
+
+DEDUP_TRIPLESTORE = PREFIX + """
+SELECT DISTINCT ?subj
+WHERE {{
+    ?subj rdf:type <{0}> .
+    ?subj <{1}> ?name .
+    FILTER(CONTAINS(?name, \"""{2}\"""))
+}}"""
 
 
 GET_TRIPLE_MAPS = PREFIX + """
