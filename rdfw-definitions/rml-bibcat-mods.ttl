@@ -220,11 +220,11 @@
     rr:subjectMap [
         rr:template "{base_url}/{id}" ;
         rr:class bf:Person ;
-        kds:deduplicate schema:name;
+        kds:deduplicate rdfs:label;
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate schema:name ;
+        rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "../mods:namePart" ;
             rr:datatype xsd:string 
@@ -241,12 +241,12 @@
     rr:subjectMap [
         rr:template "{base_url}/{id}" ;
         rr:class bf:Organization ;
-        kds:deduplicate schema:name;
+        kds:deduplicate rdfs:label;
 
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate schema:name ;
+        rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "../mods:namePart" ;
             rr:datatype xsd:string 
@@ -263,12 +263,12 @@
     rr:subjectMap [
         rr:template "{base_url}/{id}" ;
         rr:class bf:Person ;
-        kds:deduplicate schema:name;
+        kds:deduplicate rdfs:label ;
 
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate schema:name ;
+        rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "../mods:namePart" ;
             rr:datatype xsd:string 
@@ -365,10 +365,11 @@
      rr:subjectMap [
         rr:template "{base_url}/{id}" ;
         rr:class bf:Organization ;
+        kds:deduplicate rdfs:label ;
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate schema:name ;
+        rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "mods:namePart" ;
             rr:datatype xsd:string
@@ -385,11 +386,11 @@
      rr:subjectMap [
         rr:template "{base_url}/{id}" ;
         rr:class bf:Person ;
-        kds:deduplicate schema:name;
+        kds:deduplicate rdfs:label ;
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate schema:name ;
+        rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "mods:namePart" ;
             rr:datatype xsd:string

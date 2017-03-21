@@ -31,11 +31,15 @@ class Processor(object):
     def __init__(self, rml_rules):
         global NS_MGR
         self.rml = rdflib.Graph()
-        self.rml.parse(rml_rules, format='turtle')
+        if isinstance(rml_rules, list):
+            for rule in rml_rules:
+                self.rml.parse(rule, format='turtle')
+        else:
+            self.rml.parse(rml_rules, format='turtle')
         # Parse BIBCAT RML Base
-        self.rml.parse(os.path.join(BIBCAT_BASE, 
-            os.path.join("rdfw-definitions", "rml-bibcat-base.ttl")),
-            format='turtle')
+        #self.rml.parse(os.path.join(BIBCAT_BASE, 
+        #    os.path.join("rdfw-definitions", "rml-bibcat-base.ttl")),
+        #    format='turtle')
         # Populate Namespaces Manager 
         for prefix, namespace in self.rml.namespaces():
             setattr(NS_MGR, prefix, rdflib.Namespace(namespace))
@@ -67,12 +71,13 @@ class Processor(object):
                 object=class_):
                 value = self.output.value(subject=subj_iri,
                     predicate=filter_pred)
-                if value is existing_iri:
-                    self.__replace_iri__(subj_iri, value)
+                if str(value) in existing_iri:
+                    self.__replace_iri__(subj_iri, 
+                        existing_iri[str(value)])
                 else:
-                    existing_iri[value] = subj_iri
+                    existing_iri[str(value)] = subj_iri
                 # Now deduplicate if existing triplestore
-                if self.triplestore_url is None:
+                if not hasattr(self, "triplestore_url") or self.triplestore_url is None:
                     continue
                 query = DEDUP_TRIPLESTORE.format(
                     class_,
@@ -95,15 +100,22 @@ class Processor(object):
                 
 
     def __replace_iri__(self, src_iri, new_iri):
-	# Replace predicate and objects
-	for pred, obj in self.output.predicate_objects(subject=src_iri):
-		graph.remove((src_iri, pred, obj))
-		graph.add((new_iri, pred, obj))
-	# Replace subject and predicates
-	for subj, pred in self.output.subject_predicates(object=src_iri):
-		graph.remove((subj, pred, src_iri))
-		graph.add((subj, pred, new_iri))
+        """Method replaces all triples with an original IRI replaced with the
+        equivalent triples using the new IRI.
         
+        Args:
+            src_iri(rdflib.URIRef): Original or source IRI
+            new_iri(rdflib.URIREf): New replacement IRI
+        """
+        # Replace predicate and objects
+        for pred, obj in self.output.predicate_objects(subject=src_iri):
+            self.output.remove((src_iri, pred, obj))
+            self.output.add((new_iri, pred, obj))
+        # Replace subject and predicates
+        for subj, pred in self.output.subject_predicates(object=src_iri):
+            self.output.remove((subj, pred, src_iri))
+            self.output.add((subj, pred, new_iri))
+
 
 
     def __graph__(self):
@@ -186,6 +198,7 @@ class Processor(object):
         return pred_obj_maps
 
     def generate_term(self, **kwargs):
+        """Method generates a rdflib.Term based on kwargs"""
         term_map = kwargs.pop('term_map')
         if hasattr(term_map, "termType") and\
             term_map.termType == NS_MGR.rr.BlankNode:
@@ -269,6 +282,10 @@ class XMLProcessor(Processor):
                                         self.xml_ns)
                     for i, found_elem in enumerate(found_elements):
                         if found_elem.text is None or len(found_elem.text) < 1:
+                            if row.constant is not None:
+                                self.output.add((subject, 
+                                                 predicate,
+                                                 row.constant))
                             continue
 
                         if hasattr(row, 'datatype') and \
@@ -284,7 +301,7 @@ class XMLProcessor(Processor):
                         self.output.add((subject, 
                                          predicate, 
                                          ref_obj))
-                if row.constant is not None:
+                elif row.constant is not None:
                     self.output.add((subject,
                                      predicate,
                                      row.constant))
