@@ -26,33 +26,20 @@ NS_MGR.bind('fedora-model', 'info:fedora/fedora-system:def/model#')
 
 class OAIPMHIngester(object):
     IDENT_XPATH = "oai_pmh:ListIdentifiers/oai_pmh:header/oai_pmh:identifier"
-    MODS_XPATH = "oai_pmh:ListMetadataFormats/oai_pmh:metadataFormat[oai_pmh:metadataPrefix='mods']"
     TOKEN_XPATH = "oai_pmh:ListIdentifiers/oai_pmh:resumptionToken"
 
     def __init__(self, **kwargs):
         self.repository_url = kwargs.get("repository")
+        if self.repository_url is None:
+            raise ValueError("repository_url must have a value")
         self.oai_pmh_url = urllib.parse.urljoin(self.repository_url, "oai2")
-        rules_ttl = kwargs.get("rules_ttl", [])
+
         self.identifiers = dict()
         self.metadataPrefix = "oai_dc"
         metadata_result = requests.get("{}?verb=ListMetadataFormats".format(
             self.oai_pmh_url))
-        #ident_result = "oai_pmh:Identify/oai_pmh:description/oai_ident:oai-identifier/oai_ident:repositoryIdentifier"
-        metadata_doc = etree.XML(metadata_result.text)
-        # 
-        if metadata_doc.find(OAIPMHIngester.MODS_XPATH, NS):
-            self.metadataPrefix = "mods"
-            for rule_name in ["rml-bibcat-base.ttl", "rml-bibcat-mods.ttl"]:
-                rules_ttl.append(os.path.join(BIBCAT_BASE,
-                    os.path.join("rdfw-definitions", rule_name)))
-            self.metadata_ingester = XMLProcessor(
-                rml_rules=rules_ttl,
-                institution_iri=kwargs.get("institution_iri"),
-                namespaces={self.metadataPrefix: str(NS_MGR.mods)})
-        else:
-            self.metadata_ingester = XMLProcessor(
-                rules_ttl=rules_ttl)
-
+        self.metadata_formats_doc = etree.XML(metadata_result.text)
+        self.metadata_ingester = None
     
     def harvest(self, sample_size=None):
         """Method harvests all identifiers using ListIdentifiers"""
@@ -119,11 +106,29 @@ class OAIPMHIngester(object):
 class IslandoraIngester(OAIPMHIngester):
     """Islandora Ingester brings together multiple ingesters to deal with MODS and 
     RELS-EXT Metadata in order to generate BIBFRAME RDF"""
+    MODS_XPATH = "oai_pmh:ListMetadataFormats/oai_pmh:metadataFormat[oai_pmh:metadataPrefix='mods']"
 
     def __init__(self, **kwargs):
         super(IslandoraIngester, self).__init__(**kwargs)
         self.repo_graph = new_graph()
         self.base_url = kwargs.get('base_url')
+        rules_ttl = kwargs.get("rules_ttl", [])
+        if self.metadata_formats_doc.find(IslandoraIngester.MODS_XPATH, NS):
+            self.metadataPrefix = "mods"
+            for rule_name in ["rml-bibcat-base.ttl", "rml-bibcat-mods.ttl"]:
+                rules_ttl.append(os.path.join(BIBCAT_BASE,
+                    os.path.join("rdfw-definitions", rule_name)))
+            self.metadata_ingester = XMLProcessor(
+                rml_rules=rules_ttl,
+                institution_iri=kwargs.get("institution_iri"),
+                namespaces={self.metadataPrefix: str(NS_MGR.mods)})
+        else:
+            rules_ttl.append(
+                os.path.join(BIBCAT_BASE,
+                    os.path.join("rdfw-definitions", "rml-bibcat-base.ttl")))
+            self.metadata_ingester = XMLProcessor(
+                rml_rules=rules_ttl)
+
 
     def __process_mods__(self, **kwargs):
         """Extracts MODS datastream from the item_url
@@ -143,7 +148,7 @@ class IslandoraIngester(OAIPMHIngester):
         try:
             self.metadata_ingester.run(mods_result.text,
                 base_url=base_url,
-                item_iri=item_uri,
+                item_iri=item_url,
                 id=uuid.uuid1)
         except:
             logging.error("{} Error with {}".format(
@@ -157,12 +162,12 @@ class IslandoraIngester(OAIPMHIngester):
             "datastream/RELS-EXT")
         rels_ext_result = requests.get(rels_ext_url)
         if rels_ext_result.status_code > 399:
-            error = "{} RELS-EXT not found".format(pid)
+            error = "{} RELS-EXT not found".format(item_url)
             try:
                  click.echo(error, nl=False)
             except io.UnsupportedOperation:
                  print(error, end=" ")
-            return
+            return None, None
         base_url = kwargs.get("base_url")
         if base_url is None and self.base_url is not None:
             base_url = base_url
@@ -173,8 +178,8 @@ class IslandoraIngester(OAIPMHIngester):
         # Returns None if object is part of a Compound Object
         if rels_ext_doc.find("rdf:Description/fedora:isConstituentOf",
             rels_ext.xml_ns) is not None:
-            return
-        return rels_ext
+            return None, None
+        return rels_ext, rels_ext_doc
 
 
     def harvest(self, **kwargs):
@@ -203,14 +208,15 @@ class IslandoraIngester(OAIPMHIngester):
             item_url = urllib.parse.urljoin(self.repository_url,
                 "islandora/object/{0}/".format(pid))
             item_uri = rdflib.URIRef(item_url)
-            rels_ext = self.__process_rels_ext__(item_url=item_url)
+            rels_ext, rels_ext_doc = self.__process_rels_ext__(
+                item_url=item_url)
             if rels_ext is None:
                 continue
             self.__process_mods__(item_url=item_url)
             instance_uri = self.metadata_ingester.output.value(
                 subject=item_uri,
                 predicate=NS_MGR.bf.itemOf)
-            rels_ext.run(rels_ext_result.text,
+            rels_ext.run(rels_ext_doc,
                 instance_iri=instance_uri)
             self.metadata_ingester.output += rels_ext.output
             if 'out_file' in kwargs:

@@ -33,13 +33,12 @@ class Processor(object):
         self.rml = rdflib.Graph()
         if isinstance(rml_rules, list):
             for rule in rml_rules:
-                self.rml.parse(rule, format='turtle')
+                with open(rule) as fo:
+                    raw_rule = fo.read()
+                self.rml.parse(data=raw_rule, 
+                               format='turtle')
         else:
             self.rml.parse(rml_rules, format='turtle')
-        # Parse BIBCAT RML Base
-        #self.rml.parse(os.path.join(BIBCAT_BASE, 
-        #    os.path.join("rdfw-definitions", "rml-bibcat-base.ttl")),
-        #    format='turtle')
         # Populate Namespaces Manager 
         for prefix, namespace in self.rml.namespaces():
             setattr(NS_MGR, prefix, rdflib.Namespace(namespace))
@@ -320,6 +319,8 @@ class XMLProcessor(Processor):
         self.output = self.__graph__()
         if isinstance(xml, str):
             self.source = etree.XML(xml)
+        else:
+            self.source = xml
         super(XMLProcessor, self).run(**kwargs)
 
 
