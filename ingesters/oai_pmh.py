@@ -57,7 +57,10 @@ class OAIPMHIngester(object):
             raise ValueError("Cannot Harvest {}, result {}".format(
                 self.oai_pmh_url,
                 initial_result.text))
-        initial_doc = etree.XML(initial_result.text)
+        raw_initial = initial_result.text
+        if isinstance(raw_initial, str):
+            raw_initial = raw_initial.encode()
+        initial_doc = etree.XML(raw_initial)
         resume_token = initial_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
         for r in initial_doc.findall(OAIPMHIngester.IDENT_XPATH, NS):
             ident = r.text
@@ -76,7 +79,10 @@ class OAIPMHIngester(object):
                 self.oai_pmh_url,
                 resume_token.text)
             result = requests.get(continue_url)
-            shard_doc = etree.XML(result.text)
+            shard_raw = result.text
+            if isinstance(shard_raw, str):
+                shard_raw = shard_raw.encode()
+            shard_doc = etree.XML(shard_raw)
             resume_token = shard_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
             for r in shard_doc.findall(OAIPMHIngester.IDENT_XPATH, NS):
                 if not r.text in self.identifiers:
