@@ -1,4 +1,4 @@
-"""OAI-PMH to BIBFRAME 2.0 command-line ingester"""
+"""OAI-PMH to BIBFRAME 2.0 ingester Classes"""
 __author__ = "Jeremy Nelson, Mike Stabile"
 
 import click
@@ -6,7 +6,10 @@ import datetime
 import io
 import logging
 import os
-import xml.etree.ElementTree as etree
+try:
+    from lxml import etree
+except ImportError:
+    import xml.etree.ElementTree as etree
 import rdflib
 import requests
 import sys
@@ -38,7 +41,10 @@ class OAIPMHIngester(object):
         self.metadataPrefix = "oai_dc"
         metadata_result = requests.get("{}?verb=ListMetadataFormats".format(
             self.oai_pmh_url))
-        self.metadata_formats_doc = etree.XML(metadata_result.text)
+        metadata_formats = metadata_result.text
+        if isinstance(metadata_result.text, str):
+            metadata_formats = metadata_result.text.encode()
+        self.metadata_formats_doc = etree.XML(metadata_formats)
         self.metadata_ingester = None
     
     def harvest(self, sample_size=None):
@@ -113,13 +119,17 @@ class IslandoraIngester(OAIPMHIngester):
         self.repo_graph = new_graph()
         self.base_url = kwargs.get('base_url')
         rules_ttl = kwargs.get("rules_ttl", [])
-        if self.metadata_formats_doc.find(IslandoraIngester.MODS_XPATH, NS):
+        if self.metadata_formats_doc.find(
+            IslandoraIngester.MODS_XPATH, 
+            NS) is not None:
             self.metadataPrefix = "mods"
             for rule_name in ["rml-bibcat-base.ttl", "rml-bibcat-mods.ttl"]:
                 rules_ttl.append(os.path.join(BIBCAT_BASE,
                     os.path.join("rdfw-definitions", rule_name)))
             self.metadata_ingester = XMLProcessor(
                 rml_rules=rules_ttl,
+                base_url=self.base_url,
+                triplestore_url=kwargs.get("triplestore_url"),
                 institution_iri=kwargs.get("institution_iri"),
                 namespaces={self.metadataPrefix: str(NS_MGR.mods)})
         else:
@@ -141,15 +151,19 @@ class IslandoraIngester(OAIPMHIngester):
             "datastream/MODS")
         mods_result = requests.get(mods_url)
         base_url = kwargs.get("base_url")
-        if base_url is None and self.base_url is not None:
-            base_url = base_url
+        if base_url is None and "base_url" in self.metadata_ingester.constants:
+            base_url = self.metadata_ingester.constants.get("base_url")
         else:
-            raise ValueError("base_url required for __process_mods__") 
+            raise ValueError("base_url required for __process_mods__")
+        instance_url = kwargs.get("instance_url")
+        if instance_url is None:
+            instance_url = "{0}/{1}".format(base_url, uuid.uuid1()) 
         try:
             self.metadata_ingester.run(mods_result.text,
                 base_url=base_url,
+                id=uuid.uuid1,
                 item_iri=item_url,
-                id=uuid.uuid1)
+                instance_iri=instance_url)
         except:
             logging.error("{} Error with {}".format(
                 sys.exc_info()[1],

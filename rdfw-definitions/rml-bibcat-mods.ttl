@@ -39,6 +39,13 @@
     ]; 
 
     rr:predicateObjectMap [
+        rr:predicate bf:itemOf ;
+        rr:objectMap [
+            rr:template "{instance_iri}" ;
+        ]
+    ]  ;
+
+    rr:predicateObjectMap [
         rr:predicate bf:heldBy ;
         rr:objectMap [
             rr:template "{institution_iri}";
@@ -55,7 +62,7 @@
     ] ;
 
     rr:subjectMap [
-        rr:template "{base_url}/{id}" ;
+        rr:template "{instance_iri}" ;
         rr:class bf:Instance 
     ] ;
 
