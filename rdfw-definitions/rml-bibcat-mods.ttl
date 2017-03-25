@@ -42,6 +42,7 @@
         rr:predicate bf:itemOf ;
         rr:objectMap [
             rr:template "{instance_iri}" ;
+            rr:datatype xsd:anyURI ;
         ]
     ]  ;
 
