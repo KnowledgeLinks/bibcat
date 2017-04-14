@@ -42,7 +42,6 @@
         rr:predicate bf:itemOf ;
         rr:objectMap [
             rr:template "{instance_iri}" ;
-            rr:datatype xsd:anyURI ;
         ]
     ]  ;
 
@@ -132,6 +131,7 @@
     ] ;
 
 
+    rr:predicateObjectMap [
     rr:predicateObjectMap [
         rr:predicate bf:provisionActivity ;
         rr:objectMap [
@@ -427,7 +427,6 @@
 
 <#MODS2BIBFRAME_InstanceSubjectTopic> a rr:TriplesMap ;
 
-    rml:logicalSource [
         rml:source "{mods_record}" ;
         rml:iterator "mods:subject/mods:topic" 
     ] ;

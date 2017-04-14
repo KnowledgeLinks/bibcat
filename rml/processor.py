@@ -3,6 +3,7 @@ __author__ = "Jeremy Nelson"
 import datetime
 import os
 import rdflib
+import requests
 import sys
 import uuid
 from types import SimpleNamespace
