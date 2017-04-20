@@ -184,7 +184,7 @@
      rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
-            rr:parentTriplesMap<#MODS2BIBFRAME_InstanceVarientTitle> ;
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVarientTitle> ;
         ]
     ] .
 
