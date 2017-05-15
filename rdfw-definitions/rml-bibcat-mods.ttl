@@ -132,7 +132,6 @@
 
 
     rr:predicateObjectMap [
-    rr:predicateObjectMap [
         rr:predicate bf:provisionActivity ;
         rr:objectMap [
             rr:parentTriplesMap <#MODS2BIBFRAME_InstanceProvisionActivityPublishing> ;
@@ -184,7 +183,7 @@
      rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
-            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVarientTitle> ;
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVarientTitle> 
         ]
     ] .
 
@@ -427,6 +426,7 @@
 
 <#MODS2BIBFRAME_InstanceSubjectTopic> a rr:TriplesMap ;
 
+    rml:logicalSource [
         rml:source "{mods_record}" ;
         rml:iterator "mods:subject/mods:topic" 
     ] ;
