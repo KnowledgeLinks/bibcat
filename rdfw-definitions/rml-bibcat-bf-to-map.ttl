@@ -1,0 +1,96 @@
+@prefix adms:   <http://www.w3.org/ns/adms#>.
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/>. 
+@prefix dpla: <http://dp.la/about/map/> .
+@prefix edm: <http://www.europeana.eu/schemas/edm/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix locn: <http://www.w3.org/ns/locn#>.
+@prefix ore: <http://www.openarchives.org/ore/terms/> .
+@prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
+@prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#>.
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix schema: <http://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<#BIBFRAME2MAPv4_WebResource> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:iterator "/"
+        
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{web_resource_iri}" ;
+        rr:class edm:WebResource 
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dc:format ;
+        rr:objectMap [
+            rml:query """ select distinct ?format 
+                        where {{ <{instance_iri}> rdf:type ?format }}""" 
+        ] 
+    ] .
+
+<#BIBFRAME2MAPv4_SourceResource> a rr:TriplesMap;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:iterator "/",
+        rml:query """ select distinct ?item_iri
+                      WHERE { ?item_iri rdf:type bf:Item }"""
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{item_iri}";
+        rr:class dpla:SourceResource 
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:isPartOf ;
+        rr:objectMap [
+            rml:query """ select distinct ?collection_iri
+                        where {{ <{item_iri}> schema:partOf ?collection_iri }}"""
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:creator ;
+        rr:objectMap [
+            rml:query """ select distinct ?creator ?name
+                          where {{ <{item_iri}> bf:itemOf ?instance .
+                                   ?instance bf:instanceOf ?work .
+                                   ?work bf:contribution ?contribution .
+                                   ?contribution bf:agent ?creator .
+                                   ?creator rdfs:label ?name . }}""" 
+
+        ]
+
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:title ;
+        rr:objectMap [
+            rml:query """ select distinct ?label 
+                      where {{ <{item_iri}> bf:itemOf ?instance .
+                               ?instance rdfs:label ?label . }}""" 
+        ]
+    ] .
+
+<#SPARQL_JSON_source> a sd:Service ; 
+    sd:endpoint "{triplestore_url}" ;
+    sd:supportedLanguage sd:SPARQL11Query ;
+    sd:resultFormat <https://www.w3.org/ns/formats/data/SPARQL_Results_JSON> .

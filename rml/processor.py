@@ -323,9 +323,43 @@ class XMLProcessor(Processor):
         else:
             self.source = xml
         super(XMLProcessor, self).run(**kwargs)
-
-
         
+
+class SPARQLProcessor(Processor):
+
+    def __init__(self, **kwargs):
+        if "rml_rules" in kwargs:
+            rml_rules = kwargs.pop("rml_rules")
+        super(SPARQLProcessor, self).__init__(rml_rules)
+        # Defaults to Blazegraph, don't really like.
+        self.triplestore_url = kwargs.get("triplestore_url",
+            "http://localhost:9999/blazegraph/sparql")            
+
+
+    def run(self, **kwargs):
+        super(SPARQLProcessor, self).run(**kwargs)
+          
+
+class SPARQLJSONProcessor(SPARQLProcessor):
+
+    def execute(self, triple_map, **kwargs):
+        result = requests.post(self.triplestore_url,
+            data={ query: triple_map.logicalSource.query,
+                   format: "json"})
+        bindings = result.json().get("results").get("bindings")
+
+class SPARQLXMLProcessor(XMLProcessor, SPARQLProcessor):
+
+    def __init__(self, **kwargs):
+        super(SPARQLXMLProcessor, self).__init__(**kwargs)
+        
+    def execute(self, triple_map, **kwargs):
+        result = requests.post(self.triplestore_url,
+            data={ query: triple_map.logicalSource.query,
+                   format: "rdf/xml"})
+         
+
+
 PREFIX = ""
 for r in dir(NS_MGR):
     if r.startswith("__") or r is not None:
