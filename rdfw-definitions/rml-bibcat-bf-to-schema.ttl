@@ -21,8 +21,9 @@
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?entity
-                     WHERE { ?entity rdf:type bf:Work }""" 
+        rml:query """SELECT DISTINCT ?work
+                     WHERE { ?work rdf:type bf:Work }""";
+        rml:iterator "work" . 
 
     ] ;
 

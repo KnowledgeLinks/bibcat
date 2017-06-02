@@ -335,18 +335,52 @@ class SPARQLProcessor(Processor):
         self.triplestore_url = kwargs.get("triplestore_url",
             "http://localhost:9999/blazegraph/sparql")            
 
+    def __get_object__(self, binding):
+        """Method takes a binding extracts value and returns rdflib
+        entity
+
+        Args:
+            binding: binding row
+        """
+        for row in binding.values():
+            if row.get('type').startswith('uri'):
+                yield rdflib.URIRef(row.get('value'))
+            if row.get('type').startswith('literal'):
+                yield rdflib.Literal(row.get('value')
 
     def run(self, **kwargs):
         super(SPARQLProcessor, self).run(**kwargs)
           
 
-class SPARQLJSONProcessor(SPARQLProcessor):
-
     def execute(self, triple_map, **kwargs):
+        if triple_map.logicalSource.referenceFormulation.endswith("JSON"):
+            output_format = "json"
+        else:
+            output_format = "xml"
         result = requests.post(self.triplestore_url,
             data={ query: triple_map.logicalSource.query,
-                   format: "json"})
-        bindings = result.json().get("results").get("bindings")
+                   format: output_format})
+        if output_format == "json":
+            bindings = result.json().get("results").get("bindings")
+        elif output_format == "xml":
+            xml_doc = etree.XML(result.text)
+            bindings = xml_doc.findall("results/bindings")
+        iterator = triple_map.logicalSource.iterator 
+        for binding in bindings:
+            entity = binding.get(iterator).get('value')
+            for pred_obj_map in triple_map.predicateObjectMap:
+                sparql_query = pred_obj_map.query.format(entity)
+                predicate = pred_obj_map.predicate
+                result = requests.post(self.triplestore_url,
+                    data={ query: sparql_query,
+                           format: output_format})
+                if output_format.startswith("json"):
+                    pre_obj_bindings = result.json().get(
+                        'results').get('bindings')
+                for row in pre_obj_bindings:
+                    object_ = self.__get_object__(row)
+                    
+                
 
 class SPARQLXMLProcessor(XMLProcessor, SPARQLProcessor):
 
