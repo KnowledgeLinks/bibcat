@@ -375,9 +375,16 @@ class SPARQLProcessor(Processor):
             output_format = "json"
         else:
             output_format = "xml"
-        sparql = PREFIX + triple_map.logicalSource.query.format(
-            limit=self.limit,
-            offset=self.offset)
+        iterator = str(triple_map.logicalSource.iterator)
+        if iterator in kwargs:
+            sparql = PREFIX + triple_map.logicalSource.query.format(
+                    **{iterator: kwargs.get(iterator),
+                       'limit': self.limit,
+                       'offset': self.offset})
+        else:
+            sparql = PREFIX + triple_map.logicalSource.query.format(
+                limit=self.limit,
+                offset=self.offset)
         result = requests.post(self.triplestore_url,
             data={ "query": sparql,
                    "format": output_format})

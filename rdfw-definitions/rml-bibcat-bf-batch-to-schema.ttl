@@ -23,7 +23,7 @@
         rml:referenceFormulation ql:JSON ;
         rml:query """SELECT DISTINCT ?instance
                      WHERE {{ ?instance rdf:type bf:Instance .
-                              FILTER (sameTerm(?instance, <{instance}>)) }}
+                              FILTER isIRI(?instance)}}
                      ORDER BY ?instance
                      LIMIT {limit}
                      OFFSET {offset}""" ;
@@ -55,13 +55,6 @@
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate schema:workExample ;
-        rr:objectMap [
-            rr:parentTriplesMap <#BIBFRAME_ITEM2CreativeWork>
-        ]
-    ] ;
-
-    rr:predicateObjectMap [
         rr:predicate schema:author ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
@@ -70,26 +63,3 @@
 
         ]
     ] .
-
-<#BIBFRAME_ITEM2CreativeWork> a rr:TriplesMap ;
-
-    rml:logicalSource [
-        rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?item
-                  WHERE {{ <{instance}> bf:hasItem ?item . }}""";
-        rml:iterator = "item"
-    ] ;
-
-    rr:subjectMap [
-        rr:template "{item}" ;
-        rr:class schema:CreativeWork
-    ] ;
-
-    rr:predicateObjectMap [
-        rr:predicate schema:url ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT bf:electronicLocation """ 
-        ]
-    ] .
-
-    ]
