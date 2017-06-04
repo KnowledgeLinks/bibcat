@@ -21,23 +21,26 @@
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?work
-                     WHERE { ?work rdf:type bf:Work }""";
-        rml:iterator "work" . 
+        rml:query """SELECT DISTINCT ?instance
+                     WHERE {{ ?instance rdf:type bf:Instance .
+                              FILTER isIRI(?instance)}}
+                     ORDER BY ?instance
+                     LIMIT {limit}
+                     OFFSET {offset}""" ;
+        rml:iterator "instance"  
 
     ] ;
 
     rr:subjectMap [
-        rr:template "{instance_iri}" ;
-        rr:class schema:CreativeWork . 
+        rr:template "{instance}" ;
+        rr:class schema:CreativeWork  
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate schema:name ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?label 
-                         WHERE {{ ?instance bf:instanceOf <{work}> ;
-                                    rdfs:label ?label .  }} """ 
+                         WHERE {{ <{instance}> rdfs:label ?label . }}"""
         ] 
     ] ;
 
@@ -45,9 +48,9 @@
         rr:predicate schema:description ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
-                         WHERE {{ ?instance bf:instanceOf <{work}>
-                                      bf:summary ?summary .
-                                  ?summary rdf:value ?value . }}"""
+                         WHERE {{ <{instance}> bf:instanceOf ?work .
+                                  ?work bf:summary ?summary .
+                                  ?summary rdfs:label ?value . }}"""
         ]
     ] ;
 
@@ -55,7 +58,8 @@
         rr:predicate schema:author ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
-                         WHERE {{ <{work}> bf:contribution ?contribute . }}"""
+                         WHERE {{ <{instance}> bf:instanceOf ?work .
+                                  ?work bf:contribution ?contribute . }}"""
 
         ]
     ] .

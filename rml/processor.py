@@ -9,7 +9,8 @@ import uuid
 from types import SimpleNamespace
 
 NS_MGR = SimpleNamespace()
-    
+NS_MGR   
+
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
@@ -140,6 +141,11 @@ class Processor(object):
         logical_source.iterator = self.rml.value(
             subject=logical_src_bnode,
             predicate=NS_MGR.rml.iterator)
+        query = self.rml.value(
+            subject=logical_src_bnode,
+            predicate=NS_MGR.rml.query)
+        if query is not None:
+            logical_source.query = query
         return logical_source
 
     def __subject_map__(self, map_iri):
@@ -194,6 +200,9 @@ class Processor(object):
             pred_obj_map.datatype = self.rml.value(
                 subject=obj_map_bnode,
                 predicate=NS_MGR.rr.datatype)
+            pred_obj_map.query = self.rml.value(
+                subject=obj_map_bnode,
+                predicate=NS_MGR.rml.query)
             pred_obj_maps.append(pred_obj_map)
         return pred_obj_maps
 
@@ -331,9 +340,13 @@ class SPARQLProcessor(Processor):
         if "rml_rules" in kwargs:
             rml_rules = kwargs.pop("rml_rules")
         super(SPARQLProcessor, self).__init__(rml_rules)
+        __set_prefix__()
         # Defaults to Blazegraph, don't really like.
         self.triplestore_url = kwargs.get("triplestore_url",
-            "http://localhost:9999/blazegraph/sparql")            
+            "http://localhost:9999/blazegraph/sparql")
+        # Sets defaults
+        self.limit, self.offset = 5000, 0
+
 
     def __get_object__(self, binding):
         """Method takes a binding extracts value and returns rdflib
@@ -346,60 +359,66 @@ class SPARQLProcessor(Processor):
             if row.get('type').startswith('uri'):
                 yield rdflib.URIRef(row.get('value'))
             if row.get('type').startswith('literal'):
-                yield rdflib.Literal(row.get('value')
+                yield rdflib.Literal(row.get('value'))
 
     def run(self, **kwargs):
+        self.output = self.__graph__()
+        if "limit" in kwargs:
+            self.limit = kwargs.get('limit')
+        if "offset" in kwargs:
+            self.offset = kwargs.get('offset')
         super(SPARQLProcessor, self).run(**kwargs)
-          
+                  
 
     def execute(self, triple_map, **kwargs):
-        if triple_map.logicalSource.referenceFormulation.endswith("JSON"):
+        if NS_MGR.ql.JSON in triple_map.logicalSource.reference_formulations:
             output_format = "json"
         else:
             output_format = "xml"
+        sparql = PREFIX + triple_map.logicalSource.query.format(
+            limit=self.limit,
+            offset=self.offset)
         result = requests.post(self.triplestore_url,
-            data={ query: triple_map.logicalSource.query,
-                   format: output_format})
+            data={ "query": sparql,
+                   "format": output_format})
         if output_format == "json":
             bindings = result.json().get("results").get("bindings")
         elif output_format == "xml":
             xml_doc = etree.XML(result.text)
             bindings = xml_doc.findall("results/bindings")
-        iterator = triple_map.logicalSource.iterator 
+        iterator = str(triple_map.logicalSource.iterator) 
         for binding in bindings:
-            entity = binding.get(iterator).get('value')
+            entity = rdflib.URIRef(binding.get(iterator).get('value'))
+            if triple_map.subjectMap.class_ is not None:
+                self.output.add((entity, 
+                                 NS_MGR.rdf.type, 
+                                 triple_map.subjectMap.class_))
             for pred_obj_map in triple_map.predicateObjectMap:
-                sparql_query = pred_obj_map.query.format(entity)
+                sparql_query = PREFIX + pred_obj_map.query.format(
+                    **{iterator: entity})
                 predicate = pred_obj_map.predicate
                 result = requests.post(self.triplestore_url,
-                    data={ query: sparql_query,
-                           format: output_format})
+                    data={ "query": sparql_query,
+                           "format": output_format})
                 if output_format.startswith("json"):
                     pre_obj_bindings = result.json().get(
                         'results').get('bindings')
-                for row in pre_obj_bindings:
-                    object_ = self.__get_object__(row)
-                    
+                    for row in pre_obj_bindings:
+                        for object_ in self.__get_object__(row):
+                            self.output.add((entity, predicate, object_))
                 
 
-class SPARQLXMLProcessor(XMLProcessor, SPARQLProcessor):
 
-    def __init__(self, **kwargs):
-        super(SPARQLXMLProcessor, self).__init__(**kwargs)
-        
-    def execute(self, triple_map, **kwargs):
-        result = requests.post(self.triplestore_url,
-            data={ query: triple_map.logicalSource.query,
-                   format: "rdf/xml"})
-         
+def __set_prefix__():
+    global PREFIX
+    PREFIX = ""
+    for r in dir(NS_MGR):
+        if r.startswith("__") or r is None:
+            continue
+        PREFIX += "PREFIX {0}: <{1}>\n".format(r, getattr(NS_MGR, r))
+    return PREFIX
 
-
-PREFIX = ""
-for r in dir(NS_MGR):
-    if r.startswith("__") or r is not None:
-        continue
-    PREFIX += "PREFIX {0}: <{1}>\n".format(r, getattr(NS_MGR, r))
-
+__set_prefix__()
 DEDUP_RULE = PREFIX + """
 SELECT DISTINCT ?class ?bf_match
 WHERE {
