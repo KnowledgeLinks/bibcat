@@ -110,7 +110,42 @@
 
     ];
 
+    rr:predicateObjectMap [
+        rr:predicate dcterms:description ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?summary 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  ?instance  bf:instanceOf ?work .
+                                  ?work bf:summary ?summary .
+                                  ?summary rdfs:label ?value . }}"""
+        ]
+    ] ;
 
+    rr:predicateObjectMap [
+        rr:predicate dc:format ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  OPTIONAL {{ ?instance bf:dimensions ?dimension .
+                                              ?dimension rdf:value ?value }} .
+                                  OPTIONAL {{ ?instance bf:digitalCharacteristic ?characteristic .
+                                              ?characteristic a bf:EncodingFormat .
+                                              ?characteristic rdf:value ?value }} .
+                        }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:identifier ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  ?instance bf:identifiedBy ?ident .
+                                  ?ident rdf:value ?value }}
+                       }}"""
+
+        ]
+    ];
 
     rr:predicateObjectMap [
         rr:predicate dcterms:title ;
