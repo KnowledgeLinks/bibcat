@@ -27,7 +27,12 @@
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
         rml:iterator "instance_iri"
-        
+        rml:query """SELECT DISTINCT ?instance
+                     WHERE {{ ?instance rdf:type bf:Instance .
+                              FILTER (sameTerm(?instance, <{instance_iri}>)) }}
+                     ORDER BY ?instance
+                     LIMIT {limit}
+                     OFFSET {offset}""" ;
     ] ;
 
     rr:subjectMap [
@@ -210,6 +215,14 @@
                             FILTER(sameTerm(?value, <{item_iri}>) 
                          }}"""
         ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:hasView ;
+        rr:objectMap [
+            rr:parentTriplesMap <#BIBFRAME2MAPv4_WebResource> 
+        ]
+
     ] .
 
 <#SPARQL_JSON_source> a sd:Service ; 

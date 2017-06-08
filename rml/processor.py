@@ -242,6 +242,24 @@ class Processor(object):
         # Post-processing
         self.__deduplicate__()
 
+class CSVProcessor(Processor):
+    """CSV RDF Mapping Processor"""
+
+    def __init__(self, **kwargs):
+        if "fields" in kwargs:
+            self.fields = fields
+        if "rml_rules" in kwargs:
+            rml_rules = kwargs.pop("rml_rules")
+        super(CSVProcessor, self).__init__(rml_rules)
+        
+    def execute(self, triple_map, **kwargs):
+        """Method executes mapping between CSV source and 
+        output RDF
+
+        args:
+            triple_map(SimpleNamespace): Triple Map
+        """
+
 class XMLProcessor(Processor):
     """XML RDF Mapping Processor"""
 

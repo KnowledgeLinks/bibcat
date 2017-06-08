@@ -129,7 +129,8 @@ class IslandoraIngester(OAIPMHIngester):
             IslandoraIngester.MODS_XPATH, 
             NS) is not None:
             self.metadataPrefix = "mods"
-            for rule_name in ["rml-bibcat-base.ttl", "rml-bibcat-mods.ttl"]:
+            for rule_name in ["rml-bibcat-base.ttl", 
+                              "rml-bibcat-mods-to-bf.ttl"]:
                 rules_ttl.append(os.path.join(BIBCAT_BASE,
                     os.path.join("rdfw-definitions", rule_name)))
             self.metadata_ingester = XMLProcessor(
