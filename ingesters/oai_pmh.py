@@ -115,6 +115,18 @@ class OAIPMHIngester(object):
             print(msg)
 
 
+class ContentDMIngester(OAIPMHIngester):
+    """ContentDM Ingester provides an interface to OCLC's ContentDM&copy; 
+    repository"""
+
+    def __init__(self, **kwargs):
+        super(ContentDMIngester, self).__init__(**kwargs) 
+
+    def __process_dc__(self, **kwargs):
+        """Method processes Dublin Core RDF"""
+
+    def harvest(self, **kwargs):
+
 class IslandoraIngester(OAIPMHIngester):
     """Islandora Ingester brings together multiple ingesters to deal with MODS and 
     RELS-EXT Metadata in order to generate BIBFRAME RDF"""
