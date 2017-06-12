@@ -91,5 +91,3 @@
             rml:query """SELECT DISTINCT bf:electronicLocation """ 
         ]
     ] .
-
-    ]

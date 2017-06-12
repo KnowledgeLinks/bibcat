@@ -9,7 +9,6 @@ import uuid
 from types import SimpleNamespace
 
 NS_MGR = SimpleNamespace()
-NS_MGR   
 
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
