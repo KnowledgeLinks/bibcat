@@ -8,8 +8,10 @@ from unittest import mock
 sys.path.append(os.path.abspath("."))
 from bibcat.rml.processor import Processor
 
+TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
+print(TESTS_PATH)
 FIXURES_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), 
+    TESTS_PATH, 
     "fixures")
 
 class TestRDFMappingLanguageProcessor(unittest.TestCase):
@@ -25,6 +27,36 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
             rml_rules=os.path.join(FIXURES_PATH,
                                    "rml-basic.ttl"))
         self.assertTrue(isinstance(processor.rml, rdflib.Graph))
+
+    def test_bibcat_rules_missing_rml_rules_error(self):
+        self.assertRaises(TypeError, Processor, rml_rules=None)
+        self.assertRaises(ValueError, Processor, rml_rules="")
+        self.assertRaises(Exception, Processor, rml_rules=[])
+
+
+    def test_bibcat_rules_blank_graphs_rml_rules_error(self):
+        self.assertRaises(Exception, Processor, rml_rules=rdflib.Graph())
+        self.assertRaises(Exception, 
+            Processor, 
+            rml_rules=rdflib.ConjunctiveGraph())
+        
+
+    def test_bibcat_acceptable_path_rules(self):
+        raw_rml = os.path.join(FIXURES_PATH,
+                               "rml-basic.ttl")
+        self.assertTrue(os.path.exists(raw_rml))
+        self.assertTrue(
+            isinstance(Processor(raw_rml),
+                       Processor))
+                       
+    def test_bibcat_acceptable_list_rules(self):
+        rules = []
+        for name in ["rml-basic.ttl", "rml-basic.ttl"]:
+             rules.append(os.path.join(FIXURES_PATH, name))
+        self.assertTrue(
+            isinstance(Processor(rules),
+                       Processor))
+
 
     def tearDown(self):
         pass 
