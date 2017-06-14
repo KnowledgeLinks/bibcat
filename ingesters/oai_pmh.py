@@ -17,8 +17,6 @@ import urllib.parse
 import uuid
 
 from .ingester import new_graph, NS_MGR, BIBCAT_BASE
-from .dc import DCIngester
-from .mods import MODSIngester
 from .rels_ext import RELSEXTIngester
 from ..rml.processor import XMLProcessor
 
@@ -126,6 +124,17 @@ class ContentDMIngester(OAIPMHIngester):
         """Method processes Dublin Core RDF"""
 
     def harvest(self, **kwargs):
+        """Method harvests either the entire repository contents or selected
+        collections"""
+        start = datetime.datetime.utcnow()
+        msg = "Starting OAI-PMH harvest of PIDS from Islandora at {}".format(
+            start)
+        try:
+            click.echo(msg)
+        except io.UnsupportedOperation:
+            print(msg)
+
+
 
 class IslandoraIngester(OAIPMHIngester):
     """Islandora Ingester brings together multiple ingesters to deal with MODS and 
