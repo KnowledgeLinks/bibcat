@@ -428,20 +428,19 @@ class SPARQLProcessor(Processor):
         super(SPARQLProcessor, self).run(**kwargs)
 
     def execute(self, triple_map, **kwargs):
+        """Execute """
+        subjects = []
         if NS_MGR.ql.JSON in triple_map.logicalSource.reference_formulations:
             output_format = "json"
         else:
             output_format = "xml"
         iterator = str(triple_map.logicalSource.iterator)
-        if iterator in kwargs:
-            sparql = PREFIX + triple_map.logicalSource.query.format(
-                **{iterator: kwargs.get(iterator),
-                   'limit': self.limit,
-                   'offset': self.offset})
-        else:
-            sparql = PREFIX + triple_map.logicalSource.query.format(
-                limit=self.limit,
-                offset=self.offset)
+        if not 'limit' in kwargs:
+            kwargs['limit'] = self.limit
+        if not 'offset' in kwargs:
+            kwargs['offset'] = self.offset
+        sparql = PREFIX + triple_map.logicalSource.query.format(
+            **kwargs)
         result = requests.post(
             self.triplestore_url,
             data={"query": sparql,
@@ -459,9 +458,19 @@ class SPARQLProcessor(Processor):
                                  NS_MGR.rdf.type,
                                  triple_map.subjectMap.class_))
             for pred_obj_map in triple_map.predicateObjectMap:
+                predicate = pred_obj_map.predicate
+                if pred_obj_map.parentTriplesMap is not None:
+                    parent_objects = self.execute(
+                        self.triple_maps[str(pred_obj_map.parentTriplesMap)],
+                        **kwargs)
+                    for parent_obj in parent_objects:
+                        self.output.add((
+                            entity,
+                            predicate,
+                            parent_obj))
+                    continue
                 sparql_query = PREFIX + pred_obj_map.query.format(
                     **{iterator: entity})
-                predicate = pred_obj_map.predicate
                 result = requests.post(
                     self.triplestore_url,
                     data={"query": sparql_query,
@@ -472,6 +481,8 @@ class SPARQLProcessor(Processor):
                     for row in pre_obj_bindings:
                         for object_ in __get_object__(row):
                             self.output.add((entity, predicate, object_))
+            subjects.append(entity)
+        return subjects
 
 
 def __set_prefix__():

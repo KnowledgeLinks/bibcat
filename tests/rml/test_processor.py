@@ -9,7 +9,6 @@ sys.path.append(os.path.abspath("."))
 from bibcat.rml.processor import Processor
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
-print(TESTS_PATH)
 FIXURES_PATH = os.path.join(
     TESTS_PATH, 
     "fixures")
