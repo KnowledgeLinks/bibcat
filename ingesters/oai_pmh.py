@@ -30,15 +30,13 @@ class OAIPMHIngester(object):
     TOKEN_XPATH = "oai_pmh:ListIdentifiers/oai_pmh:resumptionToken"
 
     def __init__(self, **kwargs):
-        self.repository_url = kwargs.get("repository")
-        if self.repository_url is None:
-            raise ValueError("repository_url must have a value")
-        self.oai_pmh_url = urllib.parse.urljoin(self.repository_url, "oai2")
-
+        self.oai_pmh_url = kwargs.get("repository")
+        if self.oai_pmh_url is None:
+            raise ValueError("repository must have a value")
         self.identifiers = dict()
         self.metadataPrefix = "oai_dc"
-        metadata_result = requests.get("{}?verb=ListMetadataFormats".format(
-            self.oai_pmh_url))
+        metadata_url = "{}?verb=ListMetadataFormats".format(self.oai_pmh_url)
+        metadata_result = requests.get(metadata_url)
         metadata_formats = metadata_result.text
         if isinstance(metadata_result.text, str):
             metadata_formats = metadata_result.text.encode()
@@ -58,6 +56,7 @@ class OAIPMHIngester(object):
         raw_initial = initial_result.text
         if isinstance(raw_initial, str):
             raw_initial = raw_initial.encode()
+        print(raw_initial)
         initial_doc = etree.XML(raw_initial)
         resume_token = initial_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
         for r in initial_doc.findall(OAIPMHIngester.IDENT_XPATH, NS):
@@ -127,12 +126,21 @@ class ContentDMIngester(OAIPMHIngester):
         """Method harvests either the entire repository contents or selected
         collections"""
         start = datetime.datetime.utcnow()
-        msg = "Starting OAI-PMH harvest of PIDS from Islandora at {}".format(
+        msg = "Starting OAI-PMH harvest of PIDS from ContentDM at {}".format(
             start)
         try:
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)
+        super(ContentDMIngester, self).harvest(**kwargs)
+        end = datetime.datetime.utcnow()
+        msg = "\nContentDM OAI-PMH harvested at {}, total time {} mins".format(
+            end,
+            (end-start).seconds / 60.0)
+        try:
+            click.echo(msg)
+        except io.UnsupportedOperation:
+            print(msg)       
 
 
 
@@ -142,6 +150,10 @@ class IslandoraIngester(OAIPMHIngester):
     MODS_XPATH = "oai_pmh:ListMetadataFormats/oai_pmh:metadataFormat[oai_pmh:metadataPrefix='mods']"
 
     def __init__(self, **kwargs):
+        if not kwargs['repository'].endswith("oai2"):
+            kwargs['repository'] = urllib.parse.urljoin(
+                kwargs['repository'], 
+                "oai2")
         super(IslandoraIngester, self).__init__(**kwargs)
         self.repo_graph = new_graph()
         self.base_url = kwargs.get('base_url')
