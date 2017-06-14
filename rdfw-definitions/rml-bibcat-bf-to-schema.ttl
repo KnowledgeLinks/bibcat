@@ -89,6 +89,54 @@
         rr:predicate schema:url ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value 
-                         WHERE {{ <{item}> bf:electronicLocation ?value . }}""" 
+                         WHERE {{ <{item}> bf:electronicLocator ?value . }}""" 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:provider ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{ <{item}> bf:heldBy ?value . }}"""
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:identifier ;
+        rr:objectMap [
+            rr:parentTriplesMap <#BIBFRAME_ITEM2ShelfMarkIdentifier> 
         ]
     ] .
+
+<#BIBFRAME_ITEM2ShelfMarkIdentifier> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?mark
+                  WHERE {{ <{instance}> bf:hasItem ?item .
+                           ?item bf:shelfmark ?mark  . }}""";
+        rml:iterator "mark"
+    ] ; 
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class schema:PropertyValue 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:propertyID ;
+        rr:objectMap [
+            rr:constant "Call Number"@en ;
+        ] 
+    ] ;
+
+    rr:predicateObject [
+        rr:predicate schema:value ;
+        rr:objectMap [
+            rr:query """SELECT ?value 
+                        WHERE {{ {mark} rdfs:label ?value . }}"""
+        ]
+    ] .
+
+
