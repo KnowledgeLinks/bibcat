@@ -189,6 +189,9 @@ class Processor(object):
         subject_map.deduplicate = self.rml.value(
             subject=subject_map_bnode,
             predicate=NS_MGR.kds.deduplicate)
+        subject_map.reference = self.rml.value(
+            subject=subject_map_bnode,
+            predicate=NS_MGR.rr.reference)
         return subject_map
 
     def __predicate_object_map__(self, map_iri):
@@ -262,6 +265,10 @@ class Processor(object):
                 return rdflib.URIRef(raw_value)
             return rdflib.Literal(raw_value,
                                   datatype=term_map.datatype)
+        if term_map.reference is not None:
+            # Each child will have different mechanisms for referencing the
+            # source based
+            return self.__generate_reference__(term_map, **kwargs)
 
     def execute(self, triple_map, **kwargs):
         """Placeholder method should be overridden by child classes"""
@@ -272,6 +279,8 @@ class Processor(object):
         method"""
         if not 'timestamp' in kwargs:
             kwargs['timestamp'] = datetime.datetime.utcnow().isoformat()
+
+        print("Parents are {}".format(self.parents))
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs)
@@ -309,6 +318,24 @@ class XMLProcessor(Processor):
             self.xml_ns = dict()
         self.constants.update(kwargs)
 
+    def __generate_reference__(self, triple_map, **kwargs):
+        """Internal method takes a triple_map and returns the result of 
+        applying to XPath to the current DOM context
+
+        Args:
+        -----
+            triple_map: SimpleNamespace 
+            element: etree.Element
+        """
+        element = kwargs.get("element")
+        found_elements = element.findall(triple_map.reference, self.xml_ns)
+        for elem in found_elements:
+            #! Quick and dirty test for valid URI
+            if not elem.text.startswith("http"):
+                continue
+            return rdflib.URIRef(elem.text)
+            
+
     def execute(self, triple_map, **kwargs):
         """Method executes mapping between source
 
@@ -323,6 +350,7 @@ class XMLProcessor(Processor):
                 str(triple_map.logicalSource.iterator),
                 self.xml_ns):
             subject = self.generate_term(term_map=triple_map.subjectMap,
+                                         element=element,
                                          **kwargs)
             start = len(self.output)
             for row in triple_map.predicateObjectMap:
@@ -374,7 +402,7 @@ class XMLProcessor(Processor):
                     self.output.add((subject,
                                      NS_MGR.rdf.type,
                                      triple_map.subjectMap.class_))
-                subjects.append(subject)
+            subjects.append(subject)
         return subjects
 
 

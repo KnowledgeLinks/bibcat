@@ -20,7 +20,9 @@ from .ingester import new_graph, NS_MGR, BIBCAT_BASE
 from .rels_ext import RELSEXTIngester
 from ..rml.processor import XMLProcessor
 
-NS = {"oai_pmh": "http://www.openarchives.org/OAI/2.0/"}
+NS = {"oai_pmh": "http://www.openarchives.org/OAI/2.0/",
+      'dc': 'http://purl.org/dc/elements/1.1/', 
+      'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/'}
 
 NS_MGR.bind('fedora', 'info:fedora/fedora-system:def/relations-external#')
 NS_MGR.bind('fedora-model', 'info:fedora/fedora-system:def/model#')
@@ -122,11 +124,17 @@ class ContentDMIngester(OAIPMHIngester):
         rml_rules = kwargs.get("rml_rules", [])
         if not isinstance(rml_rules, list):
             rml_rules = [rml_rules,]
-        # Add 
-        rml_rules.append(os.path.join(BIBCAT_BASE,
-            os.path.join("rdfw-definitions", 
-                         "rml-bibcat-oai-pmh-dc-xml-to-bf.ttl")))
-        self.processor = XMLProcessor(rml_rules=rml_rules)
+        # Add rml base and OAI-PMH DC rules
+        for rulefile in ["rml-bibcat-oai-pmh-dc-xml-to-bf.ttl",
+                         "rml-bibcat-base.ttl"]:
+            rml_rules.append(os.path.join(BIBCAT_BASE,
+                os.path.join("rdfw-definitions", 
+                             rulefile)))
+        self.processor = XMLProcessor(
+            institution_iri=kwargs.get("institution_iri"),
+            instance_iri = kwargs.get('instance_iri'),
+            rml_rules=rml_rules,
+            namespaces=NS)
 
     def __process_dc__(self, **kwargs):
         """Method processes Dublin Core RDF"""
@@ -150,7 +158,11 @@ class ContentDMIngester(OAIPMHIngester):
                 urllib.parse.urlencode(params)))
             initial_doc = etree.XML(initial_result.text.encode())
             token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
-            self.processor.run(initial_doc)
+            records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
+            for rec in records:
+                self.processor.run(rec)
+                print(self.processor.output.serialize(format='turtle').decode())
+                break
 
             
             

@@ -21,7 +21,9 @@ bc:OAIPMH_DCtoBIBFRAME_Item a rr:TriplesMap ;
     rml:logicalSource [
         rml:source "{record}" ;   
         rml:referenceFormulation ql:XPath ;
-        rml:iterator "oai_pmh:ListRecords/oai_pmh:record/oai_pmh:metadata/oai_dc:dc"
+       # rml:iterator "oai_pmh:ListRecords/oai_pmh:record/oai_pmh:metadata/oai_dc:dc"
+        rml:iterator "oai_pmh:metadata/oai_dc:dc"
+
     ] ;
 
     rr:subjectMap [
@@ -46,6 +48,7 @@ bc:OAIPMH_DCtoBIBFRAME_Item a rr:TriplesMap ;
         ]
     ]  ;
 
+
     rr:predicateObjectMap [
         rr:predicate bf:heldBy ;
         rr:objectMap [
@@ -54,17 +57,37 @@ bc:OAIPMH_DCtoBIBFRAME_Item a rr:TriplesMap ;
         ]
     ] .
 
-
-bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TripleMap ;
+bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{record}" ;
-        rml:iterator "." 
+        rml:iterator "oai_pmh:metadata/oai_dc:dc" 
     ] ;
    
     rr:subjectMap [
         rr:template "{instance_iri}" ;
         rr:class bf:Instance 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rr:reference "dc:title"
+        ] 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:title ;
+        rr:objectMap [
+            rr:parentTriplesMap <#OAIPMH_DCtoBIBFRAME_title> 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:instanceOf ;
+        rr:objectMap [
+            rr:parentTripleMap bc:OAIPMH_DCtoBIBFRAME_work
+        ]
     ] ;
 
     rr:predicateObjectMap [
@@ -74,12 +97,18 @@ bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TripleMap ;
         ]
     ] .
 
-bc:OAIPMH_DCtoBIBFRAME_subject a rr:TripleMap ;
+
+bc:OAIPMH_DCtoBIBFRAME_subject a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{record}" ;
-        rml:iterator "dc:subject"
+        rml:iterator "oai_pmh:metadata/oai_dc:dc/dc:subject"
     ] ; 
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Topic
+    ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdf:value ;
@@ -87,3 +116,68 @@ bc:OAIPMH_DCtoBIBFRAME_subject a rr:TripleMap ;
             rr:reference "."
         ]
     ] .
+
+<#OAIPMH_DCtoBIBFRAME_title> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{record}" ;
+        rml:iterator "oai_pmh:metadata/oai_dc:dc/dc:title"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Title ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "."
+        ]
+    ] .
+
+bc:OAIPMH_DCtoBIBFRAME_work a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{record}" ;
+        rml:iterator "oai_pmh:metadata/oai_dc:dc"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Work 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:temporalCoverage ;
+        rr:objectMap [
+            rr:reference "dc:date"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:summary ;
+        rr:objectMap [
+            rr:parentTriplesMap <#OAIPMH_DCtoBIBFRAME_Summary>
+        ]
+    ] .
+
+<#OAIPMH_DCtoBIBFRAME_Summary> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{record}" ;
+        rml:iterator "oai_pmh:metadata/oai_dc:dc/dc:description"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Summary 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "."
+        ]
+    ] .
+
