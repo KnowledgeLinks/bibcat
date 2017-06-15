@@ -48,6 +48,7 @@ class OAIPMHIngester(object):
         initial_url = "{0}?verb=ListIdentifiers&metadataPrefix={1}".format(
             self.oai_pmh_url,
             self.metadataPrefix)
+        print(initial_url)
         initial_result = requests.get(initial_url)
         if initial_result.status_code > 399:
             raise ValueError("Cannot Harvest {}, result {}".format(
@@ -56,7 +57,6 @@ class OAIPMHIngester(object):
         raw_initial = initial_result.text
         if isinstance(raw_initial, str):
             raw_initial = raw_initial.encode()
-        print(raw_initial)
         initial_doc = etree.XML(raw_initial)
         resume_token = initial_doc.find(OAIPMHIngester.TOKEN_XPATH, NS)
         for r in initial_doc.findall(OAIPMHIngester.IDENT_XPATH, NS):
@@ -117,7 +117,16 @@ class ContentDMIngester(OAIPMHIngester):
     repository"""
 
     def __init__(self, **kwargs):
-        super(ContentDMIngester, self).__init__(**kwargs) 
+        super(ContentDMIngester, self).__init__(**kwargs)
+        self.triplestore_url = kwargs.get("triplestore_url")
+        rml_rules = kwargs.get("rml_rules", [])
+        if not isinstance(rml_rules, list):
+            rml_rules = [rml_rules,]
+        # Add 
+        rml_rules.append(os.path.join(BIBCAT_BASE,
+            os.path.join("rdfw-definitions", 
+                         "rml-bibcat-oai-pmh-dc-xml-to-bf.ttl")))
+        self.processor = XMLProcessor(rml_rules=rml_rules)
 
     def __process_dc__(self, **kwargs):
         """Method processes Dublin Core RDF"""
@@ -132,7 +141,21 @@ class ContentDMIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)
-        super(ContentDMIngester, self).harvest(**kwargs)
+        if "setSpec" in kwargs:
+            params = {"verb": "ListRecords",
+                      "metadataPrefix": self.metadataPrefix,
+                      "set": kwargs.get("setSpec")}
+            initial_result = requests.get("{0}?{1}".format(
+                self.oai_pmh_url,
+                urllib.parse.urlencode(params)))
+            initial_doc = etree.XML(initial_result.text.encode())
+            token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
+            self.processor.run(initial_doc)
+
+            
+            
+        else:
+            super(ContentDMIngester, self).harvest(**kwargs)
         end = datetime.datetime.utcnow()
         msg = "\nContentDM OAI-PMH harvested at {}, total time {} mins".format(
             end,
@@ -141,7 +164,17 @@ class ContentDMIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)       
-
+        for i,row in enumerate(self.identifiers.keys()):
+            if not i%10 and i > 0:
+                try:
+                    click.echo(".", nl=False)
+                except io.UnsupportedOperation:
+                    print(".", end="")
+            if not i%100:
+                try:
+                    click.echo(i, nl=False)
+                except io.UnsupportedOperation:
+                    print(i, end="")
 
 
 class IslandoraIngester(OAIPMHIngester):
@@ -288,3 +321,10 @@ class IslandoraIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)
+
+class LunaIngeseter(OAIPMHIngester):
+    """Harvests Luna objects from a OAI-PMH feed"""
+    
+    def __init__(self, **kwargs):
+        super(LunaIngeseter, self).__init__(**kwargs)
+

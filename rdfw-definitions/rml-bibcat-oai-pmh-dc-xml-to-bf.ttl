@@ -16,17 +16,19 @@
 @prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<#OAIPMH_DCtoBIBFRAME_Item> a rr:TriplesMap ;
+bc:OAIPMH_DCtoBIBFRAME_Item a rr:TriplesMap ;
     
     rml:logicalSource [
         rml:source "{record}" ;   
         rml:referenceFormulation ql:XPath ;
-        rml:iterator "oai_pmh:ListRecords/oai_pmh:record"
+        rml:iterator "oai_pmh:ListRecords/oai_pmh:record/oai_pmh:metadata/oai_dc:dc"
     ] ;
 
     rr:subjectMap [
-        rr:template "{item_iri}"
-        rr:class bf:Item  
+        rr:reference "dc:identifier";
+        rr:dataType xsd:anyURI ;
+        rr:class bf:Item
+  
     ] ;
 
     
@@ -40,7 +42,7 @@
     rr:predicateObjectMap [
         rr:predicate bf:itemOf ;
         rr:objectMap [
-             rr:parentTriplesMap <#OAIPMH_DCtoBIBFRAME_Instance>
+             rr:parentTriplesMap bc:OAIPMH_DCtoBIBFRAME_Instance
         ]
     ]  ;
 
@@ -53,7 +55,7 @@
     ] .
 
 
-<#OAIPMH_DCtoBIBFRAME_Instance> a rr:TripleMap ;
+bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TripleMap ;
 
     rml:logicalSource [
         rml:source "{record}" ;
@@ -68,9 +70,9 @@
     rr:predicateObjectMap [
         rr:predicate bf:subject ;
         rr:objectMap [
-            rr:parentTriplesMap bf:OAIPMH_DCtoBIBFRAME_subject
+            rr:parentTriplesMap bc:OAIPMH_DCtoBIBFRAME_subject
         ]
-    ] ;
+    ] .
 
 bc:OAIPMH_DCtoBIBFRAME_subject a rr:TripleMap ;
 
@@ -82,6 +84,6 @@ bc:OAIPMH_DCtoBIBFRAME_subject a rr:TripleMap ;
     rr:predicateObjectMap [
         rr:predicate rdf:value ;
         rr:objectMap [
-            rr:reference 
+            rr:reference "."
         ]
     ] .
