@@ -1,0 +1,232 @@
+@prefix adms:   <http://www.w3.org/ns/adms#>.
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix locn:   <http://www.w3.org/ns/locn#>.
+@prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
+@prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr:     <http://www.w3.org/ns/r2rml#>.
+@prefix schema: <http://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<#LOCBFItem_to_BFItemProduction> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?item
+                     WHERE {{ ?item rdf:type bf:Item . }}
+                     ORDER BY ?item
+                     LIMIT {limit}
+                     OFFSET {offset}""" ;
+        rml:iterator "item"  
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{item}" ;
+        rr:class bf:Item  
+    ] ;
+
+
+    rr:predicateObjectMap [
+        rr:predicate bf:itemOf ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{ <{item}> bf:itemOf ?value . }}"""
+        ] 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:heldBy ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{ <{item}> bf:heldBy ?value . }}"""
+        ] 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:seeAlso ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{ <{item}> rdfs:seeAlso ?value . }}"""
+        ] 
+    ] ;
+
+     rr:predicateObjectMap [
+        rr:predicate bf:shelfMark ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCBFItem_to_BFShelfMarkLLC>
+        ] 
+    ] .
+
+
+
+<#LOCBFInstance_to_BFInstanceProduction> a rr:TriplesMap ;
+    
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?instance
+                     WHERE {{ ?instance rdf:type bf:Instance  . }}
+                     LIMIT {limit}
+                     OFFSET {offset}""" ;
+        rml:iterator "instance"
+    ] ;
+ 
+    rr:subjectMap [
+        rr:template "{instance}" ;
+        rr:class bf:Instance  
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label 
+                         WHERE {{ <{instance}> rdfs:label ?label . }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:instanceOf ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCInstance_instanceOf_BFWork>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:title ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCBFInstance_to_BFTitle> 
+        ]
+    ] .
+
+<#LOCBFItem_to_BFShelfMarkLLC> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?shelf_mark
+                     WHERE {{ <{item}> bf:shelfMark ?shelf_mark }}""";
+        rml:iterator "shelf_mark"
+       
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:ShelfMarkLLC ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label
+                         WHERE {{ <{item}> bf:shelfMark ?shelf_mark .
+                                  ?shelf_mark rdfs:label ?label .
+                                  }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:source ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{ <{item}> bf:shelfMark ?shelf_mark .
+                                  ?shelf_mark bf:source ?value .
+                                  }}"""
+        ]
+    ] .
+
+<#LOCInstance_instanceOf_BFWork> a rr:TriplesMap ;
+    
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?work
+                     WHERE {{ <{instance}> bf:instanceOf ?work }}""";
+        rml:iterator "work"
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{work}" ;
+        rr:class bf:Work ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCWork_subject_BFTopic>
+        ]
+    ] .
+
+<#LOCBFInstance_to_BFTitle> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?title
+                     WHERE {{ <{instance}> bf:title ?title }}""";
+        rml:iterator "title"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Title ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label
+                         WHERE {{ _:{title} rdfs:label ?label .
+                                  _:{title} rdf:type bf:Title .}}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:mainTitle ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{  _:{title} rdf:type bf:Title .
+                                  _:{title} bf:mainTitle ?value . }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subtitle ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{ _:{title} rdf:type bf:Title .
+                                  _:{title} bf:subtitle ?value . }}"""
+        ]
+    ] .
+
+<#LOCWork_subject_BFTopic> a rr:TriplesMap ;
+    
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?subject
+                     WHERE {{ <{work}> bf:subject ?subject }}""";
+        rml:iterator "subject"
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{subject}" ;
+        rr:class bf:Topic 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label 
+                         WHERE {{ <{subject}> rdfs:label ?label . }}"""
+        ]
+    ] .
+
+

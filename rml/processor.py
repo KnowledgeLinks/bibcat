@@ -280,7 +280,6 @@ class Processor(object):
         if not 'timestamp' in kwargs:
             kwargs['timestamp'] = datetime.datetime.utcnow().isoformat()
 
-        print("Parents are {}".format(self.parents))
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs)
@@ -424,9 +423,11 @@ def __get_object__(binding):
          binding: binding row
     """
     for row in binding.values():
-        if row.get('type').startswith('uri'):
+        if isinstance(row, rdflib.URIRef) or isinstance(row, rdflib.Literal):
+            yield row
+        elif row.get('type').startswith('uri'):
             yield rdflib.URIRef(row.get('value'))
-        if row.get('type').startswith('literal'):
+        elif row.get('type').startswith('literal'):
             yield rdflib.Literal(row.get('value'))
 
 
@@ -438,10 +439,11 @@ class SPARQLProcessor(Processor):
             rml_rules = kwargs.pop("rml_rules")
         super(SPARQLProcessor, self).__init__(rml_rules)
         __set_prefix__()
-        # Defaults to Blazegraph, don't really like.
-        self.triplestore_url = kwargs.get(
-            "triplestore_url",
-            "http://localhost:9999/blazegraph/sparql")
+        self.triplestore_url = kwargs.get("triplestore_url")
+        if self.triplestore_url is None:
+            # Tries using rdflib Graph as triplestore
+            self.triplestore = kwargs.get("triplestore", self.__graph__())
+
         # Sets defaults
         self.limit, self.offset = 5000, 0
 
@@ -469,18 +471,27 @@ class SPARQLProcessor(Processor):
             kwargs['offset'] = self.offset
         sparql = PREFIX + triple_map.logicalSource.query.format(
             **kwargs)
-        result = requests.post(
-            self.triplestore_url,
-            data={"query": sparql,
-                  "format": output_format})
-        if output_format == "json":
-            bindings = result.json().get("results").get("bindings")
-        elif output_format == "xml":
-            xml_doc = etree.XML(result.text)
-            bindings = xml_doc.findall("results/bindings")
+        if self.triplestore_url is None:
+            result = self.triplestore.query(sparql)
+            bindings = result.bindings
+        else:
+            result = requests.post(
+                self.triplestore_url,
+                data={"query": sparql,
+                    "format": output_format})
+            if output_format == "json":
+                bindings = result.json().get("results").get("bindings")
+            elif output_format == "xml":
+                xml_doc = etree.XML(result.text)
+                bindings = xml_doc.findall("results/bindings")
         iterator = str(triple_map.logicalSource.iterator)
         for binding in bindings:
-            entity = rdflib.URIRef(binding.get(iterator).get('value'))
+            entity_raw = binding.get(iterator)
+            if isinstance(entity_raw, rdflib.URIRef) or \
+               isinstance(entity_raw, rdflib.BNode):
+                entity = entity_raw
+            else:
+                entity = rdflib.URIRef(entity_raw.get('value'))
             if triple_map.subjectMap.class_ is not None:
                 self.output.add((entity,
                                  NS_MGR.rdf.type,
@@ -488,6 +499,7 @@ class SPARQLProcessor(Processor):
             for pred_obj_map in triple_map.predicateObjectMap:
                 predicate = pred_obj_map.predicate
                 if pred_obj_map.parentTriplesMap is not None:
+                    kwargs[iterator] = entity
                     parent_objects = self.execute(
                         self.triple_maps[str(pred_obj_map.parentTriplesMap)],
                         **kwargs)
@@ -497,18 +509,23 @@ class SPARQLProcessor(Processor):
                             predicate,
                             parent_obj))
                     continue
+                kwargs[iterator] = entity
                 sparql_query = PREFIX + pred_obj_map.query.format(
-                    **{iterator: entity})
-                result = requests.post(
-                    self.triplestore_url,
-                    data={"query": sparql_query,
-                          "format": output_format})
-                if output_format.startswith("json"):
-                    pre_obj_bindings = result.json().get(
-                        'results').get('bindings')
-                    for row in pre_obj_bindings:
-                        for object_ in __get_object__(row):
-                            self.output.add((entity, predicate, object_))
+                    **kwargs)
+                if self.triplestore_url is None:
+                    result = self.triplestore.query(sparql_query)
+                    pre_obj_bindings = result.bindings
+                else:
+                    result = requests.post(
+                        self.triplestore_url,
+                        data={"query": sparql_query,
+                              "format": output_format})
+                    if output_format.startswith("json"):
+                        pre_obj_bindings = result.json().get(
+                            'results').get('bindings')
+                for row in pre_obj_bindings:
+                    for object_ in __get_object__(row):
+                        self.output.add((entity, predicate, object_))
             subjects.append(entity)
         return subjects
 
