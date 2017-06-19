@@ -5,6 +5,7 @@ import rdflib
 import sys
 import unittest
 from unittest import mock
+from types import SimpleNamespace
 sys.path.append(os.path.abspath("."))
 from bibcat.rml.processor import Processor
 
@@ -59,6 +60,57 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
 
     def tearDown(self):
         pass 
+
+class TestRDFMappingLanguageProcessorGenerateTerms(unittest.TestCase):
+
+    def setUp(self):
+        self.processor = Processor(
+            rml_rules=os.path.join(FIXURES_PATH,
+                                   "rml-basic.ttl"))
+        self.rr = rdflib.Namespace("http://www.w3.org/ns/r2rml#")
+        self.test_map = SimpleNamespace()
+        self.test_map.reference = None
+
+
+    def test_default(self):
+        self.assertRaises(KeyError, self.processor.generate_term)
+
+    def test_termType_bnode(self):
+        self.test_map.termType = self.rr.BlankNode
+        self.assertIsInstance(
+            self.processor.generate_term(term_map=self.test_map), 
+            rdflib.BNode)
+
+    def test_default_datatype(self):
+        self.test_map.template = "{test_default}"
+        term = self.processor.generate_term(term_map=self.test_map, test_default=1)
+        self.assertIsInstance(term, rdflib.URIRef)
+
+    def test_xsd_date_datatype(self):
+        self.test_map.datatype = rdflib.XSD.date
+        self.test_map.template = "{test_literal}"
+        term = self.processor.generate_term(term_map=self.test_map, test_literal="2017")
+        self.assertEqual(term.datatype,
+            rdflib.XSD.date)
+
+    def test_xsd_datetime_datatype(self):
+        self.test_map.datatype = rdflib.XSD.dateTime
+        self.test_map.template = "{test_literal}"
+        term = self.processor.generate_term(term_map=self.test_map, test_literal="2017-06-19")
+        self.assertEqual(term.datatype,
+            rdflib.XSD.dateTime)
+
+    def test_xsd_string_datatype(self):
+        self.test_map.datatype = rdflib.XSD.string
+        self.test_map.template = "{test_literal}"
+        term = self.processor.generate_term(term_map=self.test_map, test_literal="A fine string")
+        self.assertEqual(term.datatype,
+            rdflib.XSD.string)
+       
+       
+
+    def tearDown(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main() 

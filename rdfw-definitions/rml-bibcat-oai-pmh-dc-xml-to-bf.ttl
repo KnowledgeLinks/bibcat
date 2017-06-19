@@ -46,16 +46,7 @@ bc:OAIPMH_DCtoBIBFRAME_Item a rr:TriplesMap ;
         rr:objectMap [
              rr:parentTriplesMap bc:OAIPMH_DCtoBIBFRAME_Instance
         ]
-    ]  ;
-
-
-    rr:predicateObjectMap [
-        rr:predicate bf:heldBy ;
-        rr:objectMap [
-            rr:template "{institution_iri}";
-            rr:datatype xsd:anyURI
-        ]
-    ] .
+    ]  .
 
 bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TriplesMap ;
 
@@ -86,7 +77,7 @@ bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TriplesMap ;
     rr:predicateObjectMap [
         rr:predicate bf:instanceOf ;
         rr:objectMap [
-            rr:parentTripleMap bc:OAIPMH_DCtoBIBFRAME_work
+            rr:parentTriplesMap <#OAIPMH_DCtoBIBFRAME_work> 
         ]
     ] ;
 
@@ -112,10 +103,11 @@ bc:OAIPMH_DCtoBIBFRAME_subject a rr:TriplesMap ;
 
     rr:predicateObjectMap [
         rr:predicate rdf:value ;
-        rr:objectMap [
-            rr:reference "."
-        ]
+        rr:objectMap bc:OAIPMH_DCtoBIBFRAME_subject_predObj 
     ] .
+
+bc:OAIPMH_DCtoBIBFRAME_subject_predObj rr:reference "." .
+    
 
 <#OAIPMH_DCtoBIBFRAME_title> a rr:TriplesMap ;
 
@@ -136,7 +128,7 @@ bc:OAIPMH_DCtoBIBFRAME_subject a rr:TriplesMap ;
         ]
     ] .
 
-bc:OAIPMH_DCtoBIBFRAME_work a rr:TriplesMap ;
+<#OAIPMH_DCtoBIBFRAME_work> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{record}" ;

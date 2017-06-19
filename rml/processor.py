@@ -133,8 +133,57 @@ class Processor(object):
         graph = rdflib.Graph(namespace_manager=self.rml.namespace_manager)
         return graph
 
+    def __generate_delimited_objects__(self, **kwargs):
+        """Internal methods takes a subject, predicate, element, and a list 
+        of delimiters that are applied to element's text and a triples
+        for each value is created and associated with the subject.
+
+        Keyword Args:
+
+        -------------
+            triple_map: SimpleNamespace            
+            predicate: URIRef
+            element: XML Element
+            datatype: XSD Datatype, optional
+            delimiters: List of delimiters to apply to string
+        """
+        triple_map = kwargs.get("triple_map")
+        subject = kwargs.get('subject')
+        # Subject is blank-node, try to retrieve subject IRI
+        predicate = kwargs.get('predicate')
+        element = kwargs.get('element')
+        datatype = kwargs.get('datatype')
+        delimiters = kwargs.get('delimiters')
+        subjects = []
+        for delimiter in delimiters:
+            values = element.text.split(delimiter)
+            for row in values:
+                if datatype is not None:
+                    obj_ = rdflib.Literal(row.strip(), datatype=datetype)
+                else:
+                    obj_ = rdflib.Literal(row.strip())
+                if isinstance(subject, rdflib.BNode):
+                    new_subject = rdflib.BNode()
+                    class_ = triple_map.subjectMap.class_
+                    self.output.add((new_subject, NS_MGR.rdf.type, class_))
+                    for parent_subject, parent_predicate in self.output.subject_predicates(
+                        object=subject):
+           #self.__replace_iri__(subject, new_subject)
+                        self.output.add((parent_subject, parent_predicate, new_subject))
+                else:
+                    new_subject = subject
+                subjects.append(new_subject)
+                self.output.add((new_subject, predicate, obj_))
+        return subjects
 
     def __logical_source__(self, map_iri):
+        """Creates a SimpleNamespace for the TripelMap's logicalSource
+
+        Args:
+
+        -----
+            map_iri: URIRef
+        """
         logical_source = SimpleNamespace()
         logical_src_bnode = self.rml.value(
             subject=map_iri,
@@ -242,6 +291,11 @@ class Processor(object):
             pred_obj_map.query = self.rml.value(
                 subject=obj_map_bnode,
                 predicate=NS_MGR.rml.query)
+            # BIBCAT Extensions
+            pred_obj_map.delimiters = []
+            for obj in self.rml.objects(subject=obj_map_bnode,
+                                        predicate=NS_MGR.kds.delimiter): 
+                pred_obj_map.delimiters.append(obj)
             pred_obj_maps.append(pred_obj_map)
         return pred_obj_maps
 
@@ -333,7 +387,7 @@ class XMLProcessor(Processor):
             if not elem.text.startswith("http"):
                 continue
             return rdflib.URIRef(elem.text)
-            
+   
 
     def execute(self, triple_map, **kwargs):
         """Method executes mapping between source
@@ -381,17 +435,39 @@ class XMLProcessor(Processor):
 
                         if hasattr(row, 'datatype') and \
                            row.datatype is not None:
-                            if row.datatype == NS_MGR.xsd.anyURI:
-                                ref_obj = rdflib.URIRef(found_elem.text)
+                            if len(row.delimiters) > 0:
+                                subjects.extend(self.__generate_delimited_objects__(
+                                    triple_map=triple_map,
+                                    subject=subject,
+                                    predicate=predicate,
+                                    element=found_elem,
+                                    delimiters=row.delimiters,
+                                    datatype=row.datatype))
+ 
+                            elif row.datatype == NS_MGR.xsd.anyURI:
+                                self.output.add(
+                                    (subject,
+                                     predicate,
+                                     rdflib.URIRef(found_elem.text)))
                             else:
-                                ref_obj = rdflib.Literal(
-                                    found_elem.text,
-                                    datatype=row.datatype)
+                                 self.output.add(
+                                      (subject,
+                                       predicate,
+                                         rdflib.Literal(
+                                         found_elem.text,
+                                         datatype=row.datatype)))
                         else:
-                            ref_obj = rdflib.Literal(found_elem.text)
-                        self.output.add((subject,
-                                         predicate,
-                                         ref_obj))
+                            if len(row.delimiters) > 0 :
+                                subjects.extend(self.__generate_delimited_objects__(
+                                    triple_map=triple_map,
+                                    subject=subject,
+                                    predicate=predicate,
+                                    element=found_elem,
+                                    delimiters=row.delimiters))
+                            else:
+                                self.output.add((subject,
+                                    predicate,
+                                    rdflib.Literal(found_elem.text)))
                 elif row.constant is not None:
                     self.output.add((subject,
                                      predicate,
