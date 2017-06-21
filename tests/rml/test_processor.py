@@ -7,7 +7,7 @@ import unittest
 from unittest import mock
 from types import SimpleNamespace
 sys.path.append(os.path.abspath("."))
-from bibcat.rml.processor import Processor
+from bibcat.rml.processor import Processor, __get_object__
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
 FIXURES_PATH = os.path.join(
@@ -133,12 +133,29 @@ class TestRDFMappingLanguageProcessorGenerateTerms(unittest.TestCase):
             self.processor.generate_term,
             term_map=self.test_map,
             test_not_literal="1234")
-    
-         
-       
 
     def tearDown(self):
         pass
 
+
+class TestGetObjectInternalFunction(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_default_error(self):
+        # Binding Required
+        self.assertRaises(TypeError, __get_object__) 
+
+    def test_None(self):
+        self.assertEqual(__get_object__(None), None)
+
+    def test_simple_binding(self):
+        binding = {"value": "1234"}
+        self.assertEqual(__get_object__(binding),
+            rdflib.Literal(binding.get('value')))
+
+    def tearDown(self):
+        pass
 if __name__ == '__main__':
     unittest.main() 

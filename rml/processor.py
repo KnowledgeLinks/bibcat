@@ -3,6 +3,7 @@
 __author__ = "Jeremy Nelson"
 
 # Standard Python Modules
+import collections
 import datetime
 import os
 from types import SimpleNamespace
@@ -498,14 +499,19 @@ def __get_object__(binding):
      Args:
          binding: binding row
     """
-    for row in binding.values():
-        if isinstance(row, rdflib.URIRef) or isinstance(row, rdflib.Literal):
-            yield row
-        elif row.get('type').startswith('uri'):
-            yield rdflib.URIRef(row.get('value'))
-        elif row.get('type').startswith('literal'):
-            yield rdflib.Literal(row.get('value'))
-
+    if isinstance(binding, rdflib.term.Node):
+        return binding
+    elif isinstance(binding, collections.Iterable):
+        for row in binding.values():
+            if isinstance(row, rdflib.URIRef) or isinstance(row, rdflib.Literal):
+                return row
+            elif isinstance(row, str):
+                return rdflib.Literal(row)
+            elif row.get('type').startswith('uri'):
+                return rdflib.URIRef(row.get('value'))
+            elif row.get('type').startswith('literal'):
+                return rdflib.Literal(row.get('value'))
+    
 
 class SPARQLProcessor(Processor):
     """SPARQLProcessor provides a RML Processor for external SPARQL endpoints"""
@@ -586,6 +592,13 @@ class SPARQLProcessor(Processor):
                             parent_obj))
                     continue
                 kwargs[iterator] = entity
+                if pred_obj_map.reference is not None:
+                    ref_key = str(pred_obj_map.reference)
+                    if ref_key in binding:
+                        object_ = __get_object__(
+                            binding[ref_key])
+                        self.output.add((entity, predicate, object_))
+                    continue
                 sparql_query = PREFIX + pred_obj_map.query.format(
                     **kwargs)
                 if self.triplestore_url is None:
@@ -600,8 +613,8 @@ class SPARQLProcessor(Processor):
                         pre_obj_bindings = result.json().get(
                             'results').get('bindings')
                 for row in pre_obj_bindings:
-                    for object_ in __get_object__(row):
-                        self.output.add((entity, predicate, object_))
+                    object_ = __get_object__(row)
+                    self.output.add((entity, predicate, object_))
             subjects.append(entity)
         return subjects
 

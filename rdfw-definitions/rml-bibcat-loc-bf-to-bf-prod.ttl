@@ -1,5 +1,6 @@
 @prefix adms:   <http://www.w3.org/ns/adms#>.
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix locn:   <http://www.w3.org/ns/locn#>.
@@ -14,6 +15,12 @@
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+
+bc:RDFSLabel  rr:predicate rdfs:label ;
+   rr:objectMap [
+       rr:reference "label"
+   ] .
 
 <#LOCBFItem_to_BFItemProduction> a rr:TriplesMap ;
 
@@ -100,6 +107,54 @@
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate bf:identifiedBy ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCInstance_identifiedBy_ISBN>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:carrier ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{
+                            <{instance}> bf:carrier ?value .
+                            FILTER(isiri(?value))
+                        }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:issuance ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{
+                            <{instance}> bf:issuance ?value .
+                            FILTER(isiri(?value))
+                        }}"""
+        ]
+    ] ;
+
+
+    rr:predicateObjectMap [
+        rr:predicate bf:media ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{
+                            <{instance}> bf:media ?media .
+                            FILTER(isiri(?value))
+                        }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:note ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCInstance_BFNotes>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
             rr:parentTriplesMap <#LOCBFInstance_to_BFTitle> 
@@ -158,19 +213,107 @@
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate bf:contribution ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCWork_contribution>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:summary ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCWork_summary>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
         rr:predicate bf:subject ;
         rr:objectMap [
             rr:parentTriplesMap <#LOCWork_subject_BFTopic>
         ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCWork_subject_BFAgent>
+        ]
     ] .
+
+
+<#LOCInstance_identifiedBy_ISBN> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?isbn ?value
+                  WHERE {{ <{instance}> bf:identifiedBy ?isbn .
+                           ?isbn rdf:type bf:Isbn ;
+                                 rdf:value ?value . }}""" ;
+        rml:iterator "isbn"
+
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Isbn 
+        
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "value"
+        ]
+    ] .
+
+<#LOCInstance_BFNotes> a rr:TriplesMap ;
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?note ?label ?type_of
+                     WHERE {{ 
+                            <{instance}> bf:note ?note .
+                            ?note rdf:type bf:Note ;
+                                  rdfs:label ?label .
+                            OPTIONAL {{ ?note bf:noteType ?type_of }}
+                    }}""";
+        rml:iterator "note"
+    ] ;
+
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Note
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rr:reference "label"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:noteType ;
+        rr:objectMap [
+            rr:reference "type_of"
+        ]
+    ] .
+
+
 
 <#LOCBFInstance_to_BFTitle> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?title
-                     WHERE {{ <{instance}> bf:title ?title }}""";
+        rml:query """SELECT DISTINCT ?title ?label ?main ?subtitle
+                     WHERE {{ <{instance}> bf:title ?title .
+                              ?title rdfs:label ?label ;
+                                     bf:mainTitle ?main . 
+                              OPTIONAL {{ ?title bf:subtitle ?subtitle }}   
+                     }}""";
         rml:iterator "title"
     ] ;
 
@@ -182,37 +325,164 @@
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?label
-                         WHERE {{ _:{title} rdfs:label ?label .
-                                  _:{title} rdf:type bf:Title .}}"""
+            rr:reference "label"
         ]
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:mainTitle ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?value
-                         WHERE {{  _:{title} rdf:type bf:Title .
-                                  _:{title} bf:mainTitle ?value . }}"""
-        ]
+            rr:reference "main"
+       ]
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:subtitle ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?value
-                         WHERE {{ _:{title} rdf:type bf:Title .
-                                  _:{title} bf:subtitle ?value . }}"""
+            rr:reference "subtitle"
         ]
     ] .
+
+<#LOCWork_contribution> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?contribution
+            WHERE {{
+                <{work}> bf:contribution ?contribution .
+            }}""";
+        rml:iterator "contribution"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Contribution 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:agent ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCWork_contribution_Agent> 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:role ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCWork_ContributionRole>
+        ]
+    ] .
+
+
+<#LOCWork_contribution_Agent> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT ?agent ?label 
+            WHERE {{
+                 _:{contribution} bf:agent ?agent .
+                ?agent rdfs:label ?label .
+            }}""";
+        rml:iterator "agent"
+    ] ;  
+
+    rr:subjectMap [
+        rr:template "{agent}" ;
+        rr:class bf:Agent
+    ] ;  
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rr:reference "label"
+        ]
+    ] .
+
+<#LOCWork_ContributionRole> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT ?role ?label
+                    WHERE {{
+                         _:{contribution} bf:role ?role .
+                        ?role rdf:type bf:Role .
+                        OPTIONAL {{ ?role rdfs:label ?label }}
+                    }}""";
+        rml:iterator "role"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Role 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rr:reference "label"
+        ]
+    ] .
+
+
+<#LOCWork_summary> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?summary ?label
+            WHERE {{
+                <{work}> bf:summary ?summary .
+                ?summary rdfs:label ?label .
+            }}""";
+        rml:iterator "summary"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Summary 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rr:reference "label"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:source ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCWork_summary_Source>
+        ]
+    ]   .
+
+
+<#LOCWork_summary_Source> a rr:TriplesMap ;
+    
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?source ?label 
+            WHERE {{
+                <{work}> bf:summary ?summary .
+                ?summary bf:source ?source .
+                ?source rdfs:label ?label 
+            }}""";
+        rml:iterator "source"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Source 
+    ] ; 
+
+    rr:predicateObjectMap bc:RDFSLabel.
 
 <#LOCWork_subject_BFTopic> a rr:TriplesMap ;
     
     rml:logicalSource [
-        rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
         rml:query """SELECT DISTINCT ?subject
-                     WHERE {{ <{work}> bf:subject ?subject }}""";
+                     WHERE {{ <{work}> bf:subject ?subject .
+                              ?subject rdf:type bf:Topic .}}""";
         rml:iterator "subject"
     ] ;
 
@@ -229,4 +499,25 @@
         ]
     ] .
 
+<#LOCWork_subject_BFAgent> a rr:TriplesMap ;
+    
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?subject
+                     WHERE {{ <{work}> bf:subject ?subject .
+                              ?subject rdf:type bf:Agent .}}""";
+        rml:iterator "subject"
+    ] ;
 
+    rr:subjectMap [
+        rr:template "{subject}" ;
+        rr:class bf:Agent 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label 
+                         WHERE {{ <{subject}> rdfs:label ?label . }}"""
+        ]
+    ] .
