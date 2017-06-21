@@ -97,7 +97,7 @@ bc:OAIPMH_DCtoBIBFRAME_subject a rr:TriplesMap ;
     ] ; 
 
     rr:subjectMap [
-        rr:termType rr:BlankNode ;
+        rr:termType  rr:BlankNode ;
         rr:class bf:Topic
     ] ;
 

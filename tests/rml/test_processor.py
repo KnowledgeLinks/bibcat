@@ -103,10 +103,38 @@ class TestRDFMappingLanguageProcessorGenerateTerms(unittest.TestCase):
     def test_xsd_string_datatype(self):
         self.test_map.datatype = rdflib.XSD.string
         self.test_map.template = "{test_literal}"
-        term = self.processor.generate_term(term_map=self.test_map, test_literal="A fine string")
+        term = self.processor.generate_term(
+            term_map=self.test_map, 
+            test_literal="A fine string")
         self.assertEqual(term.datatype,
             rdflib.XSD.string)
-       
+
+    def test_template_default_literal(self):
+        literal_value = "Default Literal String"
+        self.test_map.template = "{test_literal}"
+        term = self.processor.generate_term(
+            term_map=self.test_map,
+            test_literal=literal_value)
+        self.assertEqual(str(term),
+            literal_value)
+
+    def test_template_default_url(self):
+        self.test_map.template = "http://test.io/{id}"
+        uri_term = self.processor.generate_term(
+            term_map=self.test_map,
+            id="1234")
+        self.assertEqual(str(uri_term),
+            "http://test.io/1234")
+
+      
+    def test_template_errors(self):
+        self.test_map.template = "{test_literal}"
+        self.assertRaises(KeyError, 
+            self.processor.generate_term,
+            term_map=self.test_map,
+            test_not_literal="1234")
+    
+         
        
 
     def tearDown(self):

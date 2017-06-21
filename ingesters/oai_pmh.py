@@ -167,6 +167,7 @@ class ContentDMIngester(OAIPMHIngester):
         for i,rec in enumerate(records):
             self.processor.run(rec, **kwargs)
             self.repo_graph += self.processor.output
+           
             if not i%10 and i > 0:
                 try:
                     click.echo(".", nl=False)
@@ -177,7 +178,7 @@ class ContentDMIngester(OAIPMHIngester):
                     click.echo(i, nl=False)
                 except io.UnsupportedOperation:
                      print(i, end="")
-
+        return 
         count = i
         while token is not None:
             params = { "resumptionToken": token.text,
