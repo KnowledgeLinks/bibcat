@@ -16,6 +16,10 @@
 @prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
+bc:RDFValue rr:predicate rdf:value ;
+    rr:objectMap [
+        rr:reference "value"
+    ].
 
 bc:RDFSLabel  rr:predicate rdfs:label ;
    rr:objectMap [
@@ -81,6 +85,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
         rml:referenceFormulation ql:JSON ;
         rml:query """SELECT DISTINCT ?instance
                      WHERE {{ ?instance rdf:type bf:Instance  . }}
+                     ORDER BY ?instance 
                      LIMIT {limit}
                      OFFSET {offset}""" ;
         rml:iterator "instance"
@@ -112,6 +117,21 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
             rr:parentTriplesMap <#LOCInstance_identifiedBy_ISBN>
         ]
     ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:identifiedBy ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCInstance_identifiedBy_Local_iri>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:identifiedBy ;
+        rr:objectMap [          
+            rr:parentTriplesMap <#LOCInstance_identifiedBy_Local_bnode>
+        ]
+    ] ;
+
 
     rr:predicateObjectMap [
         rr:predicate bf:carrier ;
@@ -155,9 +175,28 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate bf:provisionActivity ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCInstance_Publication>
+        ]
+
+    ] ;
+    
+    rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
             rr:parentTriplesMap <#LOCBFInstance_to_BFTitle> 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                    WHERE {{
+                        <{instance}> rdf:type ?value .
+                        FILTER (?value != bf:Instance)
+                    }}"""
         ]
     ] .
 
@@ -238,6 +277,16 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
         rr:objectMap [
             rr:parentTriplesMap <#LOCWork_subject_BFAgent>
         ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                    WHERE {{
+                        <{work}> rdf:type ?value .
+                        FILTER (?value != bf:Work)
+                    }}"""
+        ]
     ] .
 
 
@@ -260,12 +309,86 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
         
     ] ;
 
+    rr:predicateObjectMap bc:RDFValue .
+
+
+<#LOCInstance_identifiedBy_Local_iri> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?local ?value ?source
+                  WHERE {{ <{instance}> bf:identifiedBy ?local .
+                            ?local rdf:type bf:Local ;
+                                   rdf:value ?value ;
+                                   bf:source ?source .
+                            FILTER ( isIRI(?source) ) 
+                           }}""";
+        rml:iterator "local"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Local 
+        
+    ] ;
+
     rr:predicateObjectMap [
-        rr:predicate rdf:value ;
+        rr:predicate bf:source ;
         rr:objectMap [
-            rr:reference "value"
-        ]
-    ] .
+            rr:reference "source"
+       ]
+    ] ;
+
+    rr:predicateObjectMap bc:RDFValue .
+
+<#LOCInstance_identifiedBy_Local_bnode> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?local ?value 
+                    WHERE {{
+                         <{instance}> bf:identifiedBy ?local .
+                          ?local rdf:type bf:Local ;
+                                 rdf:value ?value ;
+                                 bf:source ?source .
+                        FILTER(isblank(?source))  
+                    }}""";
+        rml:iterator "local"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Local 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:source ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCInstance_Local_bnode_source>
+        ]  
+    ] ;
+
+    rr:predicateObjectMap bc:RDFValue .
+
+
+<#LOCInstance_Local_bnode_source> a rr:TriplesMap ;
+    rml:logicalSource [
+         rml:referenceFormulation ql:JSON ;
+         rml:query """SELECT DISTINCT ?source ?label 
+                WHERE {{
+                    <{instance}> bf:identifiedBy _:{local} .
+                    _:{local} bf:source ?source .
+                    ?source rdfs:label ?label .
+                }}""";
+        rml:iterator "source"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Source
+    ] ;
+
+    rr:predicateObjectMap bc:RDFSLabel .
 
 <#LOCInstance_BFNotes> a rr:TriplesMap ;
     rml:logicalSource [
@@ -302,7 +425,54 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     ] .
 
 
+<#LOCInstance_Publication> a rr:TriplesMap ;
 
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?publication ?date ?place ?agent
+                     WHERE {{
+                        <{instance}> bf:provisionActivity ?publication .
+                        ?publication rdf:type bf:Publication .
+                        OPTIONAL {{ ?publication bf:date ?date }}
+                        OPTIONAL {{ ?publication bf:place/rdfs:label ?place }}
+                        OPTIONAL {{ ?publication bf:place ?place .
+                                    FILTER (isIRI(?place) ) }}
+                        OPTIONAL {{ ?publication bf:agent ?agent }}
+                     }}""";
+        rml:iterator "publication"
+
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Publication 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rr:constant bf:ProvisionActivity
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:date ;
+        rr:objectMap [
+            rr:reference "date"
+        ]   
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:place ;
+        rr:objectMap [
+            rr:subjectMap [
+                rr:termType rr:BlankNode ;
+                rr:class bf:Place
+            ] ;
+            rr:reference "place"
+        ]   
+    ] .
+    
 <#LOCBFInstance_to_BFTitle> a rr:TriplesMap ;
 
     rml:logicalSource [
@@ -441,12 +611,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
         rr:class bf:Summary 
     ] ;
 
-    rr:predicateObjectMap [
-        rr:predicate rdfs:label ;
-        rr:objectMap [
-            rr:reference "label"
-        ]
-    ] ;
+    rr:predicateObjectMap bc:RDFSLabel ;
 
     rr:predicateObjectMap [
         rr:predicate bf:source ;

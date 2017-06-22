@@ -9,17 +9,24 @@ import sys
 import unittest
 import uuid
 
-sys.path.append(os.path.abspath(os.path.curdir))
-import ingesters
-from ingesters.ingester import Ingester, new_graph, MNAME, NS_MGR
+from types import SimpleNamespace
 
-NS_MGR.bind("bf", "http://id.loc.gov/ontologies/bibframe/")
-NS_MGR.bind("kds", "http://knowledgelinks.io/ns/data-structures/")
-NS_MGR.bind("schema", "http://schema.org/")
-NS_MGR.bind("owl", rdflib.OWL)
-NS_MGR.bind("relators", "http://id.loc.gov/vocabulary/relators/")
+PROJECT_BASE = os.path.abspath(os.path.curdir)
+sys.path.append(PROJECT_BASE)
+#sys.path.append(os.path.join(PROJECT_BASE, "bibcat"))
+#print(os.path.join(PROJECT_BASE, "bibcat"))
+import bibcat.ingesters 
+from bibcat.ingesters.ingester import Ingester, new_graph, MNAME
 
-ingesters.MLOG_LVL = logging.CRITICAL
+NS_MGR = SimpleNamespace()
+
+NS_MGR.bf = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
+NS_MGR.kds = rdflib.Namespace("http://knowledgelinks.io/ns/data-structures/")
+NS_MGR.schema = rdflib.Namespace("http://schema.org/")
+NS_MGR.owl = rdflib.Namespace(rdflib.OWL)
+NS_MGR.relators = rdflib.Namespace("http://id.loc.gov/vocabulary/relators/")
+
+bibcat.ingesters.MLOG_LVL = logging.CRITICAL
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
@@ -133,7 +140,7 @@ class TestInitLogSetup(unittest.TestCase):
     def test_module_mname(self):
         self.assertEqual(MNAME, 
             os.path.join(
-                os.path.join(ingesters.ingester.BIBCAT_BASE, "ingesters"),
+                os.path.join(bibcat.ingesters.ingester.BIBCAT_BASE, "ingesters"),
                 "ingester.py"))
 
 class TestNewExistingBNode(unittest.TestCase):

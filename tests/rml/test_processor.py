@@ -157,5 +157,42 @@ class TestGetObjectInternalFunction(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+class Test__graph__Method(unittest.TestCase):
+
+    def setUp(self):
+        self.processor = Processor(
+            rml_rules=os.path.join(FIXURES_PATH,
+                                   "rml-basic.ttl"))
+
+    def test_default(self):
+        self.assertIsInstance(self.processor.__graph__(),
+                              rdflib.Graph)
+
+    def test_namespaces(self):
+        new_graph = self.processor.__graph__()
+        self.assertListEqual(
+            [n for n in new_graph.namespace_manager.namespaces()], 
+            [n for n in self.processor.rml.namespace_manager.namespaces()])
+
+    def tearDown(self):
+        pass
+
+class Test__handle_parents__Method(unittest.TestCase):
+
+    def setUp(self):
+        self.processor = Processor(
+            rml_rules=os.path.join(FIXURES_PATH,
+                                   "rml-basic.ttl"))
+
+    def test_errors(self):
+        self.assertRaises(KeyError, self.processor.__handle_parents__)
+        self.assertRaises(KeyError, 
+            self.processor.__handle_parents__,
+            parent_map = SimpleNamespace())
+
+    def tearDown(self):
+        pass
+
 if __name__ == '__main__':
     unittest.main() 
