@@ -43,14 +43,17 @@ class OAIPMHIngester(object):
         if isinstance(metadata_result.text, str):
             metadata_formats = metadata_result.text.encode()
         self.metadata_formats_doc = etree.XML(metadata_formats)
-        self.metadata_ingester = None
+        self.processor = None
     
-    def harvest(self, sample_size=None):
+    def harvest(self, **kwargs):
         """Method harvests all identifiers using ListIdentifiers"""
-        initial_url = "{0}?verb=ListIdentifiers&metadataPrefix={1}".format(
+        params = {"verb": "ListIdentifiers",
+                  "metadataPrefix": self.metadataPrefix}
+        if "setSpec" in kwargs:
+            params["set"] = kwargs.get("setSpec")
+        initial_url = "{0}?{1}".format(
             self.oai_pmh_url,
-            self.metadataPrefix)
-        print(initial_url)
+            urllib.parse.urlencode(params))
         initial_result = requests.get(initial_url)
         if initial_result.status_code > 399:
             raise ValueError("Cannot Harvest {}, result {}".format(
@@ -149,26 +152,61 @@ class ContentDMIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)
+        params = {"verb": "ListRecords",
+                  "metadataPrefix": self.metadataPrefix}
         if "setSpec" in kwargs:
-            params = {"verb": "ListRecords",
-                      "metadataPrefix": self.metadataPrefix,
-                      "set": kwargs.get("setSpec")}
-            initial_result = requests.get("{0}?{1}".format(
+            params["set"] = kwargs.get("setSpec")
+        initial_result = requests.get("{0}?{1}".format(
                 self.oai_pmh_url,
                 urllib.parse.urlencode(params)))
-            initial_doc = etree.XML(initial_result.text.encode())
-            token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
-            records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
+        initial_doc = etree.XML(initial_result.text.encode())
+        token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
+        records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
+        self.repo_graph = self.processor.__graph__()
+        count = 0
+        for i,rec in enumerate(records):
+            self.processor.run(rec, **kwargs)
+            self.repo_graph += self.processor.output
+           
+            if not i%10 and i > 0:
+                try:
+                    click.echo(".", nl=False)
+                except io.UnsupportedOperation:
+                     print(".", end="")
+            if not i%100:
+                try:
+                    click.echo(i, nl=False)
+                except io.UnsupportedOperation:
+                     print(i, end="")
+        return 
+        count = i
+        while token is not None:
+            params = { "resumptionToken": token.text,
+                       "verb": "ListRecords"}
+            continue_url = "{0}?{1}".format(
+                self.oai_pmh_url,
+                urllib.parse.urlencode(params))
+            shard_result = requests.get(continue_url)
+            shard_doc = etree.XML(shard_result.text.encode())
+            token = shard_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
+            records = shard_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
             for rec in records:
-                self.processor.run(rec)
-                print(self.processor.output.serialize(format='turtle').decode())
-                break
-
-            
-            
-        else:
-            super(ContentDMIngester, self).harvest(**kwargs)
-        end = datetime.datetime.utcnow()
+                self.processor.run(rec, **kwargs)
+                self.repo_graph += self.processor.output
+                if not count%10 and count > 0:
+                    try:
+                        click.echo(".", nl=False)
+                    except io.UnsupportedOperation:
+                         print(".", end="")
+                if not count%100:
+                    try:
+                        click.echo(count, nl=False)
+                    except io.UnsupportedOperation:
+                         print(count, end="")
+                count += 1
+                end = datetime.datetime.utcnow()
+            if count > 8000:
+                print(token.text, count)
         msg = "\nContentDM OAI-PMH harvested at {}, total time {} mins".format(
             end,
             (end-start).seconds / 60.0)
@@ -176,17 +214,11 @@ class ContentDMIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)       
-        for i,row in enumerate(self.identifiers.keys()):
-            if not i%10 and i > 0:
-                try:
-                    click.echo(".", nl=False)
-                except io.UnsupportedOperation:
-                    print(".", end="")
-            if not i%100:
-                try:
-                    click.echo(i, nl=False)
-                except io.UnsupportedOperation:
-                    print(i, end="")
+        if 'out_file' in kwargs:
+            self.repo_graph += self.processor.output
+        else:
+            self.add_to_triplestore()
+
 
 
 class IslandoraIngester(OAIPMHIngester):
@@ -211,7 +243,7 @@ class IslandoraIngester(OAIPMHIngester):
                               "rml-bibcat-mods-to-bf.ttl"]:
                 rules_ttl.append(os.path.join(BIBCAT_BASE,
                     os.path.join("rdfw-definitions", rule_name)))
-            self.metadata_ingester = XMLProcessor(
+            self.processor = XMLProcessor(
                 rml_rules=rules_ttl,
                 base_url=self.base_url,
                 triplestore_url=kwargs.get("triplestore_url"),
@@ -221,7 +253,7 @@ class IslandoraIngester(OAIPMHIngester):
             rules_ttl.append(
                 os.path.join(BIBCAT_BASE,
                     os.path.join("rdfw-definitions", "rml-bibcat-base.ttl")))
-            self.metadata_ingester = XMLProcessor(
+            self.processor = XMLProcessor(
                 rml_rules=rules_ttl)
 
 
@@ -236,15 +268,15 @@ class IslandoraIngester(OAIPMHIngester):
             "datastream/MODS")
         mods_result = requests.get(mods_url)
         base_url = kwargs.get("base_url")
-        if base_url is None and "base_url" in self.metadata_ingester.constants:
-            base_url = self.metadata_ingester.constants.get("base_url")
+        if base_url is None and "base_url" in self.processor.constants:
+            base_url = self.processor.constants.get("base_url")
         else:
             raise ValueError("base_url required for __process_mods__")
         instance_url = kwargs.get("instance_url")
         if instance_url is None:
             instance_url = "{0}/{1}".format(base_url, uuid.uuid1()) 
         try:
-            self.metadata_ingester.run(mods_result.text,
+            self.processor.run(mods_result.text,
                 base_url=base_url,
                 id=uuid.uuid1,
                 item_iri=item_url,
@@ -312,16 +344,16 @@ class IslandoraIngester(OAIPMHIngester):
             if rels_ext is None:
                 continue
             self.__process_mods__(item_url=item_url)
-            instance_uri = self.metadata_ingester.output.value(
+            instance_uri = self.processor.output.value(
                 subject=item_uri,
                 predicate=NS_MGR.bf.itemOf)
             rels_ext.run(rels_ext_doc,
                 instance_iri=instance_uri)
-            self.metadata_ingester.output += rels_ext.output
+            self.processor.output += rels_ext.output
             if 'out_file' in kwargs:
-                self.repo_graph += self.metadata_ingester.output
+                self.repo_graph += self.processor.output
             else:
-                self.metadata_ingester.add_to_triplestore()
+                self.processor.add_to_triplestore()
         if 'out_file' in kwargs:
             with open(kwargs.get('out_file'), 'wb+') as fo:
                 fo.write(self.repo_graph.serialize(format='turtle'))

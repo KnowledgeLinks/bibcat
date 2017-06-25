@@ -3,6 +3,7 @@
 __author__ = "Jeremy Nelson"
 
 # Standard Python Modules
+import collections
 import datetime
 import os
 from types import SimpleNamespace
@@ -133,8 +134,80 @@ class Processor(object):
         graph = rdflib.Graph(namespace_manager=self.rml.namespace_manager)
         return graph
 
+    def __generate_delimited_objects__(self, **kwargs):
+        """Internal methods takes a subject, predicate, element, and a list
+        of delimiters that are applied to element's text and a triples
+        for each value is created and associated with the subject.
+
+        Keyword Args:
+
+        -------------
+            triple_map: SimpleNamespace
+            predicate: URIRef
+            element: XML Element
+            datatype: XSD Datatype, optional
+            delimiters: List of delimiters to apply to string
+        """
+        triple_map = kwargs.get("triple_map")
+        subject = kwargs.get('subject')
+        # Subject is blank-node, try to retrieve subject IRI
+        predicate = kwargs.get('predicate')
+        element = kwargs.get('element')
+        datatype = kwargs.get('datatype')
+        delimiters = kwargs.get('delimiters')
+        subjects = []
+        for delimiter in delimiters:
+            values = element.text.split(delimiter)
+            for row in values:
+                if datatype is not None:
+                    obj_ = rdflib.Literal(row.strip(), datatype=datetype)
+                else:
+                    obj_ = rdflib.Literal(row.strip())
+                if isinstance(subject, rdflib.BNode):
+                    new_subject = rdflib.BNode()
+                    class_ = triple_map.subjectMap.class_
+                    self.output.add((new_subject, NS_MGR.rdf.type, class_))
+                    for parent_subject, parent_predicate in self.output.subject_predicates(
+                            object=subject):
+           #self.__replace_iri__(subject, new_subject)
+                        self.output.add((parent_subject, parent_predicate, new_subject))
+                else:
+                    new_subject = subject
+                subjects.append(new_subject)
+                self.output.add((new_subject, predicate, obj_))
+        return subjects
+
+    def __handle_parents__(self, **kwargs):
+        """Internal method handles parentTriplesMaps
+
+        Keyword args:
+
+        -------------
+
+            parent_map: SimpleNamespace of ParentTriplesMap
+            subject: rdflib.URIRef or rdflib.BNode
+            predicate: rdflib.URIRef
+        """
+        parent_map = kwargs.pop("parent_map")
+        subject = kwargs.pop('subject')
+        predicate = kwargs.pop('predicate')
+        parent_objects = self.execute(
+            self.triple_maps[str(parent_map)],
+            **kwargs)
+        for parent_obj in parent_objects:
+            self.output.add((
+                subject,
+                predicate,
+                parent_obj))
 
     def __logical_source__(self, map_iri):
+        """Creates a SimpleNamespace for the TripelMap's logicalSource
+
+        Args:
+
+        -----
+            map_iri: URIRef
+        """
         logical_source = SimpleNamespace()
         logical_src_bnode = self.rml.value(
             subject=map_iri,
@@ -177,6 +250,7 @@ class Processor(object):
             predicate=NS_MGR.rr.subjectMap)
         if subject_map_bnode is None:
             return
+        #! Should look at supporting multple rr:class definitions
         subject_map.class_ = self.rml.value(
             subject=subject_map_bnode,
             predicate=getattr(NS_MGR.rr, "class"))
@@ -242,6 +316,11 @@ class Processor(object):
             pred_obj_map.query = self.rml.value(
                 subject=obj_map_bnode,
                 predicate=NS_MGR.rml.query)
+            # BIBCAT Extensions
+            pred_obj_map.delimiters = []
+            for obj in self.rml.objects(subject=obj_map_bnode,
+                                        predicate=NS_MGR.kds.delimiter):
+                pred_obj_map.delimiters.append(obj)
             pred_obj_maps.append(pred_obj_map)
         return pred_obj_maps
 
@@ -280,7 +359,6 @@ class Processor(object):
         if not 'timestamp' in kwargs:
             kwargs['timestamp'] = datetime.datetime.utcnow().isoformat()
 
-        print("Parents are {}".format(self.parents))
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs)
@@ -319,12 +397,12 @@ class XMLProcessor(Processor):
         self.constants.update(kwargs)
 
     def __generate_reference__(self, triple_map, **kwargs):
-        """Internal method takes a triple_map and returns the result of 
+        """Internal method takes a triple_map and returns the result of
         applying to XPath to the current DOM context
 
         Args:
         -----
-            triple_map: SimpleNamespace 
+            triple_map: SimpleNamespace
             element: etree.Element
         """
         element = kwargs.get("element")
@@ -334,7 +412,7 @@ class XMLProcessor(Processor):
             if not elem.text.startswith("http"):
                 continue
             return rdflib.URIRef(elem.text)
-            
+
 
     def execute(self, triple_map, **kwargs):
         """Method executes mapping between source
@@ -361,14 +439,11 @@ class XMLProcessor(Processor):
                         predicate,
                         self.generate_term(term_map=row, **kwargs)))
                 if row.parentTriplesMap is not None:
-                    parent_objects = self.execute(
-                        self.triple_maps[str(row.parentTriplesMap)],
+                    self.__handle_parents__(
+                        parent_map=row.parentTriplesMap,
+                        subject=subject,
+                        predicate=predicate,
                         **kwargs)
-                    for parent_obj in parent_objects:
-                        self.output.add((
-                            subject,
-                            predicate,
-                            parent_obj))
                 if row.reference is not None:
                     found_elements = element.findall(str(row.reference),
                                                      self.xml_ns)
@@ -382,17 +457,39 @@ class XMLProcessor(Processor):
 
                         if hasattr(row, 'datatype') and \
                            row.datatype is not None:
-                            if row.datatype == NS_MGR.xsd.anyURI:
-                                ref_obj = rdflib.URIRef(found_elem.text)
+                            if len(row.delimiters) > 0:
+                                subjects.extend(self.__generate_delimited_objects__(
+                                    triple_map=triple_map,
+                                    subject=subject,
+                                    predicate=predicate,
+                                    element=found_elem,
+                                    delimiters=row.delimiters,
+                                    datatype=row.datatype))
+
+                            elif row.datatype == NS_MGR.xsd.anyURI:
+                                self.output.add(
+                                    (subject,
+                                     predicate,
+                                     rdflib.URIRef(found_elem.text)))
                             else:
-                                ref_obj = rdflib.Literal(
-                                    found_elem.text,
-                                    datatype=row.datatype)
+                                self.output.add(
+                                     (subject,
+                                      predicate,
+                                      rdflib.Literal(
+                                         found_elem.text,
+                                         datatype=row.datatype)))
                         else:
-                            ref_obj = rdflib.Literal(found_elem.text)
-                        self.output.add((subject,
-                                         predicate,
-                                         ref_obj))
+                            if len(row.delimiters) > 0 :
+                                subjects.extend(self.__generate_delimited_objects__(
+                                    triple_map=triple_map,
+                                    subject=subject,
+                                    predicate=predicate,
+                                    element=found_elem,
+                                    delimiters=row.delimiters))
+                            else:
+                                self.output.add((subject,
+                                    predicate,
+                                    rdflib.Literal(found_elem.text)))
                 elif row.constant is not None:
                     self.output.add((subject,
                                      predicate,
@@ -423,11 +520,18 @@ def __get_object__(binding):
      Args:
          binding: binding row
     """
-    for row in binding.values():
-        if row.get('type').startswith('uri'):
-            yield rdflib.URIRef(row.get('value'))
-        if row.get('type').startswith('literal'):
-            yield rdflib.Literal(row.get('value'))
+    if isinstance(binding, rdflib.term.Node):
+        return binding
+    elif isinstance(binding, collections.Iterable):
+        for row in binding.values():
+            if isinstance(row, rdflib.URIRef) or isinstance(row, rdflib.Literal):
+                return row
+            elif isinstance(row, str):
+                return rdflib.Literal(row)
+            elif row.get('type').startswith('uri'):
+                return rdflib.URIRef(row.get('value'))
+            elif row.get('type').startswith('literal'):
+                return rdflib.Literal(row.get('value'))
 
 
 class SPARQLProcessor(Processor):
@@ -438,14 +542,38 @@ class SPARQLProcessor(Processor):
             rml_rules = kwargs.pop("rml_rules")
         super(SPARQLProcessor, self).__init__(rml_rules)
         __set_prefix__()
-        # Defaults to Blazegraph, don't really like.
-        self.triplestore_url = kwargs.get(
-            "triplestore_url",
-            "http://localhost:9999/blazegraph/sparql")
+        self.triplestore_url = kwargs.get("triplestore_url")
+        if self.triplestore_url is None:
+            # Tries using rdflib Graph as triplestore
+            self.triplestore = kwargs.get("triplestore", self.__graph__())
+
         # Sets defaults
         self.limit, self.offset = 5000, 0
 
+    def __get_bindings__(self, sparql, output_format):
+        """Internal method queries triplestore or remote
+        sparal endpont and returns the bindings
 
+        Args:
+
+        ----
+            sparql: String of SPARQL query
+            output_format: String of type of outputform
+        """
+        if self.triplestore_url is None:
+            result = self.triplestore.query(sparql)
+            bindings = result.bindings
+        else:
+            result = requests.post(
+                self.triplestore_url,
+                data={"query": sparql,
+                    "format": output_format})
+            if output_format == "json":
+                bindings = result.json().get("results").get("bindings")
+            elif output_format == "xml":
+                xml_doc = etree.XML(result.text)
+                bindings = xml_doc.findall("results/bindings") 
+        return bindings
 
     def run(self, **kwargs):
         self.output = self.__graph__()
@@ -463,52 +591,54 @@ class SPARQLProcessor(Processor):
         else:
             output_format = "xml"
         iterator = str(triple_map.logicalSource.iterator)
-        if not 'limit' in kwargs:
+        if 'limit' not in kwargs:
             kwargs['limit'] = self.limit
-        if not 'offset' in kwargs:
+        if 'offset' not in kwargs:
             kwargs['offset'] = self.offset
+        iterator = str(triple_map.logicalSource.iterator)
         sparql = PREFIX + triple_map.logicalSource.query.format(
             **kwargs)
-        result = requests.post(
-            self.triplestore_url,
-            data={"query": sparql,
-                  "format": output_format})
-        if output_format == "json":
-            bindings = result.json().get("results").get("bindings")
-        elif output_format == "xml":
-            xml_doc = etree.XML(result.text)
-            bindings = xml_doc.findall("results/bindings")
-        iterator = str(triple_map.logicalSource.iterator)
+        bindings = self.__get_bindings__(sparql, output_format)
         for binding in bindings:
-            entity = rdflib.URIRef(binding.get(iterator).get('value'))
+            entity_raw = binding.get(iterator)
+            if isinstance(entity_raw, (rdflib.URIRef, rdflib.BNode)):
+                entity = entity_raw
+            else:
+                entity = rdflib.URIRef(entity_raw.get('value'))
             if triple_map.subjectMap.class_ is not None:
                 self.output.add((entity,
                                  NS_MGR.rdf.type,
                                  triple_map.subjectMap.class_))
             for pred_obj_map in triple_map.predicateObjectMap:
                 predicate = pred_obj_map.predicate
+                kwargs[iterator] = entity
+
                 if pred_obj_map.parentTriplesMap is not None:
-                    parent_objects = self.execute(
-                        self.triple_maps[str(pred_obj_map.parentTriplesMap)],
+                    self.__handle_parents__(
+                        parent_map=row.parentTriplesMap,
+                        subject=entity,
+                        predicate=predicate,
                         **kwargs)
-                    for parent_obj in parent_objects:
-                        self.output.add((
-                            entity,
-                            predicate,
-                            parent_obj))
+                    continue
+                if pred_obj_map.reference is not None:
+                    ref_key = str(pred_obj_map.reference)
+                    if ref_key in binding:
+                        object_ = __get_object__(
+                            binding[ref_key])
+                        self.output.add((entity, predicate, object_))
+                    continue
+                if pred_obj_map.constant is not None:
+                    self.output.add(
+                        (entity, predicate, pred_obj_map.constant))
                     continue
                 sparql_query = PREFIX + pred_obj_map.query.format(
-                    **{iterator: entity})
-                result = requests.post(
-                    self.triplestore_url,
-                    data={"query": sparql_query,
-                          "format": output_format})
-                if output_format.startswith("json"):
-                    pre_obj_bindings = result.json().get(
-                        'results').get('bindings')
-                    for row in pre_obj_bindings:
-                        for object_ in __get_object__(row):
-                            self.output.add((entity, predicate, object_))
+                    **kwargs)
+                pre_obj_bindings = self.__get_bindings__(
+                    sparql_query, 
+                    output_format)
+                for row in pre_obj_bindings:
+                    object_ = __get_object__(row)
+                    self.output.add((entity, predicate, object_))
             subjects.append(entity)
         return subjects
 
