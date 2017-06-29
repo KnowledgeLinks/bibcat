@@ -107,6 +107,8 @@ class Processor(object):
                     self.__replace_iri__(existing_iri[value],
                                          new_iri)
 
+
+
     def __replace_iri__(self, src_iri, new_iri):
         """Method replaces all triples with an original IRI replaced with the
         equivalent triples using the new IRI.

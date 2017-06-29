@@ -5,8 +5,12 @@ import os
 import sys
 import unittest
 from unittest import mock
-sys.path.append(os.path.abspath("."))
-from bibcat.ingesters.oai_pmh import OAIPMHIngester, IslandoraIngester
+try:
+    from bibcat.ingesters.oai_pmh import OAIPMHIngester, IslandoraIngester
+except ImportError:
+    BIBCAT_BASE = os.path.abspath(".")
+    sys.path.append(BIBCAT_BASE)
+    from bibcat.ingesters.oai_pmh import OAIPMHIngester, IslandoraIngester
 
 # Mock of OAI-PMH Fee
 def mocked_oai_pmh(*args, **kwargs):

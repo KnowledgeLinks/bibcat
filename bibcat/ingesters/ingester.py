@@ -23,6 +23,7 @@ BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
 PROJECT_BASE = os.path.split(BIBCAT_BASE)[0]
+print(BIBCAT_BASE)
 sys.path.append(os.path.join(PROJECT_BASE))
 sys.path.append(os.path.join(PROJECT_BASE, "rdfw",))
 HIDE_LG = logging.getLogger("requests")

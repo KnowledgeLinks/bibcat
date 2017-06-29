@@ -6,8 +6,11 @@ import sys
 import unittest
 from unittest import mock
 from types import SimpleNamespace
-sys.path.append(os.path.abspath("."))
-from bibcat.rml.processor import Processor, __get_object__
+try:
+    from bibcat.rml.processor import Processor, __get_object__
+except ImportError:
+    sys.path.append(os.path.abspath("."))
+    from bibcat.rml.processor import Processor, __get_object__
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
 FIXURES_PATH = os.path.join(

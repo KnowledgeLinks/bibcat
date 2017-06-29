@@ -1,5 +1,5 @@
 import unittest
-from test_ingester import *
+#from ingesters.test_oai_pmh import *
 from rml.test_processor import *
 
 if __name__ == '__main__':
