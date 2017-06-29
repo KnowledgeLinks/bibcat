@@ -615,7 +615,7 @@ class SPARQLProcessor(Processor):
 
                 if pred_obj_map.parentTriplesMap is not None:
                     self.__handle_parents__(
-                        parent_map=row.parentTriplesMap,
+                        parent_map=pred_obj_map.parentTriplesMap,
                         subject=entity,
                         predicate=predicate,
                         **kwargs)

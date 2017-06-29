@@ -16,6 +16,11 @@
 @prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
+bc:RDFClass rr:predicate rdf:type ;
+    rr:objectMap [
+        rr:reference "type"
+    ] .
+
 bc:RDFValue rr:predicate rdf:value ;
     rr:objectMap [
         rr:reference "value"
@@ -25,6 +30,9 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
    rr:objectMap [
        rr:reference "label"
    ] .
+
+
+
 
 <#LOCBFItem_to_BFItemProduction> a rr:TriplesMap ;
 
@@ -181,6 +189,21 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
         ]
 
     ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:soundCharacteristic ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCBFInstance_to_Sound_Characteristics>
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:soundContent ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCBFInstance_to_Sound_Content>
+        ]
+    ] ;
     
     rr:predicateObjectMap [
         rr:predicate bf:title ;
@@ -198,7 +221,9 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
                         FILTER (?value != bf:Instance)
                     }}"""
         ]
-    ] .
+    ] ;
+    
+    rr:predicateObjectMap bc:RDFSLabel .
 
 <#LOCBFItem_to_BFShelfMarkLLC> a rr:TriplesMap ;
 
@@ -472,7 +497,53 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
             rr:reference "place"
         ]   
     ] .
-    
+
+   
+<#LOCBFInstance_to_Sound_Characteristics> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?characteristic ?label ?type
+                     WHERE {{
+                        <{instance}> bf:soundCharacteristic ?characteristic .
+                        ?characteristic rdf:type ?type;
+                                        rdfs:label ?label .
+                    }}""";
+        rml:iterator "characteristic" 
+
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+    ] ; 
+
+    rr:predicateObjectMap  bc:RDFClass ;
+
+    rr:predicateObjectMap bc:RDFSLabel .
+
+<#LOCBFInstance_to_Sound_Content> a rr:TriplesMap ;
+
+     rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?content ?label ?type
+                     WHERE {{
+                        <{instance}> bf:soundContent ?content .
+                        ?content rdf:type ?type;
+                                        rdfs:label ?label .
+                    }}""";
+        rml:iterator "content" 
+
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+    ] ; 
+
+    rr:predicateObjectMap  bc:RDFClass ;
+
+    rr:predicateObjectMap bc:RDFSLabel .
+   
+
 <#LOCBFInstance_to_BFTitle> a rr:TriplesMap ;
 
     rml:logicalSource [
