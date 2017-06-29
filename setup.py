@@ -7,7 +7,7 @@ with open(path.join(here, "VERSION")) as version:
     VERSION = version.read()
 
 setup(
-    name="BIBCAT",
+    name="bibcat",
     version=VERSION,
     description="BIBCAT RDF Framework Application",
     author="KnowledgeLinks",
@@ -24,7 +24,7 @@ setup(
         "Topic :: Text Processing :: Indexing"
     ],
     keywords="semantic web bibframe rdf",
-    packages=find_packages(exclude=['tests', 'documentation', 'contrib']),
+    packages=["bibcat"],
     install_requires=[
         'Flask',
         'pymarc',
@@ -34,5 +34,6 @@ setup(
     package_date={
         "rdf-references": ["*.ttl"],
         "rdfw-definitions": ["*.ttl"],
+        "maps": ["*.ttl"]
     }
 )      
