@@ -10,6 +10,9 @@ import uuid
 import rdflib
 import requests
 
+from types import SimpleNamespace
+
+from ..maps import get_map
 
 # get the current file name for logs and set logging levels
 try:
@@ -23,16 +26,14 @@ BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
 PROJECT_BASE = os.path.split(BIBCAT_BASE)[0]
-print(BIBCAT_BASE)
 sys.path.append(os.path.join(PROJECT_BASE))
-sys.path.append(os.path.join(PROJECT_BASE, "rdfw",))
 HIDE_LG = logging.getLogger("requests")
 HIDE_LG.setLevel(logging.CRITICAL)
 try:
     from instance import config
-    from rdfframework import getframework as rdfw
-    from rdfframework.utilities import DictClass, make_class
-    from rdfframework.utilities.uriconvertor import RdfNsManager
+#    from rdfframework import getframework as rdfw
+#    from rdfframework.utilities import DictClass, make_class
+#    from rdfframework.utilities.uriconvertor import RdfNsManager
 except ImportError:
     logging.error("Error importing {}".format(PROJECT_BASE))
 try:
@@ -43,14 +44,24 @@ try:
         __version__ = version.read().strip()
 except:
     __version__ = "unknown"
-#FW = rdfw.get_framework(config=config, reset=True, root_file_path=PROJECT_BASE)
-#FW.ns_obj.log_level = logging.CRITICAL
-#NS_MGR = FW.ns_obj
-NS_MGR = RdfNsManager(config=config)
-config = DictClass(config.__dict__)
 
-#print(json.dumps(FW.rdf_linker_dict,indent=4))
+#! Placeholder until RDFFramework can be installed as a standalone package,
+#! uses all of namespaces defined in the base-base.ttl
+NS_MGR = SimpleNamespace()
+BASE_RULES = rdflib.Graph()
+BASE_RULES.parse(data=get_map('bibcat-base.ttl').decode(), format='turtle')
+for prefix, uri in BASE_RULES.namespace_manager.namespaces():
+    setattr(NS_MGR, prefix, rdflib.Namespace(uri))
 
+def __get_prefix__():
+    prefix = ""
+    for row in dir(NS_MGR):
+        if row.startswith("__") or row is None:
+            continue
+        prefix += "PREFIX {0}: <{1}>\n".format(row, getattr(NS_MGR, row))
+    return prefix
+
+NS_MGR.prefix = __get_prefix__
 
 
 class Ingester(object):

@@ -23,9 +23,12 @@ from ..rml.processor import XMLProcessor
 NS = {"oai_pmh": "http://www.openarchives.org/OAI/2.0/",
       'dc': 'http://purl.org/dc/elements/1.1/', 
       'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/'}
-
-NS_MGR.bind('fedora', 'info:fedora/fedora-system:def/relations-external#')
-NS_MGR.bind('fedora-model', 'info:fedora/fedora-system:def/model#')
+try:
+    NS_MGR.bind('fedora', 'info:fedora/fedora-system:def/relations-external#')
+    NS_MGR.bind('fedora-model', 'info:fedora/fedora-system:def/model#')
+except AttributeError:
+    setattr(NS_MGR, 'fedora', 'info:fedora/fedora-system:def/relations-external#')
+    setattr(NS_MGR, 'fedora-model', 'info:fedora/fedora-system:def/model#')
 
 class OAIPMHIngester(object):
     IDENT_XPATH = "oai_pmh:ListIdentifiers/oai_pmh:header/oai_pmh:identifier"

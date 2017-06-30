@@ -4,6 +4,7 @@
 @prefix dcterms:<http://purl.org/dc/terms/>. 
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix locn:   <http://www.w3.org/ns/locn#>.
+@prefix mods: <http://www.loc.gov/mods/v3> .
 @prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
 @prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .

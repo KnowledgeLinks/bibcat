@@ -61,7 +61,7 @@ class TestOAI_PMHIngester(unittest.TestCase):
     @mock.patch("bibcat.ingesters.oai_pmh.requests.get", 
         side_effect=mocked_oai_pmh)
     def test_init_repo(self, mock_get):
-        oai_ingester = OAIPMHIngester(repository='http://bibcat.org')
+        oai_ingester = OAIPMHIngester(repository='http://bibcat.org/oai2')
         self.assertEqual(oai_ingester.oai_pmh_url,
                          'http://bibcat.org/oai2')
         self.assertEqual(oai_ingester.metadataPrefix, "oai_dc")
@@ -76,7 +76,7 @@ class TestIslandoraIngester(unittest.TestCase):
         pass
 
     def test_defaults(self):
-        self.assertRaises(ValueError, IslandoraIngester)
+        self.assertRaises(KeyError, IslandoraIngester)
 
     def tearDown(self):
         pass
