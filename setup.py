@@ -19,19 +19,22 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Topic :: Database :: Database",
+        "Topic :: Database",
         "Topic :: Text Processing :: General",
         "Topic :: Text Processing :: Indexing"
     ],
     keywords="semantic web bibframe rdf",
-    packages=["bibcat"],
+    packages=find_packages(exclude=['tests']),
     install_requires=[
         'Flask',
+        'lxml',
         'pymarc',
-        'rdfframework',          
+        'rdflib',
+        'rdflib-jsonld',
         'requests'
     ],
-    package_date={
+    include_package_data=True,
+    package_data={
         "rdf-references": ["*.ttl"],
         "rdfw-definitions": ["*.ttl"],
         "maps": ["*.ttl"]

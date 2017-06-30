@@ -1,0 +1,3 @@
+include README.md
+include bibcat/maps/*.ttl
+include bibcat/rdfw-definitions/*.ttl

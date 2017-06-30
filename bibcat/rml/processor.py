@@ -12,6 +12,7 @@ from types import SimpleNamespace
 import rdflib
 import requests
 
+from bibcat.maps import get_map
 
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
@@ -41,8 +42,12 @@ class Processor(object):
         self.rml = rdflib.Graph()
         if isinstance(rml_rules, list):
             for rule in rml_rules:
-                with open(rule) as file_obj:
-                    raw_rule = file_obj.read()
+                # First check if rule exists on the filesystem
+                if os.path.exists(rule):
+                    with open(rule) as file_obj:
+                        raw_rule = file_obj.read()
+                else:
+                    raw_rule = get_map(rule).decode()
                 self.rml.parse(data=raw_rule,
                                format='turtle')
         elif isinstance(rml_rules, (rdflib.Graph, rdflib.ConjunctiveGraph)):
@@ -50,7 +55,7 @@ class Processor(object):
         elif os.path.exists(rml_rules):
             self.rml.parse(rml_rules, format='turtle')
         else:
-            raise ValueError("Cannot handle rml_rules={0}".format(rml_rules))
+            self.rml.parse(data=get_map(rml_rules).decode(), format='turtle')
         # Populate Namespaces Manager
         for prefix, namespace in self.rml.namespaces():
             setattr(NS_MGR, prefix, rdflib.Namespace(namespace))

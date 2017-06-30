@@ -33,7 +33,7 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
 
     def test_bibcat_rules_missing_rml_rules_error(self):
         self.assertRaises(TypeError, Processor, rml_rules=None)
-        self.assertRaises(ValueError, Processor, rml_rules="")
+        self.assertRaises(PermissionError, Processor, rml_rules="")
         self.assertRaises(Exception, Processor, rml_rules=[])
 
 
@@ -51,7 +51,12 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
         self.assertTrue(
             isinstance(Processor(raw_rml),
                        Processor))
-                       
+                      
+    def test_bibcat_package_rule(self):
+        self.assertTrue(
+            isinstance(Processor("bibcat-base.ttl"),
+                      Processor))
+ 
     def test_bibcat_acceptable_list_rules(self):
         rules = []
         for name in ["rml-basic.ttl", "rml-basic.ttl"]:
