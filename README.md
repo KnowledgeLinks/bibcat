@@ -8,6 +8,7 @@ The easiest way to get started with `bibcat` is to install with **pip**:
 
     pip install bibcat
 
+### Development installation 
 You can also clone this repository and run pip from the same directory:
 
     git clone https://github.com/KnowledgeLinks/rdfw-bibcat bibcat
@@ -16,3 +17,34 @@ You can also clone this repository and run pip from the same directory:
 
 If you don't have pip available (although you should because `bibcat` is targeted for Python 3.5+)
 you can also follow the same steps to clone `bibcat` but run `python setup.py install`.    
+
+## Basic Usage
+
+## Running RDF Map Processor
+[RDF Mapping Language](http://rml.io/) RDF turtle files provides the mapping between
+ different input sources including XML, JSON,  CSV files, and SPARQL endpoints that
+we current normalize to a production [BIBFRAME 2.0](http://www.loc.gov/bibframe/docs/index.html)
+level of description that also combines other RDF vocabularies for  
+RDF-based applications.
+
+### MARC XML to BIBFRAME 2.0 to Production BIBFRAME 2.0
+
+
+    >>> import lxml.etree
+    >>> marc2bibframe_xsl = lxml.etree.parse("{path}/marc2bibframe2/xsl/marc2bibframe2.xsl")
+    >>> xsl_transform = lxml.etree.XSLT(marc2bibframe_xsl)
+    >>> def bibframe_handler(raw_marc_xml):
+	    marc_xml = lxml.etree.XML(raw_marc_xml)
+	    bf_xml = xsl_transform(marc_xml, baseuri="'https://bibcat.org/'")
+	    bf_rdf = rdflib.Graph().parse(data=lxml.etree.tostring(bf_xml))
+	    return bf_rdf
+
+### MODS XML to Production BIBFRAME 2.0
+
+### Dublin Core XML to Production BIBFRAME 2.0
+
+### Production BIBFRAME 2.0 to Schema.org RDF
+
+### Production BIBFRAME 2.0 to DP.LA MAPv4
+
+## Running Islandora, ContentDM&rep;, and Luna&rep; OAI-Harvester

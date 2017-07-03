@@ -1,4 +1,8 @@
-"""Python RDF Mapping Language Processor"""
+"""Python RDF Mapping Language Processor
+
+>>> import bibcat.rml.processor as processor
+
+"""
 
 __author__ = "Jeremy Nelson"
 
@@ -35,7 +39,10 @@ except ImportError:
 
 class Processor(object):
     """Base class for RDF Mapping Language Processors, child classes
-    encapsulate different types of Data sources"""
+    encapsulate different types of Data sources
+ 
+
+    """
 
     def __init__(self, rml_rules):
         global NS_MGR
