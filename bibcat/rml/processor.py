@@ -29,7 +29,7 @@ try:
         "VERSION")
     with open(VERSION_PATH) as version:
         __version__ = version.read().strip()
-except:
+except FileNotFoundError:
     __version__ = "unknown"
 
 try:
@@ -40,12 +40,11 @@ except ImportError:
 class Processor(object):
     """Base class for RDF Mapping Language Processors, child classes
     encapsulate different types of Data sources
- 
+
 
     """
 
     def __init__(self, rml_rules):
-        global NS_MGR
         self.rml = rdflib.Graph()
         if isinstance(rml_rules, list):
             for rule in rml_rules:
@@ -113,7 +112,7 @@ class Processor(object):
                 if dedup_result.status_code > 399:
                     continue
                 bindings = dedup_result.json().get('results').get('bindings')
-                if len(bindings) > 0:
+                if bindings is not None:
                     new_iri = rdflib.URIRef(
                         bindings[0].get('subj').get('value'))
                     self.__replace_iri__(existing_iri[value],
@@ -148,6 +147,8 @@ class Processor(object):
         graph = rdflib.Graph(namespace_manager=self.rml.namespace_manager)
         return graph
 
+
+
     def __generate_delimited_objects__(self, **kwargs):
         """Internal methods takes a subject, predicate, element, and a list
         of delimiters that are applied to element's text and a triples
@@ -167,14 +168,14 @@ class Processor(object):
         # Subject is blank-node, try to retrieve subject IRI
         predicate = kwargs.get('predicate')
         element = kwargs.get('element')
-        datatype = kwargs.get('datatype')
+        datatype = kwargs.get('datatype', None)
         delimiters = kwargs.get('delimiters')
         subjects = []
         for delimiter in delimiters:
             values = element.text.split(delimiter)
             for row in values:
                 if datatype is not None:
-                    obj_ = rdflib.Literal(row.strip(), datatype=datetype)
+                    obj_ = rdflib.Literal(row.strip(), datatype=datatype)
                 else:
                     obj_ = rdflib.Literal(row.strip())
                 if isinstance(subject, rdflib.BNode):
@@ -190,6 +191,38 @@ class Processor(object):
                 subjects.append(new_subject)
                 self.output.add((new_subject, predicate, obj_))
         return subjects
+
+    def __generate_reference__(self, triple_map, **kwargs):
+        """Placeholder method, should be extended by child classes
+
+        Args:
+
+        -----
+            triple_map: SimpleNamespace
+
+        Keyword Args:
+
+        -------------
+        """
+        pass
+
+    def __generate_object_term__(self, datatype, value):
+        """Internal method takes a datatype (can be None) and returns
+        the RDF Object Term
+
+        Args:
+
+        -----
+            datatype: None, or rdflib.URIRef
+            value: Varys depending on ingester
+        """
+        if datatype == NS_MGR.xsd.anyURI:
+            term = rdflib.URIRef(value)
+        elif datatype:
+            term = rdflib.Literal(value, datatype=datatype)
+        else:
+            term = rdflib.Literal(term)
+        return term
 
     def __handle_parents__(self, **kwargs):
         """Internal method handles parentTriplesMaps
@@ -370,7 +403,7 @@ class Processor(object):
     def run(self, **kwargs):
         """Run method iterates through triple maps and calls the execute
         method"""
-        if not 'timestamp' in kwargs:
+        if 'timestamp' not in kwargs:
             kwargs['timestamp'] = datetime.datetime.utcnow().isoformat()
 
         for map_key, triple_map in self.triple_maps.items():
@@ -384,7 +417,7 @@ class CSVProcessor(Processor):
 
     def __init__(self, **kwargs):
         if "fields" in kwargs:
-            self.fields = fields
+            self.fields = kwargs.pop("fields")
         if "rml_rules" in kwargs:
             rml_rules = kwargs.pop("rml_rules")
         super(CSVProcessor, self).__init__(rml_rules)
@@ -428,6 +461,52 @@ class XMLProcessor(Processor):
             return rdflib.URIRef(elem.text)
 
 
+    def __reference_handler__(self, **kwargs):
+        """Internal method for handling rr:reference in triples map
+
+        Keyword Args:
+
+        -------------
+            predicate_obj_map: SimpleNamespace
+            element: etree.Element
+            subject: rdflib.URIRef
+        """
+        subjects = []
+        pred_obj_map = kwargs.get("predicate_obj_map")
+        element = kwargs.get("element")
+        subject = kwargs.get("subject")
+        if pred_obj_map.reference is None:
+            return
+        predicate = pred_obj_map.predicate
+        found_elements = element.findall(str(row.reference),
+                                         self.xml_ns)
+        for found_elem in found_elements:
+            if found_elem.text is None or len(found_elem.text) < 1:
+                if pred_obj_map.constant is not None:
+                    self.output.add((subject,
+                                     predicate,
+                                     pred_obj_map.constant))
+                    continue
+                if not hasattr(pred_obj_map, "datatype") or \
+                    pred_obj_map.datatype is None:
+                    datatype = None
+                else:
+                    datatype = pred_obj_map.datatype
+                if pred_obj_map.delimiters is not None:
+                   subjects.extend(
+                        self.__generate_delimited_objects__(
+                            triple_map=triple_map,
+                            subject=subject,
+                            predicate=predicate,
+                            element=found_elem,
+                            delimiters=pred_obj_map.delimiters,
+                            datatype=datatype))
+                else:
+                    object_ = self.__generate_object__(found_elem, datatype)
+                    self.output.add((subject, predicate, object_))
+        return subjects
+
+
     def execute(self, triple_map, **kwargs):
         """Method executes mapping between source
 
@@ -458,53 +537,8 @@ class XMLProcessor(Processor):
                         subject=subject,
                         predicate=predicate,
                         **kwargs)
-                if row.reference is not None:
-                    found_elements = element.findall(str(row.reference),
-                                                     self.xml_ns)
-                    for found_elem in found_elements:
-                        if found_elem.text is None or len(found_elem.text) < 1:
-                            if row.constant is not None:
-                                self.output.add((subject,
-                                                 predicate,
-                                                 row.constant))
-                            continue
-
-                        if hasattr(row, 'datatype') and \
-                           row.datatype is not None:
-                            if len(row.delimiters) > 0:
-                                subjects.extend(self.__generate_delimited_objects__(
-                                    triple_map=triple_map,
-                                    subject=subject,
-                                    predicate=predicate,
-                                    element=found_elem,
-                                    delimiters=row.delimiters,
-                                    datatype=row.datatype))
-
-                            elif row.datatype == NS_MGR.xsd.anyURI:
-                                self.output.add(
-                                    (subject,
-                                     predicate,
-                                     rdflib.URIRef(found_elem.text)))
-                            else:
-                                self.output.add(
-                                     (subject,
-                                      predicate,
-                                      rdflib.Literal(
-                                         found_elem.text,
-                                         datatype=row.datatype)))
-                        else:
-                            if len(row.delimiters) > 0 :
-                                subjects.extend(self.__generate_delimited_objects__(
-                                    triple_map=triple_map,
-                                    subject=subject,
-                                    predicate=predicate,
-                                    element=found_elem,
-                                    delimiters=row.delimiters))
-                            else:
-                                self.output.add((subject,
-                                    predicate,
-                                    rdflib.Literal(found_elem.text)))
-                elif row.constant is not None:
+                subjects.extend(self.__reference_handler__(row))
+                if row.constant is not None:
                     self.output.add((subject,
                                      predicate,
                                      row.constant))
@@ -538,7 +572,7 @@ def __get_object__(binding):
         return binding
     elif isinstance(binding, collections.Iterable):
         for row in binding.values():
-            if isinstance(row, rdflib.URIRef) or isinstance(row, rdflib.Literal):
+            if isinstance(row, (rdflib.URIRef, rdflib.Literal)):
                 return row
             elif isinstance(row, str):
                 return rdflib.Literal(row)
@@ -581,12 +615,12 @@ class SPARQLProcessor(Processor):
             result = requests.post(
                 self.triplestore_url,
                 data={"query": sparql,
-                    "format": output_format})
+                      "format": output_format})
             if output_format == "json":
                 bindings = result.json().get("results").get("bindings")
             elif output_format == "xml":
                 xml_doc = etree.XML(result.text)
-                bindings = xml_doc.findall("results/bindings") 
+                bindings = xml_doc.findall("results/bindings")
         return bindings
 
     def run(self, **kwargs):
@@ -648,7 +682,7 @@ class SPARQLProcessor(Processor):
                 sparql_query = PREFIX + pred_obj_map.query.format(
                     **kwargs)
                 pre_obj_bindings = self.__get_bindings__(
-                    sparql_query, 
+                    sparql_query,
                     output_format)
                 for row in pre_obj_bindings:
                     object_ = __get_object__(row)
@@ -658,15 +692,15 @@ class SPARQLProcessor(Processor):
 
 
 def __set_prefix__():
-    global PREFIX
-    PREFIX = ""
+    prefix = ""
     for row in dir(NS_MGR):
         if row.startswith("__") or row is None:
             continue
-        PREFIX += "PREFIX {0}: <{1}>\n".format(row, getattr(NS_MGR, row))
-    return PREFIX
+        prefix += "PREFIX {0}: <{1}>\n".format(row, getattr(NS_MGR, row))
+    return prefix
 
-__set_prefix__()
+PREFIX = __set_prefix__()
+
 DEDUP_RULE = PREFIX + """
 SELECT DISTINCT ?class ?bf_match
 WHERE {
