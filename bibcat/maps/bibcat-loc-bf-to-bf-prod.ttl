@@ -715,10 +715,11 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
 <#LOCWork_subject_BFTopic> a rr:TriplesMap ;
     
     rml:logicalSource [
-        rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?subject
+        rml:referenceFormulation ql:JSON ; 
+        rml:query """SELECT DISTINCT ?subject ?label
                      WHERE {{ <{work}> bf:subject ?subject .
-                              ?subject rdf:type bf:Topic .}}""";
+                              ?subject rdf:type bf:Topic ;
+                                       rdfs:label ?label . }}""";
         rml:iterator "subject"
     ] ;
 
@@ -730,8 +731,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?label 
-                         WHERE {{ <{subject}> rdfs:label ?label . }}"""
+            rr:reference "label"
         ]
     ] .
 
@@ -739,9 +739,10 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     
     rml:logicalSource [
         rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?subject
+        rml:query """SELECT DISTINCT ?subject ?label
                      WHERE {{ <{work}> bf:subject ?subject .
-                              ?subject rdf:type bf:Agent .}}""";
+                              ?subject rdf:type bf:Agent ;
+                                       rdfs:label ?label .}}""";
         rml:iterator "subject"
     ] ;
 
@@ -753,7 +754,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?label 
-                         WHERE {{ <{subject}> rdfs:label ?label . }}"""
+            rr:reference "label"
+
         ]
     ] .
