@@ -1,6 +1,7 @@
 @prefix adms:   <http://www.w3.org/ns/adms#>.
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix bflc: <http://id.loc.gov/ontologies/bflc/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
 @prefix locn:   <http://www.w3.org/ns/locn#>.
@@ -66,7 +67,8 @@
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
                          WHERE {{ <{instance}> bf:instanceOf ?work .
-                                  ?work bf:contribution ?contribute . }}"""
+                                  ?work bf:contribution ?contribute . 
+                                  ?contribute }}"""
 
         ]
     ] .
@@ -89,7 +91,8 @@
         rr:predicate schema:url ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value 
-                         WHERE {{ <{item}> bf:electronicLocator ?value . }}""" 
+                         WHERE {{ <{item}> bf:electronicLocator ?bnode .
+                                  ?bnode bflc:location ?value }}""" 
         ]
     ] ;
 
@@ -141,9 +144,10 @@
   
     rml:logicalSource [
         rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?provider
+        rml:query """SELECT DISTINCT ?provider ?name
                   WHERE {{ <{instance}> bf:hasItem ?item .
-                           ?item bf:heldBy ?provider  . }}""";
+                           ?item bf:heldBy ?provider . 
+                           ?provider rdfs:label ?name }}""";
         rml:iterator "provider"
     ] ; 
     
@@ -155,7 +159,6 @@
     rr:predicateObjectMap [
         rr:predicate schema:name ;
         rr:objectMap [
-            rml:query """SELECT ?label 
-                        WHERE {{ <{provider}> rdfs:label ?label . }}"""
+           rr:reference "name" 
         ]
     ] .
