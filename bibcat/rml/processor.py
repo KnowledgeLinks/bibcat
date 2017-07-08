@@ -476,7 +476,7 @@ class XMLProcessor(Processor):
         element = kwargs.get("element")
         subject = kwargs.get("subject")
         if pred_obj_map.reference is None:
-            return
+            return subjects
         predicate = pred_obj_map.predicate
         found_elements = element.findall(str(row.reference),
                                          self.xml_ns)
@@ -537,7 +537,10 @@ class XMLProcessor(Processor):
                         subject=subject,
                         predicate=predicate,
                         **kwargs)
-                subjects.extend(self.__reference_handler__(row))
+                subjects.extend(self.__reference_handler__(
+                    predicate_obj_map=row,
+                    element=element,
+                    subject=subject))
                 if row.constant is not None:
                     self.output.add((subject,
                                      predicate,
@@ -692,12 +695,13 @@ class SPARQLProcessor(Processor):
 
 
 def __set_prefix__():
-    prefix = ""
+    global PREFIX
+    PREFIX = ""
     for row in dir(NS_MGR):
         if row.startswith("__") or row is None:
             continue
-        prefix += "PREFIX {0}: <{1}>\n".format(row, getattr(NS_MGR, row))
-    return prefix
+        PREFIX += "PREFIX {0}: <{1}>\n".format(row, getattr(NS_MGR, row))
+    return PREFIX
 
 PREFIX = __set_prefix__()
 

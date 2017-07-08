@@ -68,7 +68,7 @@
             rml:query """SELECT DISTINCT ?value
                          WHERE {{ <{instance}> bf:instanceOf ?work .
                                   ?work bf:contribution ?contribute . 
-                                  ?contribute }}"""
+                                  ?contribute rdf:value ?value }}"""
 
         ]
     ] .
