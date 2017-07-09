@@ -34,7 +34,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
 
 
 
-<#LOCBFItem_to_BFItemProduction> a rr:TriplesMap ;
+<#LOCBFItem_to_BFLeanItem> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
@@ -85,8 +85,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     ] .
 
 
-
-<#LOCBFInstance_to_BFInstanceProduction> a rr:TriplesMap ;
+<#LOCBFInstance_to_BFLeanInstance> a rr:TriplesMap ;
     
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
@@ -189,6 +188,28 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
         ]
 
     ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:provisionActivityStatement ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                    WHERE {{
+                        <{instance}> bf:provisionActivityStatement ?value .
+                    }}"""
+        ]
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:responsibilityStatement ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                WHERE {{
+                    <{instance}> bf:responsibilityStatement ?value .
+                }}"""
+        ]
+    ] ;
+ 
 
     rr:predicateObjectMap [
         rr:predicate bf:soundCharacteristic ;

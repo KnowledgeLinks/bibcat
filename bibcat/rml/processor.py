@@ -80,67 +80,6 @@ class Processor(object):
             self.triple_maps[map_key].predicateObjectMap = \
                 self.__predicate_object_map__(triple_map_iri)
 
-    def __deduplicate__(self):
-        """Simple de-duplication of the subject based on the value
-        and class of the subject_iri.
-
-        """
-        existing_iri = dict()
-        for row in self.rml.query(DEDUP_RULE):
-            class_, filter_pred = row
-            for subj_iri in self.output.subjects(
-                    predicate=NS_MGR.rdf.type,
-                    object=class_):
-                value = self.output.value(subject=subj_iri,
-                                          predicate=filter_pred)
-                if str(value) in existing_iri:
-                    self.__replace_iri__(subj_iri,
-                                         existing_iri[str(value)])
-                else:
-                    existing_iri[str(value)] = subj_iri
-                # Now deduplicate if existing triplestore
-                if not hasattr(self, "triplestore_url") or self.triplestore_url is None:
-                    continue
-                query = DEDUP_TRIPLESTORE.format(
-                    class_,
-                    filter_pred,
-                    value)
-                dedup_result = requests.post(
-                    self.triplestore_url,
-                    data={"query": query,
-                          "format": "json"})
-                if dedup_result.status_code > 399:
-                    continue
-                bindings = dedup_result.json().get('results').get('bindings')
-                if bindings is not None:
-                    new_iri = rdflib.URIRef(
-                        bindings[0].get('subj').get('value'))
-                    self.__replace_iri__(existing_iri[value],
-                                         new_iri)
-
-
-
-    def __replace_iri__(self, src_iri, new_iri):
-        """Method replaces all triples with an original IRI replaced with the
-        equivalent triples using the new IRI.
-
-        Parameters
-
-        ----------
-            src_iri : rdflib URIRef, Original or source IRI
-            new_iri : rdflib.URIREf, New replacement IRI
-        """
-        # Replace predicate and objects
-        for pred, obj in self.output.predicate_objects(subject=src_iri):
-            self.output.remove((src_iri, pred, obj))
-            self.output.add((new_iri, pred, obj))
-        # Replace subject and predicates
-        for subj, pred in self.output.subject_predicates(object=src_iri):
-            self.output.remove((subj, pred, src_iri))
-            self.output.add((subj, pred, new_iri))
-
-
-
     def __graph__(self):
         """Method returns a new graph with all of the namespaces in
         RML graph"""
@@ -184,7 +123,6 @@ class Processor(object):
                     self.output.add((new_subject, NS_MGR.rdf.type, class_))
                     for parent_subject, parent_predicate in self.output.subject_predicates(
                             object=subject):
-           #self.__replace_iri__(subject, new_subject)
                         self.output.add((parent_subject, parent_predicate, new_subject))
                 else:
                     new_subject = subject
@@ -409,9 +347,7 @@ class Processor(object):
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs)
-        # Post-processing
-        self.__deduplicate__()
-
+        
 class CSVProcessor(Processor):
     """CSV RDF Mapping Processor"""
 
@@ -429,6 +365,27 @@ class CSVProcessor(Processor):
         args:
             triple_map(SimpleNamespace): Triple Map
         """
+
+class JSONProcessor(Processor):
+    """JSON RDF Mapping Processor"""
+
+    def __init__(self, **kwargs):
+        try:
+            rml_rules = kwargs.pop("rml_rules")
+        except KeyError:
+            rml_rules = []
+        super(JSONProcessor, self).__init__(rml_rules)
+
+    def execute(self, triple_map, **kwargs):
+        """Method executes mapping between JSON source and
+        output RDF
+
+        Args:
+
+        -----
+            triple_map: SimpleNamespace
+        """
+
 
 class XMLProcessor(Processor):
     """XML RDF Mapping Processor"""
