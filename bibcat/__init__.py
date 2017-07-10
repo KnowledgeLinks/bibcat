@@ -3,6 +3,8 @@ import re
 import urllib.parse
 import pkg_resources
 import rdflib
+from rdflib.term import _is_valid_uri
+
 __author__ = "Jeremy Nelson, Mike Stabile, Jay Peterson"
 __version__ = pkg_resources.get_distribution("bibcat").version
 
@@ -37,7 +39,7 @@ def clean_uris(graph):
     }"""
     for iri in graph.query(ALL_URI_SPARQL):
          try:
-             rdflib.util.check_subject(str(iri))
+             _is_valid_uri(str(iri))
          except rdflib.exceptions.SubjectTypeError:
              fix_uri(iri)
 

@@ -159,7 +159,7 @@ class Processor(object):
         elif datatype:
             term = rdflib.Literal(value, datatype=datatype)
         else:
-            term = rdflib.Literal(term)
+            term = rdflib.Literal(value)
         return term
 
     def __handle_parents__(self, **kwargs):
@@ -435,32 +435,33 @@ class XMLProcessor(Processor):
         if pred_obj_map.reference is None:
             return subjects
         predicate = pred_obj_map.predicate
-        found_elements = element.findall(str(row.reference),
+        found_elements = element.findall(str(pred_obj_map.reference),
                                          self.xml_ns)
         for found_elem in found_elements:
             if found_elem.text is None or len(found_elem.text) < 1:
-                if pred_obj_map.constant is not None:
-                    self.output.add((subject,
-                                     predicate,
-                                     pred_obj_map.constant))
-                    continue
-                if not hasattr(pred_obj_map, "datatype") or \
-                    pred_obj_map.datatype is None:
-                    datatype = None
-                else:
-                    datatype = pred_obj_map.datatype
-                if pred_obj_map.delimiters is not None:
-                   subjects.extend(
-                        self.__generate_delimited_objects__(
-                            triple_map=triple_map,
-                            subject=subject,
-                            predicate=predicate,
-                            element=found_elem,
-                            delimiters=pred_obj_map.delimiters,
-                            datatype=datatype))
-                else:
-                    object_ = self.__generate_object__(found_elem, datatype)
-                    self.output.add((subject, predicate, object_))
+                continue
+            if pred_obj_map.constant is not None:
+                self.output.add((subject,
+                                 predicate,
+                                 pred_obj_map.constant))
+                continue
+            if not hasattr(pred_obj_map, "datatype") or \
+                pred_obj_map.datatype is None:
+                datatype = None
+            else:
+                datatype = pred_obj_map.datatype
+            if pred_obj_map.delimiters != []:
+               subjects.extend(
+                    self.__generate_delimited_objects__(
+                        triple_map=pred_obj_map,
+                        subject=subject,
+                        predicate=predicate,
+                        element=found_elem,
+                        delimiters=pred_obj_map.delimiters,
+                        datatype=datatype))
+            else:
+                object_ = self.__generate_object_term__(datatype, found_elem.text)
+                self.output.add((subject, predicate, object_))
         return subjects
 
 

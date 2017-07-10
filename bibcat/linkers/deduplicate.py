@@ -15,6 +15,7 @@ except ImportError:
 
 __author__ = "Jeremy Nelson"
 
+SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 
 class Deduplicator(object):
     """Class de-duplicates and generates IRIs"""
@@ -65,7 +66,7 @@ class Deduplicator(object):
             if existing_label != label:
                 # Add label as an skos:altLabel
                 self.output.add((entity_iri, 
-                                 processor.NS_MGR.skos.altLabel, 
+                                 SKOS.altLabel, 
                                  label))
         else:
             class_name = str(iri_class).split("/")[-1].lower()
