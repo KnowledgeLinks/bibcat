@@ -72,7 +72,7 @@ class OAIPMHIngester(object):
             if not ident in self.identifiers:
                 self.identifiers[ident] = 1
         total_size = int(resume_token.attrib.get("completeListSize", 0))
-        
+        sample_size = kwargs.get('sample_size')
         start = datetime.datetime.utcnow()
         msg = "Started Retrieval of {} Identifiers {}".format(total_size, start)
         try:
@@ -131,11 +131,9 @@ class ContentDMIngester(OAIPMHIngester):
         if not isinstance(rml_rules, list):
             rml_rules = [rml_rules,]
         # Add rml base and OAI-PMH DC rules
-        for rulefile in ["rml-bibcat-oai-pmh-dc-xml-to-bf.ttl",
-                         "rml-bibcat-base.ttl"]:
-            rml_rules.append(os.path.join(BIBCAT_BASE,
-                os.path.join("rdfw-definitions", 
-                             rulefile)))
+        for rulefile in ["bibcat-oai-pmh-dc-xml-to-bf.ttl",
+                         "bibcat-base.ttl"]:
+            rml_rules.append(rulefile)
         self.processor = XMLProcessor(
             institution_iri=kwargs.get("institution_iri"),
             instance_iri = kwargs.get('instance_iri'),
@@ -165,7 +163,7 @@ class ContentDMIngester(OAIPMHIngester):
         initial_doc = etree.XML(initial_result.text.encode())
         token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
         records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
-        self.repo_graph = self.processor.__graph__()
+        self.repo_graph = rdflib.Graph()#self.processor.__graph__()
         count = 0
         for i,rec in enumerate(records):
             self.processor.run(rec, **kwargs)
@@ -234,18 +232,20 @@ class IslandoraIngester(OAIPMHIngester):
             kwargs['repository'] = urllib.parse.urljoin(
                 kwargs['repository'], 
                 "oai2")
+        self.repository = kwargs.get('repository')
         super(IslandoraIngester, self).__init__(**kwargs)
-        self.repo_graph = new_graph()
+        self.repo_graph = rdflib.Graph()
+        self.repo_graph.namespace_manager.bind("bf", "http://id.loc.gov/ontologies/bibframe/")
+        self.repo_graph.namespace_manager.bind("relators", "http://id.loc.gov/vocabulary/relators/")
         self.base_url = kwargs.get('base_url')
         rules_ttl = kwargs.get("rules_ttl", [])
         if self.metadata_formats_doc.find(
             IslandoraIngester.MODS_XPATH, 
             NS) is not None:
             self.metadataPrefix = "mods"
-            for rule_name in ["rml-bibcat-base.ttl", 
-                              "rml-bibcat-mods-to-bf.ttl"]:
-                rules_ttl.append(os.path.join(BIBCAT_BASE,
-                    os.path.join("rdfw-definitions", rule_name)))
+            for rule_name in ["bibcat-base.ttl", 
+                              "bibcat-mods-to-bf.ttl"]:
+                rules_ttl.append(rule_name)
             self.processor = XMLProcessor(
                 rml_rules=rules_ttl,
                 base_url=self.base_url,
@@ -255,7 +255,7 @@ class IslandoraIngester(OAIPMHIngester):
         else:
             rules_ttl.append(
                 os.path.join(BIBCAT_BASE,
-                    os.path.join("rdfw-definitions", "rml-bibcat-base.ttl")))
+                    os.path.join("rdfw-definitions", "bibcat-base.ttl")))
             self.processor = XMLProcessor(
                 rml_rules=rules_ttl)
 
@@ -325,8 +325,9 @@ class IslandoraIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)
+        sample_size = kwargs.get('sample_size')
         super(IslandoraIngester, self).harvest(
-            sample_size=kwargs.get('sample_size'))
+            sample_size=sample_size)
         for i,row in enumerate(self.identifiers.keys()):
             if not i%10 and i > 0:
                 try:
@@ -339,7 +340,7 @@ class IslandoraIngester(OAIPMHIngester):
                 except io.UnsupportedOperation:
                     print(i, end="")
             pid = row.split(":")[-1].replace("_", ":")
-            item_url = urllib.parse.urljoin(self.repository_url,
+            item_url = urllib.parse.urljoin(self.repository,
                 "islandora/object/{0}/".format(pid))
             item_uri = rdflib.URIRef(item_url)
             rels_ext, rels_ext_doc = self.__process_rels_ext__(

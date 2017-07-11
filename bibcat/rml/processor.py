@@ -79,7 +79,8 @@ class Processor(object):
     def __graph__(self):
         """Method returns a new graph with all of the namespaces in
         RML graph"""
-        graph = rdflib.Graph(namespace_manager=self.rml.namespace_manager)
+        #graph = rdflib.Graph(namespace_manager=self.rml.namespace_manager)
+        graph = rdflib.Graph()
         return graph
 
 

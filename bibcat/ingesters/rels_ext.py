@@ -11,17 +11,12 @@ import os
 import rdflib
 import requests
 
-from ..rml.processor import XMLProcessor
-from .ingester import BIBCAT_BASE, NS_MGR
+from bibcat.rml.processor import XMLProcessor
 
 class RELSEXTIngester(XMLProcessor):
 
     def __init__(self, **kwargs):
-        rules = [os.path.join(
-                    BIBCAT_BASE,
-                    os.path.join(
-                        "rdfw-definitions",
-                        "rml-bibcat-rels-ext.ttl"))]
+        rules = ["bibcat-rels-ext.ttl"]
         if "rules_ttl" in kwargs:
             tmp_rules = kwargs.get("rules_ttl")
             if isinstance(tmp_rules, str):
