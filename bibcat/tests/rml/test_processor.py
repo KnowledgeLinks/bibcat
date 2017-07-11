@@ -7,10 +7,12 @@ import unittest
 from unittest import mock
 from types import SimpleNamespace
 try:
-    from bibcat.rml.processor import Processor, __get_object__
+    import bibcat.rml.processor as processor
+    import bibcat    
 except ImportError:
     sys.path.append(os.path.abspath("."))
-    from bibcat.rml.processor import Processor, __get_object__
+    import ibcat.rml.processor as processor
+    import bibcat
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
 FIXURES_PATH = os.path.join(
@@ -23,28 +25,28 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
         pass
 
     def test_defaults(self):
-        self.assertRaises(TypeError, Processor)
+        self.assertRaises(TypeError, processor.Processor)
      
     def test_bibcat_base(self):
-        processor = Processor(
+        base_processor = processor.Processor(
             rml_rules=os.path.join(FIXURES_PATH,
                                    "rml-basic.ttl"))
-        self.assertTrue(isinstance(processor.rml, rdflib.Graph))
+        self.assertTrue(isinstance(base_processor.rml, rdflib.Graph))
 
     def test_bibcat_rules_missing_rml_rules_error(self):
-        self.assertRaises(TypeError, Processor, rml_rules=None)
+        self.assertRaises(TypeError, processor.Processor, rml_rules=None)
         # Windows error
         if sys.platform.startswith("win"):
-            self.assertRaises(PermissionError, Processor, rml_rules="")
+            self.assertRaises(PermissionError, processor.Processor, rml_rules="")
         else:
-            self.assertRaises(IsADirectoryError, Processor, rml_rules="")
-        self.assertRaises(Exception, Processor, rml_rules=[])
+            self.assertRaises(IsADirectoryError, processor.Processor, rml_rules="")
+        self.assertRaises(Exception, processor.Processor, rml_rules=[])
 
 
     def test_bibcat_rules_blank_graphs_rml_rules_error(self):
-        self.assertRaises(Exception, Processor, rml_rules=rdflib.Graph())
+        self.assertRaises(Exception, processor.Processor, rml_rules=rdflib.Graph())
         self.assertRaises(Exception, 
-            Processor, 
+            processor.Processor, 
             rml_rules=rdflib.ConjunctiveGraph())
         
 
@@ -53,22 +55,28 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
                                "rml-basic.ttl")
         self.assertTrue(os.path.exists(raw_rml))
         self.assertTrue(
-            isinstance(Processor(raw_rml),
-                       Processor))
+            isinstance(processor.Processor(raw_rml),
+                       processor.Processor))
                       
     def test_bibcat_package_rule(self):
         self.assertTrue(
-            isinstance(Processor("bibcat-base.ttl"),
-                      Processor))
+            isinstance(processor.Processor("bibcat-base.ttl"),
+                      processor.Processor))
  
     def test_bibcat_acceptable_list_rules(self):
         rules = []
         for name in ["rml-basic.ttl", "rml-basic.ttl"]:
              rules.append(os.path.join(FIXURES_PATH, name))
         self.assertTrue(
-            isinstance(Processor(rules),
-                       Processor))
+            isinstance(processor.Processor(rules),
+                       processor.Processor))
+    
+    def test_version(self):
+        # Should be same as bibcat
+        self.assertEqual(processor.__version__,
+                         bibcat.__version__)
 
+        
 
     def tearDown(self):
         pass 
@@ -76,7 +84,7 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
 class TestRDFMappingLanguageProcessorGenerateTerms(unittest.TestCase):
 
     def setUp(self):
-        self.processor = Processor(
+        self.processor = processor.Processor(
             rml_rules=os.path.join(FIXURES_PATH,
                                    "rml-basic.ttl"))
         self.rr = rdflib.Namespace("http://www.w3.org/ns/r2rml#")
@@ -157,14 +165,14 @@ class TestGetObjectInternalFunction(unittest.TestCase):
 
     def test_default_error(self):
         # Binding Required
-        self.assertRaises(TypeError, __get_object__) 
+        self.assertRaises(TypeError, processor.__get_object__) 
 
     def test_None(self):
-        self.assertEqual(__get_object__(None), None)
+        self.assertEqual(processor.__get_object__(None), None)
 
     def test_simple_binding(self):
         binding = {"value": "1234"}
-        self.assertEqual(__get_object__(binding),
+        self.assertEqual(processor.__get_object__(binding),
             rdflib.Literal(binding.get('value')))
 
     def tearDown(self):
@@ -173,7 +181,7 @@ class TestGetObjectInternalFunction(unittest.TestCase):
 class Test__graph__Method(unittest.TestCase):
 
     def setUp(self):
-        self.processor = Processor(
+        self.processor = processor.Processor(
             rml_rules=os.path.join(FIXURES_PATH,
                                    "rml-basic.ttl"))
 
@@ -193,7 +201,7 @@ class Test__graph__Method(unittest.TestCase):
 class Test__handle_parents__Method(unittest.TestCase):
 
     def setUp(self):
-        self.processor = Processor(
+        self.processor = processor.Processor(
             rml_rules=os.path.join(FIXURES_PATH,
                                    "rml-basic.ttl"))
 

@@ -26,14 +26,7 @@ BIBCAT_BASE = os.path.abspath(
         os.path.dirname(__file__))[0])
 NS_MGR = SimpleNamespace()
 PREFIX = None
-try:
-    VERSION_PATH = os.path.join(
-        BIBCAT_BASE,
-        "VERSION")
-    with open(VERSION_PATH) as version:
-        __version__ = version.read().strip()
-except FileNotFoundError:
-    __version__ = "unknown"
+__version__ = bibcat.__version__
 
 try:
     from lxml import etree
@@ -416,7 +409,7 @@ class JSONProcessor(Processor):
         """
         subjects = []
         pred_obj_map = kwargs.get("predicate_obj_map")
-        element = kwargs.get("obj")
+        obj = kwargs.get("obj")
         subject = kwargs.get("subject")
         if pred_obj_map.reference is None:
             return subjects
@@ -447,7 +440,6 @@ class JSONProcessor(Processor):
             results = [r.value for r in json_path_exp.find(json_object)][0]
         for row in results:
             subject = self.generate_term(term_map=triple_map.subjectMap,
-                                         obj=row,
                                          **kwargs)
             for pred_obj_map in triple_map.predicateObjectMap:
                 predicate = pred_obj_map.predicate
@@ -462,10 +454,11 @@ class JSONProcessor(Processor):
                         parent_map=pred_obj_map.parentTriplesMap,
                         subject=subject,
                         predicate=predicate,
+                        obj=row,
                         **kwargs)
                 if pred_obj_map.reference is not None:
                     ref_exp = jsonpath_ng.parse(str(pred_obj_map.reference))
-                    found_objects = [r.value for r in ref_exp.parse(row)]
+                    found_objects = [r.value for r in ref_exp.find(row)]
                     for obj in found_objects:
                         if rdflib.term._is_valid_uri(obj):
                             rdf_obj = rdflib.URIRef(str(obj))
