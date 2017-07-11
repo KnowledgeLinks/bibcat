@@ -9,13 +9,16 @@ __author__ = "Jeremy Nelson"
 # Standard Python Modules
 import collections
 import datetime
+import json
 import os
 from types import SimpleNamespace
 
 # 3rd party modules
+import bibcat
 import rdflib
 import requests
 
+import jsonpath_ng
 from bibcat.maps import get_map
 
 BIBCAT_BASE = os.path.abspath(
@@ -343,7 +346,8 @@ class Processor(object):
         method"""
         if 'timestamp' not in kwargs:
             kwargs['timestamp'] = datetime.datetime.utcnow().isoformat()
-
+        if 'version' not in kwargs:
+            kwargs['version'] = bibcat.__version__
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs)
@@ -358,12 +362,28 @@ class CSVProcessor(Processor):
             rml_rules = kwargs.pop("rml_rules")
         super(CSVProcessor, self).__init__(rml_rules)
 
+    def __generate_reference__(self, triple_map, **kwargs):
+        """Extracts the value of either column by key or by position """
+        pass
+
     def execute(self, triple_map, **kwargs):
         """Method executes mapping between CSV source and
         output RDF
 
         args:
             triple_map(SimpleNamespace): Triple Map
+        """
+        pass
+
+    def run(self, csv_file, **kwargs):
+        """Method takes either path to the CSV file, csv.Reader 
+        or a csv.DictReader instance and iterates through mappings
+
+        
+        Args:
+
+        -----
+            csv_file: str, csv.DictReader
         """
 
 class JSONProcessor(Processor):
@@ -376,6 +396,37 @@ class JSONProcessor(Processor):
             rml_rules = []
         super(JSONProcessor, self).__init__(rml_rules)
 
+    def __generate_reference__(self,  triple_map, **kwargs):
+        json_obj = kwargs.get("obj")
+        path_expr = jsonpath_ng.parse(triple_map.reference)
+        results = [r.value for r in path_expr.find(json_obj)]
+        for row in results:
+            if rdflib.term._is_valid_uri(row):
+                return rdflib.URIRef(row)
+
+    def __reference_handler__(self, **kwargs):
+        """Internal method for handling rr:reference in triples map
+
+        Keyword Args:
+
+        -------------
+            predicate_obj_map: SimpleNamespace
+            obj: dict
+            subject: rdflib.URIRef
+        """
+        subjects = []
+        pred_obj_map = kwargs.get("predicate_obj_map")
+        element = kwargs.get("obj")
+        subject = kwargs.get("subject")
+        if pred_obj_map.reference is None:
+            return subjects
+        predicate = pred_obj_map.predicate
+        ref_exp = jsonpath_ng.parse(str(pred_obj_map.refernce))
+        found_objects = [r.value for r in ref_exp(obj)]
+        for row in found_objects:
+            self.output.append(subject, predicate, rdflib.Literal(row))
+            
+ 
     def execute(self, triple_map, **kwargs):
         """Method executes mapping between JSON source and
         output RDF
@@ -385,7 +436,68 @@ class JSONProcessor(Processor):
         -----
             triple_map: SimpleNamespace
         """
+        subjects = []
+        logical_src_iterator = str(triple_map.logicalSource.iterator)
+        json_object = kwargs.get('obj', self.source)
+        # Removes '.' as a generic iterator, replace with '@'
+        if logical_src_iterator == ".":
+            results = [None,]
+        else:
+            json_path_exp = jsonpath_ng.parse(logical_src_iterator)
+            results = [r.value for r in json_path_exp.find(json_object)][0]
+        for row in results:
+            subject = self.generate_term(term_map=triple_map.subjectMap,
+                                         obj=row,
+                                         **kwargs)
+            for pred_obj_map in triple_map.predicateObjectMap:
+                predicate = pred_obj_map.predicate
+                if pred_obj_map.template is not None:
+                    self.output.add((
+                        subject,
+                        predicate,
+                        self.generate_term(term_map=pred_obj_map, **kwargs)))
+                
+                if pred_obj_map.parentTriplesMap is not None:
+                    self.__handle_parents__(
+                        parent_map=pred_obj_map.parentTriplesMap,
+                        subject=subject,
+                        predicate=predicate,
+                        **kwargs)
+                if pred_obj_map.reference is not None:
+                    ref_exp = jsonpath_ng.parse(str(pred_obj_map.reference))
+                    found_objects = [r.value for r in ref_exp.parse(row)]
+                    for obj in found_objects:
+                        if rdflib.term._is_valid_uri(obj):
+                            rdf_obj = rdflib.URIRef(str(obj))
+                        else:
+                            rdf_obj = rdflib.Literal(str(obj))
+                        self.output.add((subject, predicate, ref_obj))
+                if pred_obj_map.constant is not None:
+                    self.output.add((subject,
+                                     predicate,
+                                     pred_obj_map.constant))
+            subjects.append(subject)
+        return subjects
+            
+        
 
+
+    def run(self, source, **kwargs):
+        """Method takes a JSON source and any keywords and transforms from
+        JSON to Lean BIBFRAME 2.0 triples
+
+        Args:
+
+        ----
+            source: str, dict
+        """
+        self.output = self.__graph__()
+        if isinstance(source, str):
+            import json
+            source = json.loads(source)
+        self.source = source
+        super(JSONProcessor, self).run(**kwargs)
+        
 
 class XMLProcessor(Processor):
     """XML RDF Mapping Processor"""

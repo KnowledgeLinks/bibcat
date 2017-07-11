@@ -33,7 +33,11 @@ class TestRDFMappingLanguageProcessor(unittest.TestCase):
 
     def test_bibcat_rules_missing_rml_rules_error(self):
         self.assertRaises(TypeError, Processor, rml_rules=None)
-        self.assertRaises(IsADirectoryError, Processor, rml_rules="")
+        # Windows error
+        if sys.platform.startswith("win"):
+            self.assertRaises(PermissionError, Processor, rml_rules="")
+        else:
+            self.assertRaises(IsADirectoryError, Processor, rml_rules="")
         self.assertRaises(Exception, Processor, rml_rules=[])
 
 
