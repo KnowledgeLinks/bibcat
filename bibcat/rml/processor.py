@@ -81,6 +81,8 @@ class Processor(object):
         RML graph"""
         #graph = rdflib.Graph(namespace_manager=self.rml.namespace_manager)
         graph = rdflib.Graph()
+        for prefix, name in self.rml.namespaces():
+            graph.namespace_manager.bind(prefix, name)
         return graph
 
 
@@ -638,15 +640,23 @@ def __get_object__(binding):
     if isinstance(binding, rdflib.term.Node):
         return binding
     elif isinstance(binding, collections.Iterable):
-        for row in binding.values():
+        for key, row in binding.items():
             if isinstance(row, (rdflib.URIRef, rdflib.Literal)):
                 return row
+            elif isinstance(row, dict):
+                if row.get('type').startswith('uri'):
+                    return rdflib.URIRef(row.get('value'))
+                #elif row.get('type').startswith('literal'):
+                else:
+                    return rdflib.Literal(row.get('value'))
+            elif isinstance(row, tuple):
+                print(row)
             elif isinstance(row, str):
+                if row.startswith("literal") or "xml:lang" in key:
+                    continue
                 return rdflib.Literal(row)
-            elif row.get('type').startswith('uri'):
-                return rdflib.URIRef(row.get('value'))
-            elif row.get('type').startswith('literal'):
-                return rdflib.Literal(row.get('value'))
+
+ 
 
 
 class SPARQLProcessor(Processor):
@@ -736,6 +746,7 @@ class SPARQLProcessor(Processor):
                         **kwargs)
                     continue
                 if pred_obj_map.reference is not None:
+                    #import pdb; pdb.set_trace()
                     ref_key = str(pred_obj_map.reference)
                     if ref_key in binding:
                         object_ = __get_object__(

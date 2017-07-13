@@ -65,20 +65,68 @@
     rr:predicateObjectMap [
         rr:predicate schema:author ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?value
+            rml:query """SELECT DISTINCT ?label
                          WHERE {{ <{instance}> bf:instanceOf ?work .
-                                  ?work bf:contribution ?contribute . 
-                                  ?contribute rdf:value ?value }}"""
+                                  ?work bf:contribution ?contribute .
+                                  ?contribute bf:role relators:aut ;
+                                              bf:agent ?agent .
+                                  ?agent rdfs:label ?label}}"""
 
         ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:contributor ;
+        rr:objectMap [
+             rml:query """SELECT DISTINCT ?label
+                         WHERE {{ <{instance}> bf:instanceOf ?work .
+                                  ?work bf:contribution ?contribute .
+                                  ?contribute bf:role relators:ctb ;
+                                              bf:agent ?agent .
+                                  ?agent rdfs:label ?label}}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:datePublished ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                WHERE {{ <{instance}> bf:provisionActivity ?activity .
+                         ?activity a bf:Publication ;
+                                    bf:date ?value . }}"""
+        ]
+    ] ;
+
+
+     rr:predicateObjectMap [
+        rr:predicate schema:keywords ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label 
+                WHERE {{ <{instance}> bf:instanceOf ?work .
+                         ?work bf:subject ?subject .
+                         ?subject  rdfs:label ?label . }}"""
+        ]
+    ]  ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:isbn ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+            WHERE {{
+                <{instance}> bf:identifiedBy ?isbn .
+                ?isbn rdf:type bf:Isbn ;
+                      rdf:value ?value .
+            }}"""
+        ]
     ] .
+   
 
 <#BIBFRAME_ITEM2CreativeWork> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:referenceFormulation ql:JSON ;
         rml:query """SELECT DISTINCT ?item
-                  WHERE {{ <{instance}> bf:hasItem ?item . }}""";
+                  WHERE {{ ?item bf:itemOf <{instance}> . }}""";
         rml:iterator "item"
     ] ;
 
@@ -114,9 +162,12 @@
 
     rml:logicalSource [
         rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?mark
-                  WHERE {{ <{instance}> bf:hasItem ?item .
-                           ?item bf:shelfmark ?mark  . }}""";
+        rml:query """SELECT DISTINCT ?mark ?label
+                  WHERE {{  <{item}> bf:shelfMark ?mark  . 
+                            ?mark rdfs:label ?label ;
+                                 bf:source ?source
+
+                        }}""";
         rml:iterator "mark"
     ] ; 
 
@@ -135,9 +186,8 @@
     rr:predicateObjectMap [
         rr:predicate schema:value ;
         rr:objectMap [
-            rml:query """SELECT ?value 
-                        WHERE {{ _:{mark} rdfs:label ?value . }}"""
-        ]
+            rr:reference "label"
+       ]
     ] .
 
 <#BIBFRAME_ITEM2Provider> a rr:TriplesMap ;
@@ -145,9 +195,9 @@
     rml:logicalSource [
         rml:referenceFormulation ql:JSON ;
         rml:query """SELECT DISTINCT ?provider ?name
-                  WHERE {{ <{instance}> bf:hasItem ?item .
-                           ?item bf:heldBy ?provider . 
-                           ?provider rdfs:label ?name }}""";
+                  WHERE {{ <{item}>  bf:heldBy ?provider . 
+                           OPTIONAL {{ ?provider rdfs:label ?name }}
+                         }}""";
         rml:iterator "provider"
     ] ; 
     

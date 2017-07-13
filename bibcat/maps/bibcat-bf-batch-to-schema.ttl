@@ -57,9 +57,34 @@
     rr:predicateObjectMap [
         rr:predicate schema:author ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?value
+            rml:query """SELECT DISTINCT ?label
                          WHERE {{ <{instance}> bf:instanceOf ?work .
-                                  ?work bf:contribution ?contribute . }}"""
+                                  ?work bf:contribution ?contribute .
+                                  ?contribute bf:role relators:aut ;
+                                              bf:agent ?agent .
+                                  ?agent rdfs:label ?label}}"""
 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:contributor ;
+        rr:objectMap [
+             rml:query """SELECT DISTINCT ?label
+                         WHERE {{ <{instance}> bf:instanceOf ?work .
+                                  ?work bf:contribution ?contribute .
+                                  ?contribute bf:role relators:ctb ;
+                                              bf:agent ?agent .
+                                  ?agent rdfs:label ?label}}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:datePublished ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                WHERE {{ <{instance}> bf:provisionActivity ?activity .
+                         ?activity a bf:Publication ;
+                                   bf:date ?value . }}"""
         ]
     ] .
