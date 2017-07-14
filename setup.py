@@ -3,12 +3,10 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, "VERSION")) as version:
-    VERSION = version.read()
 
 setup(
     name="bibcat",
-    version=VERSION,
+    version="1.10.1",
     description="BIBCAT RDF Framework Application",
     author="KnowledgeLinks",
     author_email="knowledgelinks.io@gmail.com",
