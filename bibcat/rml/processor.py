@@ -729,7 +729,11 @@ class SPARQLProcessor(Processor):
             if isinstance(entity_raw, (rdflib.URIRef, rdflib.BNode)):
                 entity = entity_raw
             else:
-                entity = rdflib.URIRef(entity_raw.get('value'))
+                raw_value = entity_raw.get('value')
+                if entity_raw.get('type').startswith('bnode'):
+                    entity = rdflib.BNode(raw_value)
+                else:
+                    entity = rdflib.URIRef(raw_value)
             if triple_map.subjectMap.class_ is not None:
                 self.output.add((entity,
                                  NS_MGR.rdf.type,

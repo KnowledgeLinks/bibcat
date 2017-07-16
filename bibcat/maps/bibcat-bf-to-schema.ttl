@@ -118,6 +118,16 @@
                       rdf:value ?value .
             }}"""
         ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:publisher ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+            WHERE {{
+                <{instance}> bf:provisionActivityStatement ?value .
+            }}"""
+        ]
     ] .
    
 
@@ -152,6 +162,44 @@
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate schema:fileFormat ;
+        rr:objectmap [
+            rml:query """SELECT ?value
+                WHERE {{ <{item}> bf:itemOf ?instance .
+                   ?instance rdf:type bf:Electronic .
+                    BIND("pdf" as ?value)
+                }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:fileFormat ;
+        rr:objectMap [
+            rml:query """SELECT ?value
+            WHERE {{ <{item}> bf:itemOf ?instance .
+                    ?instance bf:instanceOf ?work .
+                    ?work rdf:type bf:MovingImage .
+                    BIND("video" as ?value)
+            }}
+            """
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:fileFormat ;
+        rr:objectMap [
+            rml:query """SELECT ?value
+            WHERE {{ <{item}> bf:itemOf ?instance .
+                    ?instance bf:instanceOf ?work .
+                    ?work rdf:type bf:MovingImage .
+                    OPTIONAL {{ ?work rdf:type bf:Text }}
+                    OPTIONAL {{ ?instance rdf:type bf:Print }}
+                    BIND("print" as ?value)
+            }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
         rr:predicate schema:identifier ;
         rr:objectMap [
             rr:parentTriplesMap <#BIBFRAME_ITEM2ShelfMarkIdentifier> 
@@ -164,9 +212,7 @@
         rml:referenceFormulation ql:JSON ;
         rml:query """SELECT DISTINCT ?mark ?label
                   WHERE {{  <{item}> bf:shelfMark ?mark  . 
-                            ?mark rdfs:label ?label ;
-                                 bf:source ?source
-
+                            ?mark rdfs:label ?label .
                         }}""";
         rml:iterator "mark"
     ] ; 
@@ -194,9 +240,11 @@
   
     rml:logicalSource [
         rml:referenceFormulation ql:JSON ;
-        rml:query """SELECT DISTINCT ?provider ?name
+        rml:query """SELECT DISTINCT ?provider ?name ?logo
                   WHERE {{ <{item}>  bf:heldBy ?provider . 
-                           OPTIONAL {{ ?provider rdfs:label ?name }}
+                           ?provider schema:logo ?logo .
+                           ?library schema:parentOrganization ?provider ;
+                                    rdfs:label ?name .
                          }}""";
         rml:iterator "provider"
     ] ; 
@@ -205,10 +253,73 @@
         rr:termType rr:BlankNode ;
         rr:class schema:Organization 
     ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:address ;
+        rr:objectMap [
+            rr:parentTriplesMap <#ProviderAddress>
+        ]
+    ] ;
     
+    rr:predicateObjectMap [
+        rr:predicate schema:logo ;
+        rr:objectMap [
+            rr:reference "logo"
+        ]
+    ];
+
     rr:predicateObjectMap [
         rr:predicate schema:name ;
         rr:objectMap [
            rr:reference "name" 
+        ]
+    ] .
+
+<#ProviderAddress> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?addr ?street ?city ?state ?zip
+            WHERE {{
+               ?library schema:parentOrganization <{provider}> .
+               ?library schema:address ?addr .
+               ?addr schema:streetAddress ?street ;
+                     schema:addressLocality ?city ;
+                     schema:addressRegion ?state ;
+                     schema:postalCode ?zip .
+            }}""";
+        rml:iterator "addr"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class schema:PostalAddress 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:streetAddress ;
+        rr:objectMap [
+            rr:reference "street"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:addressLocality ;
+        rr:objectMap [
+            rr:reference "city"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:addressRegion ;
+        rr:objectMap [
+            rr:reference "state"
+        ]
+    ] ;
+ 
+    rr:predicateObjectMap [
+        rr:predicate schema:postalCode ;
+        rr:objectMap [
+            rr:reference "zip"
         ]
     ] .
