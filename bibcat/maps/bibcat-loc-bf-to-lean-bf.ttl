@@ -152,6 +152,28 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate bf:dimensions ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{
+                            <{instance}> bf:dimensions ?value .
+                    }}"""
+        ]
+    ] ; 
+
+
+
+    rr:predicateObjectMap [
+        rr:predicate bf:editionStatement ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{
+                            <{instance}> bf:editionStatement ?value .
+                    }}"""
+        ]
+    ] ; 
+
+    rr:predicateObjectMap [
         rr:predicate bf:issuance ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
@@ -225,7 +247,15 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
             rr:parentTriplesMap <#LOCBFInstance_to_Sound_Content>
         ]
     ] ;
-    
+   
+    rr:predicateObjectMap [
+        rr:predicate bf:tabelOfContents ;
+        rr:objectMap [
+            rr:parentTriplesMap <#LOCBFInstance_to_BFTableOfContents>
+        ]
+
+    ] ;
+ 
     rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
@@ -563,7 +593,26 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     rr:predicateObjectMap  bc:RDFClass ;
 
     rr:predicateObjectMap bc:RDFSLabel .
-   
+  
+ <#LOCBFInstance_to_BFTableOfContents> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?toc ?label
+                     WHERE {{ <{instance}> bf:tableOfContents ?toc .
+                               ?toc rdfs:label ?label .
+                        }}""";
+        rml:iterator "toc"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:TableOfContents ;
+    ] ;
+
+    rr:predicateObjectMap bc:RDFSLabel .
+
 
 <#LOCBFInstance_to_BFTitle> a rr:TriplesMap ;
 
