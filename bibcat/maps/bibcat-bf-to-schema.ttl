@@ -148,9 +148,7 @@
     rr:predicateObjectMap [
         rr:predicate schema:url ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?value 
-                         WHERE {{ <{item}> bf:electronicLocator ?bnode .
-                                  ?bnode bflc:location ?value }}""" 
+            rr:reference "item"
         ]
     ] ;
 
@@ -204,7 +202,17 @@
         rr:objectMap [
             rr:parentTriplesMap <#BIBFRAME_ITEM2ShelfMarkIdentifier> 
         ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:sameAs ;
+        rr:objectMap [
+            rml:query """SELECT ?value
+            WHERE {{ <{item}> rdfs:seeAlso ?value 
+            }}"""
+        ]
     ] .
+
 
 <#BIBFRAME_ITEM2ShelfMarkIdentifier> a rr:TriplesMap ;
 
