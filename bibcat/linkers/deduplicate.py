@@ -98,6 +98,8 @@ class Deduplicator(object):
                          IRIs
         """
         self.output = input_graph
+        if rdf_classes is None:
+            rdf_classes = []
         all_classes = self.default_classes + rdf_classes
         for class_ in all_classes:
             for entity in self.output.subjects(

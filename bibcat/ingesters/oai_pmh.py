@@ -71,7 +71,10 @@ class OAIPMHIngester(object):
             ident = r.text
             if not ident in self.identifiers:
                 self.identifiers[ident] = 1
-        total_size = int(resume_token.attrib.get("completeListSize", 0))
+        if resume_token is not None:
+            total_size = int(resume_token.attrib.get("completeListSize", 0))
+        else:
+            total_size = 0
         sample_size = kwargs.get('sample_size')
         start = datetime.datetime.utcnow()
         msg = "Started Retrieval of {} Identifiers {}".format(total_size, start)
@@ -327,7 +330,9 @@ class IslandoraIngester(OAIPMHIngester):
             print(msg)
         sample_size = kwargs.get('sample_size')
         super(IslandoraIngester, self).harvest(
-            sample_size=sample_size)
+            sample_size=sample_size,
+            setSpec=kwargs.get('setSpec'))
+        deduplicator = kwargs.get('dedup')
         for i,row in enumerate(self.identifiers.keys()):
             if not i%10 and i > 0:
                 try:
@@ -354,6 +359,9 @@ class IslandoraIngester(OAIPMHIngester):
             rels_ext.run(rels_ext_doc,
                 instance_iri=instance_uri)
             self.processor.output += rels_ext.output
+            if deduplicator:
+                deduplicator.run(self.processor.output,
+                    kwargs.get("dedup_classes"))
             if 'out_file' in kwargs:
                 self.repo_graph += self.processor.output
             else:
