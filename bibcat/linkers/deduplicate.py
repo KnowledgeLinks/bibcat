@@ -11,6 +11,7 @@ try:
     import instance.config as config
 except ImportError:
     config = SimpleNamespace()
+    config.BASE_URL = "https://bibcat.org/"
     config.TRIPLESTORE_URL = "http://localhost:9999/blazegraph/sparql"
 
 __author__ = "Jeremy Nelson"
@@ -22,12 +23,12 @@ class Deduplicator(object):
 
     def __init__(self, **kwargs):
         self.triplestore_url = kwargs.get(
-            'triplestore_url',
-            config.TRIPLESTORE_URL)
+            'triplestore_url')
         self.output = None
         self.default_classes = kwargs.get("classes", [])
         self.subject_pattern = kwargs.get("subject_pattern",
             "{base_url}{class_name}/{label}")
+        self.base_url = kwargs.get("base_url")
 
     def __get_or_mint__(self, old_iri, iri_class, label):
         """Attempts to retrieve any existing IRIs that match the label
@@ -72,11 +73,11 @@ class Deduplicator(object):
             class_name = str(iri_class).split("/")[-1].lower()
             # Mint new IRI based on class and slugged label
             new_url = self.subject_pattern.format(
-                base_url=config.BASE_URL,
+                base_url=self.base_url,
                 class_name=class_name,
                 label=slugify(label))
             entity_iri = rdflib.URIRef(new_url)
-            self.output.add((entity_iri, rdflib.RDFS.label, label))
+            #self.output.add((entity_iri, rdflib.RDFS.label, label))
         replace_iri(self.output, old_iri, entity_iri)
         # Add old iri as owl:sameAs to entity_iri
         if isinstance(old_iri, rdflib.URIRef):
@@ -104,7 +105,9 @@ class Deduplicator(object):
                     object=class_):
                 label = self.output.value(subject=entity,
                                           predicate=rdflib.RDFS.label)
-                if label is None:
-                    continue
-                self.__get_or_mint__(entity, class_, label)
-
+                if label is not None:
+                    self.__get_or_mint__(entity, class_, label)
+                value = self.output.value(subject=entity,
+                                          predicate=rdflib.RDF.value)
+                if value is not None:
+                    self.__get_or_mint__(entity, class_, value)

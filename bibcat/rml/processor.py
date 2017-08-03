@@ -316,7 +316,7 @@ class Processor(object):
             return rdflib.BNode()
         if not hasattr(term_map, 'datatype'):
             term_map.datatype = NS_MGR.xsd.anyURI
-        if term_map.template is not None:
+        if hasattr(term_map, "template") and term_map.template is not None:
             template_vars = kwargs
             template_vars.update(self.constants)
             # Call any functions to generate values
@@ -356,6 +356,8 @@ class CSVProcessor(Processor):
             self.fields = kwargs.pop("fields")
         if "rml_rules" in kwargs:
             rml_rules = kwargs.pop("rml_rules")
+        csv_file = kwargs.pop("csv_file")
+        self.reader = csv.DictReader(open(csv_file, 'rb'))
         super(CSVProcessor, self).__init__(rml_rules)
 
     def __generate_reference__(self, triple_map, **kwargs):
@@ -371,16 +373,96 @@ class CSVProcessor(Processor):
         """
         pass
 
-    def run(self, csv_file, **kwargs):
-        """Method takes either path to the CSV file, csv.Reader 
-        or a csv.DictReader instance and iterates through mappings
+    def run(self, **kwargs):
+        """Method runs through CSV Reader and applies rules to each
+        row.
 
-        
-        Args:
-
-        -----
-            csv_file: str, csv.DictReader
         """
+        
+class CSVRowProcessor(Processor):
+
+    def __init__(self, **kwargs):
+        if "rml_rules" in kwargs:
+            rml_rules = kwargs.pop("rml_rules")
+        else:
+            rml_rules = []
+        super(CSVRowProcessor, self).__init__(rml_rules)
+
+    def __generate_reference__(self, triple_map, **kwargs):
+        """Generates a RDF entity based on triple map
+
+        Args:
+            triple_map(SimpleNamespace): Triple Map
+        """
+        raw_value = self.source.get(str(triple_map.reference))
+        if raw_value is None or len(raw_value) < 1:
+            return
+        if hasattr(triple_map, "datatype"):
+            if triple_map.datatype == NS_MGR.xsd.anyURI:
+                output = rdflib.URIRef(raw_value)
+            else:
+                output = rdflib.Literal(raw_value,
+                    datatype=triple_map.datatype) 
+        else:
+            output = rdflib.Literal(raw_value)
+        return output
+
+    def execute(self, triple_map, **kwargs):
+        """Method executes mapping between CSV source and
+        output RDF
+
+        args:
+            triple_map(SimpleNamespace): Triple Map
+        """
+        subject = self.generate_term(term_map=triple_map.subjectMap,
+                                     **kwargs)
+        start_size = len(self.output)
+        all_subjects = []
+        for pred_obj_map in triple_map.predicateObjectMap:
+            predicate = pred_obj_map.predicate
+            if pred_obj_map.template is not None:
+                object_ = self.generate_term(term_map=pred_obj_map, **kwargs)
+                if len(str(object)) > 0:
+                    self.output.add((
+                        subject,
+                        predicate,
+                        object_))
+             
+            if pred_obj_map.parentTriplesMap is not None:
+                self.__handle_parents__(
+                    parent_map=pred_obj_map.parentTriplesMap,
+                    subject=subject,
+                    predicate=predicate,
+                    **kwargs)
+            if pred_obj_map.reference is not None:
+                object_ = self.generate_term(term_map=pred_obj_map,
+                                             **kwargs)
+                if object_ and len(str(object_)) > 0:
+                    self.output.add((subject, predicate, object_))
+            if pred_obj_map.constant is not None:
+                self.output.add((subject, predicate, pred_obj_map.constant))
+        finish_size = len(self.output)
+        if finish_size > start_size:
+            self.output.add((subject, 
+                             NS_MGR.rdf.type, 
+                             triple_map.subjectMap.class_))
+            all_subjects.append(subject)
+        return all_subjects
+
+
+
+    def run(self, row, **kwargs):
+        """Methods takes a row and depending if a dict or list,
+        runs RML rules.
+
+        Args:
+        -----
+            row(Dict, List): Row from CSV Reader
+        """
+        self.source = row
+        self.output = self.__graph__()
+        super(CSVRowProcessor, self).run(**kwargs)
+        
 
 class JSONProcessor(Processor):
     """JSON RDF Mapping Processor"""
@@ -616,7 +698,7 @@ class XMLProcessor(Processor):
                     self.output.add((subject,
                                      NS_MGR.rdf.type,
                                      triple_map.subjectMap.class_))
-            subjects.append(subject)
+                subjects.append(subject)
         return subjects
 
 
@@ -724,6 +806,7 @@ class SPARQLProcessor(Processor):
         sparql = PREFIX + triple_map.logicalSource.query.format(
             **kwargs)
         bindings = self.__get_bindings__(sparql, output_format)
+        #import pdb; pdb.set_trace()
         for binding in bindings:
             entity_raw = binding.get(iterator)
             if isinstance(entity_raw, (rdflib.URIRef, rdflib.BNode)):
