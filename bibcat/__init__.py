@@ -39,7 +39,8 @@ def clean_uris(graph):
     }"""
     for iri in graph.query(ALL_URI_SPARQL):
          try:
-             _is_valid_uri(str(iri))
+             if _is_valid_uri(str(iri)) is False:
+                fix_uri(iri)
          except rdflib.exceptions.SubjectTypeError:
              fix_uri(iri)
 
