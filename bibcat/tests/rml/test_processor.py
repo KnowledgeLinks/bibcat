@@ -11,7 +11,7 @@ try:
     import bibcat    
 except ImportError:
     sys.path.append(os.path.abspath("."))
-    import ibcat.rml.processor as processor
+    import bibcat.rml.processor as processor
     import bibcat
 
 TESTS_PATH = os.path.dirname(os.path.abspath(__file__))
