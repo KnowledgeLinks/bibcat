@@ -6,7 +6,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name="bibcat",
-    version="1.11.0",
+    version="1.12.0",
     description="BIBCAT RDF Framework Application",
     author="KnowledgeLinks",
     author_email="knowledgelinks.io@gmail.com",
