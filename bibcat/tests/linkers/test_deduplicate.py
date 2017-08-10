@@ -1,5 +1,5 @@
 import unittest
-from bibcat.linkers.deplicate import Deduplicator
+from bibcat.linkers.deduplicate import Deduplicator
 
 class TestDeduplicator(unittest.TestCase):
 

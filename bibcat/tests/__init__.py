@@ -1,4 +1,5 @@
 import unittest
+from linkers import *
 from ingesters.test_oai_pmh import *
 from rml.test_processor import *
 from test_bibcat_funcs import *

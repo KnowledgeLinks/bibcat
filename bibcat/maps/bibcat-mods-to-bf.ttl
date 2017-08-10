@@ -186,7 +186,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:objectMap [
             rr:parentTriplesMap <#MODS2BIBFRAME_InstanceTitle> ;
        ] 
-    ] 
+    ] ; 
 
      rr:predicateObjectMap [
         rr:predicate bf:title ;

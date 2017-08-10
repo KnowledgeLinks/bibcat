@@ -6,6 +6,7 @@
 @prefix locn:   <http://www.w3.org/ns/locn#>.
 @prefix mods: <http://www.loc.gov/mods/v3> .
 @prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>.
@@ -45,3 +46,30 @@ bc:adminMetadata a rr:TriplesMap ;
         ]
     ] .
 
+bc:ProvGenerated a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{*}" ;
+        rml:iterator "."
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class prov:Generation 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate prov:atTime ;
+        rr:objectMap [
+            rr:template "{timestamp}" ;
+            rr:datatype xsd:dateTime
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate prov:agent;
+        rr:objectMap [
+            rr:constant <http://knowledgelinks.io/> ;
+            rr:datatype xsd:anyURI
+        ]
+    ] .

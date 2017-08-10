@@ -61,7 +61,7 @@ class Processor(object):
         # Populate Namespaces Manager
         for prefix, namespace in self.rml.namespaces():
             setattr(NS_MGR, prefix, rdflib.Namespace(namespace))
-        self.output, self.source, self.triplestore_url = None, None, None
+        self.output, self.source, self.triplestore_url  = None, None, None
         self.parents = set()
         self.constants = dict(version=__version__)
         self.triple_maps = dict()
@@ -307,6 +307,13 @@ class Processor(object):
                 pred_obj_map.delimiters.append(obj)
             pred_obj_maps.append(pred_obj_map)
         return pred_obj_maps
+
+    def add_to_triplestore(self):
+        """Method attempts to add output to Blazegraph RDF Triplestore"""
+        if len(self.output) > 0:
+            result = requests.post(self.triplestore_url,
+                data=self.output.serialize(),
+                headers={"Content-Type": "application/rdf+xml"})
 
     def generate_term(self, **kwargs):
         """Method generates a rdflib.Term based on kwargs"""
@@ -588,6 +595,8 @@ class XMLProcessor(Processor):
             self.xml_ns = kwargs.pop("namespaces")
         else:
             self.xml_ns = dict()
+        if "triplestore_url" in kwargs:
+            self.triplestore_url = kwargs.get("triplestore_url")
         self.constants.update(kwargs)
 
     def __generate_reference__(self, triple_map, **kwargs):
