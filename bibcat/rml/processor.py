@@ -484,7 +484,7 @@ class JSONProcessor(Processor):
     def __generate_reference__(self,  triple_map, **kwargs):
         json_obj = kwargs.get("obj")
         path_expr = jsonpath_ng.parse(triple_map.reference)
-        results = [r.value for r in path_expr.find(json_obj)]
+        results = [r.value.strip() for r in path_expr.find(json_obj)]
         for row in results:
             if rdflib.term._is_valid_uri(row):
                 return rdflib.URIRef(row)
@@ -611,10 +611,11 @@ class XMLProcessor(Processor):
         element = kwargs.get("element")
         found_elements = element.findall(triple_map.reference, self.xml_ns)
         for elem in found_elements:
+            raw_text = elem.text.strip()
             #! Quick and dirty test for valid URI
-            if not elem.text.startswith("http"):
+            if not raw_text.startswith("http"):
                 continue
-            return rdflib.URIRef(elem.text)
+            return rdflib.URIRef(raw_text)
 
 
     def __reference_handler__(self, **kwargs):

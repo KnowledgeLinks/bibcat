@@ -58,8 +58,8 @@ bc:PTFStoBF_Item a rr:TriplesMap ;
     ] ;
 
     rr:subjectMap [
-        rr:tempalte "{instance_iri}" ;
-        rr:class bf:Item 
+        rr:template "{instance_iri}" ;
+        rr:class bf:Instance 
     ]; 
 
     rr:predicateObjectMap [
@@ -79,6 +79,13 @@ bc:PTFStoBF_Item a rr:TriplesMap ;
         rr:predicate bf:title;
         rr:objectMap [
             rr:parentTriplesMap <#PTFStoBF_Title>
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate bf:instanceOf ;
+        rr:objectMap [
+            rr:parentTriplesMap <#PTFStoBF_Work>
         ]
     ] .
 
@@ -125,4 +132,70 @@ bc:PTFStoBF_Item a rr:TriplesMap ;
             rr:datatype xsd:string 
         ]
     ] .
+
+<#PTFStoBF_Work> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{record}" ;
+        rml:referenceFormulation ql:XPath ;
+        rml:iterator "."
+
+    ] ;
+
+   rr:subjectMap [
+        rr:template "{instance_iri}#Work";
+        rr:class bf:Work 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:originDate ;
+        rr:objectMap [
+            rr:reference "aw_keywords/aw_field[@name='browse3']"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rr:constant "A Work"
+        ]
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#PTFStoBF_Topic>
+        ]
+    ] .
+
+<#PTFStoBF_Topic> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{record}" ;
+        rml:referenceFormulation ql:XPath ;
+        rml:iterator "."
+
+    ] ;
+
+   rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Topic ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "aw_keywords/aw_field[@name='browse13']"
+        ]
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "aw_keywords/aw_field[@name='browse15']"
+        ]
+    ] .
+
 
