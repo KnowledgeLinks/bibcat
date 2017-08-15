@@ -52,6 +52,7 @@ class Deduplicator(object):
             OPTIONAL {{ ?entity rdfs:label ?label . }}
             OPTIONAL {{ ?entity rdf:value ?label . }}
             FILTER(CONTAINS(?label, \"""{1}\"""))
+            FILTER(isIRI(?entity))
         }}""".format(iri_class, label)
         result = requests.post(self.triplestore_url,
             data={"query": sparql,
@@ -62,7 +63,9 @@ class Deduplicator(object):
         bindings = result.json().get('results').get('bindings')
         if len(bindings) > 0:
             # Use first binding
-            entity_iri = rdflib.URIRef(bindings[0].get('entity').get('value'))
+            first_binding =bindings[0]
+            entity_iri = rdflib.URIRef(first_binding.get('entity').get('value'))
+            print(entity_iri, first_binding.get("entity").get("type"))
             existing_label = rdflib.Literal(bindings[0].get('label').get('value'))
             if existing_label != label:
                 # Add label as an skos:altLabel

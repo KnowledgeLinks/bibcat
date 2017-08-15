@@ -32,6 +32,16 @@ class RELSEXTIngester(XMLProcessor):
                         'fedora-model': 'info:fedora/fedora-system:def/model#',
                         'islandora': 'http://islandora.ca/ontology/relsext#',
                         'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'})
-        self.constants["bf_still_image"] = BF.StillImage
-        self.constants["bf_audio"] = BF.Audio
-        self.constants["bf_video"] = BF.MovingImage
+        #self.constants["bf_still_image"] = BF.StillImage
+        #self.constants["bf_audio"] = BF.Audio
+        #self.constants["bf_video"] = BF.MovingImage
+
+    def run(self, xml, **kwargs):
+        super(RELSEXTIngester, self).run(xml, **kwargs)
+
+
+    #def __reference_handler__(self, **kwargs):
+        #if kwargs.get("subject").endswith("Work"):
+        #    import pdb; pdb.set_trace()
+    #    super(RELSEXTIngester, self).__reference_handler__(**kwargs)
+

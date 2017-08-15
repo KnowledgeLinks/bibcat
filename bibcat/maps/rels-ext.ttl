@@ -28,22 +28,47 @@
 
     ] ;
 
+    rr:subjectMap [
+        rr:template "{instance_iri}" ;
+        rr:class bf:Instance 
+    ]; 
+
+
+    rr:predicateObjectMap [
+        rr:predicate bf:instanceOf ;
+        rr:objectMap [
+            rr:parentTriplesMap <#RELSEXTtoBIBFRAMEWorkClass>
+        ]
+
+    ] . 
+
+   
+   
+    
+<#RELSEXTtoBIBFRAMEWorkClass> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{rels_ext_xml}" ;
+        rml:referenceFormulation ql:XPath;
+        rml:iterator "."
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{work_iri}" ;
+        rr:class bf:Work 
+    ]; 
+
     rr:predicateObjectMap [
         rr:predicate rdf:type ;
         rr:objectMap [
-            rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp-audioCModel']" ;
-            rr:template "{bf_audio}";
-            rr:datatype xsd:anyURI 
+            rr:parentTriplesMap <#RELSEXTtoAudioWork>
         ] 
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdf:type ;
         rr:objectMap [
-            rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_videoCModel']" ;
-            rr:template "{bf_video}"; 
-            rr:datatype xsd:anyURI 
-
+            rr:parentTriplesMap <#RELSEXTtoMovingImageWork>
         ] 
     ] ;
 
@@ -51,20 +76,73 @@
     rr:predicateObjectMap [
         rr:predicate rdf:type ;
         rr:objectMap [
-            rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_basic_image']" ;
-            rr:template "{bf_still_image}";
-            rr:datatype xsd:anyURI 
+            rr:parentTriplesMap <#RELSEXTBasicToStillImage>
         ] 
     ] ;
  
     rr:predicateObjectMap [
         rr:predicate rdf:type ;
         rr:objectMap [
-            rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_large_image_cmodel']" ;
-            rr:template "{bf_still_image}";
-            rr:datatype xsd:anyURI 
+            rr:parentTriplesMap <#RELSEXTLargeToStillImage>
         ] 
     ] .
 
-    
+<#RELSEXTtoAudioWork> a rr:TriplesMap ;
 
+    rml:logicalSource [
+        rml:source "{rels_ext_xml}" ;
+        rml:referenceFormulation ql:XPath;
+        rml:iterator "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp-audioCModel']"
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{work_iri}" ;
+        rr:class bf:Audio 
+    ] .
+
+<#RELSEXTtoMovingImageWork> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{rels_ext_xml}" ;
+        rml:referenceFormulation ql:XPath;
+        rml:iterator "rdf:Description/fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_videoCModel']"
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{work_iri}" ;
+        rr:class bf:MovingImage
+    ] .
+
+<#RELSEXTBasicToStillImage> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{rels_ext_xml}" ;
+        rml:referenceFormulation ql:XPath;
+        rml:iterator "rdf:Description/fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_basic_image']" 
+    ]; 
+
+    rr:subjectMap [
+        rr:template "{work_iri}" ;
+        rr:class bf:StillImage
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rr:constant bf:StillImage
+        ] 
+    ] .
+
+<#RELSEXTLargeToStillImage> a rr:TriplesMap ;
+
+     rml:logicalSource [
+        rml:source "{rels_ext_xml}" ;
+        rml:referenceFormulation ql:XPath;
+        rml:iterator "rdf:Description/fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_large_image_cmodel']" ;
+    ] ;
+
+    rr:subjectMap [
+        rr:template  "{work_iri}" ;
+        rr:class bf:StillImage
+    ] .
+   

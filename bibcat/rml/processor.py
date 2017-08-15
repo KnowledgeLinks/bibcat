@@ -638,6 +638,7 @@ class XMLProcessor(Processor):
         predicate = pred_obj_map.predicate
         found_elements = element.xpath(str(pred_obj_map.reference),
             namespaces=self.xml_ns)
+
         for found_elem in found_elements:
             if found_elem.text is None or len(found_elem.text) < 1:
                 continue
@@ -676,9 +677,10 @@ class XMLProcessor(Processor):
 
         """
         subjects = []
-        for element in self.source.xpath(
-                str(triple_map.logicalSource.iterator),
-                namespaces=self.xml_ns):
+        found_elements = self.source.xpath(
+            str(triple_map.logicalSource.iterator),
+            namespaces=self.xml_ns)
+        for element in found_elements:
             subject = self.generate_term(term_map=triple_map.subjectMap,
                                          element=element,
                                          **kwargs)
@@ -686,10 +688,13 @@ class XMLProcessor(Processor):
             for row in triple_map.predicateObjectMap:
                 predicate = row.predicate
                 if row.template is not None:
+                    obj_ = self.generate_term(term_map=row, **kwargs)
+                    if str(subject).endswith("Work"):
+                        print(subject, predicate, row.template, obj_)
                     self.output.add((
                         subject,
                         predicate,
-                        self.generate_term(term_map=row, **kwargs)))
+                        obj_))
                 if row.parentTriplesMap is not None:
                     self.__handle_parents__(
                         parent_map=row.parentTriplesMap,
