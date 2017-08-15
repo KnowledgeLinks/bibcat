@@ -138,6 +138,12 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         ]
     ] ;
 
+    rr:predicateObjectMap [
+        rr:predicate bf:note;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceNote> ;
+        ]
+    ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:provisionActivity ;
@@ -194,6 +200,28 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
             rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVarientTitle> 
         ]
     ] .
+
+<#MODS2BIBFRAME_InstanceNote> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:note[not(@type)]" 
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Note ;
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string 
+        ] 
+    ] .
+
 
 <#MODS2BIBFRAME_InstanceAdminNote> a rr:TriplesMap ;
 

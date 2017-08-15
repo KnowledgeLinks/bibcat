@@ -609,7 +609,8 @@ class XMLProcessor(Processor):
             element: etree.Element
         """
         element = kwargs.get("element")
-        found_elements = element.findall(triple_map.reference, self.xml_ns)
+        found_elements = element.xpath(triple_map.reference, 
+            namespaces=self.xml_ns)
         for elem in found_elements:
             raw_text = elem.text.strip()
             #! Quick and dirty test for valid URI
@@ -635,8 +636,8 @@ class XMLProcessor(Processor):
         if pred_obj_map.reference is None:
             return subjects
         predicate = pred_obj_map.predicate
-        found_elements = element.findall(str(pred_obj_map.reference),
-                                         self.xml_ns)
+        found_elements = element.xpath(str(pred_obj_map.reference),
+            namespaces=self.xml_ns)
         for found_elem in found_elements:
             if found_elem.text is None or len(found_elem.text) < 1:
                 continue
@@ -675,9 +676,9 @@ class XMLProcessor(Processor):
 
         """
         subjects = []
-        for element in self.source.findall(
+        for element in self.source.xpath(
                 str(triple_map.logicalSource.iterator),
-                self.xml_ns):
+                namespaces=self.xml_ns):
             subject = self.generate_term(term_map=triple_map.subjectMap,
                                          element=element,
                                          **kwargs)

@@ -28,17 +28,12 @@
 
     ] ;
 
-
-    rr:subjectMap [
-        rr:template "{instance_iri}" ;
-        rr:class bf:Instance 
-    ] ;
-
     rr:predicateObjectMap [
         rr:predicate rdf:type ;
         rr:objectMap [
             rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp-audioCModel']" ;
-            rr:constant bf:Audio ; 
+            rr:template "{bf_audio}";
+            rr:datatype xsd:anyURI 
         ] 
     ] ;
 
@@ -46,7 +41,9 @@
         rr:predicate rdf:type ;
         rr:objectMap [
             rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_videoCModel']" ;
-            rr:constant bf:MovingImage 
+            rr:template "{bf_video}"; 
+            rr:datatype xsd:anyURI 
+
         ] 
     ] ;
 
@@ -55,7 +52,8 @@
         rr:predicate rdf:type ;
         rr:objectMap [
             rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_basic_image']" ;
-            rr:constant bf:StillImage 
+            rr:template "{bf_still_image}";
+            rr:datatype xsd:anyURI 
         ] 
     ] ;
  
@@ -63,7 +61,8 @@
         rr:predicate rdf:type ;
         rr:objectMap [
             rr:reference "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_large_image_cmodel']" ;
-            rr:constant bf:StillImage 
+            rr:template "{bf_still_image}";
+            rr:datatype xsd:anyURI 
         ] 
     ] .
 
