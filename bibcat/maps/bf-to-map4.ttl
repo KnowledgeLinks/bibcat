@@ -26,7 +26,7 @@
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:iterator "instance_iri" ;
+        rml:iterator "instance" ;
         rml:query """SELECT DISTINCT ?instance
                      WHERE {{ ?instance rdf:type bf:Instance .
                               FILTER (sameTerm(?instance, <{instance_iri}>)) }}
@@ -55,7 +55,8 @@
         rml:referenceFormulation ql:JSON ;
         rml:iterator "item_iri" ;
         rml:query """ SELECT DISTINCT ?item_iri
-                      WHERE { ?item_iri rdf:type bf:Item }"""
+                      WHERE {{ ?item_iri rdf:type bf:Item ;
+                                         bf:itemOf <{instance_iri}> .}}"""
     ] ;
 
     rr:subjectMap [
@@ -167,7 +168,9 @@
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
         rml:iterator "item_iri" ;
-
+        rml:query """SELECT DISTINCT ?item_iri
+                     WHERE {{ ?item_iri bf:itemOf <{instance_iri}> .
+                    }}""" 
     ] ;
 
 
@@ -212,7 +215,7 @@
             rml:query """SELECT DISTINCT ?value 
                          WHERE {{
                             ?value rdf:type bf:Item .
-                            FILTER(sameTerm(?value, <{item_iri}>) 
+                            FILTER(sameTerm(?value, <{item_iri}>)) 
                          }}"""
         ]
     ] ;

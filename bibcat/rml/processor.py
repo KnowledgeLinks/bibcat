@@ -822,6 +822,7 @@ class SPARQLProcessor(Processor):
         sparql = PREFIX + triple_map.logicalSource.query.format(
             **kwargs)
         bindings = self.__get_bindings__(sparql, output_format)
+        print(bindings)
         #import pdb; pdb.set_trace()
         for binding in bindings:
             entity_raw = binding.get(iterator)
