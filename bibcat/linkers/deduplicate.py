@@ -65,7 +65,6 @@ class Deduplicator(object):
             # Use first binding
             first_binding =bindings[0]
             entity_iri = rdflib.URIRef(first_binding.get('entity').get('value'))
-            print(entity_iri, first_binding.get("entity").get("type"))
             existing_label = rdflib.Literal(bindings[0].get('label').get('value'))
             if existing_label != label:
                 # Add label as an skos:altLabel
@@ -83,7 +82,7 @@ class Deduplicator(object):
             #self.output.add((entity_iri, rdflib.RDFS.label, label))
         replace_iri(self.output, old_iri, entity_iri)
         # Add old iri as owl:sameAs to entity_iri
-        if isinstance(old_iri, rdflib.URIRef):
+        if isinstance(old_iri, rdflib.URIRef) and  entity_iri != old_iri:
             self.output.add((entity_iri, 
                              rdflib.OWL.sameAs,
                              old_iri))

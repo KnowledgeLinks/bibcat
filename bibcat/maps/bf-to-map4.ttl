@@ -43,8 +43,8 @@
     rr:predicateObjectMap [
         rr:predicate dc:format ;
         rr:objectMap [
-            rml:query """ select distinct ?format 
-                        where {{ <{instance_iri}> rdf:type ?format }}""" 
+            rml:query """SELECT DISTINCT ?format 
+                        WHERE {{ <{instance_iri}> rdf:type ?format }}""" 
         ] 
     ] .
 
@@ -147,7 +147,7 @@
             rml:query """SELECT DISTINCT ?value 
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
                                   ?instance bf:identifiedBy ?ident .
-                                  ?ident rdf:value ?value }}
+                                  ?ident rdf:value ?value 
                        }}"""
 
         ]

@@ -178,7 +178,9 @@ class Processor(object):
         parent_objects = self.execute(
             self.triple_maps[str(parent_map)],
             **kwargs)
-        for parent_obj in parent_objects:
+        for parent_obj in parent_objects: 
+            if parent_obj == subject:
+                continue
             self.output.add((
                 subject,
                 predicate,
@@ -234,7 +236,7 @@ class Processor(object):
             predicate=NS_MGR.rr.subjectMap)
         if subject_map_bnode is None:
             return
-        #! Should look at supporting multple rr:class definitions
+        #! Should look at supporting multiple rr:class definitions
         subject_map.class_ = self.rml.value(
             subject=subject_map_bnode,
             predicate=getattr(NS_MGR.rr, "class"))
@@ -689,8 +691,6 @@ class XMLProcessor(Processor):
                 predicate = row.predicate
                 if row.template is not None:
                     obj_ = self.generate_term(term_map=row, **kwargs)
-                    if str(subject).endswith("Work"):
-                        print(subject, predicate, row.template, obj_)
                     self.output.add((
                         subject,
                         predicate,
@@ -701,10 +701,11 @@ class XMLProcessor(Processor):
                         subject=subject,
                         predicate=predicate,
                         **kwargs)
-                subjects.extend(self.__reference_handler__(
+                new_subjects = self.__reference_handler__(
                     predicate_obj_map=row,
                     element=element,
-                    subject=subject))
+                    subject=subject)
+                subjects.extend(new_subjects)
                 if row.constant is not None:
                     self.output.add((subject,
                                      predicate,
@@ -822,8 +823,6 @@ class SPARQLProcessor(Processor):
         sparql = PREFIX + triple_map.logicalSource.query.format(
             **kwargs)
         bindings = self.__get_bindings__(sparql, output_format)
-        print(bindings)
-        #import pdb; pdb.set_trace()
         for binding in bindings:
             entity_raw = binding.get(iterator)
             if isinstance(entity_raw, (rdflib.URIRef, rdflib.BNode)):
@@ -850,7 +849,6 @@ class SPARQLProcessor(Processor):
                         **kwargs)
                     continue
                 if pred_obj_map.reference is not None:
-                    #import pdb; pdb.set_trace()
                     ref_key = str(pred_obj_map.reference)
                     if ref_key in binding:
                         object_ = __get_object__(
@@ -868,6 +866,8 @@ class SPARQLProcessor(Processor):
                     output_format)
                 for row in pre_obj_bindings:
                     object_ = __get_object__(row)
+                    if object_ is None:
+                        continue
                     self.output.add((entity, predicate, object_))
             subjects.append(entity)
         return subjects

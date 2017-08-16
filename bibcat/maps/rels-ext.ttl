@@ -33,6 +33,13 @@
         rr:class bf:Instance 
     ]; 
 
+    rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rr:parentTriplesMap <#RELSEXTPDFtoInstanceText>
+
+        ]
+    ];
 
     rr:predicateObjectMap [
         rr:predicate bf:instanceOf ;
@@ -42,8 +49,27 @@
 
     ] . 
 
-   
-   
+<#RELSEXTPDFtoInstanceText> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{rels_ext_xml}" ;
+        rml:referenceFormulation ql:XPath;
+        rml:iterator "rdf:Description/fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_pdf']"
+    ] ;
+
+   rr:subjectMap [
+        rr:template "{instance_iri}" ;
+        rr:class bf:Instance
+   ] ;
+
+   rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rr:constant bf:Text
+        ] 
+    ] .
+
+
     
 <#RELSEXTtoBIBFRAMEWorkClass> a rr:TriplesMap ;
 
@@ -92,7 +118,7 @@
     rml:logicalSource [
         rml:source "{rels_ext_xml}" ;
         rml:referenceFormulation ql:XPath;
-        rml:iterator "fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp-audioCModel']"
+        rml:iterator "rdf:Description/fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp-audioCModel']"
     ] ;
 
     rr:subjectMap [
