@@ -47,6 +47,42 @@ class OAIPMHIngester(object):
             metadata_formats = metadata_result.text.encode()
         self.metadata_formats_doc = etree.XML(metadata_formats)
         self.processor = None
+        self.repo_graph = None
+
+    def __init_doc__(self, **kwargs):
+        params = {"verb": "ListRecords",
+                  "metadataPrefix": self.metadataPrefix}
+        if "setSpec" in kwargs:
+            params["set"] = kwargs.get("setSpec")
+        initial_result = requests.get("{0}?{1}".format(
+                self.oai_pmh_url,
+                urllib.parse.urlencode(params)))
+        initial_doc = etree.XML(initial_result.text.encode())
+        token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
+        records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
+        count = 0
+        duplicator = kwargs.get("dedup")
+        for i,rec in enumerate(records):
+            count += 1
+            self.processor.run(rec, **kwargs)
+            if deduplicator is not None:
+                deduplicator.run(self.processor.output)
+            if self.repo_graph is None:
+                self.repo_graph = self.processor.output
+            else:
+                self.repo_graph += self.processor.output
+            if not i%10 and i > 0:
+                try:
+                    click.echo(".", nl=False)
+                except io.UnsupportedOperation:
+                     print(".", end="")
+            if not i%100:
+                try:
+                    click.echo(i, nl=False)
+                except io.UnsupportedOperation:
+                     print(i, end="")
+        return count, token
+ 
     
     def harvest(self, **kwargs):
         """Method harvests all identifiers using ListIdentifiers"""
@@ -156,34 +192,7 @@ class ContentDMIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)
-        params = {"verb": "ListRecords",
-                  "metadataPrefix": self.metadataPrefix}
-        if "setSpec" in kwargs:
-            params["set"] = kwargs.get("setSpec")
-        initial_result = requests.get("{0}?{1}".format(
-                self.oai_pmh_url,
-                urllib.parse.urlencode(params)))
-        initial_doc = etree.XML(initial_result.text.encode())
-        token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
-        records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
-        self.repo_graph = rdflib.Graph()#self.processor.__graph__()
-        count = 0
-        for i,rec in enumerate(records):
-            self.processor.run(rec, **kwargs)
-            self.repo_graph += self.processor.output
-           
-            if not i%10 and i > 0:
-                try:
-                    click.echo(".", nl=False)
-                except io.UnsupportedOperation:
-                     print(".", end="")
-            if not i%100:
-                try:
-                    click.echo(i, nl=False)
-                except io.UnsupportedOperation:
-                     print(i, end="")
-        return 
-        count = i
+        count, token = self.__init_doc__(**kwargs)
         while token is not None:
             params = { "resumptionToken": token.text,
                        "verb": "ListRecords"}
@@ -356,16 +365,17 @@ class IslandoraIngester(OAIPMHIngester):
             instance_uri = self.processor.output.value(
                 subject=item_uri,
                 predicate=NS_MGR.bf.itemOf)
+            work_uri = self.processor.output.value(
+                subject=instance_uri,
+                predicate=NS_MGR.bf.instanceOf)
             rels_ext.run(rels_ext_doc,
-                instance_iri=instance_uri)
+                instance_iri=instance_uri,
+                work_iri=work_uri)
             self.processor.output += rels_ext.output
             if deduplicator:
                 deduplicator.run(self.processor.output,
                     kwargs.get("dedup_classes"))
-            if 'out_file' in kwargs:
-                self.repo_graph += self.processor.output
-            else:
-                self.processor.add_to_triplestore()
+            self.repo_graph += self.processor.output
         if 'out_file' in kwargs:
             with open(kwargs.get('out_file'), 'wb+') as fo:
                 fo.write(self.repo_graph.serialize(format='turtle'))
@@ -378,9 +388,53 @@ class IslandoraIngester(OAIPMHIngester):
         except io.UnsupportedOperation:
             print(msg)
 
-class LunaIngeseter(OAIPMHIngester):
+class LunaIngester(OAIPMHIngester):
     """Harvests Luna objects from a OAI-PMH feed"""
     
     def __init__(self, **kwargs):
         super(LunaIngeseter, self).__init__(**kwargs)
+        self.processor = process.XMLProcessor(
+            triplestore_url=kwargs.get("triplestore_url"),
+            base_url=kwargs.get("base_url"),
+            rml_rules=["bibcat-base", "oai-pmh-dc-xml-to-bf.xml"]  )
+
+    def harvest(self, **kwarg):
+        deduplicator = kwargs.get('dedup')
+        start = datetime.datetime.utcnow()
+        msg = "Starting OAI-PMH harvest of PIDS from ContentDM at {}".format(
+            start)
+        try:
+            click.echo(msg)
+        except io.UnsupportedOperation:
+            print(msg)
+        count, token = self.__init_doc__(**kwargs)
+        while token is not None:
+            params = { "resumptionToken": token.text,
+                       "verb": "ListRecords"}
+            continue_url = "{0}?{1}".format(
+                self.oai_pmh_url,
+                urllib.parse.urlencode(params))
+            shard_result = requests.get(continue_url)
+            shard_doc = etree.XML(shard_result.text.encode())
+            token = shard_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
+            records = shard_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
+            for rec in records:
+                self.processor.run(rec, **kwargs)
+                if deduplicator is not None:
+                    deduplicator.run(self.processor.output)
+                self.repo_graph += self.processor.output
+                if not count%10 and count > 0:
+                    try:
+                        click.echo(".", nl=False)
+                    except io.UnsupportedOperation:
+                         print(".", end="")
+                if not count%100:
+                    try:
+                        click.echo(count, nl=False)
+                    except io.UnsupportedOperation:
+                         print(count, end="")
+                count += 1
+                end = datetime.datetime.utcnow()
+            if count > 8000:
+                print(token.text, count)
 
