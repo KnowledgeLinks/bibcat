@@ -723,7 +723,13 @@ class XMLProcessor(Processor):
     def run(self, xml, **kwargs):
         self.output = self.__graph__()
         if isinstance(xml, str):
-            self.source = etree.XML(xml)
+            try:
+                self.source = etree.XML(xml)
+            except ValueError:
+                try:
+                    self.source = etree.XML(xml.encode())
+                except:
+                    raise ValueError("Cannot run error {}".format(sys.exc_info()[0]))
         else:
             self.source = xml
         super(XMLProcessor, self).run(**kwargs)
