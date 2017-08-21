@@ -136,7 +136,7 @@ bc:OAIPMH_DCtoBIBFRAME_subject_predObj rr:reference "." .
     ] ;
 
     rr:subjectMap [
-        rr:template "{instance}#Work";
+        rr:template "{instance_iri}#Work";
         rr:class bf:Work 
     ] ;
 
