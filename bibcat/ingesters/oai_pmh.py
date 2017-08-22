@@ -61,7 +61,7 @@ class OAIPMHIngester(object):
         token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
         records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
         count = 0
-        duplicator = kwargs.get("dedup")
+        deduplicator = kwargs.get("dedup")
         for i,rec in enumerate(records):
             count += 1
             self.processor.run(rec, **kwargs)
@@ -392,16 +392,18 @@ class LunaIngester(OAIPMHIngester):
     """Harvests Luna objects from a OAI-PMH feed"""
     
     def __init__(self, **kwargs):
-        super(LunaIngeseter, self).__init__(**kwargs)
-        self.processor = process.XMLProcessor(
+        super(LunaIngester, self).__init__(**kwargs)
+        self.processor = XMLProcessor(
             triplestore_url=kwargs.get("triplestore_url"),
             base_url=kwargs.get("base_url"),
-            rml_rules=["bibcat-base", "oai-pmh-dc-xml-to-bf.xml"]  )
+            rml_rules=["bibcat-base.ttl", 
+                       "oai-pmh-dc-xml-to-bf.ttl"],
+            namespaces=NS)
 
-    def harvest(self, **kwarg):
+    def harvest(self, **kwargs):
         deduplicator = kwargs.get('dedup')
         start = datetime.datetime.utcnow()
-        msg = "Starting OAI-PMH harvest of PIDS from ContentDM at {}".format(
+        msg = "Starting OAI-PMH harvest of PIDS from Luna at {}".format(
             start)
         try:
             click.echo(msg)

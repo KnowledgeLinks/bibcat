@@ -5,6 +5,7 @@ target RDF classes on the input RDF graph, generates new IRIs in the triplestore
 from types import SimpleNamespace
 import rdflib
 import requests
+from multiprocessing import Pool
 
 from bibcat import replace_iri, slugify
 try:
@@ -115,3 +116,21 @@ class Deduplicator(object):
                                           predicate=rdflib.RDF.value)
                 if value is not None:
                     self.__get_or_mint__(entity, class_, value)
+
+
+class DeduplicatePool(object):
+    """Class constructs a mutliprocessing Pool for running deduplicate
+    runs in parallel."""
+
+    def __init__(self, **kwargs):
+        self.pool_size = kwargs.get('size')
+        self.dedupicator = kwargs.get('deduplicator')
+
+
+    def main(self, **kwargs):
+        graph = kwargs.get('graph')
+        with Pool(self.pool_size) as p:
+            p.run(self.dedupicator.run, graph)
+
+
+
