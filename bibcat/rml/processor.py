@@ -811,6 +811,8 @@ class SPARQLProcessor(Processor):
             self.limit = kwargs.get('limit')
         if "offset" in kwargs:
             self.offset = kwargs.get('offset')
+        if "triplestore" in kwargs:
+            self.triplestore = kwargs.get('triplestore')
         super(SPARQLProcessor, self).run(**kwargs)
 
     def execute(self, triple_map, **kwargs):

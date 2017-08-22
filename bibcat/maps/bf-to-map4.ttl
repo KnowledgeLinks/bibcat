@@ -26,18 +26,26 @@
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:iterator "instance" ;
-        rml:query """SELECT DISTINCT ?instance
-                     WHERE {{ ?instance rdf:type bf:Instance .
-                              FILTER (sameTerm(?instance, <{instance_iri}>)) }}
-                     ORDER BY ?instance
-                     LIMIT {limit}
-                     OFFSET {offset}""" ;
+        rml:iterator "item_iri" ;
+        rml:query """SELECT DISTINCT ?item_iri
+                WHERE {{
+                    ?item_iri rdf:type bf:Item .
+                    FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}"""
+
     ] ;
 
     rr:subjectMap [
-        rr:template "{instance_iri}" ;
+        rr:template "{item_iri}" ;
         rr:class edm:WebResource 
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate edm:rights ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ <{item_iri}> bf:AccessPolicy ?value .   }}"""
+
+        ]
     ];
 
     rr:predicateObjectMap [
@@ -53,22 +61,23 @@
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:iterator "item_iri" ;
-        rml:query """ SELECT DISTINCT ?item_iri
-                      WHERE {{ ?item_iri rdf:type bf:Item ;
-                                         bf:itemOf <{instance_iri}> .}}"""
+        rml:iterator "instance_iri" ;
+        rml:query """ SELECT DISTINCT ?instance_iri
+                      WHERE {{ ?instance_iri rdf:type bf:Instance .
+                               FILTER(sameTerm(?instance_iri, <{instance_iri}>)) . }}"""
     ] ;
 
     rr:subjectMap [
-        rr:template "{item_iri}";
+        rr:template "{instance_iri}";
         rr:class dpla:SourceResource 
     ];
 
     rr:predicateObjectMap [
         rr:predicate dcterms:isPartOf ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?collection_iri
-                        WHERE {{ <{item_iri}> schema:partOf ?collection_iri }}"""
+            rml:query """SELECT DISTINCT ?value
+                        WHERE {{ <{instance_iri}> bf:instanceOf ?work .
+                                 ?work schema:partOf ?value }}"""
 
         ]
     ] ;
@@ -119,11 +128,14 @@
     rr:predicateObjectMap [
         rr:predicate dcterms:description ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?summary 
+            rml:query """SELECT DISTINCT ?value 
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
                                   ?instance  bf:instanceOf ?work .
-                                  ?work bf:summary ?summary .
-                                  ?summary rdfs:label ?value . }}"""
+                                  OPTIONAL {{ ?work bf:summary ?summary .
+                                               ?summary rdf:value ?value . }} .
+                                  OPTIONAL {{ ?instance bf:summary ?summary .
+                                               ?summary rdf:value ?value . }}
+                        }}"""
         ]
     ] ;
 
@@ -154,11 +166,32 @@
     ];
 
     rr:predicateObjectMap [
+        rr:predicate dcterms:publisher ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{
+                                 ?instance rdf:type bf:Instance . 
+                                 OPTIONAL {{
+                                    ?item bf:itemOf ?instance ;
+                                           bf:heldBy ?value . 
+                                  }}
+                                 FILTER (sameTerm(?instance, <{instance_iri}>))
+                        }}"""            
+        ]
+
+    ] ;
+
+    rr:predicateObjectMap [
         rr:predicate dcterms:title ;
         rr:objectMap [
-            rml:query """ select distinct ?label 
-                      where {{ <{item_iri}> bf:itemOf ?instance .
-                               ?instance rdfs:label ?label . }}""" 
+            rml:query """SELECT DISTINCT ?label 
+                      WHERE {{ ?instance_iri rdf:type bf:Instance .
+                               FILTER (sameTerm(?instance_iri, <{instance_iri}>))
+                               OPTIONAL {{ ?instance_iri rdfs:label ?label }}
+                               OPTIONAL {{ ?instance_iri bf:title ?title . 
+                                           ?title bf:mainTitle ?label }}
+                                 
+                       }}""" 
         ]
     ] .
 
@@ -167,9 +200,9 @@
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:iterator "item_iri" ;
-        rml:query """SELECT DISTINCT ?item_iri
-                     WHERE {{ ?item_iri bf:itemOf <{instance_iri}> .
+        rml:iterator "work_iri" ;
+        rml:query """SELECT DISTINCT ?work_iri
+                     WHERE {{ <{instance_iri}> bf:instanceOf ?work_iri .
                     }}""" 
     ] ;
 
@@ -199,15 +232,17 @@
         ]
     ] ;
 
+
     rr:predicateObjectMap [
-        rr:predicate edm:rights ;
+        rr:predicate edm:hasView ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value 
-                         WHERE {{ ?instance bf:hasItem <{item_iri}> ;
-                                            bf:usageAndAccessPolicy ?policy .
-                                  ?policy rdf:value ?value }}"""
+                         WHERE {{
+                            ?value rdf:type bf:Item .
+                            FILTER(sameTerm(?value, <{item_iri}>)) 
+                         }}"""
         ]
-    ];
+    ] ;
 
     rr:predicateObjectMap [
         rr:predicate edm:isShownAt ;
@@ -221,12 +256,16 @@
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate edm:hasView ;
+        rr:predicate edm:aggregatedCHO ;
         rr:objectMap [
-            rr:parentTriplesMap <#BIBFRAME2MAPv4_WebResource> 
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{
+                            ?value rdf:type bf:Instance .
+                            FILTER(sameTerm(?value, <{instance_iri}>)) 
+                         }}"""
         ]
-
     ] .
+
 
 <#SPARQL_JSON_source> a sd:Service ; 
     sd:endpoint "{triplestore_url}" ;
