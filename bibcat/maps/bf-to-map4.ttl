@@ -21,7 +21,7 @@
 @prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<#BIBFRAME2MAPv4_WebResource> a rr:TriplesMap ;
+bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
@@ -55,12 +55,14 @@
     rr:predicateObjectMap [
         rr:predicate dc:format ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?format 
-                        WHERE {{ <{instance_iri}> rdf:type ?format }}""" 
+            rml:query """SELECT DISTINCT ?value 
+                        WHERE {{ <{instance_iri}> bf:carrier ?carrier .
+                                 ?carrier rdf:type bf:Carrier ;
+                                          rdf:value ?value }}""" 
         ] 
     ] .
 
-<#BIBFRAME2MAPv4_SourceResource> a rr:TriplesMap;
+bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
@@ -169,20 +171,10 @@
         ]
     ] ;
 
-    rr:predicateobjectmap [
-        rr:predicate dcterms:language ;
-        rr:objectmap [
-            rml:query """select distinct ?value 
-                         where {{ <{instance_iri}> bf:language ?lang .
-                                  ?lang rdf:value ?value . 
-                       }}"""
 
-        ]
-    ];
-
-    rr:predicateobjectmap [
+    rr:predicateObjectMap [
         rr:predicate dcterms:identifier ;
-        rr:objectmap [
+        rr:objectMap [
             rml:query """select distinct ?value 
                          where {{ <{item_iri}> bf:itemof ?instance .
                                   ?instance bf:identifiedby ?ident .
@@ -192,7 +184,18 @@
         ]
     ];
 
-    rr:predicateobjectmap [
+    rr:predicateObjectMap [
+        rr:predicate dcterms:language ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ <{instance_iri}> bf:language ?langOf .
+                                  ?langOf rdf:value ?value . 
+                       }}"""
+
+        ]
+    ];
+
+    rr:predicateObjectmap [
         rr:predicate dcterms:spatial ;
         rr:objectmap [
             rml:query """SELECT DISTINCT ?value 
@@ -262,7 +265,7 @@
         ]
     ] .
 
-<#BIBFRAME2MAPv4_Aggregation> a rr:TriplesMap;
+bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
 
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
