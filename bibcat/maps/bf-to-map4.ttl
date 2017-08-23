@@ -43,7 +43,11 @@
         rr:predicate edm:rights ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value 
-                         WHERE {{ <{item_iri}> bf:AccessPolicy ?value .   }}"""
+                         WHERE {{ 
+                            ?item_iri rdf:type bf:Item .
+                            OPTIONAL {{ ?item_iri bf:AccessPolicy ?value }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?value }}
+                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
 
         ]
     ];
@@ -116,7 +120,7 @@
                                    ?instance bf:instanceOf ?work .
                                    ?work bf:contribution ?contribution .
                                    ?contribution bf:agent ?creator .
-                                   ?creator rdfs:label ?label . 
+                                   ?creator rdf:value ?label . 
                                    OPTIONAL {{ ?contribution bf:role relators:aut . }} .
                                    OPTIONAL {{ ?contribution bf:role relators:cre . }}
                       }}""" 
@@ -124,6 +128,18 @@
         ]
 
     ];
+
+    rr:predicateObjectMap [
+        rr:predicate dc:date ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ <{instance_iri}>  bf:instanceOf ?work .
+                                  OPTIONAL {{ ?work bf:originDate ?value }} .
+                        }}"""
+        ]
+    ] ;
+
+
 
     rr:predicateObjectMap [
         rr:predicate dcterms:description ;
@@ -153,17 +169,43 @@
         ]
     ] ;
 
-    rr:predicateObjectMap [
+    rr:predicateobjectmap [
+        rr:predicate dcterms:language ;
+        rr:objectmap [
+            rml:query """select distinct ?value 
+                         where {{ <{instance_iri}> bf:language ?lang .
+                                  ?lang rdf:value ?value . 
+                       }}"""
+
+        ]
+    ];
+
+    rr:predicateobjectmap [
         rr:predicate dcterms:identifier ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?value 
-                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
-                                  ?instance bf:identifiedBy ?ident .
+        rr:objectmap [
+            rml:query """select distinct ?value 
+                         where {{ <{item_iri}> bf:itemof ?instance .
+                                  ?instance bf:identifiedby ?ident .
                                   ?ident rdf:value ?value 
                        }}"""
 
         ]
     ];
+
+    rr:predicateobjectmap [
+        rr:predicate dcterms:spatial ;
+        rr:objectmap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ <{instance_iri}> bf:instanceOf ?work .
+                                  OPTIONAL {{ ?work bf:subject ?place . 
+                                              ?place rdf:type bf:Place .
+                                              ?place rdf:value . }}
+                        
+                       }}"""
+
+        ]
+    ];
+                       
 
     rr:predicateObjectMap [
         rr:predicate dcterms:publisher ;
@@ -181,6 +223,31 @@
 
     ] ;
 
+    rr:predicateObjectMap [
+        rr:predicate edm:rights ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ 
+                            ?item_iri bf:itemOf <{instance_iri}> .
+                            ?item_iri rdf:type bf:Item .
+                            OPTIONAL {{ ?item_iri bf:AccessPolicy ?value }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?value }}
+                        }}"""
+
+        ]
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:subject ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                    WHERE {{ <{instance_iri}> bf:instanceOf ?work .
+                             ?work bf:subject ?topic .
+                             ?topic rdf:type bf:Topic .
+                             ?topic rdf:value ?value }}"""
+
+        ]
+    ];
     rr:predicateObjectMap [
         rr:predicate dcterms:title ;
         rr:objectMap [
@@ -225,8 +292,7 @@
         rr:predicate edm:preview ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
-                      WHERE {{ ?instance bf:hasItem <{item_iri}> ;
-                                         bf:coverArt ?cover_art .
+                      WHERE {{ <{instance_iri}> bf:coverArt ?cover_art .
                                ?cover_art rdf:value ?value }}"""
 
         ]
