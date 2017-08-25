@@ -6,19 +6,10 @@ import datetime
 import os
 import requests
 import rdflib
-try:
-    from ..ingesters.ingester import new_graph, NS_MGR
-    from .linker import BIBCAT_BASE, Linker, LinkerError
-except ValueError:
-    from ingesters.ingester import new_graph, NS_MGR
-    from linkers.linker import BIBCAT_BASE, Linker, LinkerError
-
 
 from fuzzywuzzy import fuzz
 
-LCSH_GRAPH = new_graph()
-LCSH_GRAPH.parse(os.path.join(BIBCAT_BASE, "rdf-references/loc_subjects.ttl"),
-                 format='turtle')
+from bibcat.linkers import Linker
 
 class LibraryOfCongressLinker(Linker):
     """Library of Congress Linked Data Linker"""
@@ -47,16 +38,20 @@ class LibraryOfCongressLinker(Linker):
                             result.text))
        
 
-    def run(self):
+    def run(self, graph=None, classes=[]):
         """Runs linker on existing bf:subject Blank Nodes"""
-        result = requests.post(self.triplestore_url,
-            data={"query": SUBJECT_BNODES,
-                  "format": "json"})
-        if result.status_code > 399:
-            raise LinkerError("Failed to run SUBJECT_BNODES sparql query {}".format(
-                    result.status_code),
-                result.text)
-        bindings = result.json().get('results').get('bindings')
+        if graph is not None:
+            result = graph.query(SUBJECT_BNODES)
+            bindings = result.bindings 
+        else:   
+            result = requests.post(self.triplestore_url,
+                data={"query": SUBJECT_BNODES,
+                  "   format": "json"})
+            if result.status_code > 399:
+                raise LinkerError("Failed to run SUBJECT_BNODES sparql query {}".format(
+                        result.status_code),
+                    result.text)
+            bindings = result.json().get('results').get('bindings')
         start = datetime.datetime.utcnow()
         print("Starting LCSH Linker Service at {}, total to process {}".format(
             start,
@@ -74,21 +69,8 @@ class LibraryOfCongressLinker(Linker):
             end,
             (end-start).seconds /60.0))
 
-FIND_LCSH = Linker.NS.prefix() + """
 
-SELECT *
-{{
-  OPTIONAL {{
-     ?1 rdfs:label "{0}"@en
-   }}
-   OPTIONAL {{
-     ?2 rdfs:label ?lab
-     filter(CONTAINS(?lab, "{0}"))
-   }}
-}}
-"""
-
-SUBJECT_BNODES = Linker.NS.prefix() + """
+SUBJECT_BNODES = PREFIX + """
 
 SELECT ?instance ?label 
 WHERE {
@@ -97,7 +79,7 @@ WHERE {
     filter(isblank(?subject))
 }"""
 
-UPDATE_SUBJECT = Linker.NS.prefix() + """
+UPDATE_SUBJECT = PREFIX + """
 
 DELETE {{
    ?instance bf:subject ?sub_bnode .
