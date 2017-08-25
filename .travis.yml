@@ -4,5 +4,5 @@ branches:
 language: python
 python:
   - "3.5"
-install: "python setup.y"
+install: "python setup.py"
 script:  python bibcat/tests/__init__.py 
