@@ -44,6 +44,35 @@ def clean_uris(graph):
          except rdflib.exceptions.SubjectTypeError:
              fix_uri(iri)
 
+def delete_bnode(bnode, graph):
+    """Deletes blank node and associated triples
+
+    Args:
+        bnode(rdflib.BNode): Blank node to delete
+        graph(rdflib.Graph|rdflib.ConjuctiveGraph): Graph
+    """
+    for pred, obj in graph.predicate_objects(subject=bnode):
+        if isinstance(obj, rdflib.BNode):
+            delete_bnode(obj, graph)
+        graph.remove((bnode, pred, obj))
+    for sub, pred in graph.subject_predicates(object=bnode):
+        graph.remove((sub, pred, bnode))
+
+
+def delete_iri(entity_iri, graph):
+    """Deletes all triples associated with an entity in a graph
+
+    Args:
+        entity_iri(rdflib.URIRef): IRI of entity
+        graph(rdflib.Graph|rdflib.ConjuctiveGraph): Graph
+    """
+    for pred, obj in graph.predicate_objects(subject=entity_iri):
+        if isinstance(obj, rdflib.BNode):
+            delete_bnode(obj, graph)
+        graph.remove((entity_iri, pred, obj))
+    for subj, pred in graph.subject_predicates(object=entity_iri):
+        graph.remove((subj, pred, entity_iri))
+
 def replace_iri(graph, old_iri, new_iri):
     """Replaces old IRI with a new IRI in the graph
 

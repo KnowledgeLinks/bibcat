@@ -10,18 +10,9 @@ BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
 
-sys.path.append(BIBCAT_BASE)
-from ingesters.ingester import new_graph, NS_MGR, PROJECT_BASE
-sys.path.append(PROJECT_BASE)
-try:
-    import rdfw as rdfframework
-except ImportError:
-    pass
-from rdfframework.utilities import RdfNsManager
 
 class Linker(object):
     """Base Linker class for all other linker classes"""
-    NS = NS_MGR
 
     def __init__(self, **kwargs):
         self.triplestore_url = kwargs.get(

@@ -6,17 +6,56 @@ import datetime
 import os
 import requests
 import rdflib
+import urllib.parse
+
+import bibcat
 
 from fuzzywuzzy import fuzz
+from bibcat.linkers.linker import Linker
 
-from bibcat.linkers import Linker
+#! PREFIX should be generated from RDF Framework in the future
+PREFIX = """PREFIX bf: <http://id.loc.gov/ontologies/bibframe/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"""
+
+#! BF should be from the RDF Framework Namespace manager
+BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 
 class LibraryOfCongressLinker(Linker):
     """Library of Congress Linked Data Linker"""
-    ID_LOC_URL = "http://id.loc.gov/"
+    ID_LOC_URL = "http://id.loc.gov/search/"
 
     def __init__(self, **kwargs):
         super(LibraryOfCongressLinker, self).__init__(**kwargs)
+        self.cutoff = kwargs.get("cutoff", 90)
+        self.graph = kwargs.get("graph", None)
+
+
+    def __link_lc_subjects__(self, subject_iri, label):
+        lc_subject_url = LibraryOfCongressLinker.ID_LOC_URL
+        print("Pre label ={}".format(label))
+        for punc in [".", ",", ":", ";", "?", "!", "*", "%", "$"]:
+            label = label.replace(punc, "")
+        lc_subject_url += "?" + urllib.parse.urlencode(
+            {"q": label,
+             "format": "json"})
+        lc_subject_url += "&q=scheme:http://id.loc.gov/authorities/subjects"
+        subject_result = requests.get(lc_subject_url)
+        if subject_result.status_code < 400:
+            lsch_iri, title = self.__process_loc_results__(
+                subject_result.json(), 
+                label)
+            if lsch_iri is None:
+                return
+            for entity in self.graph.subjects(predicate=BF.subject,
+                object=subject_iri):
+                self.graph.add((entity, BF.subject, lsch_iri))
+            self.graph.add((lsch_iri, rdflib.RDF.type, BF.Topic))
+            self.graph.add((lsch_iri, 
+                            rdflib.RDFS.label, 
+                            rdflib.Literal(title)))
+            bibcat.delete_iri(subject_iri, self.graph)
+               
 
 
     def __link_lcsh__(self, instance_uri, label, cutoff=90):
@@ -38,28 +77,44 @@ class LibraryOfCongressLinker(Linker):
                             result.text))
        
 
+    def __process_loc_results__(self, results, label):
+        title, loc_uri = None, None
+        for i, row in enumerate(results):
+            if isinstance(row, dict):
+                continue
+            if row[0].startswith('atom:entry'):
+                if row[2][0].startswith("atom:title"):
+                    title = row[2][-1]
+                if fuzz.ratio(label, title) < self.cutoff:
+                    continue
+                if row[3][0].startswith("atom:link") and \
+                    row[3][-1].get('type') is None:
+                    loc_uri = rdflib.URIRef(row[3][-1].get('href'))
+                    break
+        if loc_uri is None:
+            return None, None
+        return rdflib.URIRef(loc_uri), rdflib.Literal(title) 
+                
+       
+
+         
+
+        
+
     def run(self, graph=None, classes=[]):
         """Runs linker on existing bf:subject Blank Nodes"""
         if graph is not None:
-            result = graph.query(SUBJECT_BNODES)
+            self.graph = graph
+            result = self.graph.query(SELECT_SUBJECTS)
             bindings = result.bindings 
-        else:   
-            result = requests.post(self.triplestore_url,
-                data={"query": SUBJECT_BNODES,
-                  "   format": "json"})
-            if result.status_code > 399:
-                raise LinkerError("Failed to run SUBJECT_BNODES sparql query {}".format(
-                        result.status_code),
-                    result.text)
-            bindings = result.json().get('results').get('bindings')
         start = datetime.datetime.utcnow()
         print("Starting LCSH Linker Service at {}, total to process {}".format(
             start,
             len(bindings)))
         for i,row in enumerate(bindings):
-            instance_uri = row.get('instance').get('value')
-            label = row.get('label').get('value')
-            self.__link_lcsh__(instance_uri, label)
+            subject_iri = row.get('subject')
+            label = row.get('label')
+            self.__link_lc_subjects__(subject_iri, label)
             if not i%10 and i > 0:
                 print(".", end="")
             if not i%100:
@@ -68,6 +123,15 @@ class LibraryOfCongressLinker(Linker):
         print("Finished LCSH Linker Service at {}, total time={} mins".format(
             end,
             (end-start).seconds /60.0))
+
+
+SELECT_SUBJECTS = PREFIX + """
+
+SELECT DISTINCT ?subject ?label
+WHERE {
+	?subject rdf:type bf:Topic ;
+	         rdfs:label ?label .
+} ORDER BY ?subject"""
 
 
 SUBJECT_BNODES = PREFIX + """
