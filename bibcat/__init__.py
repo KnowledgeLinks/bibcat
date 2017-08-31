@@ -16,33 +16,33 @@ def clean_uris(graph):
         graph(rdflib.Graph): BIBFRAME RDF Graph
     """
     def fix_uri(uri):
-       url_sections = urllib.parse.urlparse(str(uri))
-       new_url = (url_sections.scheme,
-                  url_sections.netloc,
-                  urllib.parse.quote(url_sections.path),
-                  urllib.parse.quote(url_sections.params),
-                  urllib.parse.quote(url_sections.query),
-                  urllib.parse.quote(url_sections.fragment))
-       new_uri = rdflib.URIRef(
-           str(urllib.parse.urlunparse(new_url)))
-       for pred, obj in graph.predicate_objects(subject=uri):
-           graph.remove((uri, pred, obj))
-           graph.add((new_uri, pred, obj)) 
-       for subj, pred in graph.subject_predicates(object=uri):
-           graph.remove((subj, pred, uri))
-           graph.add((subj, pred, new_uri))
-    ALL_URI_SPARQL = """SELECT DISTINCT ?uri
+        """Function attempts to take an invalid uri and return a valid URI
+
+        Args:
+            uri(str): Questionable URI
+        """
+        url_sections = urllib.parse.urlparse(str(uri))
+        new_url = (url_sections.scheme,
+                   url_sections.netloc,
+                   urllib.parse.quote(url_sections.path),
+                   urllib.parse.quote(url_sections.params),
+                   urllib.parse.quote(url_sections.query),
+                   urllib.parse.quote(url_sections.fragment))
+        new_uri = rdflib.URIRef(
+            str(urllib.parse.urlunparse(new_url)))
+        replace_iri(graph, uri, new_uri)
+    all_uri_sparql = """SELECT DISTINCT ?uri
         WHERE {
             ?uri ?p ?o .
             ?s ?p1 ?uri .
         FILTER(isIRI(?uri))
     }"""
-    for iri in graph.query(ALL_URI_SPARQL):
-         try:
-             if _is_valid_uri(str(iri[0])) is False:
+    for iri in graph.query(all_uri_sparql):
+        try:
+            if _is_valid_uri(str(iri[0])) is False:
                 fix_uri(iri[0])
-         except rdflib.exceptions.SubjectTypeError:
-             fix_uri(iri)
+        except rdflib.exceptions.SubjectTypeError:
+            fix_uri(iri)
 
 def delete_bnode(bnode, graph):
     """Deletes blank node and associated triples
@@ -83,6 +83,10 @@ def replace_iri(graph, old_iri, new_iri):
         old_iri: rdflib.URIRef, Old IRI
         new_iri: rdflib.URIRef, New IRI
     """
+    if old_iri == new_iri:
+        # Otherwise deletes all occurrences of the iri in the
+        # graph
+        return
     for pred, obj in graph.predicate_objects(subject=old_iri):
         graph.add((new_iri, pred, obj))
         graph.remove((old_iri, pred, obj))
@@ -107,6 +111,3 @@ def wikify(value):
     """
     value = re.sub(r'[^\w\s-]', '', value).strip()
     return re.sub(r'[-\s]+', '_', value)
-
-
-

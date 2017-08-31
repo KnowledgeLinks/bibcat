@@ -5,7 +5,6 @@ target RDF classes on the input RDF graph, generates new IRIs in the triplestore
 from types import SimpleNamespace
 import rdflib
 import requests
-from multiprocessing import Pool
 
 from bibcat import replace_iri, slugify
 try:
