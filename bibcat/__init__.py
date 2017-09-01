@@ -44,12 +44,30 @@ def clean_uris(graph):
         except rdflib.exceptions.SubjectTypeError:
             fix_uri(iri)
 
-def delete_bnode(bnode, graph):
+def create_rdf_list(graph, nodes):
+    """Creates a RDF List with the ordering based on the nodes.
+    Returns a blank node that functions in the object role for adding
+    a triple.
+
+    Args:
+        graph(rdflib.Graph|rdflib.ConjuctiveGraph): Source graph
+        nodes(list): Python list of nodes
+    """
+    if len(nodes) < 1:
+        return rdflib.RDF.nil
+    ordered_bnode = rdflib.BNode()
+    graph.add((ordered_bnode, rdflib.RDF.first, nodes[0]))
+    graph.add((ordered_bnode,
+               rdflib.RDF.rest,
+               create_rdf_list(graph, nodes[1:])))
+    return ordered_bnode
+
+def delete_bnode(graph, bnode):
     """Deletes blank node and associated triples
 
     Args:
-        bnode(rdflib.BNode): Blank node to delete
         graph(rdflib.Graph|rdflib.ConjuctiveGraph): Graph
+        bnode(rdflib.BNode): Blank node to delete
     """
     for pred, obj in graph.predicate_objects(subject=bnode):
         if isinstance(obj, rdflib.BNode):
@@ -59,12 +77,12 @@ def delete_bnode(bnode, graph):
         graph.remove((sub, pred, bnode))
 
 
-def delete_iri(entity_iri, graph):
+def delete_iri(graph, entity_iri):
     """Deletes all triples associated with an entity in a graph
 
     Args:
-        entity_iri(rdflib.URIRef): IRI of entity
         graph(rdflib.Graph|rdflib.ConjuctiveGraph): Graph
+        entity_iri(rdflib.URIRef): IRI of entity
     """
     for pred, obj in graph.predicate_objects(subject=entity_iri):
         if isinstance(obj, rdflib.BNode):

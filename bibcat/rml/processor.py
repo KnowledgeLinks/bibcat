@@ -9,16 +9,16 @@ __author__ = "Jeremy Nelson"
 # Standard Python Modules
 import collections
 import datetime
-import json
 import os
+import sys
 from types import SimpleNamespace
 
 # 3rd party modules
-import bibcat
 import rdflib
 import requests
 
 import jsonpath_ng
+import bibcat
 from bibcat.maps import get_map
 
 BIBCAT_BASE = os.path.abspath(
@@ -61,7 +61,7 @@ class Processor(object):
         # Populate Namespaces Manager
         for prefix, namespace in self.rml.namespaces():
             setattr(NS_MGR, prefix, rdflib.Namespace(namespace))
-        self.output, self.source, self.triplestore_url  = None, None, None
+        self.output, self.source, self.triplestore_url = None, None, None
         self.parents = set()
         self.constants = dict(version=__version__)
         self.triple_maps = dict()
@@ -178,7 +178,7 @@ class Processor(object):
         parent_objects = self.execute(
             self.triple_maps[str(parent_map)],
             **kwargs)
-        for parent_obj in parent_objects: 
+        for parent_obj in parent_objects:
             if parent_obj == subject:
                 continue
             self.output.add((
@@ -313,7 +313,8 @@ class Processor(object):
     def add_to_triplestore(self):
         """Method attempts to add output to Blazegraph RDF Triplestore"""
         if len(self.output) > 0:
-            result = requests.post(self.triplestore_url,
+            result = requests.post(
+                self.triplestore_url,
                 data=self.output.serialize(),
                 headers={"Content-Type": "application/rdf+xml"})
 
@@ -356,7 +357,7 @@ class Processor(object):
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs)
-        
+
 class CSVProcessor(Processor):
     """CSV RDF Mapping Processor"""
 
@@ -387,8 +388,11 @@ class CSVProcessor(Processor):
         row.
 
         """
-        
+        pass
+
 class CSVRowProcessor(Processor):
+    """RML Processor for CSV/TSV or other delimited file supported by the
+    python standard library module csv"""
 
     def __init__(self, **kwargs):
         if "rml_rules" in kwargs:
@@ -410,8 +414,9 @@ class CSVRowProcessor(Processor):
             if triple_map.datatype == NS_MGR.xsd.anyURI:
                 output = rdflib.URIRef(raw_value)
             else:
-                output = rdflib.Literal(raw_value,
-                    datatype=triple_map.datatype) 
+                output = rdflib.Literal(
+                    raw_value,
+                    datatype=triple_map.datatype)
         else:
             output = rdflib.Literal(raw_value)
         return output
@@ -436,7 +441,7 @@ class CSVRowProcessor(Processor):
                         subject,
                         predicate,
                         object_))
-             
+
             if pred_obj_map.parentTriplesMap is not None:
                 self.__handle_parents__(
                     parent_map=pred_obj_map.parentTriplesMap,
@@ -452,8 +457,8 @@ class CSVRowProcessor(Processor):
                 self.output.add((subject, predicate, pred_obj_map.constant))
         finish_size = len(self.output)
         if finish_size > start_size:
-            self.output.add((subject, 
-                             NS_MGR.rdf.type, 
+            self.output.add((subject,
+                             NS_MGR.rdf.type,
                              triple_map.subjectMap.class_))
             all_subjects.append(subject)
         return all_subjects
@@ -471,7 +476,7 @@ class CSVRowProcessor(Processor):
         self.source = row
         self.output = self.__graph__()
         super(CSVRowProcessor, self).run(**kwargs)
-        
+
 
 class JSONProcessor(Processor):
     """JSON RDF Mapping Processor"""
@@ -483,7 +488,7 @@ class JSONProcessor(Processor):
             rml_rules = []
         super(JSONProcessor, self).__init__(rml_rules)
 
-    def __generate_reference__(self,  triple_map, **kwargs):
+    def __generate_reference__(self, triple_map, **kwargs):
         json_obj = kwargs.get("obj")
         path_expr = jsonpath_ng.parse(triple_map.reference)
         results = [r.value.strip() for r in path_expr.find(json_obj)]
@@ -511,9 +516,9 @@ class JSONProcessor(Processor):
         ref_exp = jsonpath_ng.parse(str(pred_obj_map.refernce))
         found_objects = [r.value for r in ref_exp(obj)]
         for row in found_objects:
-            self.output.append(subject, predicate, rdflib.Literal(row))
-            
- 
+            self.output.add((subject, predicate, rdflib.Literal(row)))
+
+
     def execute(self, triple_map, **kwargs):
         """Method executes mapping between JSON source and
         output RDF
@@ -542,7 +547,7 @@ class JSONProcessor(Processor):
                         subject,
                         predicate,
                         self.generate_term(term_map=pred_obj_map, **kwargs)))
-                
+
                 if pred_obj_map.parentTriplesMap is not None:
                     self.__handle_parents__(
                         parent_map=pred_obj_map.parentTriplesMap,
@@ -558,16 +563,13 @@ class JSONProcessor(Processor):
                             rdf_obj = rdflib.URIRef(str(obj))
                         else:
                             rdf_obj = rdflib.Literal(str(obj))
-                        self.output.add((subject, predicate, ref_obj))
+                        self.output.add((subject, predicate, rdf_obj))
                 if pred_obj_map.constant is not None:
                     self.output.add((subject,
                                      predicate,
                                      pred_obj_map.constant))
             subjects.append(subject)
         return subjects
-            
-        
-
 
     def run(self, source, **kwargs):
         """Method takes a JSON source and any keywords and transforms from
@@ -584,7 +586,7 @@ class JSONProcessor(Processor):
             source = json.loads(source)
         self.source = source
         super(JSONProcessor, self).run(**kwargs)
-        
+
 
 class XMLProcessor(Processor):
     """XML RDF Mapping Processor"""
@@ -611,7 +613,8 @@ class XMLProcessor(Processor):
             element: etree.Element
         """
         element = kwargs.get("element")
-        found_elements = element.xpath(triple_map.reference, 
+        found_elements = element.xpath(
+            triple_map.reference,
             namespaces=self.xml_ns)
         for elem in found_elements:
             raw_text = elem.text.strip()
@@ -638,7 +641,8 @@ class XMLProcessor(Processor):
         if pred_obj_map.reference is None:
             return subjects
         predicate = pred_obj_map.predicate
-        found_elements = element.xpath(str(pred_obj_map.reference),
+        found_elements = element.xpath(
+            str(pred_obj_map.reference),
             namespaces=self.xml_ns)
 
         for found_elem in found_elements:
@@ -655,7 +659,7 @@ class XMLProcessor(Processor):
             else:
                 datatype = pred_obj_map.datatype
             if pred_obj_map.delimiters != []:
-               subjects.extend(
+                subjects.extend(
                     self.__generate_delimited_objects__(
                         triple_map=pred_obj_map,
                         subject=subject,
@@ -751,9 +755,7 @@ def __get_object__(binding):
             elif isinstance(row, dict):
                 if row.get('type').startswith('uri'):
                     return rdflib.URIRef(row.get('value'))
-                #elif row.get('type').startswith('literal'):
-                else:
-                    return rdflib.Literal(row.get('value'))
+                return rdflib.Literal(row.get('value'))
             elif isinstance(row, tuple):
                 print(row)
             elif isinstance(row, str):
@@ -761,7 +763,7 @@ def __get_object__(binding):
                     continue
                 return rdflib.Literal(row)
 
- 
+
 
 
 class SPARQLProcessor(Processor):

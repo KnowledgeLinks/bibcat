@@ -19,6 +19,8 @@ class TestLibraryOfCongressLinker(unittest.TestCase):
         self.assertEqual(default_linker.cutoff, 90)
         self.assertEqual(loc.LibraryOfCongressLinker.ID_LOC_URL,
             "http://id.loc.gov/search/")
+        self.assertEqual(default_linker.base_url,
+                         'https://bibcat.org/')
 
 class TestLibraryOfCongressLinker_link_lc_subjects(unittest.TestCase):
 
@@ -58,7 +60,6 @@ class TestLibraryOfCongressLinker_link_lc_subjects(unittest.TestCase):
             extracted_iri,
             rdflib.URIRef("http://id.loc.gov/authorities/subjects/sh93007047"))
 
-        
     
 
         

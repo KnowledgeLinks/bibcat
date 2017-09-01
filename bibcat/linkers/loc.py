@@ -7,11 +7,11 @@ import sys
 import unicodedata
 import urllib.parse
 
-import bibcat
 import requests
 import rdflib
 
 from fuzzywuzzy import fuzz
+import bibcat
 from bibcat.linkers.linker import Linker
 
 #! PREFIX should be generated from RDF Framework in the future
@@ -28,11 +28,11 @@ class LibraryOfCongressLinker(Linker):
 
     def __init__(self, **kwargs):
         super(LibraryOfCongressLinker, self).__init__(**kwargs)
+        self.base_url = kwargs.get('base_url', 'https://bibcat.org/')
         self.cutoff = kwargs.get("cutoff", 90)
         self.graph = kwargs.get("graph", None)
         self.punct_map = dict.fromkeys(i for i in range(sys.maxunicode)
                                        if unicodedata.category(chr(i)).startswith('P'))
-
 
     def __link_subject__(self, term, subject_iri):
         """Function takes a term and queries LOC service
@@ -60,7 +60,8 @@ class LibraryOfCongressLinker(Linker):
             self.graph.add((lsch_iri,
                             rdflib.RDFS.label,
                             rdflib.Literal(title)))
-            bibcat.delete_iri(subject_iri, self.graph)
+            bibcat.delete_iri(self.graph, subject_iri)
+            return lsch_iri
 
     def __process_loc_results__(self, results, label):
         title, loc_uri, term_weights = None, None, dict()
@@ -70,7 +71,6 @@ class LibraryOfCongressLinker(Linker):
             if row[0].startswith('atom:entry'):
                 if row[2][0].startswith("atom:title"):
                     title = row[2][-1]
-                
                 #if fuzz.ratio(label, title) < self.cutoff:
                 #    continue
                 if row[3][0].startswith("atom:link") and \
@@ -79,7 +79,6 @@ class LibraryOfCongressLinker(Linker):
                     term_weights[str(loc_uri)] = {
                         "weight": fuzz.ratio(label, title),
                         "title": title}
-                   
         results = sorted(term_weights.items(), key=lambda x: x[1]['weight'])
         results.reverse()
         for row in results:
@@ -103,6 +102,14 @@ class LibraryOfCongressLinker(Linker):
             return
         elif len(terms) == 1:
             self.__link_subject__(terms[0], subject_iri)
+        # Assumes a complex subject, bases ordering on extract tokens
+        # from split call
+        else:
+            rdf_list = []
+            for term in terms:
+                rdf_list.append(self.__link_subject__(term, subject_iri))
+
+
 
 
     def run(self, graph=None):
