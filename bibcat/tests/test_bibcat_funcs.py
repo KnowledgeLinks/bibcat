@@ -1,7 +1,7 @@
 import rdflib
 import unittest
-from bibcat import clean_uris, create_rdf_list, delete_iri, replace_iri 
-from bibcat import slugify, wikify
+from bibcat import clean_uris, create_rdf_list, delete_bnode, delete_iri
+from bibcat import slugify, wikify, replace_iri 
 
 __author__ = "Jeremy Nelson"
 
@@ -64,6 +64,47 @@ class Test_create_rdf_list(unittest.TestCase):
                          self.literal_list[2])
 
 
+class Test_delete_bnode(unittest.TestCase):
+
+    def setUp(self):
+        self.graph = rdflib.Graph()
+        self.entity = rdflib.URIRef("https://bibcat.org/test-entity")
+        self.simple_title_bnode = rdflib.BNode()
+        self.graph.add((self.entity,
+                        rdflib.RDF.type,
+                        BF.Title))
+        self.graph.add((self.entity, BF.title, self.simple_title_bnode))
+        self.graph.add((self.simple_title_bnode, 
+                        BF.mainTitle, 
+                        rdflib.Literal("This is a test")))
+        self.top_title_bnode = rdflib.BNode()
+        self.graph.add((self.entity, BF.title, self.top_title_bnode))
+        secondary_title_bnode = rdflib.BNode()
+        self.graph.add((self.top_title_bnode, rdflib.RDF.type, BF.Topic))
+        self.graph.add((self.top_title_bnode, 
+                        rdflib.RDFS.label, 
+                        rdflib.Literal("This is a title and a name")))
+        self.graph.add((self.top_title_bnode, SCHEMA.name, secondary_title_bnode))
+        self.graph.add((secondary_title_bnode, 
+                        rdflib.RDF.value,
+                        rdflib.Literal("This is a name")))
+
+    def test_delete_1_level_deep_bnode(self):
+        start_size = len(self.graph)
+        delete_bnode(self.graph, self.simple_title_bnode)
+        finish_size = len(self.graph)
+        self.assertEqual(start_size-finish_size, 2)
+        self.assertIsNone(self.graph.value(subject=self.simple_title_bnode,
+                                           predicate=BF.mainTitle))
+
+    def test_delete_2_level_deep_bnode(self):
+        start_size = len(self.graph)
+        delete_bnode(self.graph, self.top_title_bnode)
+        finish_size = len(self.graph)
+        self.assertEqual(start_size-finish_size, 5)
+        self.assertIsNone(self.graph.value(subject=self.top_title_bnode,
+                                           predicate=rdflib.RDFS.label))
+
 class Test_delete_iri(unittest.TestCase):
 
     def setUp(self):
@@ -75,11 +116,36 @@ class Test_delete_iri(unittest.TestCase):
         self.graph.add((self.entity_one, 
                         rdflib.RDFS.label, 
                         rdflib.Literal("Test Entity One", lang="en")))
+        self.entity_two = rdflib.URIRef("https://bibcat.org/test-entity-two")
+        self.graph.add((self.entity_two, 
+                        rdflib.RDF.type, 
+                        rdflib.RDFS.Resource))
+        self.graph.add((self.entity_two, 
+                        rdflib.RDFS.label, 
+                        rdflib.Literal("Test Entity Two", lang="en")))
+        title_bnode = rdflib.BNode()
+        self.graph.add((self.entity_two, BF.title, title_bnode))
+        self.graph.add((title_bnode, rdflib.RDF.type, BF.Title))
+        self.graph.add((title_bnode, BF.subTitle, rdflib.Literal("Subtitle ")))
+
 
     def test_delete_iri(self):
-        self.assertEqual(len(self.graph), 2)
+        start_size = len(self.graph)
         delete_iri(self.graph, self.entity_one)
-        self.assertEqual(len(self.graph), 0)
+        finish_size = len(self.graph)
+        self.assertEqual(start_size - finish_size, 2)
+        self.assertIsNone(self.graph.value(subject=self.entity_one,
+                                           predicate=rdflib.RDF.type))
+
+    def test_delete_complex_iri(self):
+        start_size = len(self.graph)
+        delete_iri(self.graph, self.entity_two)
+        finish_size = len(self.graph)
+        self.assertEqual(start_size-finish_size, 5)
+        self.assertIsNone(self.graph.value(subject=self.entity_two,
+                                           predicate=rdflib.RDF.type))
+ 
+
 
 class Test_replace_iri(unittest.TestCase):
     

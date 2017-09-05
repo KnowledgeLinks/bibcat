@@ -71,7 +71,7 @@ def delete_bnode(graph, bnode):
     """
     for pred, obj in graph.predicate_objects(subject=bnode):
         if isinstance(obj, rdflib.BNode):
-            delete_bnode(obj, graph)
+            delete_bnode(graph, obj)
         graph.remove((bnode, pred, obj))
     for sub, pred in graph.subject_predicates(object=bnode):
         graph.remove((sub, pred, bnode))
@@ -86,7 +86,7 @@ def delete_iri(graph, entity_iri):
     """
     for pred, obj in graph.predicate_objects(subject=entity_iri):
         if isinstance(obj, rdflib.BNode):
-            delete_bnode(obj, graph)
+            delete_bnode(graph, obj)
         graph.remove((entity_iri, pred, obj))
     for subj, pred in graph.subject_predicates(object=entity_iri):
         graph.remove((subj, pred, entity_iri))

@@ -5,6 +5,7 @@ import bibcat.linkers.loc as loc
 __author__ = "Jeremy Nelson"
 
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
+SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 
 class TestLibraryOfCongressLinker(unittest.TestCase):
 
@@ -62,6 +63,48 @@ class TestLibraryOfCongressLinker_link_lc_subjects(unittest.TestCase):
 
     
 
+class TestLibraryOfCongressLinker_link_lc_subjects_OrderedCollection(unittest.TestCase):
+
+    def setUp(self):
+        self.graph = rdflib.Graph()
+        self.graph.namespace_manager.bind("skos", SKOS)
+        self.bf_topic_iri = rdflib.URIRef("http://bibcat.org/Topic345")
+        self.graph.add((self.bf_topic_iri, rdflib.RDF.type, BF.Topic))
+        self.graph.add((self.bf_topic_iri, 
+                        rdflib.RDF.value, 
+                        rdflib.Literal("Green--Electronic Books")))
+        self.linker = loc.LibraryOfCongressLinker(graph=self.graph, 
+            base_url='http://bibcat.org/')
+
+    def test_existing_is_ordered_collection(self):
+        self.linker.link_lc_subjects(self.bf_topic_iri, "Green--Electronic Books")
+        existing_classes = sorted([s for s in self.graph.objects(subject=self.bf_topic_iri,
+                                                            predicate=rdflib.RDF.type)])
+        self.assertListEqual(existing_classes,
+                             [BF.Topic, SKOS.OrderedCollection])
+
+    def test_existing_loc_iri_in_order(self):
+        self.graph.remove((self.bf_topic_iri, rdflib.RDF.value, rdflib.Literal("Green--Electronic Books")))
+        self.graph.add((self.bf_topic_iri, 
+                        rdflib.RDF.value,
+                        rdflib.Literal("Advertising--Alcoholic beverages--Government policy")))
+        self.linker.link_lc_subjects(self.bf_topic_iri, 
+                                     "Advertising--Alcoholic beverages--Government policy")
+
+        sparql = """prefix bf: <http://id.loc.gov/ontologies/bibframe/>
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+prefix skos: <"http://www.w3.org/2004/02/skos/core#>
+
+        SELECT ?loc_iri
+        WHERE {
+            <http://bibcat.org/Topic345> skos:memberList/rdf:rest*/rdf:first ?loc_iri 
+        }"""
+        #result = self.graph.query(sparql)
+
         
+        
+        
+       
         
         
