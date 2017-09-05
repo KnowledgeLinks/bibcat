@@ -210,21 +210,6 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
                        
 
-    rr:predicateObjectMap [
-        rr:predicate dcterms:publisher ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?value
-                         WHERE {{
-                                 ?instance rdf:type bf:Instance . 
-                                 OPTIONAL {{
-                                    ?item bf:itemOf ?instance ;
-                                           bf:heldBy ?value . 
-                                  }}
-                                 FILTER (sameTerm(?instance, <{instance_iri}>))
-                        }}"""            
-        ]
-
-    ] ;
 
     rr:predicateObjectMap [
         rr:predicate edm:rights ;
@@ -285,10 +270,17 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
     rr:predicateObjectMap [
         rr:predicate edm:dataProvider ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?label
-                         WHERE {{ <{item_iri}> bf:heldBy ?institution .
-                                  ?institution rdfs:label ?label }}"""
-        ] 
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{
+                                 ?instance rdf:type bf:Instance . 
+                                 OPTIONAL {{
+                                    ?item bf:itemOf ?instance ;
+                                           bf:heldBy ?value . 
+                                  }}
+                                 FILTER (sameTerm(?instance, <{instance_iri}>))
+                        }}"""            
+        ]
+
     ] ;
 
     rr:predicateObjectMap [
@@ -300,7 +292,6 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
 
         ]
     ] ;
-
 
     rr:predicateObjectMap [
         rr:predicate edm:hasView ;
