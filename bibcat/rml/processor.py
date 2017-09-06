@@ -646,6 +646,15 @@ class XMLProcessor(Processor):
             namespaces=self.xml_ns)
 
         for found_elem in found_elements:
+            if not hasattr(pred_obj_map, "datatype") or \
+                pred_obj_map.datatype is None:
+                datatype = None
+            else:
+                datatype = pred_obj_map.datatype
+            if isinstance(found_elem, str): # Handle xpath attributes
+                object_ = self.__generate_object_term__(datatype, found_elem)
+                self.output.add((subject, predicate, object_))
+                continue
             if found_elem.text is None or len(found_elem.text) < 1:
                 continue
             if pred_obj_map.constant is not None:
@@ -653,11 +662,6 @@ class XMLProcessor(Processor):
                                  predicate,
                                  pred_obj_map.constant))
                 continue
-            if not hasattr(pred_obj_map, "datatype") or \
-                pred_obj_map.datatype is None:
-                datatype = None
-            else:
-                datatype = pred_obj_map.datatype
             if pred_obj_map.delimiters != []:
                 subjects.extend(
                     self.__generate_delimited_objects__(
@@ -874,6 +878,7 @@ class SPARQLProcessor(Processor):
                 pre_obj_bindings = self.__get_bindings__(
                     sparql_query,
                     output_format)
+                
                 for row in pre_obj_bindings:
                     object_ = __get_object__(row)
                     if object_ is None:

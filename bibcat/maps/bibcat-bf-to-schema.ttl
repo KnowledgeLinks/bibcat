@@ -147,13 +147,6 @@
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate schema:url ;
-        rr:objectMap [
-            rr:reference "item"
-        ]
-    ] ;
-
-    rr:predicateObjectMap [
         rr:predicate schema:provider ;
         rr:objectMap [
             rr:parentTriplesMap <#BIBFRAME_ITEM2Provider> 
@@ -162,10 +155,10 @@
 
     rr:predicateObjectMap [
         rr:predicate schema:fileFormat ;
-        rr:objectmap [
+        rr:objectMap [
             rml:query """SELECT ?value
-                WHERE {{ <{item}> bf:itemOf ?instance .
-                   ?instance rdf:type bf:Electronic .
+                WHERE {{  <{item}> bf:itemOf ?instance .
+                    ?instance rdf:type bf:Electronic .
                     BIND("pdf" as ?value)
                 }}"""
         ]

@@ -256,7 +256,7 @@ class IslandoraIngester(OAIPMHIngester):
             NS) is not None:
             self.metadataPrefix = "mods"
             for rule_name in ["bibcat-base.ttl", 
-                              "bibcat-mods-to-bf.ttl"]:
+                              "mods-bf.ttl"]:
                 rules_ttl.append(rule_name)
             self.processor = XMLProcessor(
                 rml_rules=rules_ttl,

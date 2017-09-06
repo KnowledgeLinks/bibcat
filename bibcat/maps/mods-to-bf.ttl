@@ -39,6 +39,14 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
     ]; 
 
     rr:predicateObjectMap [
+        rr:predicate bf:usageAndAccessPolicy ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_ItemUsageAndAccess>
+        ]
+
+    ] ;
+
+    rr:predicateObjectMap [
         rr:predicate bf:itemOf ;
         rr:objectMap [
             rr:template "{instance_iri}" ;
@@ -46,6 +54,27 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         ]
     ] . 
 
+
+<#MODS2BIBFRAME_ItemUsageAndAccess> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:referenceFormulation ql:XPath ;
+        rml:iterator "."
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:constant bf:AccessPolicy ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "mods:accessCondition/@xlink:href";
+            rr:datatype xsd:anyURI
+        ]
+    ]  .
 
 <#MODS2BIBFRAME_Instance> a rr:TriplesMap ;
 
@@ -578,7 +607,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:originInfo/mods:publisher" 
+        rml:iterator "mods:originInfo" 
     ] ;
 
     rr:subjectMap [
@@ -589,7 +618,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
-            rr:reference "." ;
+            rr:reference "mods:publisher" ;
             rr:datatype xsd:string 
         ]
     ] .
