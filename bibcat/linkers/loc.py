@@ -97,8 +97,9 @@ class LibraryOfCongressLinker(Linker):
         def __add_topic__(loc_iri, value):
             self.graph.add((loc_iri, rdflib.RDF.type, BF.Topic))
             self.graph.add((loc_iri, rdflib.RDF.value, rdflib.Literal(value)))
-        entities = self.graph.subjects(predicate=BF.subject,
-                                       object=topic_subject)
+        entities = [entity for entity in self.graph.subjects(
+                                             predicate=BF.subject,
+                                             object=topic_subject)]
         terms = raw_label.split("--")
         if len(terms) < 1:
             return
@@ -131,11 +132,15 @@ class LibraryOfCongressLinker(Linker):
                 return
             # Delete old subject if a Blank Node
             if isinstance(topic_subject, rdflib.BNode):
-                bibcat.delete_bnode(self.graph, topic_subject)
+                topic_bnode = topic_subject
                 # Create a new topic_subject as an IRI
                 topic_subject = rdflib.URIRef("{}topic/{}".format(
                     self.base_url,
                     bibcat.slugify(raw_label)))
+                for entity in entities:
+                    print("Entity is {} for bnode {}".format(entity, topic_bnode))
+                    self.graph.add((entity, BF.subject, topic_subject))
+                bibcat.delete_bnode(self.graph, topic_bnode)
             # Add topic_subject back as a bf:Topic and SKOS.OrganizedCollection
             self.graph.add((topic_subject, rdflib.RDF.type, BF.Topic))
             self.graph.add((topic_subject, 
@@ -144,10 +149,12 @@ class LibraryOfCongressLinker(Linker):
             self.graph.add((topic_subject, 
                             rdflib.RDFS.label, 
                             rdflib.Literal(raw_label)))
-            self.graph.add((topic_subject,
-                            SKOS.memberList,
-                            bibcat.create_rdf_list(self.graph,
-                                                   rdf_list)))
+            if not self.graph.value(subject=topic_subject, 
+                                    predicate=SKOS.memberList):
+                self.graph.add((topic_subject,
+                                SKOS.memberList,
+                                bibcat.create_rdf_list(self.graph,
+                                                       rdf_list)))
 
 
     def run(self, graph=None):

@@ -94,13 +94,19 @@ class TestLibraryOfCongressLinker_link_lc_subjects_OrderedCollection(unittest.Te
         sparql = """prefix bf: <http://id.loc.gov/ontologies/bibframe/>
 prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-prefix skos: <"http://www.w3.org/2004/02/skos/core#>
+prefix skos: <http://www.w3.org/2004/02/skos/core#>
 
         SELECT ?loc_iri
         WHERE {
             <http://bibcat.org/Topic345> skos:memberList/rdf:rest*/rdf:first ?loc_iri 
         }"""
-        #result = self.graph.query(sparql)
+        result = self.graph.query(sparql)
+        loc_iris = [r.get('loc_iri') for r in result.bindings]
+        self.assertListEqual(
+            loc_iris,
+            [rdflib.URIRef('http://id.loc.gov/authorities/subjects/sh85001086'),
+             rdflib.URIRef('http://id.loc.gov/authorities/subjects/sh85003283'),
+             rdflib.URIRef('http://id.loc.gov/authorities/subjects/sh99005269')])
 
         
         
