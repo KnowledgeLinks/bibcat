@@ -104,7 +104,9 @@
             rml:query """SELECT DISTINCT ?label 
                 WHERE {{ <{instance}> bf:instanceOf ?work .
                          ?work bf:subject ?subject .
-                         ?subject  rdfs:label ?label . }}
+                         OPTIONAL {{ ?subject rdfs:label ?label . }}
+                         OPTIONAL {{ ?subject rdf:value ?label . }}
+                }}
                 """
         ]
     ]  ;

@@ -111,6 +111,33 @@ prefix skos: <http://www.w3.org/2004/02/skos/core#>
         
         
         
-       
+class TestLibraryOfCongressSRULinker(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_default_init(self):
+        default_linker = loc.LibraryOfCongressSRULinker()
+        self.assertEqual(default_linker.triplestore_url,
+                         "http://localhost:9999/blazegraph/sparql")
+        self.assertIsNone(default_linker.graph)
+        self.assertEqual(default_linker.cutoff, 90)
+        self.assertEqual(loc.LibraryOfCongressSRULinker.NAF_SRU,
+                         "http://lx2.loc.gov:210/NAF?")
+        self.assertEqual(loc.LibraryOfCongressSRULinker.SAF_SRU,
+                         "http://lx2.loc.gov:210/SAF?")
+        self.assertEqual(default_linker.base_url,
+                         'https://bibcat.org/')
+
+
+class TestLibraryOfCongressSRULinker_link_lc_subjects(unittest.TestCase):
+
+    def setUp(self):
+        self.graph = rdflib.Graph()
+        self.test_entity = rdflib.URIRef("http://bibcat.org/test-entity")
+        self.linker = loc.LibraryOfCongressSRULinker()
         
-        
+    def test_link_lc_subjects(self):
+        self.linker.link_lc_subjects(self.test_entity, "Green")
+            
+               

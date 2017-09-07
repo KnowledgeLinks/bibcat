@@ -42,13 +42,12 @@ class LibraryOfCongressLinker(Linker):
             term(str): Term
             subject_iri(rdflib.URIRef): Subject IRI
         """
-        lc_subject_url = LibraryOfCongressLinker.ID_LOC_URL
+        lc_search_url = LibraryOfCongressLinker.ID_LOC_URL
         label = term.translate(self.punct_map)
-        lc_subject_url += "?" + urllib.parse.urlencode(
+        lc_search_url += "?" + urllib.parse.urlencode(
             {"q": label,
              "format": "json"})
-        lc_subject_url += "&q=scheme:http://id.loc.gov/authorities/subjects"
-        subject_result = requests.get(lc_subject_url)
+        subject_result = requests.get(lc_search_url)
         if subject_result.status_code < 400:
             lsch_iri, title = self.__process_loc_results__(
                 subject_result.json(),
@@ -65,16 +64,22 @@ class LibraryOfCongressLinker(Linker):
     def __process_loc_results__(self, results, label):
         title, loc_uri, term_weights = None, None, dict()
         for row in results:
-            if isinstance(row, dict):
+            if isinstance(row, dict) or not row[0].startswith('atom:entry'):
                 continue
-            if row[0].startswith('atom:entry'):
-                if row[2][0].startswith("atom:title"):
-                    title = row[2][-1]
-                if row[3][0].startswith("atom:link") and \
-                    row[3][-1].get('type') is None:
-                    loc_uri = rdflib.URIRef(row[3][-1].get('href'))
-                    term_weights[str(loc_uri)] = {
+            if row[2][0].startswith("atom:title"):
+                title = row[2][-1]
+            if row[3][0].startswith("atom:link"):
+                loc_url = row[3][-1].get('href')
+                if "subjects/" in loc_url:
+                    bf_class = BF.Topic
+                elif "organizations/" in loc_url:
+                    bf_class = BF.Organization
+                else:
+                    bf_class = BF.Agent
+                loc_uri = rdflib.URIRef(loc_url)
+                term_weights[str(loc_uri)] = {
                         "weight": fuzz.ratio(label, title),
+                        "class": bf_class,
                         "title": title}
         results = sorted(term_weights.items(), key=lambda x: x[1]['weight'])
         results.reverse()
@@ -190,6 +195,54 @@ class LibraryOfCongressLinker(Linker):
         print("Finished LCSH Linker Service at {}, total time={} mins".format(
             end,
             (end-start).seconds /60.0))
+
+
+class LibraryOfCongressSRULinker(Linker):
+    """Uses Library of Congress SRU <http://www.loc.gov/standards/sru/> for Names and
+    Subject Authorities."""
+    NAF_SRU = "http://lx2.loc.gov:210/NAF?"
+    SAF_SRU = "http://lx2.loc.gov:210/SAF?"
+
+    def __init__(self, **kwargs):
+        super(LibraryOfCongressSRULinker, self).__init__(**kwargs)
+        self.base_url = kwargs.get('base_url', 'https://bibcat.org/')
+        self.cutoff = kwargs.get("cutoff", 90)
+        self.graph = kwargs.get("graph", None)
+        self.punct_map = dict.fromkeys(i for i in range(sys.maxunicode)
+                                       if unicodedata.category(chr(i)).startswith('P'))
+        self.subject_sparql = kwargs.get("subject_sparql", SELECT_BF_SUBJECTS)
+
+
+    def link_lc_subjects(self, entity_iri, label):
+        """Searches LCSH for a match on the entity_iri
+
+        :args:
+            entity_iri(rdflib.URIRef|rdflib.BNode): Entity IRI or Blank Node
+            label(str): String to search on
+        """
+        sru_url = LibraryOfCongressSRULinker.SAF_SRU 
+        sru_url += urllib.parse.urlencode({"operation": "searchRetrieve",
+                                           "version": 1.1,
+                                           "maximumRecords": 10,
+                                           "recordSchema": "dc"})
+        sru_url += "&query=" + urllib.parse.urlencode(
+            {"bath.topicalSubject": label})
+        print(sru_url)
+        result = requests.get(sru_url) 
+        print(result.status_code)
+            
+
+    def run(self, graph=None):
+        """Runs LOC Linker Service using SRU
+
+        :args: 
+            graph(rdflib.Graph): Input graph
+        """
+        if graph is not None:
+            self.graph = graph
+        self.link_lc_subjects(entity_iri, graph)
+        self.link_lc_names(entity_iri, graph)
+        
 
 
 SELECT_BF_SUBJECTS = PREFIX + """
