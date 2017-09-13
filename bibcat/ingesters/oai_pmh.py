@@ -255,15 +255,17 @@ class IslandoraIngester(OAIPMHIngester):
             IslandoraIngester.MODS_XPATH, 
             NS) is not None:
             self.metadataPrefix = "mods"
+            self.namespaces = {self.metadataPrefix: str(NS_MGR.mods),
+                               "xlink": "http://www.w3.org/1999/xlink"}
             for rule_name in ["bibcat-base.ttl", 
-                              "mods-bf.ttl"]:
+                              "mods-to-bf.ttl"]:
                 rules_ttl.append(rule_name)
             self.processor = XMLProcessor(
                 rml_rules=rules_ttl,
                 base_url=self.base_url,
                 triplestore_url=kwargs.get("triplestore_url"),
                 institution_iri=kwargs.get("institution_iri"),
-                namespaces={self.metadataPrefix: str(NS_MGR.mods)})
+                namespaces=self.namespaces)
         else:
             rules_ttl.append(
                 os.path.join(BIBCAT_BASE,
@@ -289,13 +291,24 @@ class IslandoraIngester(OAIPMHIngester):
             raise ValueError("base_url required for __process_mods__")
         instance_url = kwargs.get("instance_url")
         if instance_url is None:
-            instance_url = "{0}/{1}".format(base_url, uuid.uuid1()) 
+            instance_url = "{0}/{1}".format(base_url, uuid.uuid1())
         try:
-            self.processor.run(mods_result.text,
-                base_url=base_url,
-                id=uuid.uuid1,
-                item_iri=item_url,
-                instance_iri=instance_url)
+            # Check for modsCollection as root element
+            mods_xml = etree.XML(mods_result.text)
+            mods_collection =  mods_xml.find("mods:modsCollection",
+                self.namespaces)
+            if mods_collection is None:
+                mods_recs = [mods_xml,]
+            else:
+                mods_recs = mods_collection.findall("mods:mods",
+                    self.namespaces)
+            for mods_record in mods_recs:
+                self.processor.run(mods_record,
+                    base_url=base_url,
+                    id=uuid.uuid1,
+                    item_iri=item_url,
+                    instance_iri=instance_url)
+                    
         except:
             logging.error("{} Error with {}".format(
                 sys.exc_info()[1],

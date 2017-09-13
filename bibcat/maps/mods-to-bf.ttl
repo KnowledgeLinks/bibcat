@@ -65,7 +65,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:constant bf:AccessPolicy ;
+        rr:class bf:AccessPolicy ;
     ] ;
 
     rr:predicateObjectMap [

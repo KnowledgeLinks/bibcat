@@ -47,6 +47,7 @@ class LibraryOfCongressLinker(Linker):
         lc_search_url += "?" + urllib.parse.urlencode(
             {"q": label,
              "format": "json"})
+        lc_search_url += "&q=scheme:http://id.loc.gov/authorities/subjects"
         subject_result = requests.get(lc_search_url)
         if subject_result.status_code < 400:
             lsch_iri, title = self.__process_loc_results__(
