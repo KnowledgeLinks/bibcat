@@ -80,7 +80,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
      rr:predicateObjectMap [
         rr:predicate bf:shelfMark ;
         rr:objectMap [
-            rr:parentTriplesMap <#LOCBFItem_to_BFShelfMarkLLC>
+            rr:parentTriplesMap <#LOCBFItem_to_BFShelfMarkLcc>
         ] 
     ] .
 
@@ -250,7 +250,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     ] ;
    
     rr:predicateObjectMap [
-        rr:predicate bf:tabelOfContents ;
+        rr:predicate bf:tableOfContents ;
         rr:objectMap [
             rr:parentTriplesMap <#LOCBFInstance_to_BFTableOfContents>
         ]
@@ -277,7 +277,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
     
     rr:predicateObjectMap bc:RDFSLabel .
 
-<#LOCBFItem_to_BFShelfMarkLLC> a rr:TriplesMap ;
+<#LOCBFItem_to_BFShelfMarkLcc> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
@@ -290,7 +290,7 @@ bc:RDFSLabel  rr:predicate rdfs:label ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:ShelfMarkLLC ;
+        rr:class bf:ShelfMarkLcc ;
     ] ;
 
     rr:predicateObjectMap [
