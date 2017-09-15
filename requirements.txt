@@ -7,6 +7,7 @@ Flask-WTF
 isodate
 Markdown
 passlib
+fuzzywuzzy
 rdflib
 requests
 dateutils
