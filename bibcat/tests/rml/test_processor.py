@@ -192,8 +192,8 @@ class Test__graph__Method(unittest.TestCase):
     def test_namespaces(self):
         new_graph = self.processor.__graph__()
         self.assertListEqual(
-            [n for n in new_graph.namespace_manager.namespaces()], 
-            [n for n in self.processor.rml.namespace_manager.namespaces()])
+            [n for n in sorted(new_graph.namespace_manager.namespaces())], 
+            [n for n in sorted(self.processor.rml.namespace_manager.namespaces())])
 
     def tearDown(self):
         pass

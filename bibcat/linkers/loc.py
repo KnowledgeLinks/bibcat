@@ -144,7 +144,6 @@ class LibraryOfCongressLinker(Linker):
                     self.base_url,
                     bibcat.slugify(raw_label)))
                 for entity in entities:
-                    print("Entity is {} for bnode {}".format(entity, topic_bnode))
                     self.graph.add((entity, BF.subject, topic_subject))
                 bibcat.delete_bnode(self.graph, topic_bnode)
             # Add topic_subject back as a bf:Topic and SKOS.OrganizedCollection
@@ -228,10 +227,7 @@ class LibraryOfCongressSRULinker(Linker):
                                            "recordSchema": "dc"})
         sru_url += "&query=" + urllib.parse.urlencode(
             {"bath.topicalSubject": label})
-        print(sru_url)
         result = requests.get(sru_url) 
-        print(result.status_code)
-            
 
     def run(self, graph=None):
         """Runs LOC Linker Service using SRU
