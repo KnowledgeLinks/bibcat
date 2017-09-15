@@ -83,7 +83,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
                         WHERE {{ <{instance_iri}> bf:instanceOf ?work .
-                                 ?work schema:partOf ?value }}"""
+                                 OPTIONAL {{ ?work bf:partOf ?value }} 
+                                 OPTIONAL {{ <{instance_iri}> bf:partOf ?value }}"""
 
         ]
     ] ;
@@ -158,6 +159,21 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ] ;
 
     rr:predicateObjectMap [
+        rr:predicate dcterms:extent ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  ?instance  bf:instanceOf ?work .
+                                  OPTIONAL {{ ?work bf:summary ?summary .
+                                               ?summary rdf:value ?value . }} .
+                                  OPTIONAL {{ ?instance bf:summary ?summary .
+                                               ?summary rdf:value ?value . }}
+                        }}"""
+        ]
+    ] ;
+
+
+    rr:predicateObjectMap [
         rr:predicate dc:format ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value 
@@ -177,7 +193,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:objectMap [
             rml:query """select distinct ?value 
                          where {{ <{item_iri}> bf:itemof ?instance .
-                                  ?instance bf:identifiedby ?ident .
+                                  ?instance bf:identifiedBy ?ident .
                                   ?ident rdf:value ?value 
                        }}"""
 
