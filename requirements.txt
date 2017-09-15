@@ -3,7 +3,6 @@ elasticsearch
 elasticsearch-dsl
 Flask
 Flask-Login
-Flask-SQLAlchemy
 Flask-WTF
 isodate
 Markdown
@@ -12,4 +11,3 @@ rdflib
 requests
 dateutils
 pymarc
--e git+git@github.com:KnowledgeLinks/rdfframework.git#egg=master
