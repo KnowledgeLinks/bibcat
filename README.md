@@ -13,7 +13,7 @@ You can also clone this repository and run pip from the same directory:
 
     git clone https://github.com/KnowledgeLinks/rdfw-bibcat bibcat
     cd bibcat
-    pip install .
+    pip install -e . 
 
 If you don't have pip available (although you should because `bibcat` is targeted for Python 3.5+)
 you can also follow the same steps to clone `bibcat` but run `python setup.py install`.    
@@ -29,7 +29,6 @@ RDF-based applications.
 
 ### MARC XML to BIBFRAME 2.0 to Production BIBFRAME 2.0
 
-
     >>> import lxml.etree
     >>> marc2bibframe_xsl = lxml.etree.parse("{path}/marc2bibframe2/xsl/marc2bibframe2.xsl")
     >>> xsl_transform = lxml.etree.XSLT(marc2bibframe_xsl)
@@ -40,6 +39,21 @@ RDF-based applications.
 	    return bf_rdf
 
 ### MODS XML to Production BIBFRAME 2.0
+
+    >>> import uuid
+    >>> import lxml.etree
+    >>> from bibcat.rml.processor import processor
+    >>> base_url = "https://bibcat.org"
+    >>> mods_xml = lxml.etree.parse("/filepath/to/mods/file.xml")
+    >>> mods2bf = processor.XMLProcessor(
+            base_url=base_url,
+            triplestore_url="http://localhost:9999/blazegraph/sparql",
+            rml_rules=['bibcat-base.ttl', 'mods-to-bf.ttl'])
+    >>> mods2bf.run(mods_xml, 
+                   instance_iri="{}/{}".format(base_url, uuid.uuid1()),
+                   item_iri="{}/test-item".format(base_url))
+    >>> mods2bf.output # RDF Graph of BF
+                                           
 
 ### Dublin Core XML to Production BIBFRAME 2.0
 
