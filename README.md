@@ -57,6 +57,8 @@ RDF-based applications.
 
 ### Dublin Core XML to Production BIBFRAME 2.0
 
+    >>> import uuid, lxml.etree
+
 ### Production BIBFRAME 2.0 to Schema.org RDF
 
 ### Production BIBFRAME 2.0 to DP.LA MAPv4
