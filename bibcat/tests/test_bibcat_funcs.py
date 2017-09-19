@@ -1,7 +1,7 @@
 import rdflib
 import unittest
 from bibcat import clean_uris, create_rdf_list, delete_bnode, delete_iri
-from bibcat import slugify, wikify, replace_iri 
+from bibcat import modified_bf_desc, slugify, wikify, replace_iri 
 
 __author__ = "Jeremy Nelson"
 
@@ -145,7 +145,105 @@ class Test_delete_iri(unittest.TestCase):
         self.assertIsNone(self.graph.value(subject=self.entity_two,
                                            predicate=rdflib.RDF.type))
  
+class Test_modified_bf_desc(unittest.TestCase):
 
+    def setUp(self):
+        self.graph = rdflib.Graph()
+        self.graph.namespace_manager.bind("bf", BF)
+        self.entity_iri = rdflib.URIRef("https://bibcat.org/test-entity")
+        self.graph.add((self.entity_iri, 
+                        rdflib.RDF.type, 
+                        rdflib.RDFS.Resource))
+        self.graph.add((self.entity_iri, 
+                        rdflib.RDFS.label, 
+                        rdflib.Literal("Test Entity One", lang="en")))
+        self.message = "Changed rdfs:label"
+        
+
+    def test_default(self):
+        modified_bf_desc(graph=self.graph,
+                         entity_iri=self.entity_iri,
+                         msg=self.message)
+        admin_meta_bnode = self.graph.value(
+            subject=self.entity_iri,
+            predicate=BF.adminMetadata)
+        self.assertIsNotNone(admin_meta_bnode)
+        msg_value = self.graph.value(
+            subject=admin_meta_bnode,
+            predicate=rdflib.RDF.value)
+        self.assertEqual(str(msg_value), self.message)
+            
+    def test_missing_all_keywords(self):
+        self.assertRaises(AttributeError,
+                          modified_bf_desc)
+
+    def test_missing_graph_keyword(self):
+        self.assertRaises(AttributeError,
+                          modified_bf_desc,
+                          entity_iri=self.entity_iri,
+                          msg=self.message)        
+
+    def test_missing_entity_iri_keyword(self):
+        self.assertRaises(AssertionError,
+                          modified_bf_desc,
+                          graph=self.graph,
+                          msg=self.message)
+
+    def test_missing_msg_keyword(self):
+        self.assertRaises(AttributeError,
+                          modified_bf_desc,
+                          graph=self.graph,
+                          entity_iri=self.entity_iri)
+
+    def test_agent_iri(self):
+        agent_iri = rdflib.URIRef("https://bibcat.org/Agent-1")
+        self.graph.add((agent_iri, rdflib.RDF.type, BF.Agent))
+        modified_bf_desc(graph=self.graph,
+                         entity_iri=self.entity_iri,
+                         msg=self.message,
+                         agent_iri=agent_iri)
+        admin_bnode = self.graph.value(subject=self.entity_iri,
+                                       predicate=BF.adminMetadata)
+        self.assertIsNotNone(admin_bnode)
+        desc_modifier = self.graph.value(subject=admin_bnode,
+                                         predicate=BF.descriptionModifier)
+        self.assertEqual(agent_iri, desc_modifier)
+
+    def test_person_iri(self):
+        person_iri = rdflib.URIRef("https://bibcat.org/Person-1")
+        self.graph.add((person_iri, rdflib.RDF.type, BF.Person))
+        modified_bf_desc(graph=self.graph,
+                         entity_iri=self.entity_iri,
+                         msg=self.message,
+                         agent_iri=person_iri)
+        admin_bnode = self.graph.value(subject=self.entity_iri,
+                                       predicate=BF.adminMetadata)
+        self.assertIsNotNone(admin_bnode)
+        desc_modifier = self.graph.value(subject=admin_bnode,
+                                         predicate=BF.descriptionModifier)
+        self.assertEqual(person_iri, desc_modifier)
+
+       
+
+    def test_org_iri(self):
+        org_iri = rdflib.URIRef("https://bibcat.org/Organization-1")
+        self.graph.add((org_iri, rdflib.RDF.type, BF.Person))
+        modified_bf_desc(graph=self.graph,
+                         entity_iri=self.entity_iri,
+                         msg=self.message,
+                         agent_iri=org_iri)
+        admin_bnode = self.graph.value(subject=self.entity_iri,
+                                       predicate=BF.adminMetadata)
+        self.assertIsNotNone(admin_bnode)
+        desc_modifier = self.graph.value(subject=admin_bnode,
+                                         predicate=BF.descriptionModifier)
+        self.assertEqual(org_iri, desc_modifier)
+
+                     
+                
+
+    def tearDown(self):
+        pass 
 
 class Test_replace_iri(unittest.TestCase):
     

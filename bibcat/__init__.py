@@ -1,4 +1,5 @@
 """BIBCAT is a RDF-based Bibliographic Catalog"""
+import datetime
 import re
 import urllib.parse
 import pkg_resources
@@ -7,6 +8,8 @@ from rdflib.term import _is_valid_uri
 
 __author__ = "Jeremy Nelson, Mike Stabile, Jay Peterson"
 __version__ = pkg_resources.get_distribution("bibcat").version
+
+BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 
 def clean_uris(graph):
     """Iterates through all URIRef subjects and objects and attempts to fix any
@@ -90,6 +93,37 @@ def delete_iri(graph, entity_iri):
         graph.remove((entity_iri, pred, obj))
     for subj, pred in graph.subject_predicates(object=entity_iri):
         graph.remove((subj, pred, entity_iri))
+
+def modified_bf_desc(**kwargs):
+    """Adds a bf:adminMetadata property with a blank node for
+    the entity. Optional agent_iri arg will add the agent_iri as a
+    bf:descriptionModifier
+
+    Args:
+        graph((rdflib.Graph|rdflib.ConjuctiveGraph): Graph
+        entity_iri(rdflib.URIRef): IRI of entity
+        msg(str): Message the describes the modification to the
+                  entity
+        agent_iri(rdflib.URIRef): Agent IRI, can be None
+    """
+    graph = kwargs.get("graph")
+    entity_iri = kwargs.get("entity_iri")
+    msg = kwargs.get("msg")
+    if msg is None:
+        raise AttributeError("Message cannot be None")
+    agent_iri = kwargs.get("agent_iri")
+    bnode = rdflib.BNode()
+    graph.add((bnode, rdflib.RDF.type, BF.AdminMetadata))
+    graph.add((entity_iri, BF.adminMetadata, bnode))
+    graph.add((bnode, rdflib.RDF.value, rdflib.Literal(msg)))
+    graph.add((bnode,
+               BF.changeDate,
+               rdflib.Literal(datetime.datetime.utcnow().isoformat())))
+    if agent_iri is not None:
+        graph.add((bnode,
+                   BF.descriptionModifier,
+                   agent_iri))
+
 
 def replace_iri(graph, old_iri, new_iri):
     """Replaces old IRI with a new IRI in the graph
