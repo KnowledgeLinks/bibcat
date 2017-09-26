@@ -769,7 +769,6 @@ def __get_object__(binding):
 
 
 
-
 class SPARQLProcessor(Processor):
     """SPARQLProcessor provides a RML Processor for external SPARQL endpoints"""
 
@@ -886,6 +885,85 @@ class SPARQLProcessor(Processor):
                     self.output.add((entity, predicate, object_))
             subjects.append(entity)
         return subjects
+
+class SPARQLBatchProcessor(Processor):
+    """Class batches all triple_maps queries into a single SPARQL query
+    in an attempt to reduce the time spent in the triplestore/network
+    bottleneck"""
+
+    def __init__(self, rml_rules, triplestore_url):
+        super(SPARQLBatchProcessor, self).__init__(rml_rules)
+        __set_prefix__()
+        self.triplestore_url = triplestore_url
+
+    def __get_bindings__(self, sparql):
+        result = requests.post(
+            self.triplestore_url,
+            data={"query": sparql,
+                  "format": "json"})
+        bindings = result.json().get("results").get("bindings")
+            
+        return bindings
+
+    def __construct_compound_query__(self, triple_map):
+        select_clause = PREFIX + """
+SELECT"""
+        where_clause = """
+WHERE {{"""
+            
+        for pred_map in triple_map.predicateObjectMap:
+            select_line = pred_map.query.splitlines()[0]
+            for term in select_line.split():
+                if term.startswith("?"):
+                    select_clause += " {}".format(term)
+            where_clause += "\nOPTIONAL{{\n\t" +\
+                        pred_map.query +\
+                        "\n}}\n"
+        return select_clause + where_clause + "}}"
+        
+    def run(self, **kwargs):
+        self.output = self.__graph__()
+        super(SPARQLBatchProcessor, self).run(**kwargs)
+        
+    def execute(self, triple_map, **kwargs):
+        """Method iterates through triple map's predicate object maps
+        and processes query.
+
+        Args:
+            triple_map(SimpleNamespace): Triple Map
+        """
+        sparql = PREFIX + triple_map.logicalSource.query.format(
+            **kwargs)
+        print(sparql)
+        bindings = self.__get_bindings__(sparql)
+        iterator = str(triple_map.logicalSource.iterator)
+        for binding in bindings:
+            entity_dict = binding.get(iterator)
+            raw_value = entity_dict.get('value')
+            if entity_dict.get('type').startswith('bnode'):
+                entity = rdflib.BNode(raw_value)
+            else:
+                entity = rdflib.URIRef(raw_value)
+            if triple_map.subjectMap.class_ is not None:
+                self.output.add(
+                    (entity,
+                     rdflib.RDF.type,
+                     triple_map.subjectMap.class_))
+            
+            sparql_query = self.__construct_compound_query__(
+                triple_map).format(**kwargs)
+            properties = self.__get_bindings__(sparql_query)
+            for pred_obj_map in triple_map.predicateObjectMap:
+                predicate = pred_obj_map.predicate
+                if "#" in str(predicate):
+                    key = str(predicate).split("#")[-1]
+                else:
+                    key = str(predicate).split("/")[-1]
+
+                for property_ in properties:
+                    if key in property_.keys():
+                        object_ = __get_object__(property_)
+                        self.output.add((entity, predicate, object_))
 
 
 def __set_prefix__():
