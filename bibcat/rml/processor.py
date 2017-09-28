@@ -914,7 +914,7 @@ WHERE {{"""
         for pred_map in triple_map.predicateObjectMap:
             select_line = pred_map.query.splitlines()[0]
             for term in select_line.split():
-                if term.startswith("?"):
+                if term.startswith("?") and term not in select_clause:
                     select_clause += " {}".format(term)
             where_clause += "\nOPTIONAL{{\n\t" +\
                         pred_map.query +\
@@ -934,7 +934,6 @@ WHERE {{"""
         """
         sparql = PREFIX + triple_map.logicalSource.query.format(
             **kwargs)
-        print(sparql)
         bindings = self.__get_bindings__(sparql)
         iterator = str(triple_map.logicalSource.iterator)
         for binding in bindings:
@@ -962,7 +961,8 @@ WHERE {{"""
 
                 for property_ in properties:
                     if key in property_.keys():
-                        object_ = __get_object__(property_)
+                        info = {"about": property_.get(key)}
+                        object_ = __get_object__(info)
                         self.output.add((entity, predicate, object_))
 
 

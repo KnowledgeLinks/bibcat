@@ -1,0 +1,360 @@
+@prefix adms:   <http://www.w3.org/ns/adms#>.
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/>. 
+@prefix dpla: <http://dp.la/about/map/> .
+@prefix edm: <http://www.europeana.eu/schemas/edm/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix locn: <http://www.w3.org/ns/locn#>.
+@prefix ore: <http://www.openarchives.org/ore/terms/> .
+@prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
+@prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#>.
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix schema: <http://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:iterator "item_iri" ;
+        rml:query """SELECT DISTINCT ?item_iri
+                WHERE {{
+                    ?item_iri rdf:type bf:Item .
+                    FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}"""
+
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{item_iri}" ;
+        rr:class edm:WebResource 
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate edm:rights ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?rights 
+                         WHERE {{ 
+                            ?item_iri rdf:type bf:Item .
+                            OPTIONAL {{ ?item_iri bf:AccessPolicy ?rights }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights }}
+                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
+
+        ]
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dc:format ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?format 
+                        WHERE {{ <{instance_iri}> bf:carrier ?carrier .
+                                 ?carrier rdf:type bf:Carrier ;
+                                          rdf:value ?format }}""" 
+        ] 
+    ] .
+
+bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:iterator "instance_iri" ;
+        rml:query """ SELECT DISTINCT ?instance_iri
+                      WHERE {{ ?instance_iri rdf:type bf:Instance .
+                               FILTER(sameTerm(?instance_iri, <{instance_iri}>)) . }}"""
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{instance_iri}";
+        rr:class dpla:SourceResource 
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:alternative ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?alternative
+                         WHERE {{ <{instance_iri}> bf:title ?title .
+                                  ?title bf:mainTitle ?alternative .
+                                  FILTER NOT EXISTS {{ ?title rdf:type bf:Title }}
+                          }}"""
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:isPartOf ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?isPartOf
+                        WHERE {{ <{instance_iri}> bf:instanceOf ?work .
+                                 OPTIONAL {{ ?work bf:partOf ?isPartOf }} 
+                                 OPTIONAL {{ <{instance_iri}> bf:partOf ?isPartOf }}
+                        }}"""
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:alternative ;
+        rr:objectMap [ 
+            rml:query """SELECT DISTINCT ?alternative 
+                         WHERE {{ ?instance bf:hasItem <{item_iri}>  ;
+                                            bf:title   ?title .
+                                  ?title a bf:VariantTitle ;
+                                         rdfs:label ?alternative . }}"""
+
+        ]
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:contributor ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?contributor
+                         WHERE {{ ?instance bf:hasItem <{item_iri}> ;
+                                            bf:instanceOf ?work .
+                                  ?work bf:contribution ?contribution .
+                                  ?contribution bf:agent ?agent .
+                                  ?agent rdfs:label ?agent .
+                                  OPTIONAL {{ ?contribution bf:role relators:ctb }} 
+                         }}"""
+        ]
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:creator ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?creator ?label
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                   ?instance bf:instanceOf ?work .
+                                   ?work bf:contribution ?contribution .
+                                   ?contribution bf:agent ?creator .
+                                   ?creator rdf:value ?label . 
+                                   OPTIONAL {{ ?contribution bf:role relators:aut . }} .
+                                   OPTIONAL {{ ?contribution bf:role relators:cre . }}
+                      }}""" 
+
+        ]
+
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dc:date ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?date 
+                         WHERE {{ <{instance_iri}>  bf:instanceOf ?work .
+                                  OPTIONAL {{ ?work bf:originDate ?date }} .
+                        }}"""
+        ]
+    ] ;
+
+
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:description ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?description 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  ?instance  bf:instanceOf ?work .
+                                  OPTIONAL {{ ?work bf:summary ?summary .
+                                               ?summary rdf:value ?description . }} .
+                                  OPTIONAL {{ ?instance bf:summary ?summary .
+                                               ?summary rdf:value ?description . }}
+                        }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:extent ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?extent 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  ?instance bf:extent ?bnode .
+                                  ?bnode rdf:value ?extent
+                        }}"""
+        ]
+    ] ;
+
+
+    rr:predicateObjectMap [
+        rr:predicate dc:format ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?format 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  OPTIONAL {{ ?instance bf:dimensions ?dimension .
+                                              ?dimension rdf:value ?format }} .
+                                  OPTIONAL {{ ?instance bf:digitalCharacteristic ?characteristic .
+                                              ?characteristic a bf:EncodingFormat .
+                                              ?characteristic rdf:value ?format }} .
+                        }}"""
+        ]
+    ] ;
+
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:identifier ;
+        rr:objectMap [
+            rml:query """select distinct ?identifier 
+                         where {{ <{item_iri}> bf:itemOf ?instance .
+                                  ?instance bf:identifiedBy ?ident .
+                                  ?ident rdf:value ?identifier 
+                       }}"""
+
+        ]
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:language ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?language 
+                         WHERE {{ <{instance_iri}> bf:language ?langOf .
+                                  ?langOf rdf:value ?language . 
+                       }}"""
+
+        ]
+    ];
+
+    rr:predicateObjectmap [
+        rr:predicate dcterms:spatial ;
+        rr:objectmap [
+            rml:query """SELECT DISTINCT ?spatial 
+                         WHERE {{ <{instance_iri}> bf:instanceOf ?work .
+                                  OPTIONAL {{ ?work bf:subject ?place . 
+                                              ?place rdf:type bf:Place .
+                                              ?place rdf:spatial . }}
+                        
+                       }}"""
+
+        ]
+    ];
+                       
+
+
+    rr:predicateObjectMap [
+        rr:predicate edm:rights ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?rights 
+                         WHERE {{ 
+                            ?item_iri bf:itemOf <{instance_iri}> .
+                            ?item_iri rdf:type bf:Item .
+                            OPTIONAL {{ ?item_iri bf:AccessPolicy ?rights }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights }}
+                        }}"""
+
+        ]
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:subject ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?subject
+                    WHERE {{ <{instance_iri}> bf:instanceOf ?work .
+                             ?work bf:subject ?topic .
+                             ?topic rdf:type bf:Topic .
+                             ?topic rdf:value ?subject }}"""
+
+        ]
+    ];
+    rr:predicateObjectMap [
+        rr:predicate dcterms:title ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?title 
+                      WHERE {{ ?instance_iri rdf:type bf:Instance .
+                               FILTER (sameTerm(?instance_iri, <{instance_iri}>))
+                               OPTIONAL {{ ?instance_iri rdfs:label ?title }}
+                               OPTIONAL {{ ?instance_iri bf:title ?bnode . 
+                                           ?bnode rdf:type bf:Title .
+                                           ?bnode bf:mainTitle ?title }}
+                                 
+                       }}""" 
+        ]
+    ] .
+
+bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:iterator "work_iri" ;
+        rml:query """SELECT DISTINCT ?work_iri
+                     WHERE {{ <{instance_iri}> bf:instanceOf ?work_iri .
+                    }}""" 
+    ] ;
+
+
+    rr:subjectMap [
+        rr:template "{aggregation_iri}" ;
+        rr:class ore:Aggregation 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:dataProvider ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?dataProvider
+                         WHERE {{
+                                 ?instance rdf:type bf:Instance . 
+                                 OPTIONAL {{
+                                    ?item bf:itemOf ?instance ;
+                                           bf:heldBy ?dataProvider . 
+                                  }}
+                                 FILTER (sameTerm(?instance, <{instance_iri}>))
+                        }}"""            
+        ]
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:preview ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?preview
+                      WHERE {{ <{instance_iri}> bf:coverArt ?cover_art .
+                               ?cover_art rdf:value ?preview }}"""
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:hasView ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?hasView 
+                         WHERE {{
+                            ?hasView rdf:type bf:Item .
+                            FILTER(sameTerm(?hasView, <{item_iri}>)) 
+                         }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:isShownAt ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?isShownAt 
+                         WHERE {{
+                            ?isShownAt rdf:type bf:Item .
+                            FILTER(sameTerm(?isShownAt, <{item_iri}>)) 
+                         }}"""
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:aggregatedCHO ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?aggregatedCHO 
+                         WHERE {{
+                            ?aggregatedCHO rdf:type bf:Instance .
+                            FILTER(sameTerm(?aggregatedCHO, <{instance_iri}>)) 
+                         }}"""
+        ]
+    ] .
+
+
+<#SPARQL_JSON_source> a sd:Service ; 
+    sd:endpoint "{triplestore_url}" ;
+    sd:supportedLanguage sd:SPARQL11Query ;
+    sd:resultFormat <https://www.w3.org/ns/formats/data/SPARQL_Results_JSON> .
