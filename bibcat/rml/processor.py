@@ -912,6 +912,9 @@ SELECT"""
 WHERE {{"""
             
         for pred_map in triple_map.predicateObjectMap:
+            if pred_map.constant is not None or\
+               pred_map.reference is not None:
+                continue
             select_line = pred_map.query.splitlines()[0]
             for term in select_line.split():
                 if term.startswith("?") and term not in select_clause:
@@ -954,6 +957,10 @@ WHERE {{"""
             properties = self.__get_bindings__(sparql_query)
             for pred_obj_map in triple_map.predicateObjectMap:
                 predicate = pred_obj_map.predicate
+                if pred_obj_map.constant is not None:
+                    self.output.add(
+                        (entity, predicate, pred_obj_map.constant))
+                    continue
                 if "#" in str(predicate):
                     key = str(predicate).split("#")[-1]
                 else:
