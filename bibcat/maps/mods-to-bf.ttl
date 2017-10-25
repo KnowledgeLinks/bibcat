@@ -640,4 +640,12 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:objectMap [
             rr:reference "mods:originInfo/mods:dateIssued"
         ]
+    ] ;
+
+   rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rr:reference """mods:physicalDescription/mods:form[text()="image/tiff"]""" ;
+            rr:constant bf:StillImage 
+        ]
     ] .

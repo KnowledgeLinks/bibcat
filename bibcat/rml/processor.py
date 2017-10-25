@@ -891,18 +891,26 @@ class SPARQLBatchProcessor(Processor):
     in an attempt to reduce the time spent in the triplestore/network
     bottleneck"""
 
-    def __init__(self, rml_rules, triplestore_url):
+    def __init__(self, rml_rules, triplestore_url=None, triplestore=None):
         super(SPARQLBatchProcessor, self).__init__(rml_rules)
         __set_prefix__()
-        self.triplestore_url = triplestore_url
+        if triplestore_url is not None:
+            self.triplestore_url = triplestore_url
+        elif triplestore is not None:
+            self.triplestore = triplestore
 
     def __get_bindings__(self, sparql):
-        result = requests.post(
-            self.triplestore_url,
-            data={"query": sparql,
-                  "format": "json"})
-        bindings = result.json().get("results").get("bindings")
-            
+        bindings = []
+        if self.triplestore_url is not None:
+            result = requests.post(
+                self.triplestore_url,
+                data={"query": sparql,
+                      "format": "json"})
+            bindings = result.json().get("results").get("bindings")
+        elif self.triplestore is not None:
+            result = self.triplestore.query(sparql)
+            bindings = result.bindings
+        
         return bindings
 
     def __construct_compound_query__(self, triple_map):
@@ -941,11 +949,14 @@ WHERE {{"""
         iterator = str(triple_map.logicalSource.iterator)
         for binding in bindings:
             entity_dict = binding.get(iterator)
-            raw_value = entity_dict.get('value')
-            if entity_dict.get('type').startswith('bnode'):
-                entity = rdflib.BNode(raw_value)
-            else:
-                entity = rdflib.URIRef(raw_value)
+            if isinstance(entity_dict, rdflib.term.Node):
+                entity = entity_dict
+            elif isinstance(entity_dict, dict):
+                raw_value = entity_dict.get('value')
+                if entity_dict.get('type').startswith('bnode'):
+                    entity = rdflib.BNode(raw_value)
+                else:
+                    entity = rdflib.URIRef(raw_value)
             if triple_map.subjectMap.class_ is not None:
                 self.output.add(
                     (entity,

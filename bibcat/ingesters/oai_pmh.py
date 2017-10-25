@@ -6,6 +6,7 @@ import datetime
 import io
 import logging
 import os
+import time
 try:
     from lxml import etree
 except ImportError:
@@ -388,6 +389,9 @@ class IslandoraIngester(OAIPMHIngester):
             if deduplicator:
                 deduplicator.run(self.processor.output,
                     kwargs.get("dedup_classes"))
+            logging.info(" processed {}, triples count {:,}".format(
+                item_url, 
+                len(self.processor.output)))
             self.repo_graph += self.processor.output
         if 'out_file' in kwargs:
             with open(kwargs.get('out_file'), 'wb+') as fo:
