@@ -45,8 +45,10 @@ bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
             rml:query """SELECT DISTINCT ?rights 
                          WHERE {{ 
                             ?item_iri rdf:type bf:Item .
-                            OPTIONAL {{ ?item_iri bf:AccessPolicy ?rights }}
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights .
+                                        FILTER(isURI(?rights)) }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
+                                        ?rights_bnode rdf:value ?rights }}
                             FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
 
         ]
