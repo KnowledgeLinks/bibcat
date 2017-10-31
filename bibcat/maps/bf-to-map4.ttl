@@ -235,22 +235,6 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         ]
     ];
                        
-
-
-    rr:predicateObjectMap [
-        rr:predicate edm:rights ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?rights 
-                         WHERE {{ 
-                            ?item_iri bf:itemOf <{instance_iri}> .
-                            ?item_iri rdf:type bf:Item .
-                            OPTIONAL {{ ?item_iri bf:AccessPolicy ?rights }}
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights }}
-                        }}"""
-
-        ]
-    ];
-
     rr:predicateObjectMap [
         rr:predicate dcterms:subject ;
         rr:objectMap [
