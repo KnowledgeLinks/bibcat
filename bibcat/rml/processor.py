@@ -923,6 +923,13 @@ WHERE {{"""
             if pred_map.constant is not None or\
                pred_map.reference is not None:
                 continue
+            #if pred_obj_map.parentTriplesMap is not None:
+            #    self.__handle_parents__(
+            #        parent_map=pred_obj_map.parentTriplesMap,
+            #        subject=entity,
+            #        predicate=predicate,
+            #        **kwargs)
+            #        continue
             select_line = pred_map.query.splitlines()[0]
             for term in select_line.split():
                 if term.startswith("?") and term not in select_clause:
