@@ -41,7 +41,11 @@
         rr:predicate schema:name ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?label 
-                         WHERE {{ <{instance}> rdfs:label ?label . }}"""
+                         WHERE {{ <{instance}> rdf:type bf:Instance .
+                                  OPTIONAL {{ <{instance}> rdfs:label ?label . }}
+                                  OPTIONAL {{ <{instance}> bf:title ?title_bnode .
+                                              ?title_bnode bf:mainTitle ?label }}
+                    }}"""
         ] 
     ] ;
 
@@ -50,8 +54,11 @@
         rr:objectMap [
             rml:query """SELECT DISTINCT ?value
                          WHERE {{ <{instance}> bf:instanceOf ?work .
-                                  ?work bf:summary ?summary .
-                                  ?summary rdfs:label ?value . }}"""
+                                  OPTIONAL {{ ?work bf:summary ?summary .
+                                              ?summary rdfs:label ?value . }}
+                                  OPTIONAL {{ <{instance}> bf:summary ?summary .
+                                              ?summary rdfs:label ?value . }}
+                        }}"""
         ]
     ] ;
 
@@ -68,9 +75,11 @@
             rml:query """SELECT DISTINCT ?label
                          WHERE {{ <{instance}> bf:instanceOf ?work .
                                   ?work bf:contribution ?contribute .
-                                  ?contribute bf:role relators:aut ;
-                                              bf:agent ?agent .
-                                  ?agent rdfs:label ?label}}"""
+                                  ?work bf:agent ?agent ;
+                                        rdfs:label ?label .
+                                  OPTIONAL {{ ?contribute bf:role relators:aut }}
+                                  OPTIONAL {{ ?contribute bf:role relators:cre }}
+                                  }}"""
 
         ]
     ] ;
@@ -80,7 +89,7 @@
         rr:objectMap [
              rml:query """SELECT DISTINCT ?label
                          WHERE {{ <{instance}> bf:instanceOf ?work .
-                                  ?work bf:contribution ?contribute .
+                                  ?work bf:contribution ?contribute . 
                                   ?contribute bf:role relators:ctb ;
                                               bf:agent ?agent .
                                   ?agent rdfs:label ?label}}"""

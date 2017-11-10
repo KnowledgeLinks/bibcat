@@ -8,6 +8,7 @@ __author__ = "Jeremy Nelson"
 
 # Standard Python Modules
 import collections
+import csv
 import datetime
 import os
 import sys
@@ -729,6 +730,12 @@ class XMLProcessor(Processor):
 
 
     def run(self, xml, **kwargs):
+        """Method takes either an etree.ElementTree or raw XML text
+        as the first argument. 
+
+        Args:
+            xml(etree.ElementTree or text
+        """
         self.output = self.__graph__()
         if isinstance(xml, str):
             try:
