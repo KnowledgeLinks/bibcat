@@ -45,9 +45,9 @@ def __top_result__(query_result, type_=None, class_=None):
             
         
 
-def guess_iri(term, username, type_=None, format_="json", class_=None):
+def link_iri(term, username, type_=None, format_="json", class_=None):
     """Function takes a geographic term and a username and attempts
-    resolve to search committee.
+    resolve to a geonames IRI.
 
     Args:
     -----
