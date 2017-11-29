@@ -21,13 +21,13 @@ class TestLibraryOfCongressLinker(unittest.TestCase):
         self.assertEqual(loc.LibraryOfCongressLinker.ID_LOC_URL,
             "http://id.loc.gov/search/")
         self.assertEqual(default_linker.base_url,
-                         'https://bibcat.org/')
+                         'http://bibcat.org/')
 
 class TestLibraryOfCongressLinker_link_lc_subjects(unittest.TestCase):
 
     def setUp(self):
         self.graph = rdflib.Graph()
-        self.bf_topic_iri = rdflib.URIRef("https://bibcat.org/Topic650-34")
+        self.bf_topic_iri = rdflib.URIRef("http://bibcat.org/Topic650-34")
         self.graph.add((self.bf_topic_iri, rdflib.RDF.type, BF.Topic))
         self.linker = loc.LibraryOfCongressLinker(graph=self.graph)
 
@@ -127,7 +127,7 @@ class TestLibraryOfCongressSRULinker(unittest.TestCase):
         self.assertEqual(loc.LibraryOfCongressSRULinker.SAF_SRU,
                          "http://lx2.loc.gov:210/SAF?")
         self.assertEqual(default_linker.base_url,
-                         'https://bibcat.org/')
+                         'http://bibcat.org/')
 
 
 class TestLibraryOfCongressSRULinker_link_lc_subjects(unittest.TestCase):

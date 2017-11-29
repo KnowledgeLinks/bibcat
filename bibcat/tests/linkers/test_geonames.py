@@ -15,13 +15,13 @@ class TestDefaultGuessIRI(unittest.TestCase):
         pass
 
     def test_no_values(self):
-        self.assertRaises(TypeError, geonames.guess_iri)
+        self.assertRaises(TypeError, geonames.link_iri)
 
     def test_no_username(self):
-        self.assertRaises(TypeError, geonames.guess_iri, "Colorado Springs")
+        self.assertRaises(TypeError, geonames.link_iri, "Colorado Springs")
 
     def test_invalid_username(self):
-        result = geonames.guess_iri("Colorado Springs", "notGoodAtAllBIBCATUser")
+        result = geonames.link_iri("Colorado Springs", "notGoodAtAllBIBCATUser")
         self.assertIsNone(result)
 
 
