@@ -74,7 +74,7 @@ class LibraryOfCongressLinker(Linker):
 
     def __init__(self, **kwargs):
         super(LibraryOfCongressLinker, self).__init__(**kwargs)
-        self.base_url = kwargs.get('base_url', 'https://bibcat.org/')
+        self.base_url = kwargs.get('base_url', 'http://bibcat.org/')
         self.cutoff = kwargs.get("cutoff", 90)
         self.graph = kwargs.get("graph", None)
         self.punct_map = dict.fromkeys(i for i in range(sys.maxunicode)
@@ -118,7 +118,6 @@ class LibraryOfCongressLinker(Linker):
         loc_iri, label = self.__process_loc_results__(
             result.json(),
             label)
-        print(loc_iri, label)
         
 
     def __link_names__(self, name, name_iri):
@@ -152,14 +151,23 @@ class LibraryOfCongressLinker(Linker):
             term)
         if lsch_iri is None:
             return None, None
-        for entity in self.graph.subjects(predicate=BF.subject,
-                                          object=subject_iri):
+        entities = []
+        for row in self.graph.subjects(predicate=BF.subject,
+                                       object=subject_iri):
+            entities.append(row)
+        for entity in entities:
             self.graph.add((entity, BF.subject, lsch_iri))
             bibcat.delete_iri(self.graph, subject_iri)
             return lsch_iri, title
         return None, None
 
     def __process_loc_results__(self, results, label):
+        """Method takes the json results from running the 
+
+        Args:
+            results(list): List of JSON rows from LOC ID call
+            label(str): Original Label
+        """
         title, loc_uri, term_weights = None, None, dict()
         for row in results:
             if isinstance(row, dict) or not row[0].startswith('atom:entry'):
@@ -179,6 +187,7 @@ class LibraryOfCongressLinker(Linker):
                         "weight": fuzz.ratio(label, title),
                         "class": bf_class,
                         "title": title}
+        
         results = sorted(term_weights.items(), key=lambda x: x[1]['weight'])
         results.reverse()
         for row in results:
@@ -367,7 +376,6 @@ class LibraryOfCongressSRULinker(Linker):
                                            "maximumRecords": 10,
                                            "recordSchema": "dc"})
         result = requests.get(sru_url)
-        print(result.text)
 
 
     def link_lc_subjects(self, entity, label):
@@ -384,7 +392,7 @@ class LibraryOfCongressSRULinker(Linker):
                                            "recordSchema": "dc"})
         sru_url += "&query=" + urllib.parse.urlencode(
             {"bath.topicalSubject": label})
-        result = requests.get(sru_url) 
+        result = requests.get(sru_url)
 
     def run(self, graph=None):
         """Runs LOC Linker Service using SRU
