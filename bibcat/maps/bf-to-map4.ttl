@@ -97,8 +97,10 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?isPartOf
                         WHERE {{ <{instance_iri}> bf:instanceOf ?work .
-                                 OPTIONAL {{ ?work bf:partOf ?isPartOf }} 
-                                 OPTIONAL {{ <{instance_iri}> bf:partOf ?isPartOf }}
+                                 OPTIONAL {{ ?work bf:partOf ?isPartOf_bnode .
+                                             ?isPartOf_bnode rdfs:label ?isPartOf  . }} 
+                                 OPTIONAL {{ <{instance_iri}> bf:partOf ?isPartOf_bnode .
+                                             ?isPartOf_bnode rdfs:label ?isPartOf .}}
                         }}"""
 
         ]
@@ -283,12 +285,13 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
     rr:predicateObjectMap [
         rr:predicate edm:dataProvider ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?dataProvider
+            rml:query """SELECT DISTINCT ?dataProvider 
                          WHERE {{
                                  ?instance rdf:type bf:Instance . 
                                  OPTIONAL {{
                                     ?item bf:itemOf ?instance ;
-                                           bf:heldBy ?dataProvider . 
+                                           bf:heldBy ?dataProvider_bnode . 
+                                    ?dataProvider_bnode rdfs:label ?dataProvider .
                                   }}
                                  FILTER (sameTerm(?instance, <{instance_iri}>))
                         }}"""            
