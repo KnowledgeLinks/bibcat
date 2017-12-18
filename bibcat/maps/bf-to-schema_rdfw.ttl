@@ -1,0 +1,382 @@
+@prefix adms:   <http://www.w3.org/ns/adms#>.
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix bflc: <http://id.loc.gov/ontologies/bflc/> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix locn:   <http://www.w3.org/ns/locn#>.
+@prefix oslo:   <http://purl.org/oslo/ns/localgov#>.
+@prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr:     <http://www.w3.org/ns/r2rml#>.
+@prefix schema: <http://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<#BIBFRAME2CreativeWork> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source <#SPARQL_JSON_source> ;
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?instance
+                     WHERE {{ ?instance rdf:type bf:Instance .
+                              FILTER (sameTerm(?instance, <{instance}>)) }}
+                     ORDER BY ?instance
+                     LIMIT {limit}
+                     OFFSET {offset}""" ;
+        rml:iterator "instance" ;
+        rml:reference "$.:bf_Instance" ;
+        rml:key "instance"
+
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{instance}" ;
+        rr:class schema:CreativeWork
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:name ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label
+                         WHERE {{ <{instance}> rdf:type bf:Instance .
+                                  OPTIONAL {{ <{instance}> rdfs:label ?label . }}
+                                  OPTIONAL {{ <{instance}> bf:title ?title_bnode .
+                                              ?title_bnode bf:mainTitle ?label }}
+                    }}""" ;
+            rml:reference "$.rdfs_label, $.bf_title.bf_mainTitle|limit=1|stripend=. /"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:description ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                         WHERE {{ <{instance}> bf:instanceOf ?work .
+                                  OPTIONAL {{ ?work bf:summary ?summary .
+                                              ?summary rdfs:label ?value . }}
+                                  OPTIONAL {{ <{instance}> bf:summary ?summary .
+                                              ?summary rdfs:label ?value . }}
+                        }}""" ;
+            rml:reference "$.bf_instanceOf.bf_summary.rdfs_label" ;
+            rml:altReference "$.bf_summary.rdfs_label"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:workExample ;
+        rr:objectMap [
+            rr:parentTriplesMap <#BIBFRAME_ITEM2CreativeWork>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:author ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label
+                         WHERE {{ <{instance}> bf:instanceOf ?work .
+                                  ?work bf:contribution ?contribute .
+                                  ?contribute bf:role ?role .
+                                  ?contribute bf:agent ?agent .
+                                  ?agent rdfs:label ?label .
+                                  FILTER (?role=relators:aut||
+                                          ?role=relators:cre||
+                                          ?role=<https://bibcat.coalliance.org/role/author>)
+                                  }}""" ;
+            rml:reference """
+                    $.bf_instanceOf.bf_contribution[bf_role=relators_cre].bf_agent.rdfs_label,
+                    $.bf_instanceOf.bf_contribution[bf_role=relators_aut].bf_agent.rdfs_label,
+                    $.bf_instanceOf.bf_contribution[bf_role='pyuri_aHR0cHM6Ly9iaWJjYXQuY29hbGxpYW5jZS5vcmcvcm9sZS8=_author'].bf_agent.rdfs_label
+                    |stripend=,. /|distinct""" ;
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:contributor ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label
+                         WHERE {{ <{instance}> bf:instanceOf ?work .
+                                  ?work bf:contribution ?contribute .
+                                  ?contribute bf:role relators:ctb ;
+                                              bf:agent ?agent .
+                                  ?agent rdfs:label ?label}}""" ;
+            rml:reference "$.bf_instanceOf.bf_contribution[bf_role=relators_ctb].bf_agent.rdfs_label|stripend=,. /|distinct"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:datePublished ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+                WHERE {{ <{instance}> bf:provisionActivity ?activity .
+                         ?activity a bf:Publication ;
+                         bf:date ?value . }}""" ;
+            rml:reference "$.bf_provisionActivity[rdf_type=bf_Publication].bf_date|stripend=,. /|distinct"
+        ]
+    ] ;
+
+
+     rr:predicateObjectMap [
+        rr:predicate schema:keywords ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?label
+                WHERE {{ <{instance}> bf:instanceOf ?work .
+                         ?work bf:subject ?subject .
+                         OPTIONAL {{ ?subject rdfs:label ?label . }}
+                         OPTIONAL {{ ?subject rdf:value ?label . }}
+                }}
+                """ ;
+            rml:reference """ $.bf_instanceOf.bf_subject.rdfs_label,
+                              $.bf_instanceOf.bf_subject.rdf_value
+                              |stripend=. ,/|distinct"""
+        ]
+    ]  ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:isbn ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+            WHERE {{
+                <{instance}> bf:identifiedBy ?isbn .
+                ?isbn rdf:type bf:Isbn ;
+                      rdf:value ?value .
+            }}""" ;
+            rml:reference "$.bf_identifiedBy[rdf_type=bf_Isbn].rdf_value"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:publisher ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?value
+            WHERE {{
+                <{instance}> bf:provisionActivityStatement ?value .
+            }}""" ;
+            rml:reference "$.bf_provisionActivityStatement"
+        ]
+    ] .
+
+
+<#BIBFRAME_ITEM2CreativeWork> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?item
+                  WHERE {{ ?item bf:itemOf <{instance}> . }}""";
+        rml:iterator "item";
+        rml:reference "bf_itemOf.$" ;
+        rml:key "instance"
+    ] ;
+
+    rr:subjectMap [
+        rr:template "{item}" ;
+        rr:class schema:CreativeWork
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:provider ;
+        rr:objectMap [
+            rr:parentTriplesMap <#BIBFRAME_ITEM2Provider>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:fileFormat ;
+        rr:objectMap [
+            rml:query """SELECT ?value
+                WHERE {{  <{item}> bf:itemOf ?instance .
+                    ?instance rdf:type bf:Electronic .
+                    BIND("pdf" as ?value)
+                }}""" ;
+            rml:reference "$.bf_itemOf[rdf_type=bf_Electronic].=pdf"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:fileFormat ;
+        rr:objectMap [
+            rml:query """SELECT ?value
+            WHERE {{ <{item}> bf:itemOf ?instance .
+                    ?instance bf:instanceOf ?work .
+                    ?work rdf:type bf:MovingImage .
+                    BIND("video" as ?value)
+            }}
+            """ ;
+            rml:reference "$.bf_itemOf.bf_instanceOf[rdf_type=bf_MovingImage].=video"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:fileFormat ;
+        rr:objectMap [
+            rml:query """SELECT ?value
+            WHERE {{ <{item}> bf:itemOf ?instance .
+                    ?instance bf:instanceOf ?work .
+                    # ?work rdf:type bf:MovingImage .
+                    OPTIONAL {{ ?work rdf:type bf:Text }}
+                    OPTIONAL {{ ?instance rdf:type bf:Print }}
+                    BIND("print" as ?value)
+            }}""" ;
+            #! if the instance has an rdf:type but does not have an rdf:type
+            #! bf:Print and the work has a type bf:Text should the item have a
+            #! fileformat of 'print'. I don't think you should look at the work
+            #! unless the there is not an rdf:type for the instance
+            rml:reference """$.bf_itemOf[rdf_type=bf_Print].='print',
+                             $.bf_itemOf.bf_instanceOf[rdf_type=bf_Text].=print
+                          """
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:identifier ;
+        rr:objectMap [
+            rr:parentTriplesMap <#BIBFRAME_ITEM2ShelfMarkIdentifier>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:sameAs ;
+        rr:objectMap [
+            rml:query """SELECT ?value
+            WHERE {{ <{item}> rdfs:seeAlso ?value
+            }}""" ;
+            rml:reference "$.rdfs_seeAlso"
+        ]
+    ] .
+
+
+<#BIBFRAME_ITEM2ShelfMarkIdentifier> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?mark ?label
+                  WHERE {{  <{item}> bf:shelfMark ?mark  .
+                            ?mark rdfs:label ?label .
+                        }}""";
+        rml:iterator "mark" ;
+        rml:reference "$.bf_shelfMark" ;
+        rml:key "item"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class schema:PropertyValue
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:propertyID ;
+        rr:objectMap [
+            rr:constant "Call Number"@en ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:value ;
+        rr:objectMap [
+            rr:reference "label" ;
+            rml:reference "$.rdfs_label"
+       ]
+    ] .
+
+<#BIBFRAME_ITEM2Provider> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?provider ?name ?logo
+                  WHERE {{ <{item}>  bf:heldBy ?provider .
+                           ?provider schema:logo ?logo .
+                           ?library schema:parentOrganization ?provider ;
+                                    rdfs:label ?name .
+                         }}""";
+        rml:iterator "provider" ;
+        rml:reference "$.bf_heldBy" ;
+        rml:key "item"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class schema:Organization
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:address ;
+        rr:objectMap [
+            rr:parentTriplesMap <#ProviderAddress>
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:logo ;
+        rr:objectMap [
+            rr:reference "logo";
+            rml:reference "$.schema_logo"
+        ]
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate schema:name ;
+        rr:objectMap [
+           rr:reference "name";
+            rml:reference "rdfs_label.*.schema_parentOrganization.$"
+        ]
+    ] .
+
+<#ProviderAddress> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:referenceFormulation ql:JSON ;
+        rml:query """SELECT DISTINCT ?schema_address ?schema_streetAddress ?schema_addressLocality ?schema_addressRegion ?schema_postalCode
+            WHERE {{
+               ?library schema:parentOrganization <{provider}> .
+               ?library schema:address ?schema_address .
+               ?addr schema:streetAddress ?schema_streetAddress ;
+                     schema:addressLocality ?schema_addressLocality ;
+                     schema:addressRegion ?schema_addressRegion ;
+                     schema:postalCode ?schema_postalCode .
+            }}""";
+        rml:iterator "schema_address";
+        rml:reference "schema_address.*.schema_parentOrganization.$" ;
+        rml:key "provider"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class schema:PostalAddress
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:streetAddress ;
+        rr:objectMap [
+            rr:reference "schema_streetAddress";
+            rml:reference "$.schema_streetAddress"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:addressLocality ;
+        rr:objectMap [
+            rr:reference "schema_addressLocality";
+            rml:reference "$.schema_addressLocality"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:addressRegion ;
+        rr:objectMap [
+            rr:reference "schema_addressRegion";
+            rml:reference "$.schema_addressRegion"
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate schema:postalCode ;
+        rr:objectMap [
+            rr:reference "schema_postalCode";
+            rml:reference "$.schema_postalCode"
+        ]
+    ] .
