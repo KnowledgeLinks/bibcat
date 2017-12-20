@@ -62,8 +62,9 @@
                                   OPTIONAL {{ <{instance}> bf:summary ?summary .
                                               ?summary rdfs:label ?value . }}
                         }}""" ;
-            rml:reference "$.bf_instanceOf.bf_summary.rdfs_label" ;
-            rml:altReference "$.bf_summary.rdfs_label"
+            rml:reference """$.bf_instanceOf.bf_summary.rdfs_label,
+                             $.bf_summary.rdfs_label"""
+                             # |limit=1"""
         ]
     ] ;
 
@@ -334,10 +335,10 @@
             WHERE {{
                ?library schema:parentOrganization <{provider}> .
                ?library schema:address ?schema_address .
-               ?addr schema:streetAddress ?schema_streetAddress ;
-                     schema:addressLocality ?schema_addressLocality ;
-                     schema:addressRegion ?schema_addressRegion ;
-                     schema:postalCode ?schema_postalCode .
+               ?schema_address schema:streetAddress ?schema_streetAddress ;
+                               schema:addressLocality ?schema_addressLocality ;
+                               schema:addressRegion ?schema_addressRegion ;
+                               schema:postalCode ?schema_postalCode .
             }}""";
         rml:iterator "schema_address";
         rml:reference "schema_address.*.schema_parentOrganization.$" ;
