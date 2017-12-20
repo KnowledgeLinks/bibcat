@@ -381,3 +381,100 @@
             rml:reference "$.schema_postalCode"
         ]
     ] .
+
+kds:DataQuery rml:query """
+SELECT DISTINCT ?s ?p ?o
+{{
+    BIND(<{instance}> as ?item) .
+    {{ # Gather all primary triples
+        ?item ?p ?o.
+        BIND(?item as ?s) .
+    }} UNION {{ # selet Triples where the URI is the Subject 1 level deep
+        ?item ?p0 ?s.
+        ?s ?p ?o .
+        Filter(?p0 != rdf:type).
+        FILTER(?p0=bf:title||?p0=bf:identifiedBy||?p0=bf:provisionActivity||?p0=bf:instanceOf)
+        Filter(isiri(?s)||isblank(?s))
+    }} UNION {{ # selet Triples where the URI is the Subject 2 levels deep
+        ?item bf:instanceOf ?work.
+        ?work ?p1 ?s2 .
+        filter (?p1=bf:subject||?p1=bf:contribution||?p1=bf:summary)
+        {{
+            ?s2 ?p ?o .
+            bind(?s2 as ?s) .
+            FILTER(?p!=owl:sameAs) .
+
+        }} UNION {{
+            ?s2 bf:agent ?s .
+            ?s ?p ?o .
+            FILTER(?p!=owl:sameAs) .
+            Filter(isiri(?s)||isblank(?s))
+        }}
+    }} UNION {{
+      ?s ?p ?item .
+      bind(?item as ?o)
+      filter (?p=bf:itemOf)
+    }} UNION {{
+      ?s0 ?p0 ?item .
+      ?s0 ?p1 ?o1 .
+      filter(?p1=rdf:type||?p1=bf:shelfMark||?p1=bf:heldBy||?p1=rdfs:seeAlso)
+      {{
+        ?s0 ?p1 ?o1 .
+        bind(?s0 as ?s).
+        bind(?p1 as ?p).
+        bind(?o1 as ?o) .
+      }} UNION {{
+        ?o1 ?p ?o .
+        bind(?o1 as ?s)
+      }} UNION {{
+        ?s0 bf:heldBy ?provider .
+        ?provider ?p_pro ?o_pro .
+        {{
+          ?provider ?p_pro ?o_pro .
+          bind(?provider as ?s) .
+          bind(?p_pro as ?p) .
+          bind(?o_pro as ?o) .
+        }} UNION {{
+          ?library schema:parentOrganization ?provider .
+          ?library ?p_lib ?o_lib .
+          {{
+            ?library ?p_lib ?o_lib .
+            bind(?library as ?s) .
+            bind(?p_lib as ?p) .
+            bind(?o_lib as ?o) .
+          }} UNION {{
+            ?library schema:address ?s .
+            ?s ?p ?o
+          }}
+        }}
+      }}
+
+    }}
+  FILTER (?p=rdf:type||
+        ?p=bf:summary||
+        ?p=rdfs:label||
+        ?p=bf:title||
+        ?p=bf:mainTitle||
+        ?p=bf:instanceOf||
+        ?p=bf:subject||
+        ?p=rdf:value||
+        ?p=bf:contribution||
+        ?p=bf:role||
+        ?p=bf:agent||
+        ?p=bf:provisionActivity||
+        ?p=bf:date||
+        ?p=bf:identifiedBy||
+        ?p=bf:provisionActivityStatement ||
+        ?p=bf:itemOf||
+        ?p=rdfs:seeAlso||
+        ?p=bf:shelfMark||
+        ?p=rdfs:label||
+        ?p=bf:heldBy||
+        ?p=schema:logo||
+        ?p=schema:parentOrganization||
+        ?p=schema:address||
+        ?p=schema:streetAddress||
+        ?p=schema:addressLocality||
+        ?p=schema:addressRegion||
+        ?p=schema:postalCode)
+}}""" .
