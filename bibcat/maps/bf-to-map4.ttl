@@ -30,7 +30,10 @@ bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
         rml:query """SELECT DISTINCT ?item_iri
                 WHERE {{
                     ?item_iri rdf:type bf:Item .
-                    FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}"""
+                    FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}""";
+        rml:iterator "item" ;
+        rml:reference "$.:bf_Item" ;
+        rml:key "item"
 
     ] ;
 
@@ -50,7 +53,7 @@ bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
                             OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
                                         ?rights_bnode rdf:value ?rights }}
                             FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
-
+            rml:reference "$.bf_usageAndAccessPolicy, $.bf_usageAndAccessPolicy.rdf_value"
         ]
     ];
 
@@ -60,7 +63,8 @@ bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
             rml:query """SELECT DISTINCT ?format 
                         WHERE {{ <{instance_iri}> bf:carrier ?carrier .
                                  ?carrier rdf:type bf:Carrier ;
-                                          rdf:value ?format }}""" 
+                                          rdf:value ?format }}"""
+            rml:reference "$.bf_instanceOf.bf_carrier.bf_value" 
         ] 
     ] .
 
@@ -72,7 +76,10 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rml:iterator "instance_iri" ;
         rml:query """ SELECT DISTINCT ?instance_iri
                       WHERE {{ ?instance_iri rdf:type bf:Instance .
-                               FILTER(sameTerm(?instance_iri, <{instance_iri}>)) . }}"""
+                               FILTER(sameTerm(?instance_iri, <{instance_iri}>)) . }}""" ;
+        rml:iterator "instance" ;
+        rml:reference "$.:bf_Instance" ;
+        rml:key "instance"
     ] ;
 
     rr:subjectMap [
@@ -87,7 +94,9 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                          WHERE {{ <{instance_iri}> bf:title ?title .
                                   ?title bf:mainTitle ?alternative .
                                   FILTER NOT EXISTS {{ ?title rdf:type bf:Title }}
-                          }}"""
+                          }}""" ;
+            rml:reference "$.bf_title.bf_mainTitle"
+
 
         ]
     ] ;
@@ -101,7 +110,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                              ?isPartOf_bnode rdfs:label ?isPartOf  . }} 
                                  OPTIONAL {{ <{instance_iri}> bf:partOf ?isPartOf_bnode .
                                              ?isPartOf_bnode rdfs:label ?isPartOf .}}
-                        }}"""
+                        }}""" ;
+            rml:reference "$.bf_instanceOf.bf_partOf.rdfs_label, $.bf_partOf.rdfs_label"
 
         ]
     ] ;
@@ -114,6 +124,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                             bf:title   ?title .
                                   ?title a bf:VariantTitle ;
                                          rdfs:label ?alternative . }}"""
+            rml:reference "$.bf_title[rdf_type=bf_VariantTitle].rdfs_label"
 
         ]
     ];
@@ -128,7 +139,10 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   ?contribution bf:agent ?agent .
                                   ?agent rdfs:label ?agent .
                                   OPTIONAL {{ ?contribution bf:role relators:ctb }} 
-                         }}"""
+                         }}""",
+            rml:reference """
+                    $.bf_instanceOf.bf_contribution.bf_agent.rdfs_label, 
+                    $.bf_instanceOf.bf_contribution[bf_role=relators_ct].bf_agent.rdfs_label""";
         ]
     ];
 
@@ -143,7 +157,13 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                    ?creator rdf:value ?label . 
                                    OPTIONAL {{ ?contribution bf:role relators:aut . }} .
                                    OPTIONAL {{ ?contribution bf:role relators:cre . }}
-                      }}""" 
+                      }}""";
+            rml:reference """
+                    $.bf_instanceOf.bf_contribution[bf_role=relators_cre].bf_agent.rdfs_label,
+                    $.bf_instanceOf.bf_contribution[bf_role=relators_aut].bf_agent.rdfs_label,
+                    $.bf_instanceOf.bf_contribution[bf_role='pyuri_aHR0cHM6Ly9iaWJjYXQuY29hbGxpYW5jZS5vcmcvcm9sZS8=_author'].bf_agent.rdfs_label
+                    |stripend=,. /|distinct""" ;
+
 
         ]
 
@@ -155,7 +175,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
             rml:query """SELECT DISTINCT ?date 
                          WHERE {{ <{instance_iri}>  bf:instanceOf ?work .
                                   OPTIONAL {{ ?work bf:originDate ?date }} .
-                        }}"""
+                        }}""" ;
+            rml:reference "$.bf_instanceOf.bf_originDate"
         ]
     ] ;
 
@@ -171,7 +192,9 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                                ?summary rdf:value ?description . }} .
                                   OPTIONAL {{ ?instance bf:summary ?summary .
                                                ?summary rdf:value ?description . }}
-                        }}"""
+                        }}""";
+            rml:reference "$.bf_instanceOf.bf_summary.rdfs_value, $.bf_summary.rdfs_value"
+                            
         ]
     ] ;
 
@@ -182,7 +205,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
                                   ?instance bf:extent ?bnode .
                                   ?bnode rdf:value ?extent
-                        }}"""
+                        }}""";
+            rml:reference "$.bf_extent.bf_value"
         ]
     ] ;
 
@@ -197,7 +221,10 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   OPTIONAL {{ ?instance bf:digitalCharacteristic ?characteristic .
                                               ?characteristic a bf:EncodingFormat .
                                               ?characteristic rdf:value ?format }} .
-                        }}"""
+                        }}""";
+            rml:reference """
+                    $.bf_dimensions.rdf_value, 
+                    $.bf_digitalCharacteristic[rdf_type=bf_EncodingFormat].rdf_value"""
         ]
     ] ;
 
@@ -209,7 +236,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                          where {{ <{item_iri}> bf:itemOf ?instance .
                                   ?instance bf:identifiedBy ?ident .
                                   ?ident rdf:value ?identifier 
-                       }}"""
+                       }}""";
+            rml:reference "$.bf_identifiedBy.rdf_value"
 
         ]
     ];
@@ -220,7 +248,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
             rml:query """SELECT DISTINCT ?language 
                          WHERE {{ <{instance_iri}> bf:language ?langOf .
                                   ?langOf rdf:value ?language . 
-                       }}"""
+                       }}""";
+            rml:reference "$.bf_language.rdf_value"
 
         ]
     ];
@@ -232,9 +261,10 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                          WHERE {{ <{instance_iri}> bf:instanceOf ?work .
                                   OPTIONAL {{ ?work bf:subject ?place . 
                                               ?place rdf:type bf:Place .
-                                              ?place rdf:spatial . }}
+                                              ?place rdf:value . }}
                         
-                       }}"""
+                       }}""";
+            rml:reference "$.bf_instanceOf.bf_subject[rdf_type=bf_Place].rdf_value"
 
         ]
     ];
@@ -246,7 +276,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                     WHERE {{ <{instance_iri}> bf:instanceOf ?work .
                              ?work bf:subject ?topic .
                              ?topic rdf:type bf:Topic .
-                             ?topic rdf:value ?subject }}"""
+                             ?topic rdf:value ?subject }}""";
+            rml:reference "$.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value"
 
         ]
     ];
@@ -261,7 +292,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                            ?bnode rdf:type bf:Title .
                                            ?bnode bf:mainTitle ?title }}
                                  
-                       }}""" 
+                       }}""" ;
+            rml:reference "$.rdfs_label, $.bf_title.bf_mainTitle"
         ]
     ] .
 
@@ -270,10 +302,13 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:iterator "work_iri" ;
-        rml:query """SELECT DISTINCT ?work_iri
-                     WHERE {{ <{instance_iri}> bf:instanceOf ?work_iri .
-                    }}""" 
+        rml:iterator "item" ;
+        rml:query """SELECT DISTINCT ?item 
+                    WHERE {{ ?item rdf:type bf:Item .
+                               FILTER(sameTerm(?item, <{item_iri}>)) . }}"""  
+                    }}""";
+        rml:reference "$.bf_Item" ;
+        rml:key "item"  
     ] ;
 
 
@@ -287,14 +322,10 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?dataProvider 
                          WHERE {{
-                                 ?instance rdf:type bf:Instance . 
-                                 OPTIONAL {{
-                                    ?item bf:itemOf ?instance ;
-                                           bf:heldBy ?dataProvider_bnode . 
+                                    ?item bf:heldBy ?dataProvider_bnode . 
                                     ?dataProvider_bnode rdfs:label ?dataProvider .
-                                  }}
-                                 FILTER (sameTerm(?instance, <{instance_iri}>))
-                        }}"""            
+                        }}""" ;
+            rml:reference "$.heldBy.rdfs_label"
         ]
 
     ] ;
@@ -303,8 +334,11 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
         rr:predicate edm:preview ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?preview
-                      WHERE {{ <{instance_iri}> bf:coverArt ?cover_art .
-                               ?cover_art rdf:value ?preview }}"""
+                      WHERE {{ ?item bf:instanceOf ?instance .
+                               ?instance bf:coverArt ?cover_art .
+                               ?cover_art rdf:value ?preview .
+                               BIND(<{item_iri}> as ?item)  }}""";
+            rml:reference "$.bf_instanceOf.bf_coverArt.rdf_value"
 
         ]
     ] ;
@@ -316,7 +350,8 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                          WHERE {{
                             ?isShownAt rdf:type bf:Item .
                             FILTER(sameTerm(?isShownAt, <{item_iri}>)) 
-                         }}"""
+                         }}""";
+            rml:reference "$"
         ]
     ] ;
 
@@ -325,9 +360,10 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?aggregatedCHO 
                          WHERE {{
-                            ?aggregatedCHO rdf:type bf:Instance .
-                            FILTER(sameTerm(?aggregatedCHO, <{instance_iri}>)) 
-                         }}"""
+                            ?item bf:instanceOf ?aggregatedCHO ;
+                            BIND(<{item_iri}> as ?item) 
+                         }}""" ;
+            rml:reference "$.bf_instanceOf"
         ]
     ] .
 
