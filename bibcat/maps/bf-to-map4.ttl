@@ -33,7 +33,6 @@ bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
                     FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}""";
         rml:iterator "item" ;
         rml:reference "$.:bf_Item" ;
-        rml:key "item"
 
     ] ;
 
@@ -52,7 +51,7 @@ bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
                                         FILTER(isURI(?rights)) }}
                             OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
                                         ?rights_bnode rdf:value ?rights }}
-                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
+                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}""";
             rml:reference "$.bf_usageAndAccessPolicy, $.bf_usageAndAccessPolicy.rdf_value"
         ]
     ];
@@ -63,7 +62,7 @@ bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
             rml:query """SELECT DISTINCT ?format 
                         WHERE {{ <{instance_iri}> bf:carrier ?carrier .
                                  ?carrier rdf:type bf:Carrier ;
-                                          rdf:value ?format }}"""
+                                          rdf:value ?format }}""";
             rml:reference "$.bf_instanceOf.bf_carrier.bf_value" 
         ] 
     ] .
@@ -77,7 +76,6 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rml:query """ SELECT DISTINCT ?instance_iri
                       WHERE {{ ?instance_iri rdf:type bf:Instance .
                                FILTER(sameTerm(?instance_iri, <{instance_iri}>)) . }}""" ;
-        rml:iterator "instance" ;
         rml:reference "$.:bf_Instance" ;
         rml:key "instance"
     ] ;
@@ -86,20 +84,6 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:template "{instance_iri}";
         rr:class dpla:SourceResource 
     ];
-
-    rr:predicateObjectMap [
-        rr:predicate dcterms:alternative ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?alternative
-                         WHERE {{ <{instance_iri}> bf:title ?title .
-                                  ?title bf:mainTitle ?alternative .
-                                  FILTER NOT EXISTS {{ ?title rdf:type bf:Title }}
-                          }}""" ;
-            rml:reference "$.bf_title.bf_mainTitle"
-
-
-        ]
-    ] ;
 
     rr:predicateObjectMap [
         rr:predicate dcterms:isPartOf ;
@@ -123,7 +107,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                          WHERE {{ ?instance bf:hasItem <{item_iri}>  ;
                                             bf:title   ?title .
                                   ?title a bf:VariantTitle ;
-                                         rdfs:label ?alternative . }}"""
+                                         rdfs:label ?alternative . }}""";
             rml:reference "$.bf_title[rdf_type=bf_VariantTitle].rdfs_label"
 
         ]
@@ -139,7 +123,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   ?contribution bf:agent ?agent .
                                   ?agent rdfs:label ?agent .
                                   OPTIONAL {{ ?contribution bf:role relators:ctb }} 
-                         }}""",
+                         }}""";
             rml:reference """
                     $.bf_instanceOf.bf_contribution.bf_agent.rdfs_label, 
                     $.bf_instanceOf.bf_contribution[bf_role=relators_ct].bf_agent.rdfs_label""";
@@ -305,7 +289,7 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
         rml:iterator "item" ;
         rml:query """SELECT DISTINCT ?item 
                     WHERE {{ ?item rdf:type bf:Item .
-                               FILTER(sameTerm(?item, <{item_iri}>)) . }}"""  
+                             BIND(<{item_iri}> as ?item) .   
                     }}""";
         rml:reference "$.bf_Item" ;
         rml:key "item"  
@@ -325,7 +309,7 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                                     ?item bf:heldBy ?dataProvider_bnode . 
                                     ?dataProvider_bnode rdfs:label ?dataProvider .
                         }}""" ;
-            rml:reference "$.heldBy.rdfs_label"
+            rml:reference "$.bf_heldBy.rdfs_label"
         ]
 
     ] ;

@@ -13,6 +13,7 @@
 @prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
 @prefix rr:     <http://www.w3.org/ns/r2rml#>.
 @prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -48,7 +49,8 @@
                                   OPTIONAL {{ <{instance}> bf:title ?title_bnode .
                                               ?title_bnode bf:mainTitle ?label }}
                     }}""" ;
-            rml:reference "$.rdfs_label, $.bf_title.bf_mainTitle|limit=1|stripend=. /"
+            rml:reference "$.rdfs_label, $.bf_title.bf_mainTitle|limit=1|stripend=. /" ;
+            sh:maxLength 1;
         ]
     ] ;
 

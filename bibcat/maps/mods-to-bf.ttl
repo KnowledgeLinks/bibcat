@@ -97,19 +97,6 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
     ]; 
 
 
-    rr:predicateObjectMap [
-        rr:predicate relators:aut ;
-        rr:objectMap [
-           rr:parentTriplesMap <#MODS2BIBFRAME_InstanceAuthor> ; 
-        ]
-    ] ;
-
-    rr:predicateObjectMap [
-        rr:predicate relators:aut ;
-        rr:objectMap [
-           rr:parentTriplesMap <#MODS2BIBFRAME_InstanceAuthorOrg> ; 
-        ]
-    ] ;
 
      rr:predicateObjectMap [
         rr:predicate bf:contribution ;
@@ -282,7 +269,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
     ] .
 
 
-<#MODS2BIBFRAME_InstanceAuthor> a rr:TriplesMap ;
+<#MODS2BIBFRAME_WorkAuthor> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
@@ -291,7 +278,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Person 
+        rr:class bf:Person, bf:Agent 
     ] ;
 
     rr:predicateObjectMap [
@@ -300,9 +287,16 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
             rr:reference "../mods:namePart" ;
             rr:datatype xsd:string 
         ] 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:role ;
+        rr:objectMap [
+            rr:constant relators:cre
+       ]
     ] .
 
-<#MODS2BIBFRAME_InstanceAuthorOrg> a rr:TriplesMap ;
+<#MODS2BIBFRAME_WorkAuthorOrg> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
@@ -311,7 +305,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Organization 
+        rr:class bf:Organization, bf:Agent 
 
     ] ;
 
@@ -321,7 +315,53 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
             rr:reference "../mods:namePart" ;
             rr:datatype xsd:string 
         ] 
-    ] .
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:role ;
+        rr:objectMap [
+            rr:constant relators:cre 
+        ]
+    ]  .
+
+<#MODS2BIBFRAME_WorkThesisAdvisor> a rr:TripleMap ;
+
+    rml:logicalSource [
+        rml:source "{mods_record}" ;
+        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='thesis advisor']" 
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Contribution 
+
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:agent ;
+        rr:objectMap [
+
+
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:role ;
+        rr:objectMap [
+            rr:constant relators:cre 
+        ]
+    ]  .
+
+<#MODS2BIBFRAME_TheisAdvisor> a rr:TripleMap ;
+
+    rml:logicalSource [
+
+
+    ] ;
+
+    rr:subjectMap [
+        rr:reference "[@authorURI]"
+    ]
 
 <#MODS2BIBFRAME_InstanceContribution> a rr:TriplesMap ;
 
@@ -641,6 +681,21 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
             rr:reference "mods:originInfo/mods:dateIssued"
         ]
     ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:contribution ;
+        rr:objectMap [
+           rr:parentTriplesMap <#MODS2BIBFRAME_WorkAuthor> ; 
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate relators:aut ;
+        rr:objectMap [
+           rr:parentTriplesMap <#MODS2BIBFRAME_WorkAuthorOrg> ; 
+        ]
+    ] ;
+
 
    rr:predicateObjectMap [
         rr:predicate rdf:type ;

@@ -944,7 +944,8 @@ WHERE {{"""
             where_clause += "\nOPTIONAL{{\n\t" +\
                         pred_map.query +\
                         "\n}}\n"
-        return select_clause + where_clause + "}}"
+        sparql = select_clause + where_clause + "}}"
+        return sparql
         
     def run(self, **kwargs):
         self.output = self.__graph__()
@@ -979,6 +980,7 @@ WHERE {{"""
             
             sparql_query = self.__construct_compound_query__(
                 triple_map).format(**kwargs)
+            print(sparql_query)
             properties = self.__get_bindings__(sparql_query)
             for pred_obj_map in triple_map.predicateObjectMap:
                 predicate = pred_obj_map.predicate
