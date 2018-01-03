@@ -86,21 +86,6 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:isPartOf ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?isPartOf
-                        WHERE {{ <{instance_iri}> bf:instanceOf ?work .
-                                 OPTIONAL {{ ?work bf:partOf ?isPartOf_bnode .
-                                             ?isPartOf_bnode rdfs:label ?isPartOf  . }} 
-                                 OPTIONAL {{ <{instance_iri}> bf:partOf ?isPartOf_bnode .
-                                             ?isPartOf_bnode rdfs:label ?isPartOf .}}
-                        }}""" ;
-            rml:reference "$.bf_instanceOf.bf_partOf.rdfs_label, $.bf_partOf.rdfs_label"
-
-        ]
-    ] ;
-
-    rr:predicateObjectMap [
         rr:predicate dcterms:alternative ;
         rr:objectMap [ 
             rml:query """SELECT DISTINCT ?alternative 
