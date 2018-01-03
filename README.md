@@ -1,4 +1,4 @@
-# Knowledgelinks.io BIBCAT 2.0
+# Knowledgelinks.io BIBCAT
 
 [![Build Status](https://travis-ci.org/KnowledgeLinks/bibcat.svg)](https://travis-ci.org/KnowledgeLinks/bibcat)
 
