@@ -21,52 +21,6 @@
 @prefix vcard:  <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-bc:BIBFRAME2MAPv4_WebResource a rr:TriplesMap ;
-
-    rml:logicalSource [
-        rml:source <#SPARQL_JSON_source> ;
-        rml:referenceFormulation ql:JSON ;
-        rml:iterator "item_iri" ;
-        rml:query """SELECT DISTINCT ?item_iri
-                WHERE {{
-                    ?item_iri rdf:type bf:Item .
-                    FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}""";
-        rml:iterator "item" ;
-        rml:reference "$.:bf_Item" ;
-
-    ] ;
-
-    rr:subjectMap [
-        rr:template "{item_iri}" ;
-        rr:class edm:WebResource 
-    ];
-
-    rr:predicateObjectMap [
-        rr:predicate edm:rights ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?rights 
-                         WHERE {{ 
-                            ?item_iri rdf:type bf:Item .
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights .
-                                        FILTER(isURI(?rights)) }}
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
-                                        ?rights_bnode rdf:value ?rights }}
-                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}""";
-            rml:reference "$.bf_usageAndAccessPolicy, $.bf_usageAndAccessPolicy.rdf_value"
-        ]
-    ];
-
-    rr:predicateObjectMap [
-        rr:predicate dc:format ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?format 
-                        WHERE {{ <{instance_iri}> bf:carrier ?carrier .
-                                 ?carrier rdf:type bf:Carrier ;
-                                          rdf:value ?format }}""";
-            rml:reference "$.bf_instanceOf.bf_carrier.bf_value" 
-        ] 
-    ] .
-
 bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
     rml:logicalSource [
@@ -118,12 +72,12 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     rr:predicateObjectMap [
         rr:predicate dcterms:creator ;
         rr:objectMap [
-            rml:query """SELECT DISTINCT ?creator ?label
+            rml:query """SELECT DISTINCT ?creator
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
                                    ?instance bf:instanceOf ?work .
                                    ?work bf:contribution ?contribution .
-                                   ?contribution bf:agent ?creator .
-                                   ?creator rdf:value ?label . 
+                                   ?contribution bf:agent ?creator_iri .
+                                   ?creator_iri rdf:value ?creator . 
                                    OPTIONAL {{ ?contribution bf:role relators:aut . }} .
                                    OPTIONAL {{ ?contribution bf:role relators:cre . }}
                       }}""";
@@ -293,6 +247,7 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                          WHERE {{
                                     ?item bf:heldBy ?dataProvider_bnode . 
                                     ?dataProvider_bnode rdfs:label ?dataProvider .
+                                    BIND(<{item_iri}> as ?item) .
                         }}""" ;
             rml:reference "$.bf_heldBy.rdfs_label"
         ]
