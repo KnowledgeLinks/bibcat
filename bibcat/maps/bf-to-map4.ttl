@@ -26,16 +26,16 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:iterator "instance_iri" ;
-        rml:query """ SELECT DISTINCT ?instance_iri
-                      WHERE {{ ?instance_iri rdf:type bf:Instance .
-                               FILTER(sameTerm(?instance_iri, <{instance_iri}>)) . }}""" ;
-        rml:reference "$.:bf_Instance" ;
-        rml:key "instance"
+        rml:iterator "item_iri" ;
+        rml:query """ SELECT DISTINCT ?item_iri
+                      WHERE {{ ?item_iri rdf:type bf:Item .
+                               FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}""" ;
+        rml:reference "$.:bf_Item" ;
+        rml:key "item"
     ] ;
 
     rr:subjectMap [
-        rr:template "{instance_iri}";
+        rr:template "{item_iri}";
         rr:class dpla:SourceResource 
     ];
 
@@ -78,8 +78,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                    ?work bf:contribution ?contribution .
                                    ?contribution bf:agent ?creator_iri .
                                    ?creator_iri rdf:value ?creator . 
-                                   OPTIONAL {{ ?contribution bf:role relators:aut . }} .
-                                   OPTIONAL {{ ?contribution bf:role relators:cre . }}
+                                   ?contribution bf:role  ?role.
+                                   FILTER (?role=relators:aut||?role=relators:cre)  
                       }}""";
             rml:reference """
                     $.bf_instanceOf.bf_contribution[bf_role=relators_cre].bf_agent.rdfs_label,
@@ -177,6 +177,21 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         ]
     ];
 
+    rr:predicateObjectMap [
+        rr:predicate edm:rights ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?rights 
+                         WHERE {{ 
+                            ?item_iri rdf:type bf:Item .
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights .
+                                        FILTER(isURI(?rights)) }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
+                                        ?rights_bnode rdf:value ?rights }}
+                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
+
+        ]
+    ];
+
     rr:predicateObjectmap [
         rr:predicate dcterms:spatial ;
         rr:objectmap [
@@ -225,19 +240,29 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
     rml:logicalSource [
         rml:source <#SPARQL_JSON_source> ;
         rml:referenceFormulation ql:JSON ;
-        rml:iterator "item" ;
-        rml:query """SELECT DISTINCT ?item 
-                    WHERE {{ ?item rdf:type bf:Item .
-                             BIND(<{item_iri}> as ?item) .   
+        rml:iterator "instance" ;
+        rml:query """SELECT DISTINCT ?instance 
+                    WHERE {{ ?instance rdf:type bf:Instance .
+                             BIND(<{instance_iri}> as ?instance) .   
                     }}""";
-        rml:reference "$.bf_Item" ;
-        rml:key "item"  
+        rml:reference "$.bf_Instance" ;
+        rml:key "instance"  
     ] ;
 
 
     rr:subjectMap [
-        rr:template "{aggregation_iri}" ;
+        rr:template "{instance_iri}" ;
         rr:class ore:Aggregation 
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:aggregatedCHO ;
+        rr:objectMap [
+            rml:query  """SELECT DISTINCT ?item 
+                         WHERE {{ 
+                            BIND(<{item_iri}> as ?item)
+                      }}"""
+        ] ;
     ] ;
 
     rr:predicateObjectMap [
