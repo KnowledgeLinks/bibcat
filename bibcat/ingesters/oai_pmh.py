@@ -19,7 +19,8 @@ import uuid
 
 from .ingester import new_graph, NS_MGR, BIBCAT_BASE
 from .rels_ext import RELSEXTIngester
-from ..rml.processor import XMLProcessor
+from rdfframework.connections import ConnManager
+from rdfframework.rml.processor import XMLProcessor
 
 NS = {"oai_pmh": "http://www.openarchives.org/OAI/2.0/",
       'dc': 'http://purl.org/dc/elements/1.1/', 
