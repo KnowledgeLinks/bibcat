@@ -96,8 +96,13 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:predicate dc:date ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?date 
-                         WHERE {{ <{instance_iri}>  bf:instanceOf ?work .
-                                  OPTIONAL {{ ?work bf:originDate ?date }} .
+                         WHERE {{ BIND(<{instance_iri}> as ?instance) .
+                              OPTIONAL {{ ?instance bf:subject ?temporal .
+                                          ?temporal rdf:type bf:Temporal ;
+                                                    rdf:value ?date . }}
+                              OPTIONAL {{ ?instance bf:temporalCoverage ?date . }}
+                              OPTIONAL {{ ?instance bf:instanceOf ?work .
+                                          ?work bf:originDate ?date . }}
                         }}""" ;
             rml:reference "$.bf_instanceOf.bf_originDate"
         ]
