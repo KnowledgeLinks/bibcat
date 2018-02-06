@@ -42,6 +42,7 @@ bc:adminMetadata a rr:TriplesMap ;
     rr:predicateObjectMap [
         rr:predicate  bf:generationDate ;
         rr:objectMap [
-            rr:template "{timestamp}" 
+            rr:template "{timestamp}";
+            rr:datatype xsd:dateTime 
         ]
     ] .
