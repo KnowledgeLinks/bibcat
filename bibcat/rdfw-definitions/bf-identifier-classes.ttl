@@ -1,0 +1,234 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sesame: <http://www.openrdf.org/schema/sesame#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix fn: <http://www.w3.org/2005/xpath-functions#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix hint: <http://www.bigdata.com/queryHints#> .
+@prefix bd: <http://www.bigdata.com/rdf#> .
+@prefix bds: <http://www.bigdata.com/rdf/search#> .
+
+<http://id.loc.gov/ontologies/bibframe/Isbn> a owl:Class ;
+	rdfs:label "ISBN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Book Number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Ansi> a owl:Class ;
+	rdfs:label "ANSI number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "American National Standards Institute identifier." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Barcode> a owl:Class ;
+	rdfs:label "Barcode" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Optical machine-readable representation of data relating to the item to which it is attached." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Coden> a owl:Class ;
+	rdfs:label "CODEN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identifier for scientific and technical periodical titles assigned by the International CODEN Section of Chemical Abstracts Service." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/CopyrightNumber> a owl:Class ;
+	rdfs:label "Copyright-legal deposit number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identifier assigned to a copyright registration or legal deposit." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/DissertationIdentifier> a owl:Class ;
+	rdfs:label "Dissertation Identifier" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identifier assigned to a thesis or dissertation for identification purposes ." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Doi> a owl:Class ;
+	rdfs:label "DOI" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Digital Object Identifier." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Ean> a owl:Class ;
+	rdfs:label "EAN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Article Identifier." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Fingerprint> a owl:Class ;
+	rdfs:label "Fingerprint identifier" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identifier that is used to assist in the identification of antiquarian books by recording information comprising groups of characters taken from specified positions on specified pages of the book." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Hdl> a owl:Class ;
+	rdfs:label "Handle" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Unique and persistent identifier for digital objects developed by the Corporation for National Research Initiatives." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Isan> a owl:Class ;
+	rdfs:label "ISAN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Audiovisual Number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Ismn> a owl:Class ;
+	rdfs:label "ISMN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Music Number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Iso> a owl:Class ;
+	rdfs:label "ISO number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Organization for Standardization standard number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Isrc> a owl:Class ;
+	rdfs:label "ISRC" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Recording Code." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Issn> a owl:Class ;
+	rdfs:label "ISSN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Serial Number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/IssnL> a owl:Class ;
+	rdfs:label "ISSN-L" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Serial Number that links together various media versions of a continuing resource." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/IssueNumber> a owl:Class ;
+	rdfs:label "Audio issue number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Number used to identify the issue designation, or serial identification, assigned by a publisher to a sound recording." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Istc> a owl:Class ;
+	rdfs:label "ISTC" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Text Code, a numbering system developed to enable the unique identification of textual works." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Iswc> a owl:Class ;
+	rdfs:label "ISWC" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "International Standard Musical Work Code, a unique, persistent reference number for the identification of musical works." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Lccn> a owl:Class ;
+	rdfs:label "LCCN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Library of Congress Control Number that identifies a resource description." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/LcOverseasAcq> a owl:Class ;
+	rdfs:label "LC acquisition program" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identification number assigned by the Library of Congress to works acquired through one of its collaborative overseas acquisition programs." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Local> a owl:Class ;
+	rdfs:label "Local identifier" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identifier established locally and not a standard number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/MatrixNumber> a owl:Class ;
+	rdfs:label "Audio matrix number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Matrix number from the master from which a specific sound recording was pressed." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/MusicPlate> a owl:Class ;
+	rdfs:label "Music plate number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Number assigned by a music publisher to a specific music publication." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/MusicPublisherNumber> a owl:Class ;
+	rdfs:label "Music publisher number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Number assigned to a music publication other than an issue, matrix, or plate number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Nbn> a owl:Class ;
+	rdfs:label "NBN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "National Bibliography Number that identifies a resource description." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/PostalRegistration> a owl:Class ;
+	rdfs:label "Postal registration number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Number assigned to a publication for which the specified postal service permits the use of a special mailing class privilege." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/PublisherNumber> a owl:Class ;
+	rdfs:label "Other publisher number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Number assigned by a publisher that is not one of the specific defined types." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/ReportNumber> a owl:Class ;
+	rdfs:label "Technical report number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identification number of a technical report that is not a Standard Technical Report Number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+
+<http://id.loc.gov/ontologies/bibframe/ShelfMark> a owl:Class ;
+	rdfs:label "Shelf location" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Piece/item identifier, such as a call or other type of number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Sici> a owl:Class ;
+	rdfs:label "SICI" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Serial Item and Contribution Identifier." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/StockNumber> a owl:Class ;
+	rdfs:label "Stock number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identification number used for stock purposes and assigned by agencies such as distributors, publishers, or vendors." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Strn> a owl:Class ;
+	rdfs:label "STRN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Standard Technical Report Number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/StudyNumber> a owl:Class ;
+	rdfs:label "Study number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Identification number for a computer data file." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Upc> a owl:Class ;
+	rdfs:label "UPC" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Universal Product Code." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/Urn> a owl:Class ;
+	rdfs:label "URN" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Uniform Resource Number." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .
+
+<http://id.loc.gov/ontologies/bibframe/VideorecordingNumber> a owl:Class ;
+	rdfs:label "Videorecording number" ;
+	rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+	<http://www.w3.org/2004/02/skos/core#definition> "Number assigned by a publisher to a videorecording." ;
+	<http://purl.org/dc/terms/modified> "2016-04-21 (New)" .

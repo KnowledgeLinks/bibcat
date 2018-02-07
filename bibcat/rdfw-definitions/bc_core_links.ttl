@@ -1,0 +1,208 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix es: <http://knowledgelinks.io/ns/elasticsearch/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dcterm: <http://purl.org/dc/terms/> .
+@prefix mads: <http://www.loc.gov/mads/rdf/v1#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+# Adding an overaching class to Bibframe to allow for class wide
+# property inheritance
+bf:Resource a owl:Class;
+	rdfs:label "Resource"^^xsd:string ;
+	skos:defintion "Base class for any Bibframe Object"^^xsd:string .
+
+# bf:Work bf:Instance and bf:Item now inherit from bf:Resource
+bf:Work rdfs:subClassOf bf:Resource ;
+	kds:esIndex "catalog" ;
+	kds:esDocType "work" .
+
+bf:Instance rdfs:subClassOf bf:Resource .
+bf:Item rdfs:subClassOf bf:Resource .
+bf:ProvisionActivity rdfs:subClassOf bf:Resource .
+
+# The below properties did not have an associated domain in the bibframe2
+# vocab file
+
+bf:note rdfs:domain bf:Resource .
+bf:date rdfs:domain bf:Resource .
+bf:place rdfs:domain bf:Resource .
+bf:source rdfs:domain bf:Resource .
+rdfs:label rdfs:domain bf:Resource, bf:TableOfContents, bf:Identifier .
+
+bf:summary rdfs:domain bf:Work, bf:Instance .
+
+bf:soundContent rdfs:domain bf:Work, bf:Instance .
+
+bf:issuance rdfs:domain bf:Work, bf:Instance .
+
+bf:title rdfs:domain bf:Work, bf:Instance, bf:Item .
+
+bf:agent rdfs:domain bf:Work, bf:Instance .
+
+bf:contribution rdfs:domain bf:Work, bf:Instance .
+
+bf:subject rdfs:domain bf:Work, bf:Instance, bf:Item ;
+	rdfs:range bf:Topic .
+
+bf:tableOfContents rdfs:domain bf:Work, bf:Instance .
+
+bf:Role kds:esNestedProps mads:authoritativeLabel, mads:code, rdf:type,
+	rdfs:label .
+
+rdf:type kds:initProcessor [
+		kds:appliesToClass kdr:AllClasses ;
+		a kdr:AddClassProcessor
+	] ;
+	kds:esProcessor	[
+		kds:appliesToClass kdr:AllClasses ;
+		a kdr:AddClassHeirarchyProcessor
+	] ;
+	kds:rangeDef [
+		kds:appliesToClass kdr:AllClasses ;
+		kds:appliesToRange kdr:AllClasses ;
+		kds:esIndexType es:NotAnalyzed ;
+		kds:esValue "uri"
+	] .
+
+
+# ----------------- bf:Topic ---------------------------------------------------
+bf:Topic a kds:ControlledClass ;
+	kds:storageType "object" ;
+	kds:esNestedProps skos:broader, skos:altLabel, skos:prefLabel,
+					  bf:identifiedBy, rdfs:label, rdf:type;
+	kds:esValue skos:prefLabel ;
+	kds:esAltValue rdfs:label ;
+	kds:esIndex "reference" ;
+	kds:esDocType "topics" .
+
+skos:broader rdfs:domain bf:Topic ;
+	rdfs:range bf:Topic ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange bf:Topic ;
+		kds:esIndexType es:Nested
+	] .
+
+skos:inScheme rdfs:domain bf:Topic ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange skos:ConceptScheme  ;
+		kds:esIndexType es:NotAnalyzed ;
+		kds:esValue "uri"
+	] .
+
+skos:member rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string  ;
+		kds:esIndexType es:NotAnalyzed
+	] .
+
+dcterm:created rdfs:domain bf:Topic ;
+	rdfs:range xsd:datetime ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:datetime
+	] .
+
+skos:altLabel rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic;
+		kds:appliesToRange xsd:string  ;
+		kds:esIndexType es:Standard;
+		kds:esIndexType es:Raw;
+		kds:esIndexType es:Lower
+	] .
+
+skos:notation rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string
+	] .
+
+
+skos:prefLabel rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic;
+		kds:appliesToRange xsd:string  ;
+		kds:esIndexType es:Standard;
+		kds:esIndexType es:Raw;
+		kds:esIndexType es:Lower
+	] .
+
+dcterm:modified rdfs:domain bf:Topic ;
+	rdfs:range xsd:datetime ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:datetime
+	] .
+
+rdf:type rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string  ;
+		kds:esIndexType es:NotAnalyzed;
+	] .
+
+bf:identifiedBy rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange bf:Identifier ;
+		kds:esIndexType es:Nested
+	] .
+
+skos:note rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string  ;
+		kds:esIndexType es:Standard;
+	] .
+
+skos:example rdfs:domain bf:Topic ;
+	rdfs:range xsd:string ;
+	kds:rangeDef [
+		kds:appliesToClass bf:Topic;
+		kds:appliesToRange xsd:string  ;
+		kds:esIndexType es:Standard;
+	] ;
+	rdfs:comment "email address.";
+	kds:requiredByDomain skos:example;
+	kds:propertyProcessing [
+		kds:appliesToClass bf:Topic;
+		a kdr:EmailVerificationProcessor
+	];
+	kds:propertyValidation [
+		kds:appliesToClass kdr:AllClasses;
+		a kdr:EmailValidator
+	];
+	kds:propertySecurity [
+		kds:appliesToClass kdr:AllClasses;
+		acl:agent kdr:self-sg;
+		acl:mode acl:Read, acl:Write
+	] ;
+	kds:formDefault [
+		kds:appliesToClass kdr:AllClasses;
+		kds:formFieldName "emailaddr";
+		kds:formLabelName "Email Address";
+		kds:formFieldHelp "Enter a valid email address.";
+		kds:fieldType [
+			a	kdr:TextField
+		]
+	] .
+

@@ -28,7 +28,7 @@ bc:PTFStoBF_Item a rr:TriplesMap ;
     ] ;
 
     rr:subjectMap [
-        rr:reference "relation/references" ;
+        rr:template "{item_iri}" ;
         rr:class bf:Item 
     ]; 
 
