@@ -65,7 +65,7 @@
             rml:reference "$.bf_instanceOf.bf_summary.rdfs_label" ;
             rml:altReference "$.bf_summary.rdfs_label"
         ]
-    ] .;
+    ] ;
 
     rr:predicateObjectMap [
         rr:predicate schema:workExample ;

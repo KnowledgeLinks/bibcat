@@ -28,15 +28,15 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:template "{item_iri}" ;
-        rr:class bf:Item 
-    ]; 
+        rr:class bf:Item
+    ];
 
     rr:predicateObjectMap [
         rr:predicate bf:generationProcess ;
         rr:objectMap [
             rr:parentTriplesMap bc:adminMetadata
         ]
-    ]; 
+    ];
 
     rr:predicateObjectMap [
         rr:predicate bf:usageAndAccessPolicy ;
@@ -52,7 +52,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
             rr:template "{instance_iri}" ;
             rr:datatype xsd:anyURI
         ]
-    ] . 
+    ] .
 
 
 <#MODS2BIBFRAME_ItemUsageAndAccess> a rr:TriplesMap ;
@@ -86,7 +86,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:template "{instance_iri}" ;
-        rr:class bf:Instance 
+        rr:class bf:Instance
     ] ;
 
     rr:predicateObjectMap [
@@ -94,7 +94,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:objectMap [
             rr:parentTriplesMap bc:adminMetadata
         ]
-    ]; 
+    ];
 
 
 
@@ -103,7 +103,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:objectMap [
            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceContribution> ;
         ]
-    ] ;    
+    ] ;
 
      rr:predicateObjectMap [
         rr:predicate bf:contribution ;
@@ -207,13 +207,13 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate bf:title ;
         rr:objectMap [
             rr:parentTriplesMap <#MODS2BIBFRAME_InstanceTitle> ;
-       ] 
-    ] ; 
+       ]
+    ] ;
 
      rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
-            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVarientTitle> 
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVarientTitle>
         ]
     ] .
 
@@ -221,7 +221,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:note[not(@type)]" 
+        rml:iterator "mods:note[not(@type)]"
     ] ;
 
     rr:subjectMap [
@@ -234,8 +234,8 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate rdf:value ;
         rr:objectMap [
             rr:reference "." ;
-            rr:datatype xsd:string 
-        ] 
+            rr:datatype xsd:string
+        ]
     ] .
 
 
@@ -243,7 +243,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:note[@type='admin']" 
+        rml:iterator "mods:note[@type='admin']"
     ] ;
 
     rr:subjectMap [
@@ -257,15 +257,15 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:objectMap [
             rr:constant "admin"@en ;
             rr:datatype xsd:string  ;
-        ] 
-    ] ; 
+        ]
+    ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdf:value ;
         rr:objectMap [
             rr:reference "." ;
-            rr:datatype xsd:string 
-        ] 
+            rr:datatype xsd:string
+        ]
     ] .
 
 
@@ -273,20 +273,20 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']" 
+        rml:iterator "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']"
     ] ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Person, bf:Agent 
+        rr:class bf:Person, bf:Agent
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "../mods:namePart" ;
-            rr:datatype xsd:string 
-        ] 
+            rr:datatype xsd:string
+        ]
     ] ;
 
     rr:predicateObjectMap [
@@ -300,12 +300,12 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='creator']" 
+        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='creator']"
     ] ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Organization, bf:Agent 
+        rr:class bf:Organization, bf:Agent
 
     ] ;
 
@@ -313,14 +313,14 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "../mods:namePart" ;
-            rr:datatype xsd:string 
-        ] 
+            rr:datatype xsd:string
+        ]
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:role ;
         rr:objectMap [
-            rr:constant relators:cre 
+            rr:constant relators:cre
         ]
     ]  .
 
@@ -328,40 +328,41 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='thesis advisor']" 
+        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='thesis advisor']"
     ] ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Contribution 
+        rr:class bf:Contribution
 
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:agent ;
         rr:objectMap [
-
-
+            rr:termType rr:BlankNode ;
+            rr:class bf:Person
         ]
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:role ;
         rr:objectMap [
-            rr:constant relators:cre 
+            rr:constant relators:creator
         ]
     ]  .
 
 <#MODS2BIBFRAME_TheisAdvisor> a rr:TripleMap ;
 
     rml:logicalSource [
-
+        rr:termType rr:BlankNode ;
+        rr:class bf:Person
 
     ] ;
 
     rr:subjectMap [
         rr:reference "[@authorURI]"
-    ]
+    ] .
 
 <#MODS2BIBFRAME_InstanceContribution> a rr:TriplesMap ;
 
@@ -372,15 +373,15 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Person 
+        rr:class bf:Person
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "../mods:namePart" ;
-            rr:datatype xsd:string 
-        ] 
+            rr:datatype xsd:string
+        ]
     ] .
 
 <#MODS2BIBFRAME_InstanceContributionCorporate> a rr:TriplesMap ;
@@ -392,15 +393,15 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Person 
+        rr:class bf:Person
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "../mods:namePart" ;
-            rr:datatype xsd:string 
-        ] 
+            rr:datatype xsd:string
+        ]
     ] .
 
 
@@ -408,7 +409,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:physicalDescription/mods:extent" 
+        rml:iterator "mods:physicalDescription/mods:extent"
     ] ;
 
     rr:subjectMap [
@@ -420,7 +421,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate rdf:value ;
         rr:objectMap [
             rr:reference "." ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] .
 
@@ -440,10 +441,10 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate rdf:value ;
         rr:objectMap [
             rr:reference "." ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] .
-   
+
 <#MODS2BIBFRAME_InstanceLanguage> a rr:TriplesMap;
 
     rml:logicalSource [
@@ -460,7 +461,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate rdf:value ;
         rr:objectMap [
             rr:reference "." ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] .
 
@@ -488,13 +489,13 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:subject/mods:name[@type='corporate']" 
+        rml:iterator "mods:subject/mods:name[@type='corporate']"
     ] ;
 
      rr:subjectMap [
         rr:termType rr:BlankNode ;
         rr:class bf:Organization ;
-        kds:deduplicate rdfs:label 
+        kds:deduplicate rdfs:label
     ] ;
 
     rr:predicateObjectMap [
@@ -509,12 +510,12 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:subject/mods:name[@type='personal']" 
+        rml:iterator "mods:subject/mods:name[@type='personal']"
     ] ;
 
      rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Person 
+        rr:class bf:Person
     ] ;
 
     rr:predicateObjectMap [
@@ -529,7 +530,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:subject/mods:temporal" 
+        rml:iterator "mods:subject/mods:temporal"
     ] ;
 
      rr:subjectMap [
@@ -549,7 +550,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:subject/mods:topic" 
+        rml:iterator "mods:subject/mods:topic"
     ] ;
 
      rr:subjectMap [
@@ -570,7 +571,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:abstract" 
+        rml:iterator "mods:abstract"
     ] ;
 
      rr:subjectMap [
@@ -591,7 +592,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:titleInfo" 
+        rml:iterator "mods:titleInfo"
     ] ;
 
     rr:subjectMap [
@@ -603,7 +604,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate bf:mainTitle ;
         rr:objectMap [
             rr:reference "mods:title" ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] ;
 
@@ -611,7 +612,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate bf:subTitle ;
         rr:objectMap [
             rr:reference "mods:subtitle" ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] .
 
@@ -619,7 +620,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:titleInfo[@type='alternative']" 
+        rml:iterator "mods:titleInfo[@type='alternative']"
     ] ;
 
     rr:subjectMap [
@@ -631,7 +632,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate bf:mainTitle ;
         rr:objectMap [
             rr:reference "mods:title" ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] ;
 
@@ -639,7 +640,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate bf:subTitle ;
         rr:objectMap [
             rr:reference "mods:subtitle" ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] .
 
@@ -647,19 +648,19 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:originInfo" 
+        rml:iterator "mods:originInfo"
     ] ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Organization 
+        rr:class bf:Organization
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
             rr:reference "mods:publisher" ;
-            rr:datatype xsd:string 
+            rr:datatype xsd:string
         ]
     ] .
 
@@ -672,7 +673,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:template "{instance_iri}#Work" ;
-        rr:class bf:Work 
+        rr:class bf:Work
     ] ;
 
     rr:predicateObjectMap [
@@ -685,14 +686,14 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
     rr:predicateObjectMap [
         rr:predicate bf:contribution ;
         rr:objectMap [
-           rr:parentTriplesMap <#MODS2BIBFRAME_WorkAuthor> ; 
+           rr:parentTriplesMap <#MODS2BIBFRAME_WorkAuthor> ;
         ]
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate relators:aut ;
         rr:objectMap [
-           rr:parentTriplesMap <#MODS2BIBFRAME_WorkAuthorOrg> ; 
+           rr:parentTriplesMap <#MODS2BIBFRAME_WorkAuthorOrg> ;
         ]
     ] ;
 
@@ -701,6 +702,6 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate rdf:type ;
         rr:objectMap [
             rr:reference """mods:physicalDescription/mods:form[text()="image/tiff"]""" ;
-            rr:constant bf:StillImage 
+            rr:constant bf:StillImage
         ]
     ] .
