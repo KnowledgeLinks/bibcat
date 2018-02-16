@@ -81,14 +81,15 @@ bf:hasInstance kds:rangeDef [
 	] .
 bf:instanceOf kds:rangeDef [
 		kds:appliesToClass kdr:AllClasses ;
-		kds:appliesToRange kdr:AllClasses ;
 		kds:esIndexType es:Ignored
 	] .
 
-bf:hasItem kds:esLookup owl:inverseOf .
+bf:hasItem kds:rangeDef [
+		kds:appliesToClass kdr:AllClasses ;
+		kds:esLookup owl:inverseOf
+	] .
 bf:itemOf kds:rangeDef [
 		kds:appliesToClass kdr:AllClasses ;
-		kds:appliesToRange kdr:AllClasses ;
 		kds:esIndexType es:Ignored
 	] .
 # ----------------- bf:Topic ---------------------------------------------------
