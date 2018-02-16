@@ -140,6 +140,18 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
+        rr:predicate dcterms:extent ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?extent 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
+                                  ?instance bf:dimension ?bnode .
+                                  ?bnode rdf:value ?extent
+                        }}""";
+        ]
+    ] ;
+
+
+    rr:predicateObjectMap [
         rr:predicate dc:format ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?format 

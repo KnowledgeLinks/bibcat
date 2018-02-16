@@ -305,13 +305,15 @@ class IslandoraIngester(OAIPMHIngester):
                 mods_recs = mods_collection.findall("mods:mods",
                     self.namespaces)
             for mods_record in mods_recs:
+                work_iri = rdflib.URIRef("{}#Work".format(instance_url))
                 self.processor.run(mods_record,
                     base_url=base_url,
                     id=uuid.uuid1,
                     item_iri=item_url,
-                    instance_iri=instance_url)
+                    instance_iri=instance_url,
+                    work_iri=work_iri)
                     
-        except:
+        except ValueError:
             logging.error("{} Error with {}".format(
                 sys.exc_info()[1],
                 item_url))
