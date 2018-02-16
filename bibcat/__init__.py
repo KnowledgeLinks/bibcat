@@ -7,7 +7,10 @@ import rdflib
 from rdflib.term import _is_valid_uri
 
 __author__ = "Jeremy Nelson, Mike Stabile, Jay Peterson"
-__version__ = pkg_resources.get_distribution("bibcat").version
+try:
+    __version__ = pkg_resources.get_distribution("bibcat").version
+except:
+    __version__ = "2.0.6"
 
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 
