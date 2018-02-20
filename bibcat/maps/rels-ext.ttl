@@ -65,7 +65,7 @@
    rr:predicateObjectMap [
         rr:predicate rdf:type ;
         rr:objectMap [
-            rr:constant bf:Text
+            rr:constant bf:Print
         ] 
     ] .
 
@@ -111,6 +111,13 @@
         rr:objectMap [
             rr:parentTriplesMap <#RELSEXTLargeToStillImage>
         ] 
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rr:parentTriplesMap <#RELSEXTtoTextWork>
+        ] ;
     ] .
 
 <#RELSEXTtoAudioWork> a rr:TriplesMap ;
@@ -161,9 +168,9 @@
 
 <#RELSEXTLargeToStillImage> a rr:TriplesMap ;
 
-     rml:logicalSource [
+     rml:logicalsource [
         rml:source "{rels_ext_xml}" ;
-        rml:referenceFormulation ql:XPath;
+        rml:referenceformulation ql:xpath;
         rml:iterator "rdf:Description/fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_large_image_cmodel']" ;
     ] ;
 
@@ -171,4 +178,24 @@
         rr:template  "{work_iri}" ;
         rr:class bf:StillImage
     ] .
-   
+
+<#RELSEXTtoTextWork> a rr:TriplesMap ;
+
+     rml:logicalsource [
+        rml:source "{rels_ext_xml}" ;
+        rml:referenceformulation ql:xpath;        
+        rml:iterator "rdf:Description/fedora-model:hasModel[@rdf:resource='info:fedora/islandora:sp_pdf'] 
+    ] ;
+
+    rr:subjectMap [
+        rr:template  "{work_iri}" ;
+        rr:class bf:Text
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:type ;
+        rr:objectMap [
+            rr:constant bf:Text ;
+    ] .
+    ]    .
+

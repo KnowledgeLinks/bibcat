@@ -90,13 +90,12 @@ def delete_iri(graph, entity_iri):
         graph(rdflib.Graph|rdflib.ConjuctiveGraph): Graph
         entity_iri(rdflib.URIRef): IRI of entity
     """
-    for pred, obj in graph.predicate_objects(subject=entity_iri):
-        if isinstance(obj, rdflib.BNode):
-            delete_bnode(graph, obj)
-        graph.remove((entity_iri, pred, obj))
-    for subj, pred in graph.subject_predicates(object=entity_iri):
-        graph.remove((subj, pred, entity_iri))
-
+    delete_sparql = """DELETE WHERE {{
+      <{0}> ?p ?o .
+      ?s ?p1 <{0}> .
+    }}""".format(entity_iri)
+    graph.update(delete_sparql)
+   
 def modified_bf_desc(**kwargs):
     """Adds a bf:adminMetadata property with a blank node for
     the entity. Optional agent_iri arg will add the agent_iri as a
