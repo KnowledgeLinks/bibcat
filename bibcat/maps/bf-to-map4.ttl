@@ -236,6 +236,20 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
         ]
     ];
+
+    rr:predicateObjectMap [
+        rr:predicate dcterms:subject ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?subject
+                    WHERE {{ <{instance_iri}> bf:subject ?topic .
+                             ?topic rdf:type bf:Topic .
+                             ?topic rdf:value ?subject }}""";
+            rml:reference "$.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value"
+
+        ]
+    ];
+
+
     rr:predicateObjectMap [
         rr:predicate dcterms:title ;
         rr:objectMap [
