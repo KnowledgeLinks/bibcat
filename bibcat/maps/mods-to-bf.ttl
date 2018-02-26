@@ -168,33 +168,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         ]
     ] ;
 
-    rr:predicateObjectMap [
-        rr:predicate bf:subject ;
-        rr:objectMap [
-            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectOrg> ;
-        ]
-    ] ;
 
-    rr:predicateObjectMap [
-        rr:predicate bf:subject ;
-        rr:objectMap [
-            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectPerson> ;
-        ]
-    ] ;
-
-    rr:predicateObjectMap [
-        rr:predicate bf:subject ;
-        rr:objectMap [
-            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectTemporal> ;
-        ]
-    ] ;
-
-    rr:predicateObjectMap [
-        rr:predicate bf:subject ;
-        rr:objectMap [
-            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceSubjectTopic> ;
-        ]
-    ] ;
 
     rr:predicateObjectMap [
         rr:predicate bf:summary ;
@@ -512,7 +486,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
     ] .
 
 
-<#MODS2BIBFRAME_InstanceSubjectOrg> a rr:TriplesMap ;
+<#MODS2BIBFRAME_WorkSubjectOrg> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
@@ -533,7 +507,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         ]
     ] .
 
-<#MODS2BIBFRAME_InstanceSubjectPerson> a rr:TriplesMap ;
+<#MODS2BIBFRAME_WorkSubjectPerson> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
@@ -553,7 +527,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         ]
     ] .
 
-<#MODS2BIBFRAME_InstanceSubjectTemporal> a rr:TriplesMap ;
+<#MODS2BIBFRAME_WorkSubjectTemporal> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
@@ -573,7 +547,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         ]
     ] .
 
-<#MODS2BIBFRAME_InstanceSubjectTopic> a rr:TriplesMap ;
+<#MODS2BIBFRAME_WorkSubjectTopic> a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
@@ -721,6 +695,34 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         rr:predicate bf:contribution ;
         rr:objectMap [
             rr:parentTriplesMap <#MODS2BIBFRAME_WorkThesisAdvisor> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_WorkSubjectOrg> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_WorkSubjectPerson> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_WorkSubjectTemporal> ;
+        ]
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate bf:subject ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MODS2BIBFRAME_WorkSubjectTopic> ;
         ]
     ] ;
 
