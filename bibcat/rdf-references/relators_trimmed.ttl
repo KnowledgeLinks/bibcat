@@ -1,0 +1,1085 @@
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterm: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix schema: <http://schema.org/> .
+@prefix ore: <http://www.openarchives.org/ore/terms/> .
+@prefix dpla: <http://dp.la/about/map/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix loc: <http://id.loc.gov/authorities/> .
+@prefix dbr: <http://dbpedia.org/resource/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+@prefix mods: <http://www.loc.gov/mods/v3#> .
+@prefix mads: <http://www.loc.gov/mads/rdf/v1#> .
+@prefix dbo: <http://dbpedia.org/ontology/> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix es: <http://knowledgelinks.io/ns/elasticsearch/> .
+@prefix dbp: <http://dbpedia.org/property/> .
+@prefix m21: <http://knowledgelinks.io/ns/marc21/> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix bd: <http://www.bigdata.com/rdf#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix edm: <http://www.europeana.eu/schemas/edm/> .
+@prefix adms: <https://www.w3.org/ns/adms#> .
+@prefix sesame: <http://www.openrdf.org/schema/sesame#> .
+@prefix fn: <http://www.w3.org/2005/xpath-functions#> .
+@prefix hint: <http://www.bigdata.com/queryHints#> .
+@prefix bds: <http://www.bigdata.com/rdf/search#> .
+
+relator:cre mads:authoritativeLabel "Creator"@en ;
+	mads:code "cre" ;
+	mads:definitionNote "A person or organization responsible for the intellectual or artistic content of a resource" .
+
+relator:pbl mads:authoritativeLabel "Publisher"@en ;
+	mads:code "pbl" ;
+	mads:definitionNote "A person or organization responsible for publishing, releasing, or issuing a resource" .
+
+relator:aut mads:authoritativeLabel "Author"@en ;
+	mads:code "aut" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a work that is primarily textual in content, regardless of media type (e.g., printed text, spoken word, electronic text, tactile text) or genre (e.g., poems, novels, screenplays, blogs). Use also for persons, etc., creating a new work by paraphrasing, rewriting, or adapting works by another creator such that the modification has substantially changed the nature and content of the original or changed the medium of expression" .
+
+relator:ths mads:authoritativeLabel "Thesis advisor"@en ;
+	mads:code "ths" ;
+	mads:definitionNote "A person under whose supervision a degree candidate develops and presents a thesis, mÃ©moire, or text of a dissertation" .
+
+relator:abr mads:authoritativeLabel "Abridger"@en ;
+	mads:code "abr" ;
+	mads:definitionNote "A person, family, or organization contributing to a resource by shortening or condensing the original work but leaving the nature and content of the original work substantially unchanged. For substantial modifications that result in the creation of a new work, see author" .
+
+relator:acp mads:authoritativeLabel "Art copyist"@en ;
+	mads:code "acp" ;
+	mads:definitionNote "A person (e.g., a painter or sculptor) who makes copies of works of visual art" .
+
+relator:act mads:authoritativeLabel "Actor"@en ;
+	mads:code "act" ;
+	mads:definitionNote "A performer contributing to an expression of a work by acting as a cast member or player in a musical or dramatic presentation, etc." .
+
+relator:adi mads:authoritativeLabel "Art director"@en ;
+	mads:code "adi" ;
+	mads:definitionNote "A person contributing to a motion picture or television production by overseeing the artists and craftspeople who build the sets" .
+
+relator:adp mads:authoritativeLabel "Adapter"@en ;
+	mads:code "adp" ;
+	mads:definitionNote "A person or organization who 1) reworks a musical composition, usually for a different medium, or 2) rewrites novels or stories for motion pictures or other audiovisual medium." .
+
+relator:aft mads:authoritativeLabel "Author of afterword, colophon, etc."@en ;
+	mads:code "aft" ;
+	mads:definitionNote "A person or organization responsible for an afterword, postface, colophon, etc. but who is not the chief author of a work" .
+
+relator:anl mads:authoritativeLabel "Analyst"@en ;
+	mads:code "anl" ;
+	mads:definitionNote "A person or organization that reviews, examines and interprets data or information in a specific area" .
+
+relator:anm mads:authoritativeLabel "Animator"@en ;
+	mads:code "anm" ;
+	mads:definitionNote "A person contributing to a moving image work or computer program by giving apparent movement to inanimate objects or drawings. For the creator of the drawings that are animated, see artist" .
+
+relator:ann mads:authoritativeLabel "Annotator"@en ;
+	mads:code "ann" ;
+	mads:definitionNote "A person who makes manuscript annotations on an item" .
+
+relator:ant mads:authoritativeLabel "Bibliographic antecedent"@en ;
+	mads:code "ant" ;
+	mads:definitionNote "A person or organization responsible for a resource upon which the resource represented by the bibliographic description is based. This may be appropriate for adaptations, sequels, continuations, indexes, etc." .
+
+relator:ape mads:authoritativeLabel "Appellee"@en ;
+	mads:code "ape" ;
+	mads:definitionNote "A person or organization against whom an appeal is taken" .
+
+relator:apl mads:authoritativeLabel "Appellant"@en ;
+	mads:code "apl" ;
+	mads:definitionNote "A person or organization who appeals a lower court's decision" .
+
+relator:app mads:authoritativeLabel "Applicant"@en ;
+	mads:code "app" ;
+	mads:definitionNote "A  person or organization responsible for the submission of an application or who is named as eligible for the results of the processing of the application (e.g., bestowing of rights, reward, title, position)" .
+
+relator:aqt mads:authoritativeLabel "Author in quotations or text abstracts"@en ;
+	mads:code "aqt" ;
+	mads:definitionNote "A person or organization whose work is largely quoted or extracted in works to which he or she did not contribute directly. Such quotations are found particularly in exhibition catalogs, collections of photographs, etc." .
+
+relator:arc mads:authoritativeLabel "Architect"@en ;
+	mads:code "arc" ;
+	mads:definitionNote "A person, family, or organization responsible for creating an architectural design, including a pictorial representation intended to show how a building, etc., will look when completed. It also oversees the construction of structures" .
+
+relator:ard mads:authoritativeLabel "Artistic director"@en ;
+	mads:code "ard" ;
+	mads:definitionNote "A person responsible for controlling the development of the artistic style of an entire production, including the choice of works to be presented and selection of senior production staff" .
+
+relator:arr mads:authoritativeLabel "Arranger"@en ;
+	mads:code "arr" ;
+	mads:definitionNote "A person, family, or organization contributing to a musical work by rewriting the composition for a medium of performance different from that for which the work was originally intended, or modifying the work for the same medium of performance, etc., such that the musical substance of the original composition remains essentially unchanged. For extensive modification that effectively results in the creation of a new musical work, see composer" .
+
+relator:art mads:authoritativeLabel "Artist"@en ;
+	mads:code "art" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a work by conceiving, and implementing, an original graphic design, drawing, painting, etc. For book illustrators, prefer Illustrator [ill]" .
+
+relator:asg mads:authoritativeLabel "Assignee"@en ;
+	mads:code "asg" ;
+	mads:definitionNote "A person or organization to whom a license for printing or publishing has been transferred" .
+
+relator:asn mads:authoritativeLabel "Associated name"@en ;
+	mads:code "asn" ;
+	mads:definitionNote "A person or organization associated with or found in an item or collection, which cannot be determined to be that of a Former owner [fmo] or other designated relationship indicative of provenance" .
+
+relator:ato mads:authoritativeLabel "Autographer"@en ;
+	mads:code "ato" ;
+	mads:definitionNote "A person whose manuscript signature appears on an item" .
+
+relator:att mads:authoritativeLabel "Attributed name"@en ;
+	mads:code "att" ;
+	mads:definitionNote "An author, artist, etc., relating him/her to a resource for which there is or once was substantial authority for designating that person as author, creator, etc. of the work indicative of provenance" .
+
+relator:auc mads:authoritativeLabel "Auctioneer"@en ;
+	mads:code "auc" ;
+	mads:definitionNote "A person or organization in charge of the estimation and public auctioning of goods, particularly books, artistic works, etc." .
+
+relator:aud mads:authoritativeLabel "Author of dialog"@en ;
+	mads:code "aud" ;
+	mads:definitionNote "A person or organization responsible for the dialog or spoken commentary for a screenplay or sound recording" .
+
+relator:aui mads:authoritativeLabel "Author of introduction, etc."@en ;
+	mads:code "aui" ;
+	mads:definitionNote "A person or organization responsible for an introduction, preface, foreword, or other critical introductory matter, but who is not the chief author" .
+
+relator:aus mads:authoritativeLabel "Screenwriter"@en ;
+	mads:code "aus" ;
+	mads:definitionNote "An author of a screenplay, script, or scene" .
+
+relator:bdd mads:authoritativeLabel "Binding designer"@en ;
+	mads:code "bdd" ;
+	mads:definitionNote "A person or organization responsible for the binding design of a book, including the type of binding, the type of materials used, and any decorative aspects of the binding" .
+
+relator:bjd mads:authoritativeLabel "Bookjacket designer"@en ;
+	mads:code "bjd" ;
+	mads:definitionNote "A person or organization responsible for the design of flexible covers designed for or published with a book, including the type of materials used, and any decorative aspects of the bookjacket" .
+
+relator:bkd mads:authoritativeLabel "Book designer"@en ;
+	mads:code "bkd" ;
+	mads:definitionNote "A person or organization involved in manufacturing a manifestation by being responsible for the entire graphic design of a book, including arrangement of type and illustration, choice of materials, and process used" .
+
+relator:bkp mads:authoritativeLabel "Book producer"@en ;
+	mads:code "bkp" ;
+	mads:definitionNote "A person or organization responsible for the production of books and other print media" .
+
+relator:blw mads:authoritativeLabel "Blurb writer"@en ;
+	mads:code "blw" ;
+	mads:definitionNote "A person or organization responsible for writing a commendation or testimonial for a work, which appears on or within the publication itself, frequently on the back or dust jacket of print publications or on advertising material for all media" .
+
+relator:bnd mads:authoritativeLabel "Binder"@en ;
+	mads:code "bnd" ;
+	mads:definitionNote "A person who binds an item" .
+
+relator:bpd mads:authoritativeLabel "Bookplate designer"@en ;
+	mads:code "bpd" ;
+	mads:definitionNote "A person or organization responsible for the design of a book owner's identification label that is most commonly pasted to the inside front cover of a book" .
+
+relator:brd mads:authoritativeLabel "Broadcaster"@en ;
+	mads:code "brd" ;
+	mads:definitionNote "A person, family, or organization involved in broadcasting a resource to an audience via radio, television, webcast, etc." .
+
+relator:brl mads:authoritativeLabel "Braille embosser"@en ;
+	mads:code "brl" ;
+	mads:definitionNote "A person, family, or organization involved in manufacturing a resource by embossing Braille cells using a stylus, special embossing printer, or other device" .
+
+relator:bsl mads:authoritativeLabel "Bookseller"@en ;
+	mads:code "bsl" ;
+	mads:definitionNote "A person or organization who makes books and other bibliographic materials available for purchase. Interest in the materials is primarily lucrative" .
+
+relator:cas mads:authoritativeLabel "Caster"@en ;
+	mads:code "cas" ;
+	mads:definitionNote "A person, family, or organization involved in manufacturing a resource by pouring a liquid or molten substance into a mold and leaving it to solidify to take the shape of the mold" .
+
+relator:ccp mads:authoritativeLabel "Conceptor"@en ;
+	mads:code "ccp" ;
+	mads:definitionNote "A person or organization responsible for the original idea on which a work is based, this includes the scientific author of an audio-visual item and the conceptor of an advertisement" .
+
+relator:chr mads:authoritativeLabel "Choreographer"@en ;
+	mads:code "chr" ;
+	mads:definitionNote "A person responsible for creating or contributing to a work of movement" .
+
+relator:clb mads:code "clb" .
+
+relator:cli mads:authoritativeLabel "Client"@en ;
+	mads:code "cli" ;
+	mads:definitionNote "A person or organization for whom another person or organization is acting" .
+
+relator:cll mads:authoritativeLabel "Calligrapher"@en ;
+	mads:code "cll" ;
+	mads:definitionNote "A person or organization who writes in an artistic hand, usually as a copyist and or engrosser" .
+
+relator:clr mads:authoritativeLabel "Colorist"@en ;
+	mads:code "clr" ;
+	mads:definitionNote "A person or organization responsible for applying color to drawings, prints, photographs, maps, moving images, etc" .
+
+relator:clt mads:authoritativeLabel "Collotyper"@en ;
+	mads:code "clt" ;
+	mads:definitionNote "A person, family, or organization involved in manufacturing a manifestation of photographic prints from film or other colloid that has ink-receptive and ink-repellent surfaces" .
+
+relator:cmm mads:authoritativeLabel "Commentator"@en ;
+	mads:code "cmm" ;
+	mads:definitionNote "A performer contributing to a work by providing interpretation, analysis, or a discussion of the subject matter on a recording, film, or other audiovisual medium" .
+
+relator:cmp mads:authoritativeLabel "Composer"@en ;
+	mads:code "cmp" ;
+	mads:definitionNote "A person, family, or organization responsible for creating or contributing to a musical resource by adding music to a work that originally lacked it or supplements it" .
+
+relator:cmt mads:authoritativeLabel "Compositor"@en ;
+	mads:code "cmt" ;
+	mads:definitionNote "A person or organization responsible for the creation of metal slug, or molds made of other materials, used to produce the text and images in printed matter" .
+
+relator:cnd mads:authoritativeLabel "Conductor"@en ;
+	mads:code "cnd" ;
+	mads:definitionNote "A performer contributing to a musical resource by leading a performing group (orchestra, chorus, opera, etc.) in a musical or dramatic presentation, etc." .
+
+relator:cng mads:authoritativeLabel "Cinematographer"@en ;
+	mads:code "cng" ;
+	mads:definitionNote "A person in charge of photographing a motion picture, who plans the technical aspets of lighting and photographing of scenes, and often assists the director in the choice of angles, camera setups, and lighting moods. He or she may also supervise the further processing of filmed material up to the completion of the work print. Cinematographer is also referred to as director of photography. Do not confuse with videographer" .
+
+relator:cns mads:authoritativeLabel "Censor"@en ;
+	mads:code "cns" ;
+	mads:definitionNote "A person or organization who examines bibliographic resources for the purpose of suppressing parts deemed objectionable on moral, political, military, or other grounds" .
+
+relator:coe mads:authoritativeLabel "Contestant-appellee"@en ;
+	mads:code "coe" ;
+	mads:definitionNote "A contestant against whom an appeal is taken from one court of law or jurisdiction to another to reverse the judgment" .
+
+relator:col mads:authoritativeLabel "Collector"@en ;
+	mads:code "col" ;
+	mads:definitionNote "A curator who brings together items from various sources that are then arranged, described, and cataloged as a collection. A collector is neither the creator of the material nor a person to whom manuscripts in the collection may have been addressed" .
+
+relator:com mads:authoritativeLabel "Compiler"@en ;
+	mads:code "com" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a new work (e.g., a bibliography, a directory) through the act of compilation, e.g., selecting, arranging, aggregating, and editing data, information, etc" .
+
+relator:con mads:authoritativeLabel "Conservator"@en ;
+	mads:code "con" ;
+	mads:definitionNote "A person or organization responsible for documenting, preserving, or treating printed or manuscript material, works of art, artifacts, or other media" .
+
+relator:cor mads:authoritativeLabel "Collection registrar"@en ;
+	mads:code "cor" ;
+	mads:definitionNote "A curator who lists or inventories the items in an aggregate work such as a collection of items or works" .
+
+relator:cos mads:authoritativeLabel "Contestant"@en ;
+	mads:code "cos" ;
+	mads:definitionNote "A person(s) or organization who opposes, resists, or disputes, in a court of law, a claim, decision, result, etc." .
+
+relator:cot mads:authoritativeLabel "Contestant-appellant"@en ;
+	mads:code "cot" ;
+	mads:definitionNote "A contestant who takes an appeal from one court of law or jurisdiction to another to reverse the judgment" .
+
+relator:cou mads:authoritativeLabel "Court governed"@en ;
+	mads:code "cou" ;
+	mads:definitionNote "A court governed by court rules, regardless of their official nature (e.g., laws, administrative regulations)" .
+
+relator:cov mads:authoritativeLabel "Cover designer"@en ;
+	mads:code "cov" ;
+	mads:definitionNote "A person or organization responsible for the graphic design of a book cover, album cover, slipcase, box, container, etc. For a person or organization responsible for the graphic design of an entire book, use Book designer; for book jackets, use Bookjacket designer" .
+
+relator:cpc mads:authoritativeLabel "Copyright claimant"@en ;
+	mads:code "cpc" ;
+	mads:definitionNote "A person or organization listed as a copyright owner at the time of registration. Copyright can be granted or later transferred to another person or organization, at which time the claimant becomes the copyright holder" .
+
+relator:cpe mads:authoritativeLabel "Complainant-appellee"@en ;
+	mads:code "cpe" ;
+	mads:definitionNote "A complainant against whom an appeal is taken from one court or jurisdiction to another to reverse the judgment, usually in an equity proceeding" .
+
+relator:cph mads:authoritativeLabel "Copyright holder"@en ;
+	mads:code "cph" ;
+	mads:definitionNote "A person or organization to whom copy and legal rights have been granted or transferred for the intellectual content of a work. The copyright holder, although not necessarily the creator of the work, usually has the exclusive right to benefit financially from the sale and use of the work to which the associated copyright protection applies" .
+
+relator:cpl mads:authoritativeLabel "Complainant"@en ;
+	mads:code "cpl" ;
+	mads:definitionNote "A person or organization who applies to the courts for redress, usually in an equity proceeding" .
+
+relator:cpt mads:authoritativeLabel "Complainant-appellant"@en ;
+	mads:code "cpt" ;
+	mads:definitionNote "A complainant who takes an appeal from one court or jurisdiction to another to reverse the judgment, usually in an equity proceeding" .
+
+relator:crp mads:authoritativeLabel "Correspondent"@en ;
+	mads:code "crp" ;
+	mads:definitionNote "A person or organization who was either the writer or recipient of a letter or other communication" .
+
+relator:crr mads:authoritativeLabel "Corrector"@en ;
+	mads:code "crr" ;
+	mads:definitionNote "A person or organization who is a corrector of manuscripts, such as the scriptorium official who corrected the work of a scribe. For printed matter, use Proofreader" .
+
+relator:crt mads:authoritativeLabel "Court reporter"@en ;
+	mads:code "crt" ;
+	mads:definitionNote "The person, family, or organization contributing to a resource by preparing a court's opinions for publication" .
+
+relator:csl mads:authoritativeLabel "Consultant"@en ;
+	mads:code "csl" ;
+	mads:definitionNote "A person or organization relevant to a resource, who is called upon for professional advice or services in a specialized field of knowledge or training" .
+
+relator:csp mads:authoritativeLabel "Consultant to a project"@en ;
+	mads:code "csp" ;
+	mads:definitionNote "A person or organization relevant to a resource, who is engaged specifically to provide an intellectual overview of a strategic or operational task and by analysis, specification, or instruction, to create or propose a cost-effective course of action or solution" .
+
+relator:cst mads:authoritativeLabel "Costume designer"@en ;
+	mads:code "cst" ;
+	mads:definitionNote "A person, family, or organization that designs the costumes for a moving image production or for a musical or dramatic presentation or entertainment" .
+
+relator:ctb mads:authoritativeLabel "Contributor"@en ;
+	mads:code "ctb" ;
+	mads:definitionNote "A person, family or organization responsible for making contributions to the resource. This includes those whose work has been contributed to a larger work, such as an anthology, serial publication, or other compilation of individual works. If a more specific role is available, prefer that, e.g. editor, compiler, illustrator" .
+
+relator:cte mads:authoritativeLabel "Contestee-appellee"@en ;
+	mads:code "cte" ;
+	mads:definitionNote "A contestee against whom an appeal is taken from one court or jurisdiction to another to reverse the judgment" .
+
+relator:ctg mads:authoritativeLabel "Cartographer"@en ;
+	mads:code "ctg" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a map, atlas, globe, or other cartographic work" .
+
+relator:ctr mads:authoritativeLabel "Contractor"@en ;
+	mads:code "ctr" ;
+	mads:definitionNote "A person or organization relevant to a resource, who enters into a contract with another person or organization to perform a specific" .
+
+relator:cts mads:authoritativeLabel "Contestee"@en ;
+	mads:code "cts" ;
+	mads:definitionNote "A person(s) or organization defending a claim, decision, result, etc. being opposed, resisted, or disputed in a court of law" .
+
+relator:ctt mads:authoritativeLabel "Contestee-appellant"@en ;
+	mads:code "ctt" ;
+	mads:definitionNote "A contestee who takes an appeal from one court or jurisdiction to another to reverse the judgment" .
+
+relator:cur mads:authoritativeLabel "Curator"@en ;
+	mads:code "cur" ;
+	mads:definitionNote "A person, family, or organization conceiving, aggregating, and/or organizing an exhibition, collection, or other item" .
+
+relator:cwt mads:authoritativeLabel "Commentator for written text"@en ;
+	mads:code "cwt" ;
+	mads:definitionNote "A person or organization responsible for the commentary or explanatory notes about a text. For the writer of manuscript annotations in a printed book, use Annotator" .
+
+relator:dbp mads:authoritativeLabel "Distribution place"@en ;
+	mads:code "dbp" ;
+	mads:definitionNote "A place from which a resource, e.g., a serial, is distributed" .
+
+relator:dfd mads:authoritativeLabel "Defendant"@en ;
+	mads:code "dfd" ;
+	mads:definitionNote "A person or organization who is accused in a criminal proceeding or sued in a civil proceeding" .
+
+relator:dfe mads:authoritativeLabel "Defendant-appellee"@en ;
+	mads:code "dfe" ;
+	mads:definitionNote "A defendant against whom an appeal is taken from one court or jurisdiction to another to reverse the judgment, usually in a legal action" .
+
+relator:dft mads:authoritativeLabel "Defendant-appellant"@en ;
+	mads:code "dft" ;
+	mads:definitionNote "A defendant who takes an appeal from one court or jurisdiction to another to reverse the judgment, usually in a legal action" .
+
+relator:dgg mads:authoritativeLabel "Degree granting institution"@en ;
+	mads:code "dgg" ;
+	mads:definitionNote "A organization granting an academic degree" .
+
+relator:dis mads:authoritativeLabel "Dissertant"@en ;
+	mads:code "dis" ;
+	mads:definitionNote "A person who presents a thesis for a university or higher-level educational degree" .
+
+relator:dln mads:authoritativeLabel "Delineator"@en ;
+	mads:code "dln" ;
+	mads:definitionNote "A person or organization executing technical drawings from others' designs" .
+
+relator:dnc mads:authoritativeLabel "Dancer"@en ;
+	mads:code "dnc" ;
+	mads:definitionNote "A performer who dances in a musical, dramatic, etc., presentation" .
+
+relator:dnr mads:authoritativeLabel "Donor"@en ;
+	mads:code "dnr" ;
+	mads:definitionNote "A former owner of an item who donated that item to another owner" .
+
+relator:dpc mads:authoritativeLabel "Depicted"@en ;
+	mads:code "dpc" ;
+	mads:definitionNote "An entity depicted or portrayed in a work, particularly in a work of art" .
+
+relator:dpt mads:authoritativeLabel "Depositor"@en ;
+	mads:code "dpt" ;
+	mads:definitionNote "A current owner of an item who deposited the item into the custody of another person, family, or organization, while still retaining ownership" .
+
+relator:drm mads:authoritativeLabel "Draftsman"@en ;
+	mads:code "drm" ;
+	mads:definitionNote "A person, family, or organization contributing to a resource by an architect, inventor, etc., by making detailed plans or drawings for buildings, ships, aircraft, machines, objects, etc" .
+
+relator:drt mads:authoritativeLabel "Director"@en ;
+	mads:code "drt" ;
+	mads:definitionNote "A person responsible for the general management and supervision of a filmed performance, a radio or television program, etc." .
+
+relator:dsr mads:authoritativeLabel "Designer"@en ;
+	mads:code "dsr" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a design for an object" .
+
+relator:dst mads:authoritativeLabel "Distributor"@en ;
+	mads:code "dst" ;
+	mads:definitionNote "A person or organization that has exclusive or shared marketing rights for a resource" .
+
+relator:dtc mads:authoritativeLabel "Data contributor"@en ;
+	mads:code "dtc" ;
+	mads:definitionNote "A person or organization that submits data for inclusion in a database or other collection of data" .
+
+relator:dte mads:authoritativeLabel "Dedicatee"@en ;
+	mads:code "dte" ;
+	mads:definitionNote "A person, family, or organization to whom the resource is dedicated" .
+
+relator:dtm mads:authoritativeLabel "Data manager"@en ;
+	mads:code "dtm" ;
+	mads:definitionNote "A person or organization responsible for managing databases or other data sources" .
+
+relator:dto mads:authoritativeLabel "Dedicator"@en ;
+	mads:code "dto" ;
+	mads:definitionNote "A person who writes a dedication, which may be a formal statement or in epistolary or verse form" .
+
+relator:dub mads:authoritativeLabel "Dubious author"@en ;
+	mads:code "dub" ;
+	mads:definitionNote "A person or organization to which authorship has been dubiously or incorrectly ascribed" .
+
+relator:edc mads:authoritativeLabel "Editor of compilation"@en ;
+	mads:code "edc" ;
+	mads:definitionNote "A person, family, or organization contributing to a collective or aggregate work by selecting and putting together works, or parts of works, by one or more creators. For compilations of data, information, etc., that result in new works, see compiler" .
+
+relator:edm mads:authoritativeLabel "Editor of moving image work"@en ;
+	mads:code "edm" ;
+	mads:definitionNote "A person, family, or organization responsible for assembling, arranging, and trimming film, video, or other moving image formats, including both visual and audio aspects" .
+
+relator:edt mads:authoritativeLabel "Editor"@en ;
+	mads:code "edt" ;
+	mads:definitionNote "A person, family, or organization contributing to a resource by revising or elucidating the content, e.g., adding an introduction, notes, or other critical matter. An editor may also prepare a resource for production, publication, or distribution. For major revisions, adaptations, etc., that substantially change the nature and content of the original work, resulting in a new work, see author" .
+
+relator:egr mads:authoritativeLabel "Engraver"@en ;
+	mads:code "egr" ;
+	mads:definitionNote "A person or organization who cuts letters, figures, etc. on a surface, such as a wooden or metal plate used for printing" .
+
+relator:elg mads:authoritativeLabel "Electrician"@en ;
+	mads:code "elg" ;
+	mads:definitionNote "A person responsible for setting up a lighting rig and focusing the lights for a production, and running the lighting at a performance" .
+
+relator:elt mads:authoritativeLabel "Electrotyper"@en ;
+	mads:code "elt" ;
+	mads:definitionNote "A person or organization who creates a duplicate printing surface by pressure molding and electrodepositing of metal that is then backed up with lead for printing" .
+
+relator:eng mads:authoritativeLabel "Engineer"@en ;
+	mads:code "eng" ;
+	mads:definitionNote "A person or organization that is responsible for technical planning and design, particularly with construction" .
+
+relator:enj mads:authoritativeLabel "Enacting jurisdiction"@en ;
+	mads:code "enj" ;
+	mads:definitionNote "A jurisdiction enacting a law, regulation, constitution, court rule, etc." .
+
+relator:etr mads:authoritativeLabel "Etcher"@en ;
+	mads:code "etr" ;
+	mads:definitionNote "A person or organization who produces text or images for printing by subjecting metal, glass, or some other surface to acid or the corrosive action of some other substance" .
+
+relator:evp mads:authoritativeLabel "Event place"@en ;
+	mads:code "evp" ;
+	mads:definitionNote "A place where an event such as a conference or a concert took place" .
+
+relator:exp mads:authoritativeLabel "Expert"@en ;
+	mads:code "exp" ;
+	mads:definitionNote "A person or organization in charge of the description and appraisal of the value of goods, particularly rare items, works of art, etc." .
+
+relator:fac mads:authoritativeLabel "Facsimilist"@en ;
+	mads:code "fac" ;
+	mads:definitionNote "A person or organization that executed the facsimile" .
+
+relator:fds mads:authoritativeLabel "Film distributor"@en ;
+	mads:code "fds" ;
+	mads:definitionNote "A person, family, or organization involved in distributing a moving image resource to theatres or other distribution channels" .
+
+relator:fld mads:authoritativeLabel "Field director"@en ;
+	mads:code "fld" ;
+	mads:definitionNote "A person or organization that manages or supervises the work done to collect raw data or do research in an actual setting or environment (typically applies to the natural and social sciences)" .
+
+relator:flm mads:authoritativeLabel "Film editor"@en ;
+	mads:code "flm" ;
+	mads:definitionNote "A person who, following the script and in creative cooperation with the Director, selects, arranges, and assembles the filmed material, controls the synchronization of picture and sound, and participates in other post-production tasks such as sound mixing and visual effects processing.  Today, picture editing is often performed digitally." .
+
+relator:fmd mads:authoritativeLabel "Film director"@en ;
+	mads:code "fmd" ;
+	mads:definitionNote "A director responsible for the general management and supervision of a filmed performance" .
+
+relator:fmk mads:authoritativeLabel "Filmmaker"@en ;
+	mads:code "fmk" ;
+	mads:definitionNote "A person, family or organization responsible for creating an independent or personal film. A filmmaker is individually responsible for the conception and execution of all aspects of the film" .
+
+relator:fmo mads:authoritativeLabel "Former owner"@en ;
+	mads:code "fmo" ;
+	mads:definitionNote "A person, family, or organization formerly having legal possession of an item (i.e., a specific copy or instance of a resource)" .
+
+relator:fmp mads:authoritativeLabel "Film producer"@en ;
+	mads:code "fmp" ;
+	mads:definitionNote "A producer responsible for most of the business aspects of a film" .
+
+relator:fnd mads:authoritativeLabel "Funder"@en ;
+	mads:code "fnd" ;
+	mads:definitionNote "A person or organization that furnished financial support for the production of the work" .
+
+relator:fpy mads:authoritativeLabel "First party"@en ;
+	mads:code "fpy" ;
+	mads:definitionNote "A person or organization who is identified as the only party or the party of the first party. In the case of transfer of rights, this is the assignor, transferor, licensor, grantor, etc. Multiple parties can be named jointly as the first party" .
+
+relator:frg mads:authoritativeLabel "Forger"@en ;
+	mads:code "frg" ;
+	mads:definitionNote "A person or organization who makes or imitates something of value or importance, especially with the intent to defraud" .
+
+relator:gis mads:authoritativeLabel "Geographic information specialist"@en ;
+	mads:code "gis" ;
+	mads:definitionNote "A person responsible for geographic information system (GIS) development and integration with global positioning system data" .
+
+relator:grt mads:code "grt" .
+
+relator:his mads:authoritativeLabel "Host institution"@en ;
+	mads:code "his" ;
+	mads:definitionNote "An organization hosting an event, exhibit, conference, etc., which gave rise to the resource, but having little or no responsibility for the content of the resource" .
+
+relator:hnr mads:authoritativeLabel "Honoree"@en ;
+	mads:code "hnr" ;
+	mads:definitionNote "A person, family, or organization honored by a work or item (e.g., the honoree of a festschrift, a person to whom a copy is presented)" .
+
+relator:hst mads:authoritativeLabel "Host"@en ;
+	mads:code "hst" ;
+	mads:definitionNote "A performer contributing to a resource by leading a program (often broadcast) that includes other guests, performers, etc. (e.g., talk show host)" .
+
+relator:ill mads:authoritativeLabel "Illustrator"@en ;
+	mads:code "ill" ;
+	mads:definitionNote "A person, family, or organization contributing to a resource by supplementing the primary content with drawings, diagrams, photographs, etc. If the work is primarily the artistic content created by this entity, use artist" .
+
+relator:ilu mads:authoritativeLabel "Illuminator"@en ;
+	mads:code "ilu" ;
+	mads:definitionNote "A person providing decoration to a specific item using precious metals or color, often with elaborate designs and motifs" .
+
+relator:ins mads:authoritativeLabel "Inscriber"@en ;
+	mads:code "ins" ;
+	mads:definitionNote "A person who has written a statement of dedication or gift" .
+
+relator:inv mads:authoritativeLabel "Inventor"@en ;
+	mads:code "inv" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a new device or process" .
+
+relator:isb mads:authoritativeLabel "Issuing body"@en ;
+	mads:code "isb" ;
+	mads:definitionNote "A person, family or organization issuing the work, such as an official organ of the body" .
+
+relator:itr mads:authoritativeLabel "Instrumentalist"@en ;
+	mads:code "itr" .
+
+relator:opn mads:authoritativeLabel "Opponent"@en ;
+	mads:code "opn" ;
+	mads:definitionNote "A person or organization responsible for opposing a thesis or dissertation" .
+
+relator:org mads:authoritativeLabel "Originator"@en ;
+	mads:code "org" ;
+	mads:definitionNote "A person or organization performing the work, i.e., the name of a person or organization associated with the intellectual content of the work. This category does not include the publisher or personal affiliation, or sponsor except where it is also the corporate author" .
+
+relator:orm mads:authoritativeLabel "Organizer of meeting"@en ;
+	mads:code "orm" ;
+	mads:definitionNote "A person or organization responsible for organizing a meeting for which the resource is the report or proceedings" .
+
+relator:osp mads:authoritativeLabel "Onscreen presenter"@en ;
+	mads:code "osp" ;
+	mads:definitionNote "A performer contributing to an expression of a work by appearing on screen in nonfiction moving image materials or introductions to fiction moving image materials to provide contextual or background information. Use when another term (e.g., narrator, host) is either not applicable or not desired" .
+
+relator:oth mads:authoritativeLabel "Other"@en ;
+	mads:code "oth" ;
+	mads:definitionNote "A role that has no equivalent in the MARC list." .
+
+relator:own mads:authoritativeLabel "Owner"@en ;
+	mads:code "own" ;
+	mads:definitionNote "A person, family, or organization that currently owns an item or collection, i.e.has legal possession of a specific copy or instance of a resource" .
+
+relator:pan mads:authoritativeLabel "Panelist"@en ;
+	mads:code "pan" ;
+	mads:definitionNote "A performer contributing to a resource by participating in a program (often broadcast) where topics are discussed, usually with participation of experts in fields related to the discussion" .
+
+relator:pat mads:authoritativeLabel "Patron"@en ;
+	mads:code "pat" ;
+	mads:definitionNote "A person or organization responsible for commissioning a work. Usually a patron uses his or her means or influence to support the work of artists, writers, etc. This includes those who commission and pay for individual works" .
+
+relator:pbd mads:authoritativeLabel "Publishing director"@en ;
+	mads:code "pbd" ;
+	mads:definitionNote "A person or organization who presides over the elaboration of a collective work to ensure its coherence or continuity. This includes editors-in-chief, literary editors, editors of series, etc." .
+
+relator:pdr mads:authoritativeLabel "Project director"@en ;
+	mads:code "pdr" ;
+	mads:definitionNote "A person or organization with primary responsibility for all essential aspects of a project, has overall responsibility for managing projects, or provides overall direction to a project manager" .
+
+relator:pfr mads:authoritativeLabel "Proofreader"@en ;
+	mads:code "pfr" ;
+	mads:definitionNote "A person who corrects printed matter. For manuscripts, use Corrector [crr]" .
+
+relator:pht mads:authoritativeLabel "Photographer"@en ;
+	mads:code "pht" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a photographic work" .
+
+relator:plt mads:authoritativeLabel "Platemaker"@en ;
+	mads:code "plt" ;
+	mads:definitionNote "A person, family, or organization involved in manufacturing a manifestation by preparing plates used in the production of printed images and/or text" .
+
+relator:pma mads:authoritativeLabel "Permitting agency"@en ;
+	mads:code "pma" ;
+	mads:definitionNote "An organization (usually a government agency) that issues permits under which work is accomplished" .
+
+relator:pmn mads:authoritativeLabel "Production manager"@en ;
+	mads:code "pmn" ;
+	mads:definitionNote "A person responsible for all technical and business matters in a production" .
+
+relator:pop mads:authoritativeLabel "Printer of plates"@en ;
+	mads:code "pop" ;
+	mads:definitionNote "A person or organization who prints illustrations from plates." .
+
+relator:ppm mads:authoritativeLabel "Papermaker"@en ;
+	mads:code "ppm" ;
+	mads:definitionNote "A person or organization responsible for the production of paper, usually from wood, cloth, or other fibrous material" .
+
+relator:ppt mads:authoritativeLabel "Puppeteer"@en ;
+	mads:code "ppt" ;
+	mads:definitionNote "A performer contributing to a resource by manipulating, controlling, or directing puppets or marionettes in a moving image production or a musical or dramatic presentation or entertainment" .
+
+relator:pra mads:authoritativeLabel "Praeses"@en ;
+	mads:code "pra" ;
+	mads:definitionNote "A person who is the faculty moderator of an academic disputation, normally proposing a thesis and participating in the ensuing disputation" .
+
+relator:prc mads:authoritativeLabel "Process contact"@en ;
+	mads:code "prc" ;
+	mads:definitionNote "A person or organization primarily responsible for performing or initiating a process, such as is done with the collection of metadata sets" .
+
+relator:prd mads:authoritativeLabel "Production personnel"@en ;
+	mads:code "prd" ;
+	mads:definitionNote "A person or organization associated with the production (props, lighting, special effects, etc.) of a musical or dramatic presentation or entertainment" .
+
+relator:pre mads:authoritativeLabel "Presenter"@en ;
+	mads:code "pre" ;
+	mads:definitionNote "A person or organization mentioned in an âX presentsâ credit for moving image materials and who is associated with production, finance, or distribution in some way.  A vanity credit;  in early years, normally the head of a studio" .
+
+relator:prf mads:authoritativeLabel "Performer"@en ;
+	mads:code "prf" ;
+	mads:definitionNote "A person contributing to a resource by performing music, acting, dancing, speaking, etc., often in a musical or dramatic presentation, etc.Â If specific codes are used, [prf] is used for a person whose principal skill is not known or specified" .
+
+relator:prg mads:authoritativeLabel "Programmer"@en ;
+	mads:code "prg" ;
+	mads:definitionNote "A person, family, or organization responsible for creating a computer program" .
+
+relator:prm mads:authoritativeLabel "Printmaker"@en ;
+	mads:code "prm" ;
+	mads:definitionNote "A person or organization who makes a relief, intaglio, or planographic printing surface" .
+
+relator:prn mads:authoritativeLabel "Production company"@en ;
+	mads:code "prn" ;
+	mads:definitionNote "An organization that is responsible for financial, technical, and organizational management of a production for stage, screen, sound recording, television, webcast, etc." .
+
+relator:pro mads:authoritativeLabel "Producer"@en ;
+	mads:code "pro" ;
+	mads:definitionNote "A person, family, or organization responsible for most of the business aspects of a production for screen, sound recording, television, webcast, etc. The producer is generally responsible for fund raising, managing the production, hiring key personnel, arranging for distributors, etc." .
+
+relator:prp mads:authoritativeLabel "Production place"@en ;
+	mads:code "prp" ;
+	mads:definitionNote "The place of production (e.g., inscription, fabrication, construction, etc.) of a resource in an unpublished form" .
+
+relator:prs mads:authoritativeLabel "Production designer"@en ;
+	mads:code "prs" ;
+	mads:definitionNote "A person or organization responsible for designing the overall visual appearance of a moving image production" .
+
+relator:prt mads:authoritativeLabel "Printer"@en ;
+	mads:code "prt" ;
+	mads:definitionNote "A person, family, or organization involved in manufacturing a manifestation of printed text, notated music, etc., from type or plates, such as a book, newspaper, magazine, broadside, score, etc" .
+
+relator:prv mads:authoritativeLabel "Provider"@en ;
+	mads:code "prv" ;
+	mads:definitionNote "A person or organization who produces, publishes, manufactures, or distributes a resource if specific codes are not desired (e.g. [mfr], [pbl])" .
+
+relator:pta mads:authoritativeLabel "Patent applicant"@en ;
+	mads:code "pta" ;
+	mads:definitionNote "A person or organization that applied for a patent" .
+
+relator:pte mads:authoritativeLabel "Plaintiff-appellee"@en ;
+	mads:code "pte" ;
+	mads:definitionNote "A plaintiff against whom an appeal is taken from one court or jurisdiction to another to reverse the judgment, usually in a legal proceeding" .
+
+relator:ptf mads:authoritativeLabel "Plaintiff"@en .
+
+relator:itr mads:definitionNote "A performer contributing to a resource by playing a musical instrument" .
+
+relator:ive mads:authoritativeLabel "Interviewee"@en ;
+	mads:code "ive" ;
+	mads:definitionNote "A person, family or organization responsible for creating or contributing to a resource by responding to an interviewer, usually a reporter, pollster, or some other information gathering agent" .
+
+relator:ivr mads:authoritativeLabel "Interviewer"@en ;
+	mads:code "ivr" ;
+	mads:definitionNote "A person, family, or organization responsible for creating or contributing to a resource by acting as an interviewer, reporter, pollster, or some other information gathering agent" .
+
+relator:jud mads:authoritativeLabel "Judge"@en ;
+	mads:code "jud" ;
+	mads:definitionNote "A person who hears and decides on legal matters in court." .
+
+relator:jug mads:authoritativeLabel "Jurisdiction governed"@en ;
+	mads:code "jug" ;
+	mads:definitionNote "A jurisdiction governed by a law, regulation, etc., that was enacted by another jurisdiction" .
+
+relator:lbr mads:authoritativeLabel "Laboratory"@en ;
+	mads:code "lbr" ;
+	mads:definitionNote "An organization that provides scientific analyses of material samples" .
+
+relator:lbt mads:authoritativeLabel "Librettist"@en ;
+	mads:code "lbt" ;
+	mads:definitionNote "An author of a libretto of an opera or other stage work, or an oratorio" .
+
+relator:ldr mads:authoritativeLabel "Laboratory director"@en ;
+	mads:code "ldr" ;
+	mads:definitionNote "A person or organization that manages or supervises work done in a controlled setting or environment" .
+
+relator:led mads:authoritativeLabel "Lead"@en ;
+	mads:code "led" ;
+	mads:definitionNote "A person or organization that takes primary responsibility for a particular activity or endeavor. May be combined with another relator term or code to show the greater importance this person or organization has regarding that particular role. If more than one relator is assigned to a heading, use the Lead relator only if it applies to all the relators" .
+
+relator:lee mads:authoritativeLabel "Libelee-appellee"@en ;
+	mads:code "lee" ;
+	mads:definitionNote "A libelee against whom an appeal is taken from one ecclesiastical court or admiralty to another to reverse the judgment" .
+
+relator:lel mads:authoritativeLabel "Libelee"@en ;
+	mads:code "lel" ;
+	mads:definitionNote "A person or organization against whom a libel has been filed in an ecclesiastical court or admiralty" .
+
+relator:len mads:authoritativeLabel "Lender"@en ;
+	mads:code "len" ;
+	mads:definitionNote "A person or organization permitting the temporary use of a book, manuscript, etc., such as for photocopying or microfilming" .
+
+relator:let mads:authoritativeLabel "Libelee-appellant"@en ;
+	mads:code "let" ;
+	mads:definitionNote "A libelee who takes an appeal from one ecclesiastical court or admiralty to another to reverse the judgment" .
+
+relator:lgd mads:authoritativeLabel "Lighting designer"@en ;
+	mads:code "lgd" ;
+	mads:definitionNote "A person or organization who designs the lighting scheme for a theatrical presentation, entertainment, motion picture, etc." .
+
+relator:lie mads:authoritativeLabel "Libelant-appellee"@en ;
+	mads:code "lie" ;
+	mads:definitionNote "A libelant against whom an appeal is taken from one ecclesiastical court or admiralty to another to reverse the judgment" .
+
+relator:lil mads:authoritativeLabel "Libelant"@en ;
+	mads:code "lil" ;
+	mads:definitionNote "A person or organization who files a libel in an ecclesiastical or admiralty case" .
+
+relator:lit mads:authoritativeLabel "Libelant-appellant"@en ;
+	mads:code "lit" ;
+	mads:definitionNote "A libelant who takes an appeal from one ecclesiastical court or admiralty to another to reverse the judgment" .
+
+relator:lsa mads:authoritativeLabel "Landscape architect"@en ;
+	mads:code "lsa" ;
+	mads:definitionNote "An architect responsible for creating landscape works. This work involves coordinating the arrangement of existing and proposed land features and structures" .
+
+relator:lse mads:authoritativeLabel "Licensee"@en ;
+	mads:code "lse" ;
+	mads:definitionNote "A person or organization who is an original recipient of the right to print or publish" .
+
+relator:lso mads:authoritativeLabel "Licensor"@en ;
+	mads:code "lso" ;
+	mads:definitionNote "A person or organization who is a signer of the license, imprimatur, etc" .
+
+relator:ltg mads:authoritativeLabel "Lithographer"@en ;
+	mads:code "ltg" ;
+	mads:definitionNote "A person or organization who prepares the stone or plate for lithographic printing, including a graphic artist creating a design directly on the surface from which printing will be done." .
+
+relator:lyr mads:authoritativeLabel "Lyricist"@en ;
+	mads:code "lyr" ;
+	mads:definitionNote "An author of the words of a non-dramatic musical work (e.g. the text of a song), except for oratorios" .
+
+relator:mcp mads:authoritativeLabel "Music copyist"@en ;
+	mads:code "mcp" ;
+	mads:definitionNote "A person who transcribes or copies musical notation" .
+
+relator:mdc mads:authoritativeLabel "Metadata contact"@en ;
+	mads:code "mdc" ;
+	mads:definitionNote "A person or organization primarily responsible for compiling and maintaining the original description of a metadata set (e.g., geospatial metadata set)" .
+
+relator:mfp mads:authoritativeLabel "Manufacture place"@en ;
+	mads:code "mfp" ;
+	mads:definitionNote "The place of manufacture (e.g., printing, duplicating, casting, etc.) of a resource in a published form" .
+
+relator:mfr mads:authoritativeLabel "Manufacturer"@en ;
+	mads:code "mfr" ;
+	mads:definitionNote "A person or organization responsible for printing, duplicating, casting, etc. a resource" .
+
+relator:mod mads:authoritativeLabel "Moderator"@en ;
+	mads:code "mod" ;
+	mads:definitionNote "A performer contributing to a resource by leading a program (often broadcast) where topics are discussed, usually with participation of experts in fields related to the discussion" .
+
+relator:mon mads:authoritativeLabel "Monitor"@en ;
+	mads:code "mon" ;
+	mads:definitionNote "A person or organization that supervises compliance with the contract and is responsible for the report and controls its distribution. Sometimes referred to as the grantee, or controlling agency" .
+
+relator:mrb mads:authoritativeLabel "Marbler"@en ;
+	mads:code "mrb" ;
+	mads:definitionNote "The entity responsible for marbling paper, cloth, leather, etc. used in construction of a resource" .
+
+relator:mrk mads:authoritativeLabel "Markup editor"@en ;
+	mads:code "mrk" ;
+	mads:definitionNote "A person or organization performing the coding of SGML, HTML, or XML markup of metadata, text, etc." .
+
+relator:msd mads:authoritativeLabel "Musical director"@en ;
+	mads:code "msd" ;
+	mads:definitionNote "A person who coordinates the activities of the composer, the sound editor, and sound mixers for a moving image production or for a musical or dramatic presentation or entertainment" .
+
+relator:mte mads:authoritativeLabel "Metal-engraver"@en ;
+	mads:code "mte" ;
+	mads:definitionNote "An engraver responsible for decorations, illustrations, letters, etc. cut on a metal surface for printing or decoration" .
+
+relator:mus mads:authoritativeLabel "Musician"@en ;
+	mads:code "mus" ;
+	mads:definitionNote "A person or organization who performs music or contributes to the musical content of a work when it is not possible or desirable to identify the function more precisely" .
+
+relator:nrt mads:authoritativeLabel "Narrator"@en ;
+	mads:code "nrt" ;
+	mads:definitionNote "A performer contributing to a resource by reading or speaking in order to give an account of an act, occurrence, course of events, etc" .
+
+relator:ptf mads:code "ptf" ;
+	mads:definitionNote "A person or organization who brings a suit in a civil proceeding" .
+
+relator:pth mads:authoritativeLabel "Patent holder"@en ;
+	mads:code "pth" ;
+	mads:definitionNote "A person or organization that was granted the patent referred to by the item" .
+
+relator:ptt mads:authoritativeLabel "Plaintiff-appellant"@en ;
+	mads:code "ptt" ;
+	mads:definitionNote "A plaintiff who takes an appeal from one court or jurisdiction to another to reverse the judgment, usually in a legal proceeding" .
+
+relator:pup mads:authoritativeLabel "Publication place"@en ;
+	mads:code "pup" ;
+	mads:definitionNote "The place where a resource is published" .
+
+relator:rbr mads:authoritativeLabel "Rubricator"@en ;
+	mads:code "rbr" ;
+	mads:definitionNote "A person or organization responsible for parts of a work, often headings or opening parts of a manuscript, that appear in a distinctive color, usually red" .
+
+relator:rcd mads:authoritativeLabel "Recordist"@en ;
+	mads:code "rcd" ;
+	mads:definitionNote "A person or organization who uses a recording device to capture sounds and/or video during a recording session, including field recordings of natural sounds, folkloric events, music, etc." .
+
+relator:rce mads:authoritativeLabel "Recording engineer"@en ;
+	mads:code "rce" ;
+	mads:definitionNote "A person contributing to a resource by supervising the technical aspects of a sound or video recording session" .
+
+relator:rcp mads:authoritativeLabel "Addressee"@en ;
+	mads:code "rcp" ;
+	mads:definitionNote "A person, family, or organization to whom the correspondence in the work is addressed" .
+
+relator:rdd mads:authoritativeLabel "Radio director"@en ;
+	mads:code "rdd" ;
+	mads:definitionNote "A director responsible for the general management and supervision of a radio program" .
+
+relator:red mads:authoritativeLabel "Redaktor"@en ;
+	mads:code "red" ;
+	mads:definitionNote "A person or organization who writes or develops the framework for an item without being intellectually responsible for its content" .
+
+relator:ren mads:authoritativeLabel "Renderer"@en ;
+	mads:code "ren" ;
+	mads:definitionNote "A person or organization who prepares drawings of architectural designs (i.e., renderings) in accurate, representational perspective to show what the project will look like when completed" .
+
+relator:res mads:authoritativeLabel "Researcher"@en ;
+	mads:code "res" ;
+	mads:definitionNote "A person or organization responsible for performing research" .
+
+relator:rev mads:authoritativeLabel "Reviewer"@en ;
+	mads:code "rev" ;
+	mads:definitionNote "A person or organization responsible for the review of a book, motion picture, performance, etc." .
+
+relator:rpc mads:authoritativeLabel "Radio producer"@en ;
+	mads:code "rpc" ;
+	mads:definitionNote "A producer responsible for most of the business aspects of a radio program" .
+
+relator:rps mads:authoritativeLabel "Repository"@en ;
+	mads:code "rps" ;
+	mads:definitionNote "An organization that hosts data or material culture objects and provides services to promote long term, consistent and shared use of those data or objects" .
+
+relator:rpt mads:authoritativeLabel "Reporter"@en ;
+	mads:code "rpt" ;
+	mads:definitionNote "A person or organization who writes or presents reports of news or current events on air or in print" .
+
+relator:rpy mads:authoritativeLabel "Responsible party"@en ;
+	mads:code "rpy" ;
+	mads:definitionNote "A person or organization legally responsible for the content of the published material" .
+
+relator:rse mads:authoritativeLabel "Respondent-appellee"@en ;
+	mads:code "rse" ;
+	mads:definitionNote "A respondent against whom an appeal is taken from one court or jurisdiction to another to reverse the judgment, usually in an equity proceeding" .
+
+relator:rsg mads:authoritativeLabel "Restager"@en ;
+	mads:code "rsg" ;
+	mads:definitionNote "A person or organization, other than the original choreographer or director, responsible for restaging a choreographic or dramatic work and who contributes minimal new content" .
+
+relator:rsp mads:authoritativeLabel "Respondent"@en ;
+	mads:code "rsp" ;
+	mads:definitionNote "A person or organization who makes an answer to the courts pursuant to an application for redress (usually in an equity proceeding) or a candidate for a degree who defends or opposes a thesis provided by the praeses in an academic disputation" .
+
+relator:rsr mads:authoritativeLabel "Restorationist"@en ;
+	mads:code "rsr" ;
+	mads:definitionNote "A person, family, or organization responsible for the set of technical, editorial, and intellectual procedures aimed at compensating for the degradation of an item by bringing it back to a state as close as possible to its original condition" .
+
+relator:rst mads:authoritativeLabel "Respondent-appellant"@en ;
+	mads:code "rst" ;
+	mads:definitionNote "A respondent who takes an appeal from one court or jurisdiction to another to reverse the judgment, usually in an equity proceeding" .
+
+relator:rth mads:authoritativeLabel "Research team head"@en ;
+	mads:code "rth" ;
+	mads:definitionNote "A person who directed or managed a research project" .
+
+relator:rtm mads:authoritativeLabel "Research team member"@en ;
+	mads:code "rtm" ;
+	mads:definitionNote "A person who participated in a research project but whose role did not involve direction or management of it" .
+
+relator:sad mads:authoritativeLabel "Scientific advisor"@en ;
+	mads:code "sad" ;
+	mads:definitionNote "A person or organization who brings scientific, pedagogical, or historical competence to the conception and realization on a work, particularly in the case of audio-visual items" .
+
+relator:sce mads:authoritativeLabel "Scenarist"@en ;
+	mads:code "sce" ;
+	mads:definitionNote "A person or organization who is the author of a motion picture screenplay, generally the person who wrote the scenarios for a motion picture during the silent era" .
+
+relator:scl mads:authoritativeLabel "Sculptor"@en ;
+	mads:code "scl" ;
+	mads:definitionNote "An artist responsible for creating a three-dimensional work by modeling, carving, or similar technique" .
+
+relator:scr mads:authoritativeLabel "Scribe"@en ;
+	mads:code "scr" ;
+	mads:definitionNote "A person who is an amanuensis and for a writer of manuscripts proper. For a person who makes pen-facsimiles, use Facsimilist [fac]" .
+
+relator:sds mads:authoritativeLabel "Sound designer"@en ;
+	mads:code "sds" ;
+	mads:definitionNote "A person who produces and reproduces the sound score (both live and recorded), the installation of microphones, the setting of sound levels, and the coordination of sources of sound for a production" .
+
+relator:sec mads:authoritativeLabel "Secretary"@en ;
+	mads:code "sec" ;
+	mads:definitionNote "A person or organization who is a recorder, redactor, or other person responsible for expressing the views of a organization" .
+
+relator:sgd mads:authoritativeLabel "Stage director"@en ;
+	mads:code "sgd" ;
+	mads:definitionNote "A person or organization contributing to a stage resource through the overall management and supervision of a performance" .
+
+relator:sgn mads:authoritativeLabel "Signer"@en ;
+	mads:code "sgn" ;
+	mads:definitionNote "A person whose signature appears without a presentation or other statement indicative of provenance. When there is a presentation statement, use Inscriber [ins]." .
+
+relator:sht mads:authoritativeLabel "Supporting host"@en ;
+	mads:code "sht" ;
+	mads:definitionNote "A person or organization that supports (by allocating facilities, staff, or other resources) a project, program, meeting, event, data objects, material culture objects, or other entities capable of support" .
+
+relator:sll mads:authoritativeLabel "Seller"@en ;
+	mads:code "sll" ;
+	mads:definitionNote "A former owner of an item who sold that item to another owner" .
+
+relator:sng mads:authoritativeLabel "Singer"@en ;
+	mads:code "sng" ;
+	mads:definitionNote "A performer contributing to a resource by using his/her/their voice, with or without instrumental accompaniment, to produce music. A singer's performance may or may not include actual words" .
+
+relator:spk mads:authoritativeLabel "Speaker"@en ;
+	mads:code "spk" ;
+	mads:definitionNote "A performer contributing to a resource by speaking words, such as a lecture, speech, etc.Â " .
+
+relator:spn mads:authoritativeLabel "Sponsor"@en ;
+	mads:code "spn" ;
+	mads:definitionNote "A person, family, or organization sponsoring some aspect of the resource, e.g., funding research, sponsoring an event" .
+
+relator:spy mads:authoritativeLabel "Second party"@en ;
+	mads:code "spy" ;
+	mads:definitionNote "A person or organization who is identified as the party of the second part. In the case of transfer of right, this is the assignee, transferee, licensee, grantee, etc. Multiple parties can be named jointly as the second party" .
+
+relator:srv mads:authoritativeLabel "Surveyor"@en ;
+	mads:code "srv" ;
+	mads:definitionNote "A person, family, or organization contributing to a cartographic resource by providing measurements or dimensional relationships for the geographic area represented" .
+
+relator:std mads:authoritativeLabel "Set designer"@en ;
+	mads:code "std" ;
+	mads:definitionNote "A person who translates the rough sketches of the art director into actual architectural structures for a theatrical presentation, entertainment, motion picture, etc. Set designers draw the detailed guides and specifications for building the set" .
+
+relator:stg mads:authoritativeLabel "Setting"@en ;
+	mads:code "stg" ;
+	mads:definitionNote "An entity in which the activity or plot of a work takes place, e.g. a geographic place, a time period, a building, an event" .
+
+relator:stl mads:authoritativeLabel "Storyteller"@en ;
+	mads:code "stl" ;
+	mads:definitionNote "A performer contributing to a resource by relaying a creator's original story with dramatic or theatrical interpretation" .
+
+relator:stm mads:authoritativeLabel "Stage manager"@en ;
+	mads:code "stm" ;
+	mads:definitionNote "A person who is in charge of everything that occurs on a performance stage, and who acts as chief of all crews and assistant to a director during rehearsals" .
+
+relator:stn mads:authoritativeLabel "Standards body"@en ;
+	mads:code "stn" ;
+	mads:definitionNote "An organization responsible for the development or enforcement of a standard" .
+
+relator:str mads:authoritativeLabel "Stereotyper"@en ;
+	mads:code "str" ;
+	mads:definitionNote "A person or organization who creates a new plate for printing by molding or copying another printing surface" .
+
+relator:tcd mads:authoritativeLabel "Technical director"@en ;
+	mads:code "tcd" ;
+	mads:definitionNote "A person who is ultimately in charge of scenery, props, lights and sound for a production" .
+
+relator:tch mads:authoritativeLabel "Teacher"@en ;
+	mads:code "tch" ;
+	mads:definitionNote "A performer contributing to a resource by giving instruction or providing a demonstration" .
+
+relator:tld mads:authoritativeLabel "Television director"@en ;
+	mads:code "tld" ;
+	mads:definitionNote "A director responsible for the general management and supervision of a television program" .
+
+relator:tlp mads:authoritativeLabel "Television producer"@en ;
+	mads:code "tlp" ;
+	mads:definitionNote "A producer responsible for most of the business aspects of a television program" .
+
+relator:trc mads:authoritativeLabel "Transcriber"@en ;
+	mads:code "trc" ;
+	mads:definitionNote "A person, family, or organization contributing to a resource by changing it from one system of notation to another. For a work transcribed for a different instrument or performing group, see Arranger [arr]. For makers of pen-facsimiles, use Facsimilist [fac]" .
+
+relator:trl mads:authoritativeLabel "Translator"@en ;
+	mads:code "trl" ;
+	mads:definitionNote "A person or organization who renders a text from one language into another, or from an older form of a language into the modern form" .
+
+relator:tyd mads:authoritativeLabel "Type designer"@en ;
+	mads:code "tyd" ;
+	mads:definitionNote "A person or organization who designs the type face used in a particular item" .
+
+relator:tyg mads:authoritativeLabel "Typographer"@en ;
+	mads:code "tyg" ;
+	mads:definitionNote "A person or organization primarily responsible for choice and arrangement of type used in an item. If the typographer is also responsible for other aspects of the graphic design of a book (e.g., Book designer [bkd]), codes for both functions may be needed" .
+
+relator:uvp mads:authoritativeLabel "University place"@en ;
+	mads:code "uvp" ;
+	mads:definitionNote "A place where a university that is associated with a resource is located, for example, a university where an academic dissertation or thesis was presented" .
+
+relator:vdg mads:authoritativeLabel "Videographer"@en ;
+	mads:code "vdg" ;
+	mads:definitionNote "A person in charge of a video production, e.g. the video recording of a stage production as opposed to a commercial motion picture. The videographer may be the camera operator or may supervise one or more camera operators. Do not confuse with cinematographer" .
+
+relator:voc mads:code "voc" .
+
+relator:wac mads:authoritativeLabel "Writer of added commentary"@en ;
+	mads:code "wac" ;
+	mads:definitionNote "A person, family, or corporate body contributing to an expression of a work by providing an interpretation or critical explanation of the original work" .
+
+relator:wal mads:authoritativeLabel "Writer of added lyrics"@en ;
+	mads:code "wal" ;
+	mads:definitionNote "A writer of words added to an expression of a musical work. For lyric writing in collaboration with a composer to form an original work, see lyricist" .
+
+relator:wam mads:authoritativeLabel "Writer of accompanying material"@en ;
+	mads:code "wam" ;
+	mads:definitionNote "A person or organization who writes significant material which accompanies a sound recording or other audiovisual material" .
+
+relator:wat mads:authoritativeLabel "Writer of added text"@en ;
+	mads:code "wat" ;
+	mads:definitionNote "A person, family, or organization contributing to a non-textual resource by providing text for the non-textual work (e.g., writing captions for photographs, descriptions of maps)." .
+
+relator:wdc mads:authoritativeLabel "Woodcutter"@en ;
+	mads:code "wdc" ;
+	mads:definitionNote "A person or organization who makes prints by cutting the image in relief on the plank side of a wood block" .
+
+relator:wde mads:authoritativeLabel "Wood engraver"@en ;
+	mads:code "wde" ;
+	mads:definitionNote "A person or organization who makes prints by cutting the image in relief on the end-grain of a wood block" .
+
+relator:wit mads:authoritativeLabel "Witness"@en ;
+	mads:code "wit" ;
+	mads:definitionNote "A person who verifies the truthfulness of an event or action" .

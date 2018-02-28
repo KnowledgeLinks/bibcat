@@ -24,22 +24,58 @@ bf:Resource a owl:Class;
 
 # bf:Work bf:Instance and bf:Item now inherit from bf:Resource
 bf:Work rdfs:subClassOf bf:Resource ;
+	kds:storageType "object" ;
 	kds:esIndex "catalog" ;
-	kds:esDocType "work" .
+	kds:esDocType "work" ;
+	kds:esNestedProps rdfs:label;
+	kds:esValue bf:title, bf:hasInstance ;
+	kds:esRmlMapping "bf-to-schema_rdfw.ttl" ;
+	kds:esSpecialUnion """UNION {
+	# get base triples for bf:Items
+	?instance bf:instanceOf ?item .
+	?s bf:itemOf ?instance .
+	?s ?p ?o .
+  } UNION {
+	# get 1 level deap for bf:Items
+	?instance bf:instanceOf ?item .
+	?bf_item bf:itemOf ?instance .
+	?bf_item ?p1 ?s .
+	?s ?p ?o .
+	FILTER(ISBLANK(?s)||ISIRI(?s)) .
+	FILTER(?p1!=bf:itemOf).
+  } UNION {
+	# get 2 level deap for bf:Items
+	?instance bf:instanceOf ?item .
+	?bf_item bf:itemOf ?instance .
+	?bf_item ?p1 ?s1 .
+	?s1 ?p2 ?s .
+	?s ?p ?o .
+	FILTER(ISBLANK(?s1)||ISIRI(?s1))
+	FILTER(ISBLANK(?s)||ISIRI(?s)) .
+	FILTER(?p1!=bf:itemOf).
+  }""" .
+bf:Collection kds:storageType "object" .
 
-bf:Instance rdfs:subClassOf bf:Resource .
+bf:Instance rdfs:subClassOf bf:Resource ;
+	kds:storageType "object" ;
+	kds:esValue bf:title .
 bf:Item rdfs:subClassOf bf:Resource .
 bf:ProvisionActivity rdfs:subClassOf bf:Resource .
 
+bf:GenerationProcess kds:esNestedProps bf:generationDate,
+	rdf:value .
 # The below properties did not have an associated domain in the bibframe2
 # vocab file
+bf:UsageAndAccessPolicy kds:esNestedProps
+	skos:prefLabel,
+	rdf:type .
 
 bf:note rdfs:domain bf:Resource .
 bf:date rdfs:domain bf:Resource .
 bf:place rdfs:domain bf:Resource .
 bf:source rdfs:domain bf:Resource .
 rdfs:label rdfs:domain bf:Resource, bf:TableOfContents, bf:Identifier .
-rdf:value rdfs:domain bf:Topic .
+
 bf:summary rdfs:domain bf:Work, bf:Instance .
 
 bf:soundContent rdfs:domain bf:Work, bf:Instance .
@@ -54,6 +90,9 @@ bf:contribution rdfs:domain bf:Work, bf:Instance .
 
 bf:subject rdfs:domain bf:Work, bf:Instance, bf:Item ;
 	rdfs:range bf:Topic .
+
+bf:partOf rdfs:domain bf:Work, bf:Instance, bf:Item ;
+	rdfs:range bf:Work, bf:Instance, bf:Item, bf:Collection .
 
 bf:tableOfContents rdfs:domain bf:Work, bf:Instance .
 
@@ -92,15 +131,46 @@ bf:itemOf kds:rangeDef [
 		kds:appliesToClass kdr:AllClasses ;
 		kds:esIndexType es:Ignored
 	] .
+
+bf:Item kds:storageType "object" ;
+	kds:esValue skos:prefLabel ;
+	kds:esAltValue rdfs:label ;
+	kds:esIndex "items" ;
+	kds:esDocType "item" .
+
+bf:expressionOf kds:rangeDef [
+	kds:esIndexType: es:Ignored
+] .
+# bf:identifiedBy rdfs:domain bf:Item ;
+# 	kds:rangeDef [
+# 		kds:appliesToClass bf:Item ;
+# 		kds:appliesToRange bf:Identifier ;
+# 		kds:esField rdf:type ;
+# 		kds:esValue rdf:value
+# 	] .
+
 # ----------------- bf:Topic ---------------------------------------------------
 bf:Topic a kds:ControlledClass ;
 	kds:storageType "object" ;
-	kds:esNestedProps skos:broader, skos:altLabel, skos:prefLabel,
-					  bf:identifiedBy, rdfs:label, rdf:type, rdf:value;
+	kds:esNestedProps rdfs:label, rdf:type, rdf:value;
+	# kds:esNestedProps skos:broader, skos:altLabel, skos:prefLabel,
+	# 				  bf:identifiedBy, rdfs:label, rdf:type, rdf:value;
 	kds:esValue skos:prefLabel ;
 	kds:esAltValue rdfs:label ;
 	kds:esIndex "reference" ;
 	kds:esDocType "topics" .
+
+rdfs:seeAlso kds:rangeDef [
+	kds:appliesToClass kdr:AllClasses ;
+	kds:esIndexType es:NotAnalyzed
+] .
+
+rdf:value rdfs:domain bf:Topic ;
+	kds:rangeDef [
+	kds:appliesToClass kdr:AllClasses ;
+	kds:esIndexType es:Standard
+] .
+
 
 skos:broader rdfs:domain bf:Topic ;
 	rdfs:range bf:Topic ;
@@ -177,7 +247,6 @@ rdf:type rdfs:domain bf:Topic ;
 	] .
 
 bf:identifiedBy rdfs:domain bf:Topic ;
-	rdfs:range xsd:string ;
 	kds:rangeDef [
 		kds:appliesToClass bf:Topic ;
 		kds:appliesToRange bf:Identifier ;
