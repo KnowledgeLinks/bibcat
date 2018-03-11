@@ -97,12 +97,13 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?date 
                          WHERE {{ BIND(<{instance_iri}> as ?instance) .
-                              OPTIONAL {{ ?instance bf:subject ?temporal .
-                                          ?temporal rdf:type bf:Temporal ;
-                                                    rdf:value ?date . }}
-                              OPTIONAL {{ ?instance bf:temporalCoverage ?date . }}
-                              OPTIONAL {{ ?instance bf:instanceOf ?work .
-                                          ?work bf:originDate ?date . }}
+                              ?instance bf:instanceOf ?work .
+                              OPTIONAL {{ ?work bf:subject ?subject .
+                                          ?subject rdf:type bf:Temporal ;
+                                                   rdf:value ?date . }}
+                              OPTIONAL {{ ?work bf:temporalCoverage ?date . }}
+                              OPTIONAL {{ ?work bf:originDate ?date . }}
+                                          
                         }}""" ;
             rml:reference "$.bf_instanceOf.bf_originDate"
         ]
@@ -194,20 +195,6 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         ]
     ];
 
-    rr:predicateObjectMap [
-        rr:predicate edm:rights ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?rights 
-                         WHERE {{ 
-                            ?item_iri rdf:type bf:Item .
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights .
-                                        FILTER(isURI(?rights)) }}
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
-                                        ?rights_bnode rdf:value ?rights }}
-                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
-
-        ]
-    ];
 
     rr:predicateObjectmap [
         rr:predicate dcterms:spatial ;
@@ -334,6 +321,22 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
             rml:reference "$"
         ]
     ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:rights ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?rights 
+                         WHERE {{ 
+                            ?item_iri rdf:type bf:Item .
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights .
+                                        FILTER(isURI(?rights)) }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
+                                        ?rights_bnode rdf:value ?rights }}
+                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
+
+        ]
+    ];
+
 
     rr:predicateObjectMap [
         rr:predicate edm:aggregatedCHO ;
