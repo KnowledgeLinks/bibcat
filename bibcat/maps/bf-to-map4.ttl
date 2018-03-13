@@ -2,7 +2,7 @@
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
-@prefix dcterm: <http://purl.org/dc/terms/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
 @prefix dpla: <http://dp.la/about/map/> .
 @prefix edm: <http://www.europeana.eu/schemas/edm/> .
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
@@ -31,7 +31,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                       WHERE {{ ?item_iri rdf:type bf:Item .
                                FILTER(sameTerm(?item_iri, <{item_iri}>)) . }}""" ;
         rml:reference "$.:bf_Item" ;
-        rml:key "item_iri"
+        rml:key "item"
     ] ;
 
     rr:subjectMap [
@@ -40,7 +40,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:alternative ;
+        rr:predicate dcterms:alternative ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?alternative
                          WHERE {{ ?instance bf:hasItem <{item_iri}>  ;
@@ -53,7 +53,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:contributor ;
+        rr:predicate dcterms:contributor ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?contributor
                          WHERE {{ ?instance bf:hasItem <{item_iri}> ;
@@ -65,12 +65,12 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                          }}""";
             rml:reference """
                     $.bf_instanceOf.bf_contribution.bf_agent.rdfs_label,
-                    $.bf_instanceOf.bf_contribution[bf_role=relators_ctb].bf_agent.rdfs_label""";
+                    $.bf_instanceOf.bf_contribution[bf_role=relators_ct].bf_agent.rdfs_label""";
         ]
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:creator ;
+        rr:predicate dcterms:creator ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?creator
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -97,12 +97,13 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?date
                          WHERE {{ BIND(<{instance_iri}> as ?instance) .
-                              OPTIONAL {{ ?instance bf:subject ?temporal .
-                                          ?temporal rdf:type bf:Temporal ;
-                                                    rdf:value ?date . }}
-                              OPTIONAL {{ ?instance bf:temporalCoverage ?date . }}
-                              OPTIONAL {{ ?instance bf:instanceOf ?work .
-                                          ?work bf:originDate ?date . }}
+                              ?instance bf:instanceOf ?work .
+                              OPTIONAL {{ ?work bf:subject ?subject .
+                                          ?subject rdf:type bf:Temporal ;
+                                                   rdf:value ?date . }}
+                              OPTIONAL {{ ?work bf:temporalCoverage ?date . }}
+                              OPTIONAL {{ ?work bf:originDate ?date . }}
+
                         }}""" ;
             rml:reference "$.bf_instanceOf.bf_originDate"
         ]
@@ -111,7 +112,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:description ;
+        rr:predicate dcterms:description ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?description
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -121,14 +122,13 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   OPTIONAL {{ ?instance bf:summary ?summary .
                                                ?summary rdf:value ?description . }}
                         }}""";
-            rml:reference """$.bf_itemOf.bf_instanceOf.bf_summary.rdf_value,
-                             $.bf_itemOf.bf_summary.rdfs_value"""
+            rml:reference "$.bf_instanceOf.bf_summary.rdfs_value, $.bf_summary.rdfs_value"
 
         ]
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:extent ;
+        rr:predicate dcterms:extent ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?extent
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -141,7 +141,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:extent ;
+        rr:predicate dcterms:extent ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?extent
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -172,7 +172,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:identifier ;
+        rr:predicate dcterms:identifier ;
         rr:objectMap [
             rml:query """select distinct ?identifier
                          where {{ <{item_iri}> bf:itemOf ?instance .
@@ -185,7 +185,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:language ;
+        rr:predicate dcterms:language ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?language
                          WHERE {{ <{instance_iri}> bf:language ?langOf .
@@ -196,24 +196,9 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         ]
     ];
 
-    rr:predicateObjectMap [
-        rr:predicate edm:rights ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?rights
-                         WHERE {{
-                            ?item_iri rdf:type bf:Item .
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights .
-                                        FILTER(isURI(?rights)) }}
-                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
-                                        ?rights_bnode rdf:value ?rights }}
-                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}""";
-            rml:reference "$.bf_usageAndAccessPolicy"
-
-        ]
-    ];
 
     rr:predicateObjectmap [
-        rr:predicate dcterm:spatial ;
+        rr:predicate dcterms:spatial ;
         rr:objectmap [
             rml:query """SELECT DISTINCT ?spatial
                          WHERE {{ <{instance_iri}> bf:instanceOf ?work .
@@ -228,42 +213,33 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:subject ;
+        rr:predicate dcterms:subject ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?subject
-                    WHERE {{
-                            {{
-                                <{instance_iri}> bf:instanceOf ?work .
-                                ?work bf:subject ?topic .
-                                ?topic rdf:type bf:Topic .
-                                ?topic rdf:value ?subject
-                            }} UNION {{
-                                <{instance_iri}> bf:subject ?topic .
-                                ?topic rdf:type bf:Topic .
-                                ?topic rdf:value ?subject
-                            }}
-                          }}""";
-            rml:reference """
-            $.bf_itemOf.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value,
-            $.bf_itemOf.bf_subject[rdf_type=bf_Topic].rdf_value"""
+                    WHERE {{ <{instance_iri}> bf:instanceOf ?work .
+                             ?work bf:subject ?topic .
+                             ?topic rdf:type bf:Topic .
+                             ?topic rdf:value ?subject }}""";
+            rml:reference "$.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value"
+
         ]
     ];
 
-    # rr:predicateObjectMap [
-    #     rr:predicate dcterm:subject ;
-    #     rr:objectMap [
-    #         rml:query """SELECT DISTINCT ?subject
-    #                 WHERE {{ <{instance_iri}> bf:subject ?topic .
-    #                          ?topic rdf:type bf:Topic .
-    #                          ?topic rdf:value ?subject }}""";
-    #         rml:reference "$.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value"
+    rr:predicateObjectMap [
+        rr:predicate dcterms:subject ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?subject
+                    WHERE {{ <{instance_iri}> bf:subject ?topic .
+                             ?topic rdf:type bf:Topic .
+                             ?topic rdf:value ?subject }}""";
+            rml:reference "$.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value"
 
-    #     ]
-    # ];
+        ]
+    ];
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterm:title ;
+        rr:predicate dcterms:title ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?title
                       WHERE {{ ?instance_iri rdf:type bf:Instance .
@@ -274,7 +250,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                            ?bnode bf:mainTitle ?title }}
 
                        }}""" ;
-            rml:reference "$.bf_itemOf.rdfs_label, $.bf_itemOf.bf_title.bf_mainTitle"
+            rml:reference "$.rdfs_label, $.bf_title.bf_mainTitle"
         ]
     ] .
 
@@ -304,8 +280,7 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
             rml:query  """SELECT DISTINCT ?item
                          WHERE {{
                             BIND(<{item_iri}> as ?item)
-                      }}""";
-            rml:reference "bf_itemOf.$"
+                      }}"""
         ] ;
     ] ;
 
@@ -318,7 +293,7 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                                     ?dataProvider_bnode rdfs:label ?dataProvider .
                                     BIND(<{item_iri}> as ?item) .
                         }}""" ;
-            rml:reference "rdfs_label.bf_heldBy.*.bf_itemOf.$|no_lang_tag"
+            rml:reference "$.bf_heldBy.rdfs_label"
         ]
 
     ] ;
@@ -327,7 +302,7 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
         rr:predicate edm:preview ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?preview
-                      WHERE {{ ?item bf:instanceOf ?instance .
+                      WHERE {{ ?item bf:itemOf ?instance .
                                ?instance bf:coverArt ?cover_art .
                                ?cover_art rdf:value ?preview .
                                BIND(<{item_iri}> as ?item)  }}""";
@@ -344,9 +319,25 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                             ?isShownAt rdf:type bf:Item .
                             FILTER(sameTerm(?isShownAt, <{item_iri}>))
                          }}""";
-            rml:reference "bf_itemOf.$"
+            rml:reference "$"
         ]
     ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate edm:rights ;
+        rr:objectMap [
+            rml:query """SELECT DISTINCT ?rights
+                         WHERE {{
+                            ?item_iri rdf:type bf:Item .
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights .
+                                        FILTER(isURI(?rights)) }}
+                            OPTIONAL {{ ?item_iri bf:usageAndAccessPolicy ?rights_bnode .
+                                        ?rights_bnode rdf:value ?rights }}
+                            FILTER(sameTerm(?item_iri, <{item_iri}>))    }}"""
+
+        ]
+    ];
+
 
     rr:predicateObjectMap [
         rr:predicate edm:aggregatedCHO ;
@@ -356,7 +347,7 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                             ?item bf:instanceOf ?aggregatedCHO ;
                             BIND(<{item_iri}> as ?item)
                          }}""" ;
-            rml:reference "bf_itemOf.$"
+            rml:reference "$.bf_instanceOf"
         ]
     ] .
 
