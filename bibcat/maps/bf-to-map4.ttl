@@ -135,7 +135,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   ?instance bf:extent ?bnode .
                                   ?bnode rdf:value ?extent
                         }}""";
-            rml:reference "$.bf_extent.bf_value"
+            rml:reference "$.bf_itemOf.bf_extent.rdf_value"
         ]
     ] ;
 
@@ -148,6 +148,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   ?instance bf:dimension ?bnode .
                                   ?bnode rdf:value ?extent
                         }}""";
+            rml:reference "$.bf_itemOf.bf_dimension.bf_extent.rdf_value"
         ]
     ] ;
 
@@ -287,8 +288,8 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                     WHERE {{ ?instance rdf:type bf:Instance .
                              BIND(<{instance_iri}> as ?instance) .
                     }}""";
-        rml:reference "$.:bf_Instance" ;
-        rml:key "instance_iri"
+        rml:reference "$.bf_itemOf" ;
+        rml:key "item_iri"
     ] ;
 
 

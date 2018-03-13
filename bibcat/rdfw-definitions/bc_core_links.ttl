@@ -25,11 +25,10 @@ bf:Resource a owl:Class;
 # bf:Work bf:Instance and bf:Item now inherit from bf:Resource
 bf:Work rdfs:subClassOf bf:Resource ;
 	kds:storageType "object" ;
-	kds:esIndex "catalog" ;
+	kds:esIndex "works" ;
 	kds:esDocType "work" ;
 	kds:esNestedProps rdfs:label;
 	kds:esValue bf:title, bf:hasInstance ;
-	kds:esRmlMapping "bf-to-schema_rdfw.ttl" ;
 	kds:esSpecialUnion """UNION {
 	# get base triples for bf:Items
 	?instance bf:instanceOf ?item .
@@ -54,11 +53,25 @@ bf:Work rdfs:subClassOf bf:Resource ;
 	FILTER(ISBLANK(?s)||ISIRI(?s)) .
 	FILTER(?p1!=bf:itemOf).
   }""" .
-bf:Collection kds:storageType "object" .
+bf:Collection kds:storageType "object" ;
+	kds:esIndex "collections" ;
+	kds:esDocType "collection" .
 
 bf:Instance rdfs:subClassOf bf:Resource ;
 	kds:storageType "object" ;
-	kds:esValue bf:title .
+	kds:esValue bf:title ;
+	kds:esRmlProcessor [
+		a kdr:RmlSPARQLProcessor ;
+		kds:esRmlMapping "bf-to-schema_rdfw.ttl" ;
+		kds:forceNested true ;
+		rdfs:label "schema_json_ld" ;
+		kds:rmlProcessorParams [
+			kds:rtn_format "json-ld" ;
+			kds:subjectKwarg "instance" ;
+			a kdr:ParamaterClass
+		]
+	] .
+
 bf:Item rdfs:subClassOf bf:Resource .
 bf:ProvisionActivity rdfs:subClassOf bf:Resource .
 
@@ -66,9 +79,21 @@ bf:GenerationProcess kds:esNestedProps bf:generationDate,
 	rdf:value .
 # The below properties did not have an associated domain in the bibframe2
 # vocab file
-bf:UsageAndAccessPolicy kds:esNestedProps
-	skos:prefLabel,
-	rdf:type .
+
+bf:Organization rdfs:subClassOf bf:Agent .
+bf:Person rdfs:subClassOf bf:Agent .
+
+bf:Agent kds:esIndex "agents" ;
+	kds:esDocType "agent" .
+
+bf:coverArt kds:esProcessor [
+		kds:appliesToClass kdr:AllClasses ;
+		kds:params [
+			kds:lookupProperty rdf:value;
+			a kdr:ParamaterClass
+		] ;
+		a kdr:ConvertObjectToStringProcessor
+	] .
 
 bf:note rdfs:domain bf:Resource .
 bf:date rdfs:domain bf:Resource .
@@ -96,8 +121,19 @@ bf:partOf rdfs:domain bf:Work, bf:Instance, bf:Item ;
 
 bf:tableOfContents rdfs:domain bf:Work, bf:Instance .
 
-bf:Role kds:esNestedProps mads:authoritativeLabel, mads:code, rdf:type,
-	rdfs:label .
+bf:Role kds:esNestedProps "none"; #	rdfs:label, mads:authoritativeLabel ;
+	kds:esValue mads:authoritativeLabel .
+
+bf:Organization kds:esNestedProps rdf:type .
+
+bf:UsageAndAccessPolicy kds:esValue skos:prefLabel ;
+	kds:esNestedProps "label" .
+
+bf:hasItem kds:esObjectType kdr:Array ;
+	kds:esValue "uri" .
+bf:hasInstance kds:esObjectType kdr:Array .
+bf:itemOf kds:esObjectType kdr:Array .
+
 
 rdf:type kds:initProcessor [
 		kds:appliesToClass kdr:AllClasses ;
@@ -105,7 +141,7 @@ rdf:type kds:initProcessor [
 	] ;
 	kds:esProcessor	[
 		kds:appliesToClass kdr:AllClasses ;
-		a kdr:AddClassHeirarchyProcessor
+		a kdr:AddClassHierarchyProcessor
 	] ;
 	kds:rangeDef [
 		kds:appliesToClass kdr:AllClasses ;
@@ -113,6 +149,8 @@ rdf:type kds:initProcessor [
 		kds:esIndexType es:NotAnalyzed ;
 		kds:esValue "uri"
 	] .
+
+bf:Collection kds:esValue bf:title .
 
 bf:hasInstance kds:rangeDef [
 		kds:appliesToClass kdr:AllClasses ;
@@ -131,12 +169,26 @@ bf:itemOf kds:rangeDef [
 		kds:appliesToClass kdr:AllClasses ;
 		kds:esIndexType es:Ignored
 	] .
+bf:partOf kds:rangeDef [
+		kds:appliesToClass bf:Instance ;
+		kds:esIndexClass bf:Collection
+	] .
 
 bf:Item kds:storageType "object" ;
-	kds:esValue skos:prefLabel ;
+	kds:esValue "uri" ;
 	kds:esAltValue rdfs:label ;
 	kds:esIndex "items" ;
-	kds:esDocType "item" .
+	kds:esDocType "item" ;
+	kds:esRmlProcessor [
+		a kdr:RmlSPARQLProcessor ;
+		kds:esRmlMapping "bf-to-map4.ttl", "map4.ttl";
+		rdfs:label "map4_json_ld";
+		kds:rmlProcessorParams [
+			kds:rtn_format "json-ld" ;
+			kds:subjectKwarg "item_iri" ;
+			a kdr:ParamaterClass
+		]
+	] .
 
 bf:expressionOf kds:rangeDef [
 	kds:esIndexType: es:Ignored
@@ -157,8 +209,8 @@ bf:Topic a kds:ControlledClass ;
 	# 				  bf:identifiedBy, rdfs:label, rdf:type, rdf:value;
 	kds:esValue skos:prefLabel ;
 	kds:esAltValue rdfs:label ;
-	kds:esIndex "reference" ;
-	kds:esDocType "topics" .
+	kds:esIndex "topics" ;
+	kds:esDocType "topic" .
 
 rdfs:seeAlso kds:rangeDef [
 	kds:appliesToClass kdr:AllClasses ;
