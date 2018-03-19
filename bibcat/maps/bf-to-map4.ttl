@@ -49,16 +49,19 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   OPTIONAL {{ ?title rdfs:label ?alternative . }}
                                   OPTIONAL {{ ?title bf:mainTitle ?alternative . }}
                         }}""";
-            rml:reference "$.bf_title[rdf_type=bf_VariantTitle].rdfs_label"
-
+            rml:reference """
+                    $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].rdfs_label,
+                    $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].bf_mainTitle
+                    """
         ]
     ];
 
     rr:predicateObjectMap [
         rr:predicate dcterms:contributor ;
         rr:objectMap [
+            #! This query is not working!!!
             rml:query """SELECT DISTINCT ?contributor
-                         WHERE {{ <{item_iri}> bf:itemOf ?instance . 
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance .
                                   ?instance bf:instanceOf ?work .
                                   ?work bf:contribution ?contribution .
                                   ?contribution bf:agent ?agent .
@@ -66,8 +69,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   OPTIONAL {{ ?contribution bf:role relators:ctb }}
                          }}""";
             rml:reference """
-                    $.bf_instanceOf.bf_contribution.bf_agent.rdfs_label,
-                    $.bf_instanceOf.bf_contribution[bf_role=relators_ctb].bf_agent.rdfs_label""";
+                    $.bf_itemOf.bf_instanceOf.bf_contribution.bf_agent.rdfs_label,
+                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_ctb].bf_agent.rdfs_label""";
         ]
     ];
 
@@ -84,9 +87,9 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                    FILTER (?role=relators:aut||?role=relators:cre)
                       }}""";
             rml:reference """
-                    $.bf_instanceOf.bf_contribution[bf_role=relators_cre].bf_agent.rdfs_label,
-                    $.bf_instanceOf.bf_contribution[bf_role=relators_aut].bf_agent.rdfs_label,
-                    $.bf_instanceOf.bf_contribution[bf_role='pyuri_aHR0cHM6Ly9iaWJjYXQuY29hbGxpYW5jZS5vcmcvcm9sZS8=_author'].bf_agent.rdfs_label
+                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_cre].bf_agent.rdfs_label,
+                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_aut].bf_agent.rdfs_label,
+                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role='pyuri_aHR0cHM6Ly9iaWJjYXQuY29hbGxpYW5jZS5vcmcvcm9sZS8=_author'].bf_agent.rdfs_label
                     |stripend=,. /|distinct""" ;
 
 
@@ -107,7 +110,11 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                               OPTIONAL {{ ?work bf:originDate ?date . }}
 
                         }}""" ;
-            rml:reference "$.bf_instanceOf.bf_originDate"
+            rml:reference """
+                    $.bf_itemOf.bf_instanceOf.bf_originDate,
+                    $.bf_itemOf.bf_instanceOf.bf_temporalCoverage,
+                    $.bf_itemOf.bf_instanceOf.bf_subject[rdf_type=bf_Temporal].rdf_value
+                    """
         ]
     ] ;
 
@@ -125,7 +132,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                                ?summary rdf:value ?description . }}
                         }}""";
             rml:reference """$.bf_itemOf.bf_instanceOf.bf_summary.rdf_value,
-                             $.bf_itemOf.bf_summary.rdfs_value"""
+                             $.bf_itemOf.bf_summary.rdf_value"""
         ]
     ] ;
 
@@ -150,7 +157,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   ?instance bf:dimension ?bnode .
                                   ?bnode rdf:value ?extent
                         }}""";
-            rml:reference "$.bf_itemOf.bf_dimension.bf_extent.rdf_value"
+            rml:reference "$.bf_itemOf.bf_dimension.rdf_value"
         ]
     ] ;
 
@@ -167,8 +174,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                               ?characteristic rdf:value ?format }} .
                         }}""";
             rml:reference """
-                    $.bf_dimensions.rdf_value,
-                    $.bf_digitalCharacteristic[rdf_type=bf_EncodingFormat].rdf_value"""
+                    $.bf_itemOf.bf_dimensions.rdf_value,
+                    $.bf_tiemOf.bf_digitalCharacteristic[rdf_type=bf_EncodingFormat].rdf_value"""
         ]
     ] ;
 
@@ -181,7 +188,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   ?instance bf:identifiedBy ?ident .
                                   ?ident rdf:value ?identifier
                        }}""";
-            rml:reference "$.bf_identifiedBy.rdf_value"
+            rml:reference "$.bf_itemOf.bf_identifiedBy.rdf_value"
 
         ]
     ];
@@ -193,7 +200,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                          WHERE {{ <{instance_iri}> bf:language ?langOf .
                                   ?langOf rdf:value ?language .
                        }}""";
-            rml:reference "$.bf_language.rdf_value"
+            rml:reference "$.bf_itemOf.bf_language.rdf_value"
 
         ]
     ];
@@ -209,7 +216,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                               ?place rdf:value . }}
 
                        }}""";
-            rml:reference "$.bf_instanceOf.bf_subject[rdf_type=bf_Place].rdf_value"
+            rml:reference "$.bf_itemOf.bf_instanceOf.bf_subject[rdf_type=bf_Place].rdf_value"
 
         ]
     ];
@@ -306,7 +313,8 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
                                ?instance bf:coverArt ?cover_art .
                                ?cover_art rdf:value ?preview .
                                BIND(<{item_iri}> as ?item)  }}""";
-            rml:reference "$.bf_instanceOf.bf_coverArt.rdf_value"
+            rml:reference """$.bf_instanceOf.bf_coverArt.rdf_value,
+                             $.bf_coverArt.rdf_value"""
 
         ]
     ] ;
