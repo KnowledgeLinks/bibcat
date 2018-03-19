@@ -187,7 +187,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
      rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
-            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVarientTitle>
+            rr:parentTriplesMap <#MODS2BIBFRAME_InstanceVariantTitle>
         ]
     ] .
 
@@ -617,7 +617,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
         ]
     ] .
 
-<#MODS2BIBFRAME_InstanceVarientTitle> a rr:TriplesMap;
+<#MODS2BIBFRAME_InstanceVariantTitle> a rr:TriplesMap;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
@@ -626,7 +626,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:VarientTitle ;
+        rr:class bf:VariantTitle ;
     ] ;
 
     rr:predicateObjectMap [

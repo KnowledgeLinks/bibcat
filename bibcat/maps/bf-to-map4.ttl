@@ -43,10 +43,12 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:predicate dcterms:alternative ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?alternative
-                         WHERE {{ ?instance bf:hasItem <{item_iri}>  ;
-                                            bf:title   ?title .
-                                  ?title a bf:VariantTitle ;
-                                         rdfs:label ?alternative . }}""";
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance  .
+                                  ?instance bf:title ?title .
+                                  ?title a bf:VariantTitle .
+                                  OPTIONAL {{ ?title rdfs:label ?alternative . }}
+                                  OPTIONAL {{ ?title bf:mainTitle ?alternative . }}
+                        }}""";
             rml:reference "$.bf_title[rdf_type=bf_VariantTitle].rdfs_label"
 
         ]
@@ -56,8 +58,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
         rr:predicate dcterms:contributor ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?contributor
-                         WHERE {{ ?instance bf:hasItem <{item_iri}> ;
-                                            bf:instanceOf ?work .
+                         WHERE {{ <{item_iri}> bf:itemOf ?instance . 
+                                  ?instance bf:instanceOf ?work .
                                   ?work bf:contribution ?contribution .
                                   ?contribution bf:agent ?agent .
                                   ?agent rdfs:label ?agent .
