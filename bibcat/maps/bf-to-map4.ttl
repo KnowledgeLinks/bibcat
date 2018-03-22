@@ -353,19 +353,6 @@ bc:BIBFRAME2MAPv4_Aggregation a rr:TriplesMap;
             rml:reference "bf_usageAndAccessPolicy.*.bf_itemOf.$"
 
         ]
-    ];
-
-
-    rr:predicateObjectMap [
-        rr:predicate edm:aggregatedCHO ;
-        rr:objectMap [
-            rml:query """SELECT DISTINCT ?aggregatedCHO
-                         WHERE {{
-                            ?item bf:instanceOf ?aggregatedCHO ;
-                            BIND(<{item_iri}> as ?item)
-                         }}""" ;
-            rml:reference "$.bf_instanceOf"
-        ]
     ] .
 
 
