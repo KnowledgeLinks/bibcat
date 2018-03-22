@@ -2,7 +2,7 @@
 @prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
-@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dcterm: <http://purl.org/dc/terms/>.
 @prefix dpla: <http://dp.la/about/map/> .
 @prefix edm: <http://www.europeana.eu/schemas/edm/> .
 @prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
@@ -40,7 +40,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:alternative ;
+        rr:predicate dcterm:alternative ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?alternative
                          WHERE {{ <{item_iri}> bf:itemOf ?instance  .
@@ -57,7 +58,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:contributor ;
+        rr:predicate dcterm:contributor ;
         rr:objectMap [
             #! This query is not working!!!
             rml:query """SELECT DISTINCT ?contributor
@@ -75,7 +76,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:creator ;
+        rr:predicate dcterm:creator ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?creator
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -99,6 +101,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
     rr:predicateObjectMap [
         rr:predicate dc:date ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?date
                          WHERE {{ BIND(<{instance_iri}> as ?instance) .
@@ -121,7 +124,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:description ;
+        rr:predicate dcterm:description ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?description
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -137,7 +140,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ] ;
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:extent ;
+        rr:predicate dcterm:extent ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?extent
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -150,7 +154,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:extent ;
+        rr:predicate dcterm:extent ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?extent
                          WHERE {{ <{item_iri}> bf:itemOf ?instance .
@@ -181,7 +185,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:identifier ;
+        rr:predicate dcterm:identifier ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """select distinct ?identifier
                          where {{ <{item_iri}> bf:itemOf ?instance .
@@ -194,7 +199,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:language ;
+        rr:predicate dcterm:language ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?language
                          WHERE {{ <{instance_iri}> bf:language ?langOf .
@@ -207,7 +213,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectmap [
-        rr:predicate dcterms:spatial ;
+        rr:predicate dcterm:spatial ;
         rr:objectmap [
             rml:query """SELECT DISTINCT ?spatial
                          WHERE {{ <{instance_iri}> bf:instanceOf ?work .
@@ -222,7 +228,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
     ];
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:subject ;
+        rr:predicate dcterm:subject ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?subject
                     WHERE {{
@@ -245,7 +252,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
 
     rr:predicateObjectMap [
-        rr:predicate dcterms:title ;
+        rr:predicate dcterm:title ;
+        rr:datatype rdf:List ;
         rr:objectMap [
             rml:query """SELECT DISTINCT ?title
                       WHERE {{ ?instance_iri rdf:type bf:Instance .
