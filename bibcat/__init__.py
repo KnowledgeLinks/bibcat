@@ -5,6 +5,10 @@ import urllib.parse
 import pkg_resources
 import rdflib
 from rdflib.term import _is_valid_uri
+from rdfframework.rml import RmlManager
+from rdfframework.datamanager import DefinitionManager
+from rdfframework.datatypes import RdfNsManager
+import pdb
 
 __author__ = "Jeremy Nelson, Mike Stabile, Jay Peterson"
 try:
@@ -13,6 +17,42 @@ except:
     __version__ = "2.0.6"
 
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
+# Register bibcat data with the rdfframework
+# Register the Rml mappings with the RmlManager
+RmlManager().register_defs([('package_all', 'bibcat.maps')])
+# Define vocabulary and definition file locations
+DefinitionManager().add_file_locations([('vocabularies', ['rdf',
+                                                          'rdfs',
+                                                          'owl',
+                                                          'schema',
+                                                          'bf',
+                                                          'skos',
+                                                          'dcterm']),
+                                        ('package_all',
+                                         'bibcat.rdfw-definitions')])
+# Register RDF namespaces to use
+RdfNsManager({'acl': '<http://www.w3.org/ns/auth/acl#>',
+              'bd': '<http://www.bigdata.com/rdf#>',
+              'bf': 'http://id.loc.gov/ontologies/bibframe/',
+              'dbo': 'http://dbpedia.org/ontology/',
+              'dbp': 'http://dbpedia.org/property/',
+              'dbr': 'http://dbpedia.org/resource/',
+              'dc': 'http://purl.org/dc/elements/1.1/',
+              'dcterm': 'http://purl.org/dc/terms/',
+              'dpla': 'http://dp.la/about/map/',
+              'edm': 'http://www.europeana.eu/schemas/edm/',
+              'es': 'http://knowledgelinks.io/ns/elasticsearch/',
+              'foaf': 'http://xmlns.com/foaf/0.1/',
+              'loc': 'http://id.loc.gov/authorities/',
+              'm21': '<http://knowledgelinks.io/ns/marc21/>',
+              'mads': '<http://www.loc.gov/mads/rdf/v1#>',
+              'mods': 'http://www.loc.gov/mods/v3#',
+              'ore': 'http://www.openarchives.org/ore/terms/',
+              'owl': 'http://www.w3.org/2002/07/owl#',
+              'relators': 'http://id.loc.gov/vocabulary/relators/',
+              'schema': 'http://schema.org/',
+              'skos': 'http://www.w3.org/2004/02/skos/core#',
+              'xsd': 'http://www.w3.org/2001/XMLSchema#'})
 
 def clean_uris(graph):
     """Iterates through all URIRef subjects and objects and attempts to fix any
@@ -95,7 +135,7 @@ def delete_iri(graph, entity_iri):
       ?s ?p1 <{0}> .
     }}""".format(entity_iri)
     graph.update(delete_sparql)
-   
+
 def modified_bf_desc(**kwargs):
     """Adds a bf:adminMetadata property with a blank node for
     the entity. Optional agent_iri arg will add the agent_iri as a

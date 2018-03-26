@@ -6,7 +6,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name="bibcat",
-    version="2.1.7",
+    version="2.1.8",
     description="BIBCAT RDF Framework Application",
     author="KnowledgeLinks",
     author_email="knowledgelinks.io@gmail.com",
@@ -38,4 +38,4 @@ setup(
         "rdfw-definitions": ["*.ttl"],
         "maps": ["*.ttl"]
     }
-)      
+)
