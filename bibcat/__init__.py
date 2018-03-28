@@ -14,7 +14,7 @@ __author__ = "Jeremy Nelson, Mike Stabile, Jay Peterson"
 try:
     __version__ = pkg_resources.get_distribution("bibcat").version
 except:
-    __version__ = "2.0.6"
+    __version__ = "NOT SET"
 
 BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 # Register bibcat data with the rdfframework
@@ -52,6 +52,7 @@ RdfNsManager({'acl': '<http://www.w3.org/ns/auth/acl#>',
               'mods': 'http://www.loc.gov/mods/v3#',
               'ore': 'http://www.openarchives.org/ore/terms/',
               'owl': 'http://www.w3.org/2002/07/owl#',
+              'prov': 'http://www.w3.org/ns/prov#',
               'relators': 'http://id.loc.gov/vocabulary/relators/',
               'schema': 'http://schema.org/',
               'skos': 'http://www.w3.org/2004/02/skos/core#',
@@ -154,12 +155,18 @@ def modified_bf_desc(**kwargs):
     graph = kwargs.get("graph")
     entity_iri = kwargs.get("entity_iri")
     msg = kwargs.get("msg")
+    nsm = RdfNsManager()
     if msg is None:
         raise AttributeError("Message cannot be None")
     agent_iri = kwargs.get("agent_iri")
     bnode = rdflib.BNode()
-    graph.add((bnode, rdflib.RDF.type, BF.AdminMetadata))
-    graph.add((entity_iri, BF.adminMetadata, bnode))
+    graph.add((
+        bnode, 
+        rdflib.RDF.type, 
+        nsm.bf.AdminMetadata))
+    graph.add((
+        entity_iri, 
+        nsm.bf.adminMetadata, bnode))
     graph.add((bnode, rdflib.RDF.value, rdflib.Literal(msg)))
     graph.add((bnode,
                BF.changeDate,
