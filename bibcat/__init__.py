@@ -6,7 +6,7 @@ import pkg_resources
 import rdflib
 from rdflib.term import _is_valid_uri
 from rdfframework.rml import RmlManager
-from rdfframework.datamanager import DefinitionManager
+from rdfframework.datamanager import DefinitionManager, DatastoreManager
 from rdfframework.datatypes import RdfNsManager
 import pdb
 
@@ -20,6 +20,9 @@ BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
 # Register bibcat data with the rdfframework
 # Register the Rml mappings with the RmlManager
 RmlManager().register_defs([('package_all', 'bibcat.maps')])
+# Register datastore files
+DatastoreManager().add_file_locations([('package_all',
+                                        'bibcat.rdf-references')])
 # Define vocabulary and definition file locations
 DefinitionManager().add_file_locations([('vocabularies', ['rdf',
                                                           'rdfs',
