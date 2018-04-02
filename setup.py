@@ -6,7 +6,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name="bibcat",
-    version="2.2.1",
+    version="2.2.2",
     description="BIBCAT RDF Framework Application",
     author="KnowledgeLinks",
     author_email="knowledgelinks.io@gmail.com",
@@ -32,7 +32,8 @@ setup(
         'rdflib-jsonld',
         'requests',
         'fuzzywuzzy',
-        'python-Levenshtein'
+        'rdfframework'
+        #'python-Levenshtein'
     ],
     include_package_data=True,
     package_data={
