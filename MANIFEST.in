@@ -1,3 +1,4 @@
 include README.md
 include bibcat/maps/*.ttl
 include bibcat/rdfw-definitions/*.ttl
+include bibcat/rdf-references/*.ttl
