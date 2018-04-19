@@ -6,7 +6,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name="bibcat",
-    version="2.2.3",
+    version="2.2.4",
     description="BIBCAT RDF Framework Application",
     author="KnowledgeLinks",
     author_email="knowledgelinks.io@gmail.com",
@@ -35,7 +35,7 @@ setup(
         'rdfframework'
         #'python-Levenshtein'
     ],
-    #include_package_data=True,
+    include_package_data=True,
     package_data={
         "rdf-references": ["*.ttl"],
         "rdfw-definitions": ["*.ttl"],
