@@ -9,6 +9,7 @@ from rdfframework.rml import RmlManager
 from rdfframework.datamanager import DefinitionManager, DatastoreManager
 from rdfframework.datatypes import RdfNsManager
 import pdb
+import bibcat.sparql
 
 __author__ = "Jeremy Nelson, Mike Stabile, Jay Peterson"
 try:
@@ -161,11 +162,11 @@ def modified_bf_desc(**kwargs):
     agent_iri = kwargs.get("agent_iri")
     bnode = rdflib.BNode()
     graph.add((
-        bnode, 
-        rdflib.RDF.type, 
+        bnode,
+        rdflib.RDF.type,
         nsm.bf.AdminMetadata))
     graph.add((
-        entity_iri, 
+        entity_iri,
         nsm.bf.adminMetadata, bnode))
     graph.add((bnode, rdflib.RDF.value, rdflib.Literal(msg)))
     graph.add((bnode,
