@@ -264,7 +264,8 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                            ?bnode bf:mainTitle ?title }}
 
                        }}""" ;
-            rml:reference "$.bf_itemOf.rdfs_label, $.bf_itemOf.bf_title.bf_mainTitle"
+            rml:reference """$.bf_itemOf.rdfs_label,
+                             $.bf_itemOf.bf_title.bf_mainTitle"""
         ]
     ] .
 
