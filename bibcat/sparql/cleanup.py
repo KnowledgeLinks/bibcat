@@ -130,7 +130,36 @@ WHERE
 }
 """
 
+DELETE_INSTANCE_LINKS_MISSING_TITLES = """
+# DELETE_INSTANCE_LINKS_MISSING_TITLES
+# Deletes bf:Instance linkages to works and items when the bf:Instance does
+# NOT have bf:title property
+
+prefix bf: <http://id.loc.gov/ontologies/bibframe/>
+DELETE {
+  ?instance bf:instanceOf ?work.
+  ?item bf:itemOf ?instance .
+}
+WHERE
+{
+    {
+        ?instance a bf:Instance .
+        optional {
+            ?instance bf:title ?title
+        }
+        filter(!(bound(?title)))
+    }
+    ?instance bf:instanceOf ?work .
+    ?item bf:itemOf ?instance .
+}
+"""
+
 CLEANUP_QRY_SERIES = [DELETE_MULTIPLE_ITEMOF,
                       DELETE_ORPHAN_INSTANCES,
                       CREATE_MISSING_WORKS,
                       DELETE_ORPHAN_WORKS]
+
+
+CLEANUP_MISSING_TITLE_SERIES = [DELETE_INSTANCE_LINKS_MISSING_TITLES,
+                                DELETE_ORPHAN_INSTANCES,
+                                DELETE_ORPHAN_WORKS]
