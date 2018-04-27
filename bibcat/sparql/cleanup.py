@@ -154,12 +154,74 @@ WHERE
 }
 """
 
+DELETE_ORPHAN_ITEMS = """
+# DELETE_ORPHAN_ITEMS
+# DELETE all orphan bf:Item triples that are not linked to a bf:Instance
+
+prefix bf: <http://id.loc.gov/ontologies/bibframe/>
+DELETE
+{
+    ?item ?p ?o .
+    ?bns ?bnp ?bno .
+}
+WHERE
+{
+    # Get all of the items not tied to an instance
+    {
+        ?item a bf:Item .
+        optional {
+            ?item bf:itemOf ?instance .
+        }
+        filter(!(bound(?instance)))
+    }
+    ?item ?p ?o .
+
+    # Get all of the associated blank nodes
+    optional {
+        ?o ?bnp ?bno .
+        filter(isblank(?o))
+        bind(?o as ?bns)
+    } .
+}
+"""
+
+DELETE_MULTIPLE_GEN_PROCESS = """
+# DELETE_MULTIPLE_GEN_PROCESS
+# Deletes all but one bf:generationProccess when attached to a subject
+
+prefix bf: <http://id.loc.gov/ontologies/bibframe/>
+
+DELETE
+{
+    ?item bf:generationProcess ?new_policy .
+    ?bns ?bnp ?bno.
+}
+WHERE
+{
+    {
+        SELECT ?item  (MIN(?policy) as ?keep) (count(?policy) as ?p_count)
+        {
+            ?item bf:generationProcess ?policy .
+        }
+        group by ?item
+    }
+    filter(?p_count>1)
+    ?item bf:generationProcess ?new_policy .
+    filter(?keep!=?new_policy) .
+    bind(?new_policy as ?bns) .
+    optional {
+        ?bns ?bnp ?bno .
+    } .
+}
+"""
 CLEANUP_QRY_SERIES = [DELETE_MULTIPLE_ITEMOF,
                       DELETE_ORPHAN_INSTANCES,
                       CREATE_MISSING_WORKS,
-                      DELETE_ORPHAN_WORKS]
+                      DELETE_ORPHAN_WORKS,
+                      DELETE_MULTIPLE_GEN_PROCESS]
 
 
 CLEANUP_MISSING_TITLE_SERIES = [DELETE_INSTANCE_LINKS_MISSING_TITLES,
                                 DELETE_ORPHAN_INSTANCES,
-                                DELETE_ORPHAN_WORKS]
+                                DELETE_ORPHAN_WORKS,
+                                DELETE_ORPHAN_ITEMS]

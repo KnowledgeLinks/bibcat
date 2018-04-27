@@ -52,7 +52,9 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                         }}""";
             rml:reference """
                     $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].rdfs_label,
+                    $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].rdf_value,
                     $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].bf_mainTitle
+                    |stripend=,. /|distinct|limit=1
                     """
         ]
     ];
@@ -117,6 +119,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                     $.bf_itemOf.bf_instanceOf.bf_originDate,
                     $.bf_itemOf.bf_instanceOf.bf_temporalCoverage,
                     $.bf_itemOf.bf_instanceOf.bf_subject[rdf_type=bf_Temporal].rdf_value
+                    |limit=1
                     """
         ]
     ] ;
@@ -265,7 +268,9 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
 
                        }}""" ;
             rml:reference """$.bf_itemOf.rdfs_label,
-                             $.bf_itemOf.bf_title.bf_mainTitle"""
+                             $.bf_itemOf.rdf_value,
+                             $.bf_itemOf.bf_title.bf_mainTitle
+                             |stripend=,. /|distinct|limit=1"""
         ]
     ] .
 
