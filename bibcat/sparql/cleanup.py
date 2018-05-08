@@ -148,14 +148,13 @@ WHERE
             ?instance bf:title ?title
         }
         filter(!(bound(?title)))
-    }
-    {
+    } UNION {
         ?instance a bf:Instance .
         optional {
             ?instance bf:title ?title .
             ?title bf:mainTitle ?main .
         }
-        filter(strlen(?main) < 1) 
+        filter(strlen(?main) < 1)
     }
     ?instance bf:instanceOf ?work .
     ?item bf:itemOf ?instance .

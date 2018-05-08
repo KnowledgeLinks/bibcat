@@ -53,7 +53,7 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
             rml:reference """
                     $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].rdfs_label,
                     $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].rdf_value,
-                    $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].bf_mainTitle
+                    $.bf_itemOf.bf_title[rdf_type=bf_VariantTitle].bf_mainTitle,
                     |stripend=,. /|distinct|limit=1
                     """
         ]
@@ -72,8 +72,13 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                   OPTIONAL {{ ?contribution bf:role relators:ctb }}
                          }}""";
             rml:reference """
-                    $.bf_itemOf.bf_instanceOf.bf_contribution.bf_agent.rdfs_label,
-                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_ctb].bf_agent.rdfs_label""";
+                    $.bf_itemOf.relators_ctb.rdfs_label,
+                    $.bf_itemOf.relators_ths.rdfs_label,
+                    $.bf_itemOf.bf_contribution[rdf_type=bf_Person].rdfs_label,
+                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_ths].rdfs_label,
+                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_ctb].rdfs_label,
+                    $.bf_itemOf.bf_contribution[bf_role=relators_ths].bf_agent.rdfs_label,
+                    $.bf_itemOf.bf_contribution[bff_role=relators_ctb].bf_agent.rdfs_label""";
         ]
     ];
 
@@ -91,12 +96,13 @@ bc:BIBFRAME2MAPv4_SourceResource a rr:TriplesMap;
                                    FILTER (?role=relators:aut||?role=relators:cre)
                       }}""";
             rml:reference """
+                    $.bf_itemOf.relators_aut.rdfs_label,
+                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_cre].rdf_value,
                     $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_cre].bf_agent.rdfs_label,
                     $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role=relators_aut].bf_agent.rdfs_label,
-                    $.bf_itemOf.bf_instanceOf.bf_contribution[bf_role='pyuri_aHR0cHM6Ly9iaWJjYXQuY29hbGxpYW5jZS5vcmcvcm9sZS8=_author'].bf_agent.rdfs_label
+                    $.bf_itemOf.bf_contribution[bf_role=relators_cre].bf_agent.rdfs_label,
+                    $.bf_itemOf.bf_contribution[bf_role=relators_aut].bf_agent.rdfs_label
                     |stripend=,. /|distinct""" ;
-
-
         ]
 
     ];
