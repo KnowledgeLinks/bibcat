@@ -304,19 +304,19 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
 
     rml:logicalSource [
         rml:source "{mods_record}" ;
-        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='creator']"
+        rml:iterator "mods:name[@type='corporate']/mods:role[mods:roleTerm='creator']/.."
     ] ;
 
     rr:subjectMap [
         rr:termType rr:BlankNode ;
-        rr:class bf:Organization, bf:Agent
+        rr:class bf:Organization
 
     ] ;
 
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;
         rr:objectMap [
-            rr:reference "../mods:namePart" ;
+            rr:reference "mods:namePart" ;
             rr:datatype xsd:string
         ]
     ] ;
@@ -327,6 +327,7 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
             rr:constant relators:cre
         ]
     ]  .
+
 
 <#MODS2BIBFRAME_WorkThesisAdvisor> a rr:TriplesMap ;
 
@@ -697,6 +698,8 @@ bc:MODS2BIBFRAME_Item a rr:TriplesMap ;
             rr:parentTriplesMap <#MODS2BIBFRAME_WorkThesisAdvisor> ;
         ]
     ] ;
+
+
 
     rr:predicateObjectMap [
         rr:predicate bf:subject ;

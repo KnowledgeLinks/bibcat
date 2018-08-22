@@ -24,7 +24,10 @@ from rdfframework.rml.processor import XMLProcessor
 
 NS = {"oai_pmh": "http://www.openarchives.org/OAI/2.0/",
       'dc': 'http://purl.org/dc/elements/1.1/', 
+      'dcterms': 'http://purl.org/dc/elements/1.1/',
       'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/'}
+BF = rdflib.Namespace("http://id.loc.gov/ontologies/bibframe/")
+
 try:
     NS_MGR.bind('fedora', 'info:fedora/fedora-system:def/relations-external#')
     NS_MGR.bind('fedora-model', 'info:fedora/fedora-system:def/model#')
@@ -160,6 +163,10 @@ class OAIPMHIngester(object):
         except io.UnsupportedOperation:
             print(msg)
 
+    def save_file(self, filepath):
+        with open(filepath, 'wb+') as fo:
+            fo.write(self.repo_graph.serialize(format='turtle'))
+
 
 class ContentDMIngester(OAIPMHIngester):
     """ContentDM Ingester provides an interface to OCLC's ContentDM&copy; 
@@ -172,7 +179,7 @@ class ContentDMIngester(OAIPMHIngester):
         if not isinstance(rml_rules, list):
             rml_rules = [rml_rules,]
         # Add rml base and OAI-PMH DC rules
-        for rulefile in ["bibcat-oai-pmh-dc-xml-to-bf.ttl",
+        for rulefile in ["oai-pmh-dc-xml-to-bf.ttl",
                          "bibcat-base.ttl"]:
             rml_rules.append(rulefile)
         self.processor = XMLProcessor(
@@ -429,6 +436,10 @@ class LunaIngester(OAIPMHIngester):
             click.echo(msg)
         except io.UnsupportedOperation:
             print(msg)
+        super(IslandoraIngester, self).harvest(
+            sample_size=sample_size,
+            setSpec=kwargs.get('setSpec'))
+
         count, token = self.__init_doc__(**kwargs)
         while token is not None:
             params = { "resumptionToken": token.text,
@@ -460,3 +471,82 @@ class LunaIngester(OAIPMHIngester):
             if count > 8000:
                 print(token.text, count)
 
+class OmekaIngester(OAIPMHIngester):
+    """Harvests Omeka objects from a OAI-PMH feed"""
+    
+    def __init__(self, **kwargs):
+        super(OmekaIngester, self).__init__(**kwargs)
+        self.base_url = kwargs.get("base_url")
+        rml_rules=["bibcat-base.ttl", 
+                   "oai-pmh-dc-xml-to-bf.ttl"]
+        rml_rules.extend(kwargs.get("rml_rules", []))
+        self.processor = XMLProcessor(
+            triplestore_url=kwargs.get("triplestore_url"),
+            base_url=kwargs.get("base_url"),
+            rml_rules=rml_rules,
+            namespaces=NS)
+
+    def harvest(self, **kwargs):
+        sample_size = kwargs.get("sample_size")
+        start = datetime.datetime.utcnow()
+        msg = "Starting OAI-PMH harvest of PIDS from Luna at {}".format(
+            start)
+        try:
+            click.echo(msg)
+        except io.UnsupportedOperation:
+            print(msg)
+        params = {"verb": "ListRecords",
+                  "metadataPrefix": self.metadataPrefix}
+        initial_url = "{0}?{1}".format(
+            self.oai_pmh_url,
+            urllib.parse.urlencode(params))
+        initial_result = requests.get(initial_url)
+        if initial_result.status_code > 399:
+            raise ValueError("Cannot Harvest {}, result {}".format(
+                self.oai_pmh_url,
+                initial_result.text))
+        raw_initial = initial_result.text
+        if isinstance(raw_initial, str):
+            raw_initial = raw_initial.encode()
+
+        initial_doc = etree.XML(initial_result.text.encode())
+        token = initial_doc.find("oai_pmh:ListRecords/oai_pmh:resumptionToken", NS)
+        records = initial_doc.findall("oai_pmh:ListRecords/oai_pmh:record", NS)
+        for i,rec in enumerate(records):
+            #! Temporary Pine River adjustment
+            identifiers = rec.findall("oai_pmh:metadata/oai_dc:dc/dc:identifier", NS)
+            for ident in identifiers:
+                if ident.text.endswith("pdf"):
+                    continue
+                elif ident.text.endswith("jpg"):
+                    cover_art_url = ident.text
+                else:
+                    item_iri = ident.text
+            instance_iri = "{}/{}".format(self.base_url, uuid.uuid1())
+            self.processor.run(rec, item_iri=item_iri, instance_iri=instance_iri)
+            if cover_art_url is not None:
+                cover_art = rdflib.BNode()
+                self.processor.output.add((rdflib.URIRef(instance_iri),
+                                           BF.coverArt,
+                                           cover_art))
+                self.processor.output.add((cover_art, rdflib.RDF.type, BF.CoverArt))
+                self.processor.output.add((cover_art, rdflib.RDF.value, rdflib.URIRef(cover_art_url)))
+            if self.repo_graph is None:
+                self.repo_graph = self.processor.output
+            else:
+                self.repo_graph += self.processor.output
+            if not i%10:
+                try:
+                    click.echo(".", nl=False)
+                except io.UnsupportedOperation:
+                    print(".", end="")
+
+            if not i%100:
+                try:
+                    click.echo(i, nl=False)
+                except io.UnsupportedOperation:
+                    print(i, end="")
+        end = datetime.datetime.utcnow()
+        print("Finished at {}, total items {:,}".format(end.isoformat(),
+                                                        i))
+    

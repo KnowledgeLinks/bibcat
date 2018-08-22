@@ -67,6 +67,14 @@ bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TriplesMap ;
         ] 
     ] ;
 
+
+    rr:predicateObjectMap [
+        rr:predicate bf:extent;
+        rr:objectMap [
+            rr:parentTriplesMap <#OAIPMH_DCtoBIBFRAME_InstanceExtent> ;
+        ]
+    ] ;
+
     rr:predicateObjectMap [
         rr:predicate bf:title ;
         rr:objectMap [
@@ -88,6 +96,25 @@ bc:OAIPMH_DCtoBIBFRAME_Instance a rr:TriplesMap ;
         ]
     ] .
 
+<#OAIPMH_DCtoBIBFRAME_InstanceExtent> a rr:TriplesMap ;
+
+    rml:logicalSource [
+        rml:source "{record}" ;
+        rml:iterator "oai_pmh:metadata/oai_dc:dc/dcterms:extent"
+    ] ;
+
+    rr:subjectMap [
+        rr:termType rr:BlankNode ;
+        rr:class bf:Extent ;
+    ] ;
+
+    rr:predicateObjectMap [
+        rr:predicate rdf:value ;
+        rr:objectMap [
+            rr:reference "." ;
+            rr:datatype xsd:string
+        ]
+    ] .
 
 bc:OAIPMH_DCtoBIBFRAME_subject a rr:TriplesMap ;
 
