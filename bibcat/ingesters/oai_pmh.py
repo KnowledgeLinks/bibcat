@@ -535,7 +535,7 @@ class OmekaIngester(OAIPMHIngester):
                 self.repo_graph = self.processor.output
             else:
                 self.repo_graph += self.processor.output
-            if not i%10:
+            if not i%10 and i > 0:
                 try:
                     click.echo(".", nl=False)
                 except io.UnsupportedOperation:
